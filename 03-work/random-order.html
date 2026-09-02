@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>다이내믹 순서 뽑기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; padding: 40px; }
+        .container { background: #16213e; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 450px; text-align: center; }
+        textarea { width: 100%; height: 150px; background: #0f3460; color: white; border: 1px solid #4ecca3; border-radius: 10px; padding: 10px; margin-bottom: 20px; resize: none; }
+        button { width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 10px; cursor: pointer; font-size: 17px; font-weight: bold; transition: 0.3s; }
+        .btn-draw { background-color: #e94560; color: white; }
+        .btn-draw:hover { background-color: #ff2e63; transform: scale(1.02); }
+        .btn-excel { background-color: #4ecca3; color: white; display: none; }
+        #status { height: 30px; margin: 15px 0; color: #4ecca3; font-weight: bold; }
+        #result { margin-top: 20px; text-align: left; max-height: 400px; overflow-y: auto; }
+        .name-item { background: #0f3460; margin: 8px 0; padding: 12px; border-radius: 8px; border-left: 5px solid #e94560; animation: fadeIn 0.5s ease forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .rank { color: #4ecca3; margin-right: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🔥 랜덤 순서 뽑기 </h2>
+    <textarea id="nameInput" placeholder="여기에 명단을 붙여넣으세요..."></textarea>
+    <button class="btn-draw" onclick="startDrawing()">🚀 순서 섞기 시작!</button>
+    <div id="status"></div>
+    <div id="result"></div>
+    <button id="excelBtn" class="btn-excel" onclick="downloadExcel()">📊 결과 엑셀 다운로드</button>
+</div>
+
+<script>
+    let shuffledResult = [];
+
+    async function startDrawing() {
+        const text = document.getElementById('nameInput').value;
+        const resultDiv = document.getElementById('result');
+        const statusDiv = document.getElementById('status');
+        const excelBtn = document.getElementById('excelBtn');
+        
+        let names = text.split('\n').map(name => name.trim()).filter(name => name !== "");
+
+        if (names.length === 0) {
+            alert("이름을 입력해주세요!");
+            return;
+        }
+
+        // 초기화
+        resultDiv.innerHTML = "";
+        excelBtn.style.display = "none";
+        statusDiv.innerText = "명단을 섞는 중입니다...";
+
+        // 셔플 알고리즘
+        for (let i = names.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [names[i], names[j]] = [names[j], names[i]];
+        }
+        shuffledResult = names;
+
+        // 긴장감 연출 (애니메이션 대기)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        statusDiv.innerText = "✨ 결과 발표! ✨";
+        confetti({ pixelDensity: 2, particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+        // 결과를 하나씩 순차적으로 등장시킴
+        for (let i = 0; i < names.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'name-item';
+            div.style.animationDelay = `${i * 0.1}s`; // 순차적 등장
+            div.innerHTML = `<span class="rank">${i + 1}위</span> <span>${names[i]}</span>`;
+            resultDiv.appendChild(div);
+        }
+
+        // 엑셀 버튼 표시
+        excelBtn.style.display = "block";
+    }
+
+    function downloadExcel() {
+        if (shuffledResult.length === 0) return;
+
+        const data = shuffledResult.map((name, index) => ({
+            "순서": index + 1,
+            "이름": name
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "뽑기결과");
+        
+        // 파일 다운로드 실행
+        XLSX.writeFile(workbook, "뽑기_결과_리스트.xlsx");
+    }
+</script>
+
+</body>
+</html>

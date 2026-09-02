@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학생별 정오표 전체 출력 만들기</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; width: 100%; text-align: center; }
+        h2 { color: #333; margin-top: 0; margin-bottom: 15px; }
+        p { color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+        .file-label { display: block; margin: 0 auto 20px auto; padding: 30px 15px; border: 2px dashed #007bff; border-radius: 10px; background-color: #f0f8ff; color: #007bff; cursor: pointer; transition: 0.3s; font-weight: bold; font-size: 16px; }
+        .file-label:hover { background-color: #e1f0ff; }
+        input[type="file"] { display: none; }
+        button { background-color: #4CAF50; color: white; border: none; padding: 15px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold; width: 90%; }
+        button:hover { background-color: #45a049; }
+        #status { margin-top: 20px; font-weight: bold; color: #333; font-size: 15px; word-break: keep-all; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>📄 Made by 수수!</h2>
+        <p><b>지필평가-지필평가조회-교과목별학생답정오표 엑셀(XLS) 다운</b></p>
+        
+        <label for="upload" id="file-label" class="file-label">
+            📁 여기를 눌러 다운 받은 나이스 엑셀 파일을 선택하세요
+        </label>
+        <input type="file" id="upload" accept=".xlsx, .xls" onchange="updateFileName()" />
+        
+        <button onclick="processExcel()">✨ 파일 선택 후 여기를 눌러 변환 시작!</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function updateFileName() {
+            const fileInput = document.getElementById('upload');
+            const label = document.getElementById('file-label');
+            if (fileInput.files.length > 0) {
+                label.innerHTML = `✅ 선택됨: <br><span style='color:#333; font-weight:normal;'>${fileInput.files[0].name}</span>`;
+                label.style.backgroundColor = "#e6ffe6";
+                label.style.borderColor = "#28a745";
+                label.style.color = "#28a745";
+                document.getElementById('status').innerHTML = ""; 
+            }
+        }
+
+        function processExcel() {
+            const fileInput = document.getElementById('upload');
+            const statusDiv = document.getElementById('status');
+
+            if (!fileInput.files.length) {
+                alert('파란색 박스를 눌러 엑셀 파일을 먼저 선택해주세요!');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            statusDiv.innerHTML = "⏳ 파일을 분석 중입니다...";
+            
+            const reader = new FileReader();
+            reader.onload = function(eText) {
+                try {
+                    const textData = eText.target.result;
+                    
+                    if (textData.includes('<html') || textData.includes('<table')) {
+                        console.log("HTML 기반 엑셀 파일 감지");
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(textData, 'text/html');
+                        const tables = doc.querySelectorAll('table');
+                        
+                        if (!tables || tables.length === 0) throw new Error("파일 내부에서 표 데이터를 찾을 수 없습니다.");
+                        
+                        let targetTable = tables[0];
+                        for(let t of tables) { if(t.rows.length > targetTable.rows.length) targetTable = t; }
+
+                        const json = [];
+                        for (let i = 0; i < targetTable.rows.length; i++) {
+                            const rowData = [];
+                            for (let j = 0; j < targetTable.rows[i].cells.length; j++) {
+                                rowData.push(targetTable.rows[i].cells[j].textContent.trim());
+                            }
+                            json.push(rowData);
+                        }
+                        createIndividualSheets(json, statusDiv);
+
+                    } else {
+                        console.log("일반 엑셀 파일 감지");
+                        const arrayReader = new FileReader();
+                        arrayReader.onload = function(eArr) {
+                            try {
+                                const data = new Uint8Array(eArr.target.result);
+                                const workbook = XLSX.read(data, {type: 'array'});
+                                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                                const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+                                createIndividualSheets(json, statusDiv);
+                            } catch (err2) {
+                                throw new Error("일반 엑셀 변환 중 오류: " + err2.message);
+                            }
+                        };
+                        arrayReader.readAsArrayBuffer(file);
+                    }
+                } catch (err) {
+                    alert("🚨 파일 분석 중 오류가 발생했습니다: \n" + err.message);
+                    statusDiv.innerHTML = `<span style='color: red;'>❌ 변환 실패: ${err.message}</span>`;
+                }
+            };
+            
+            reader.readAsText(file, 'euc-kr'); 
+        }
+
+        function createIndividualSheets(json, statusDiv) {
+            try {
+                if (!json || json.length === 0) throw new Error("엑셀 파일에 데이터가 없습니다.");
+
+                let fileNameInfo = "개별성적표";
+                for (let i = 0; i < Math.min(10, json.length); i++) {
+                    if (json[i]) {
+                        let rowStr = json[i].filter(c => String(c).trim() !== "").join(" ");
+                        if (rowStr.includes("학년도") && rowStr.includes("학기")) {
+                            fileNameInfo = rowStr.replace(/1차\s*정기시험/g, " ").replace(/:/g, "_").trim().replace(/\s+/g, "_");
+                            break;
+                        }
+                    }
+                }
+
+                let headerStartIdx = -1;
+                for (let i = 0; i < json.length; i++) {
+                    if (json[i]) {
+                        for(let j = 0; j < json[i].length; j++) {
+                            if (json[i][j] && (String(json[i][j]).includes("번호") || String(json[i][j]).includes("반/번호"))) {
+                                headerStartIdx = i; break;
+                            }
+                        }
+                        if (headerStartIdx !== -1) break;
+                    }
+                }
+
+                if (headerStartIdx === -1) {
+                    throw new Error("표에서 '반/번호' 항목을 찾지 못했습니다. 올바른 나이스 다운로드 파일인지 확인해주세요.");
+                }
+
+                const rawH1 = json[headerStartIdx];
+                const rawH2 = json[headerStartIdx + 1] || [];
+                const rawH3 = json[headerStartIdx + 2] || [];
+                const validCols = [];
+                const newScoreCols = []; 
+                
+                for(let c = 3; c < Math.max(rawH1.length, rawH2.length, rawH3.length); c++) {
+                    if (String(rawH1[c] || "").trim() !== "" || String(rawH2[c] || "").trim() !== "") {
+                        const headerText = String(rawH1[c]).replace(/\s/g, '');
+                        
+                        if (headerText === "기타점수") continue;
+
+                        validCols.push(c);
+                        if (["선택형점수", "서답형점수", "과목총점"].includes(headerText)) {
+                            newScoreCols.push(validCols.length + 2); 
+                        }
+                    }
+                }
+
+                // 💡 [수정] 어떤 환경에서도 잘리지 않도록 폰트 크기를 조금 더 줄여서 공간을 강제로 확보
+                let dynamicFontSize = 9.0;
+                if (validCols.length > 20) dynamicFontSize = 8.0;
+                if (validCols.length > 25) dynamicFontSize = 7.0;
+                if (validCols.length > 30) dynamicFontSize = 6.5;
+
+                const outputData = [];
+                const merges = [];
+                const rowBreaks = []; 
+                let currentRow = 0;
+
+                function createCell(val, isHeader) {
+                    return {
+                        v: val,
+                        s: {
+                            border: { top: {style:"thin"}, bottom: {style:"thin"}, left: {style:"thin"}, right: {style:"thin"} },
+                            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                            font: { bold: false, name: "맑은 고딕", sz: dynamicFontSize },
+                            fill: isHeader ? { fgColor: { rgb: "F2F2F2" } } : undefined
+                        }
+                    };
+                }
+
+                function buildRow(rawArr, isHeader, isStudentData = false) {
+                    let row = [];
+                    if(isHeader) {
+                        row.push(createCell("반/번호", true));
+                        row.push(createCell("", true));
+                        row.push(createCell("성명", true)); 
+                    } else {
+                        row.push(createCell(rawArr[1] || "", false)); 
+                        row.push(createCell("", false));              
+                        row.push(createCell(rawArr[2] || "", false)); 
+                    }
+                    
+                    validCols.forEach((origIdx, i) => {
+                        let val = rawArr[origIdx];
+                        const isScoreCol = newScoreCols.includes(i + 3);
+
+                        if (isHeader && isScoreCol && val) {
+                            const cleanVal = String(val).replace(/\s/g, '');
+                            if (cleanVal === '선택형점수') val = '선택형\n점수';
+                            if (cleanVal === '서답형점수') val = '서답형\n점수';
+                            if (cleanVal === '과목총점') val = '과목\n총점';
+                        }
+
+                        if (isStudentData && isScoreCol) {
+                            if (val === undefined || val === null || String(val).trim() === "") {
+                                val = 0;
+                            }
+                        }
+                        row.push(createCell(val !== undefined ? val : "", isHeader));
+                    });
+                    return row;
+                }
+
+                let studentCount = 0; 
+                for (let i = headerStartIdx + 3; i < json.length; i++) {
+                    const rawStudent = json[i];
+                    if (!rawStudent || !rawStudent[2] || String(rawStudent[2]).trim() === "") continue;
+
+                    outputData.push(buildRow(rawH1, true));
+                    outputData.push(buildRow(rawH2, true));
+                    outputData.push(buildRow(rawH3, true));
+                    outputData.push(buildRow(rawStudent, false, true));
+
+                    merges.push({s: {r: currentRow, c: 0}, e: {r: currentRow+2, c: 1}});
+                    merges.push({s: {r: currentRow, c: 2}, e: {r: currentRow+2, c: 2}});
+                    merges.push({s: {r: currentRow+3, c: 0}, e: {r: currentRow+3, c: 1}}); 
+                    
+                    newScoreCols.forEach(colIdx => {
+                        merges.push({s: {r: currentRow, c: colIdx}, e: {r: currentRow+2, c: colIdx}});
+                    });
+
+                    currentRow += 4;
+                    outputData.push([]); 
+                    currentRow += 1;
+                    
+                    studentCount++; 
+                    
+                    // 10명마다 페이지 자르기
+                    if (studentCount % 10 === 0) {
+                        rowBreaks.push(currentRow - 1); 
+                    }
+                }
+
+                const newWorksheet = XLSX.utils.aoa_to_sheet(outputData);
+                newWorksheet['!merges'] = merges;
+                newWorksheet['!rowBreaks'] = rowBreaks; 
+
+                // 💡 [수정] 한셀이나 구버전 엑셀에서 프로그램이 크기 조절을 무시해도 아예 물리적 너비가 A4에 맞도록 (기존 82 -> 72로 대폭 축소)
+                const targetTotalWch = 72; 
+                const fixedWch = 1.2 + 1.2 + 5.0; // 이름 및 번호열 폭 축소
+                const scoreWchTotal = newScoreCols.length * 4.0; // 점수열 폭 축소
+                const remainingWch = targetTotalWch - fixedWch - scoreWchTotal;
+                const qCount = validCols.length - newScoreCols.length;
+                const qWch = Math.max(1.2, remainingWch / qCount); 
+
+                let colWidths = [{wch: 1.2}, {wch: 1.2}, {wch: 5.0}]; 
+                validCols.forEach((_, i) => {
+                    const isScore = newScoreCols.includes(i + 3);
+                    colWidths.push({ wch: isScore ? 4.0 : qWch }); 
+                });
+                newWorksheet['!cols'] = colWidths;
+                
+                // 💡 [수정] 좌우 여백을 최소치인 0.2로 세팅하여 공간 최대로 활용
+                newWorksheet['!margins'] = { left: 0.2, right: 0.2, top: 0.4, bottom: 0.4, header: 0, footer: 0 };
+                
+                // 💡 [수정] 높이 맞춤(fitToHeight)을 0이 아닌 999로 설정하여 엑셀 오류 방지 및 A4 사이즈 지정(paperSize: 9)
+                newWorksheet['!sheetPr'] = { pageSetUpPr: { fitToPage: true, autoPageBreaks: true } };
+                newWorksheet['!pageSetup'] = { 
+                    paperSize: 9, 
+                    orientation: 'portrait', 
+                    fitToPage: true, 
+                    fitToWidth: 1, 
+                    fitToHeight: 999 
+                }; 
+
+                const newWorkbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "성적표");
+                
+                const finalFileName = `${fileNameInfo}_개별정오표_최종.xlsx`;
+                XLSX.writeFile(newWorkbook, finalFileName);
+                
+                statusDiv.innerHTML = `<span style='color: green;'>✅ 성공! <br><b>${finalFileName}</b> 파일이 저장되었습니다.</span>`;
+            } catch (error) {
+                console.error(error);
+                alert("🚨 조립 과정 중 오류가 발생했습니다: \n" + error.message);
+                statusDiv.innerHTML = `<span style='color: red;'>❌ 조립 실패: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

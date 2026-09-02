@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 블렌더 (Image Blender)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+        body {
+            background-color: #f0f4ff; 
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #6366f1;
+            margin-bottom: 20px;
+            font-weight: 900;
+        }
+
+        .quiz-btn {
+            background: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            transition: transform 0.2s;
+        }
+        .quiz-btn:hover { transform: scale(1.05); }
+
+        .main-container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* --- (기존 블렌더 CSS 그대로 유지) --- */
+        .upload-section { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .upload-card { background: white; border-radius: 15px; padding: 20px; flex: 1; min-width: 300px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .upload-card h3 { color: #6366f1; margin-top: 0; }
+        .file-input-label { background-color: #93c5fd; color: white; padding: 10px 30px; border-radius: 10px; cursor: pointer; display: inline-block; font-weight: 700; margin-bottom: 10px; transition: background 0.2s; }
+        .file-input-label:hover { background-color: #60a5fa; }
+        .file-input-label.second { background-color: #fca5a5; }
+        .file-input-label.second:hover { background-color: #f87171; }
+        input[type="file"] { display: none; }
+        .upload-msg { font-size: 0.85rem; color: #94a3b8; }
+        
+        .result-container { background: white; border-radius: 20px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 400px; border: 4px solid #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; user-select: none; }
+        #blendCanvas { max-width: 100%; border-radius: 10px; background-color: #f8fafc; cursor: default; }
+        .placeholder-text { position: absolute; color: #60a5fa; font-weight: 700; font-size: 1.2rem; pointer-events: none; }
+        
+        .control-card { background: white; border-radius: 20px; padding: 30px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .control-card h3 { color: #6366f1; margin-top: 0; margin-bottom: 20px; }
+        
+        .option-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px; background-color: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .option-container label { font-weight: 700; color: #475569; }
+        .slider-container { width: 100%; margin: 20px 0; }
+        input[type="range"] { width: 100%; height: 8px; background: #e2e8f0; border-radius: 5px; outline: none; -webkit-appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: #3b82f6; border-radius: 50%; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        .formula-box { font-size: 0.95rem; color: #64748b; margin-bottom: 20px; line-height: 1.6; }
+        .formula-box b { color: #6366f1; }
+        .math-style { font-style: italic; color: #60a5fa; font-weight: 700; }
+        
+        .btn-group { display: flex; justify-content: center; gap: 10px; align-items: center; }
+        .btn-auto { background-color: #6366f1; color: white; border: none; padding: 10px 25px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        select { padding: 10px; border-radius: 10px; border: 1px solid #d1d5db; color: #4b5563; outline: none; font-family: inherit; font-size: 0.9rem; }
+        
+        .preview-section { display: flex; gap: 20px; width: 100%; }
+        .preview-card { flex: 1; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .preview-header { background-color: #c7d2fe; padding: 8px; text-align: center; font-weight: 700; font-size: 0.9rem; color: #4338ca; }
+        .preview-img-box { height: 150px; display: flex; justify-content: center; align-items: center; background-color: #f1f5f9; color: #94a3b8; font-size: 0.8rem; }
+        .preview-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* ==========================================
+           [퀴즈 모달 CSS]
+           ========================================== */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        
+        .quiz-modal {
+            background: white; width: 90%; max-width: 650px; border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; display: flex; flex-direction: column;
+            max-height: 90vh; overflow-y: auto;
+        }
+
+        .quiz-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; border-bottom: 1px solid #e2e8f0; position: relative;
+        }
+        .quiz-header h2 { margin: 0; font-size: 1.2rem; color: #6366f1; display: flex; align-items: center; gap: 8px;}
+        .quiz-progress-text { color: #64748b; font-weight: 700; font-size: 0.9rem; margin-right: 30px;}
+        .quiz-close { 
+            position: absolute; right: 20px; top: 20px; background: none; border: none; 
+            font-size: 1.5rem; color: #94a3b8; cursor: pointer; padding: 0; line-height: 1;
+        }
+        
+        .progress-bar-container { width: 100%; height: 4px; background: #e2e8f0; position: absolute; bottom: 0; left: 0; }
+        .progress-bar-fill { height: 100%; background: #8b5cf6; width: 10%; transition: width 0.3s ease; }
+
+        .quiz-body { padding: 30px 20px; }
+        .question-text { font-size: 1.1rem; color: #334155; margin-bottom: 25px; line-height: 1.5; font-weight: 700; }
+        .question-text span { color: #6366f1; }
+
+        .options-container { display: flex; flex-direction: column; gap: 12px; }
+        .quiz-option {
+            border: 1px solid #c7d2fe; border-radius: 8px; padding: 15px 20px;
+            cursor: pointer; background: white; transition: all 0.2s;
+            font-size: 1.05rem; color: #475569; display: flex; align-items: center; line-height: 1.4;
+        }
+        .quiz-option:hover:not(.disabled) { background: #f8fafc; border-color: #8b5cf6; }
+        
+        .quiz-option.correct { border: 2px solid #22c55e; background: #f0fdf4; color: #166534; font-weight: 700; }
+        .quiz-option.incorrect { border: 2px solid #ef4444; background: #fef2f2; color: #991b1b; font-weight: 700; }
+        .quiz-option.disabled { opacity: 0.4; pointer-events: none; }
+        
+        .feedback-box {
+            margin-top: 20px; border-radius: 8px; padding: 15px; font-size: 0.95rem; line-height: 1.6; display: none;
+        }
+        .feedback-box.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; animation: fadeIn 0.3s ease; }
+        .feedback-box.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; animation: fadeIn 0.3s ease; }
+        
+        .quiz-footer { padding: 20px; text-align: right; border-top: 1px solid #e2e8f0; }
+        .btn-next {
+            background: #6366f1; color: white; border: none; padding: 10px 25px; border-radius: 20px;
+            font-weight: 700; cursor: pointer; display: none; font-size: 1rem;
+        }
+        .btn-next.show { display: inline-block; animation: fadeIn 0.3s ease; }
+
+        .result-screen { text-align: center; padding: 40px 20px; display: none; }
+        .result-screen.active { display: block; }
+        .score-circle {
+            width: 120px; height: 120px; border-radius: 50%; background: #e0e7ff; color: #4338ca;
+            display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 900; margin: 0 auto 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>이미지 블렌더</h1>
+    <button class="quiz-btn" id="openQuizBtn">📝 합성 비율 & 수학 원리 퀴즈</button>
+
+    <div class="main-container">
+        <div class="upload-section">
+            <div class="upload-card">
+                <h3>이미지 1</h3>
+                <label for="img1Input" class="file-input-label">업로드</label>
+                <input type="file" id="img1Input" accept="image/*">
+                <div class="upload-msg" id="msg1">이미지가 없습니다. 첫번째 이미지를 업로드하세요.</div>
+            </div>
+            <div class="upload-card">
+                <h3>이미지 2</h3>
+                <label for="img2Input" class="file-input-label second">업로드</label>
+                <input type="file" id="img2Input" accept="image/*">
+                <div class="upload-msg" id="msg2">이미지가 없습니다. 두번째 이미지를 업로드하세요.</div>
+            </div>
+        </div>
+
+        <div class="result-container">
+            <div class="placeholder-text" id="placeholder">이미지를 업로드하여 블렌딩을 시작하세요</div>
+            <canvas id="blendCanvas"></canvas>
+        </div>
+
+        <div class="control-card">
+            <h3>블렌드 조절</h3>
+            <div class="option-container">
+                <label for="resizeMode">이미지 크기 조절:</label>
+                <select id="resizeMode">
+                    <option value="relative" selected>실제 원본 크기 비율 유지 (가운데 정렬)</option>
+                    <option value="fit">각각 화면에 꽉 차게 맞춤 (비율 유지)</option>
+                    <option value="stretch">화면 크기에 강제로 맞춤 (찌그러짐 허용)</option>
+                </select>
+            </div>
+            <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 20px;">
+                * 이미지가 업로드된 후, 캔버스 위에서 <strong>이미지 2</strong>를 드래그하여 위치를 조정할 수 있습니다.
+            </div>
+            <div class="slider-container">
+                <input type="range" id="alphaSlider" min="0" max="100" value="50">
+            </div>
+            <div class="formula-box" id="formulaText">
+                현재 <b>50%</b>의 비율로 이미지 2가 이미지 1과 합성되고 있습니다.<br>
+                최종색상 = 이미지1 × (1 - α) + 이미지2 × α, 여기서 <span class="math-style">α = 0.5</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn-auto" id="autoBtn">▶ 자동 재생</button>
+                <select id="speedSelect">
+                    <option value="1">매우 느림</option>
+                    <option value="2">느림</option>
+                    <option value="5" selected>보통</option>
+                    <option value="10">빠름</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-card">
+                <div class="preview-header">이미지 1 (미리보기)</div>
+                <div class="preview-img-box" id="preBox1">이미지 1</div>
+            </div>
+            <div class="preview-card">
+                <div class="preview-header">이미지 2 (미리보기)</div>
+                <div class="preview-img-box" id="preBox2">이미지 2</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="quizModal">
+        <div class="quiz-modal">
+            <div class="quiz-header">
+                <h2>📝 합성 원리 퀴즈</h2>
+                <div class="quiz-progress-text"><span id="qCurrent">1</span> / 10</div>
+                <button class="quiz-close" id="closeQuizBtn">✕</button>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="qProgress"></div>
+                </div>
+            </div>
+
+            <div class="quiz-body" id="quizPlayArea">
+                <div class="question-text" id="qText"></div>
+                <div class="options-container" id="qOptions">
+                    </div>
+                <div class="feedback-box" id="qFeedback"></div>
+            </div>
+
+            <div class="result-screen" id="quizResultArea">
+                <h2>퀴즈 완료!</h2>
+                <div class="score-circle" id="finalScore">80점</div>
+                <p style="color: #64748b; margin-bottom: 30px;">가중 평균과 영상 처리의 원리를 잘 이해하셨나요?</p>
+                <button class="quiz-btn" onclick="document.getElementById('quizModal').classList.remove('active')">블렌더로 돌아가기</button>
+            </div>
+
+            <div class="quiz-footer" id="quizFooter">
+                <button class="btn-next" id="nextQuestionBtn">다음 ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // [1] 블렌더 연산 로직 (기존 유지)
+        // ==========================================
+        const canvas = document.getElementById('blendCanvas');
+        const ctx = canvas.getContext('2d');
+        const alphaSlider = document.getElementById('alphaSlider');
+        const formulaText = document.getElementById('formulaText');
+        const placeholder = document.getElementById('placeholder');
+        const resizeModeSelect = document.getElementById('resizeMode');
+        
+        const img1Input = document.getElementById('img1Input');
+        const img2Input = document.getElementById('img2Input');
+        const preBox1 = document.getElementById('preBox1');
+        const preBox2 = document.getElementById('preBox2');
+
+        const autoBtn = document.getElementById('autoBtn');
+        const speedSelect = document.getElementById('speedSelect');
+
+        let img1 = null, img2 = null;
+        let isPlaying = false, playInterval = null, playDirection = 1; 
+
+        let img2X = 0, img2Y = 0, isDraggingImg2 = false;
+        let dragOffsetX = 0, dragOffsetY = 0;
+        let img2DrawW = 0, img2DrawH = 0;
+
+        function handleImageUpload(e, imgNum) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    if (imgNum === 1) {
+                        img1 = img;
+                        preBox1.innerHTML = `<img src="${event.target.result}">`;
+                        document.getElementById('msg1').innerText = `크기: ${img.width}x${img.height}px`;
+                    } else {
+                        img2 = img;
+                        preBox2.innerHTML = `<img src="${event.target.result}">`;
+                        document.getElementById('msg2').innerText = `크기: ${img.width}x${img.height}px`;
+                        resetImg2Position(); 
+                    }
+                    if (img1 || img2) { placeholder.style.display = 'none'; drawBlendedImage(); }
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        img1Input.addEventListener('change', (e) => handleImageUpload(e, 1));
+        img2Input.addEventListener('change', (e) => handleImageUpload(e, 2));
+        resizeModeSelect.addEventListener('change', () => { resetImg2Position(); drawBlendedImage(); });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!img2 || resizeModeSelect.value === 'stretch') return;
+            const { offsetX, offsetY } = e;
+            if (offsetX >= img2X && offsetX <= img2X + img2DrawW && offsetY >= img2Y && offsetY <= img2Y + img2DrawH) {
+                isDraggingImg2 = true; dragOffsetX = offsetX - img2X; dragOffsetY = offsetY - img2Y; canvas.style.cursor = 'move';
+            }
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDraggingImg2) { img2X = e.offsetX - dragOffsetX; img2Y = e.offsetY - dragOffsetY; drawBlendedImage(); }
+        });
+        const stopDrag = () => { if (isDraggingImg2) { isDraggingImg2 = false; canvas.style.cursor = 'default'; } };
+        canvas.addEventListener('mouseup', stopDrag);
+        canvas.addEventListener('mouseout', stopDrag);
+
+        function resetImg2Position() {
+            if (canvas.width > 0 && canvas.height > 0) { img2X = (canvas.width - img2DrawW) / 2; img2Y = (canvas.height - img2DrawH) / 2; } 
+            else { img2X = 0; img2Y = 0; }
+        }
+
+        function drawBlendedImage() {
+            if (!img1 && !img2) return;
+            const mode = resizeModeSelect.value;
+            const w1 = img1 ? img1.width : 0, h1 = img1 ? img1.height : 0;
+            const w2 = img2 ? img2.width : 0, h2 = img2 ? img2.height : 0;
+            const maxW = Math.max(w1, w2), maxH = Math.max(h1, h2);
+            const ratio = Math.min(800 / maxW, 800 / maxH, 1);
+            
+            canvas.width = maxW * ratio; canvas.height = maxH * ratio;
+            const alpha = alphaSlider.value / 100;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            function drawImg(img, opacity, imgNum) {
+                if (!img) return;
+                ctx.globalAlpha = opacity;
+                let drawW, drawH, dx, dy;
+
+                if (mode === 'stretch') { drawW = canvas.width; drawH = canvas.height; dx = 0; dy = 0; } 
+                else if (mode === 'fit') {
+                    const imgRatio = Math.min(canvas.width / img.width, canvas.height / img.height);
+                    drawW = img.width * imgRatio; drawH = img.height * imgRatio; dx = (canvas.width - drawW) / 2; dy = (canvas.height - drawH) / 2;
+                } else {
+                    drawW = img.width * ratio; drawH = img.height * ratio; dx = (canvas.width - drawW) / 2; dy = (canvas.height - drawH) / 2;
+                }
+                
+                if (imgNum === 2) {
+                    img2DrawW = drawW; img2DrawH = drawH;
+                    if (!isDraggingImg2 && img2X === 0 && img2Y === 0) resetImg2Position();
+                    mode !== 'stretch' ? ctx.drawImage(img, img2X, img2Y, drawW, drawH) : ctx.drawImage(img, dx, dy, drawW, drawH);
+                } else { ctx.drawImage(img, dx, dy, drawW, drawH); }
+            }
+
+            drawImg(img1, 1.0, 1); drawImg(img2, alpha, 2); 
+            const percent = Math.round(alpha * 100);
+            formulaText.innerHTML = `현재 <b>${percent}%</b>의 비율로 이미지 2가 이미지 1과 합성되고 있습니다.<br>최종색상 = 이미지1 × (1 - α) + 이미지2 × α, 여기서 <span class="math-style">α = ${alpha.toFixed(2)}</span>`;
+        }
+        alphaSlider.addEventListener('input', drawBlendedImage);
+
+        autoBtn.addEventListener('click', () => {
+            if (isPlaying) { clearInterval(playInterval); autoBtn.innerHTML = "▶ 자동 재생"; isPlaying = false; } 
+            else {
+                if (!img1 && !img2) { alert("먼저 이미지를 업로드하세요!"); return; }
+                autoBtn.innerHTML = "⏹ 중단하기"; isPlaying = true;
+                playInterval = setInterval(() => {
+                    let currentVal = parseInt(alphaSlider.value);
+                    currentVal += (parseInt(speedSelect.value) * playDirection);
+                    if (currentVal >= 100) { currentVal = 100; playDirection = -1; } 
+                    else if (currentVal <= 0) { currentVal = 0; playDirection = 1; }
+                    alphaSlider.value = currentVal; drawBlendedImage();
+                }, 50);
+            }
+        });
+
+
+        // ==========================================
+        // [2] 새롭게 개편된 '다양한' 퀴즈 10문항
+        // ==========================================
+        const modal = document.getElementById('quizModal');
+        const openQuizBtn = document.getElementById('openQuizBtn');
+        const closeQuizBtn = document.getElementById('closeQuizBtn');
+        
+        const qCurrent = document.getElementById('qCurrent');
+        const qProgress = document.getElementById('qProgress');
+        const qText = document.getElementById('qText');
+        const qOptions = document.getElementById('qOptions');
+        const qFeedback = document.getElementById('qFeedback');
+        const nextBtn = document.getElementById('nextQuestionBtn');
+        
+        const quizPlayArea = document.getElementById('quizPlayArea');
+        const quizResultArea = document.getElementById('quizResultArea');
+        const quizFooter = document.getElementById('quizFooter');
+        const finalScoreDisplay = document.getElementById('finalScore');
+
+        // 다양해진 퀴즈 데이터 (수식, 개념, 응용, 계산 등)
+        const quizData = [
+            {
+                q: "이미지 A와 B를 <span>7:3 비율</span>로 섞는 '가중 평균(Weighted Average)'의 올바른 수식은?",
+                ops: ["0.3 × A + 0.7 × B", "0.7 × A + 0.3 × B", "A + B", "0.7 × A - 0.3 × B"],
+                ans: 1,
+                exp: "가중 평균은 두 값에 각각의 비율(가중치)을 곱해 더하는 것입니다. A에 0.7(70%), B에 0.3(30%)을 곱해 더해야 합니다."
+            },
+            {
+                q: "블렌더 슬라이더의 투명도(α) 값이 <span>0%</span>일 때, 화면에 나타나는 올바른 결과는?",
+                ops: ["이미지 A만 보인다", "이미지 B만 보인다", "두 이미지가 반반 섞여 보인다", "까만 화면이 나온다"],
+                ans: 0,
+                exp: "수식 [A×(1-α) + B×α] 에서 α가 0이면 수식은 [A×1 + B×0]이 됩니다. 따라서 이미지 A만 온전히 보이게 됩니다."
+            },
+            {
+                q: "이미지 A의 픽셀 값이 0(검은색), 이미지 B의 픽셀 값이 200(밝은 회색)일 때, <span>50:50 비율</span>로 섞으면 결과값은?",
+                ops: ["0", "50", "100", "200"],
+                ans: 2,
+                exp: "(0 × 0.5) + (200 × 0.5) = 0 + 100 = 100 입니다. 이처럼 색상도 숫자로 이루어져 있어 수학적 계산이 가능합니다."
+            },
+            {
+                q: "이러한 '가중 평균' 원리가 쓰이지 <span>않는</span> 실생활 사례는?",
+                ops: ["영상 편집의 페이드 인/아웃(Fade in/out)", "포토샵의 레이어 투명도 조절", "날씨 예측 모델의 앙상블 기법", "사진의 모자이크(픽셀화) 처리"],
+                ans: 3,
+                exp: "모자이크 처리는 주변 픽셀들의 평균을 내어 하나의 큰 네모로 만드는 '공간적 묶음' 처리이며, 두 장의 다른 사진을 겹치는 가중 평균과는 다른 기법입니다."
+            },
+            {
+                q: "합성 수식이 <span>0.2 × A + 0.8 × B</span> 라면, 우리 눈에는 어떤 이미지가 더 뚜렷하게 보일까요?",
+                ops: ["이미지 A", "이미지 B", "똑같이 보인다", "이미지가 보이지 않는다"],
+                ans: 1,
+                exp: "이미지 B에 곱해지는 가중치(0.8)가 이미지 A의 가중치(0.2)보다 훨씬 크기 때문에 이미지 B의 특징이 훨씬 강하게 나타납니다."
+            },
+            {
+                q: "컴퓨터 그래픽에서 Red, Green, Blue 채널 외에, 이미지 블렌더처럼 <span>투명도를 조절하는 제 4의 채널</span> 이름은 무엇일까요?",
+                ops: ["감마(Gamma) 채널", "오메가(Omega) 채널", "알파(Alpha) 채널", "베타(Beta) 채널"],
+                ans: 2,
+                exp: "투명도를 담당하는 채널을 '알파(Alpha) 채널'이라고 부릅니다. 이 때문에 이미지 겹치기 기술을 '알파 블렌딩(Alpha Blending)'이라고도 합니다."
+            },
+            {
+                q: "자연스러운 합성을 위해, 이미지 A에 곱해지는 가중치와 이미지 B에 곱해지는 가중치를 <span>모두 더하면</span> 항상 어떤 값이 되어야 할까요?",
+                ops: ["0", "1 (또는 100%)", "10", "255"],
+                ans: 1,
+                exp: "가중치의 총합은 항상 1(100%)이 되어야 원본 이미지들의 밝기 총량이 변하지 않고 자연스럽게 합성됩니다."
+            },
+            {
+                q: "슬라이더를 움직여 이미지 B의 투명도를 80%로 설정했다면, 자연스럽게 이미지 A의 투명도는 <span>몇 %</span>가 되어야 할까요?",
+                ops: ["0%", "20%", "80%", "100%"],
+                ans: 1,
+                exp: "두 투명도 비율의 합은 100%가 되어야 합니다. 따라서 100% - 80% = 20% 가 되어야 합니다."
+            },
+            {
+                q: "만약 수식이 <span>1.5 × A - 0.5 × B</span> 처럼 가중치 범위(0~1)를 벗어난다면 어떤 현상이 발생할까요?",
+                ops: ["색상이 반전되거나 비정상적으로 왜곡된다", "가중 평균과 똑같이 예쁘게 섞인다", "아무 변화 없이 이미지 A만 보인다", "이미지가 흑백으로 변한다"],
+                ans: 0,
+                exp: "가중치가 음수가 되거나 합이 1을 초과하면, 색상 값이 0 이하로 떨어지거나 255를 초과하여 색상이 타버리거나 비정상적으로 왜곡(Extrapolation)됩니다."
+            },
+            {
+                q: "두 개 이상의 데이터(이미지 픽셀)에 각각 <span>중요도(비율)를 곱하여 더하는</span> 이 수학적 기법의 정확한 명칭은?",
+                ops: ["산술 평균", "기하 평균", "조화 평균", "가중 평균 (Weighted Average)"],
+                ans: 3,
+                exp: "단순히 더해서 2로 나누는 것은 산술 평균이며, 각 데이터마다 다른 중요도(가중치)를 곱해 더하는 것을 '가중 평균'이라고 합니다."
+            }
+        ];
+
+        let currentQIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        openQuizBtn.addEventListener('click', startQuiz);
+        closeQuizBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+        function startQuiz() {
+            currentQIndex = 0; score = 0;
+            quizPlayArea.style.display = 'block';
+            quizFooter.style.display = 'block';
+            quizResultArea.style.display = 'none';
+            modal.classList.add('active');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            nextBtn.classList.remove('show');
+            qFeedback.className = 'feedback-box'; // 초기화
+            qFeedback.innerHTML = '';
+            
+            const q = quizData[currentQIndex];
+            
+            qCurrent.innerText = currentQIndex + 1;
+            qProgress.style.width = `${(currentQIndex + 1) * 10}%`;
+
+            // 문제 텍스트 삽입
+            qText.innerHTML = `Q${currentQIndex + 1}. ${q.q}`;
+
+            // 보기 렌더링
+            qOptions.innerHTML = '';
+            q.ops.forEach((optText, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'quiz-option';
+                btn.innerHTML = optText;
+                btn.addEventListener('click', () => handleOptionClick(btn, idx, q));
+                qOptions.appendChild(btn);
+            });
+        }
+
+        function handleOptionClick(clickedBtn, selectedIdx, q) {
+            if (isAnswered) return; 
+            isAnswered = true;
+
+            const isCorrect = (selectedIdx === q.ans);
+            if (isCorrect) score += 10;
+
+            const allBtns = qOptions.children;
+            for (let i = 0; i < allBtns.length; i++) {
+                allBtns[i].classList.add('disabled');
+                if (i === q.ans) allBtns[i].classList.add('correct');
+            }
+
+            if (!isCorrect) clickedBtn.classList.add('incorrect');
+
+            // 해설 박스 표시
+            qFeedback.classList.add(isCorrect ? 'success' : 'error');
+            let feedbackHTML = isCorrect ? `<strong>✅ 정답입니다!</strong><br>` : `<strong>❌ 오답입니다!</strong><br>`;
+            feedbackHTML += q.exp;
+            qFeedback.innerHTML = feedbackHTML;
+            
+            nextBtn.innerText = (currentQIndex === 9) ? '결과 보기 ➔' : '다음 문제 ➔';
+            nextBtn.classList.add('show');
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQIndex < 9) {
+                currentQIndex++;
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        });
+
+        function showResult() {
+            quizPlayArea.style.display = 'none';
+            quizFooter.style.display = 'none';
+            quizResultArea.style.display = 'block';
+            
+            finalScoreDisplay.innerText = `${score}점`;
+            
+            if (score >= 80) {
+                finalScoreDisplay.style.background = '#dcfce7';
+                finalScoreDisplay.style.color = '#16a34a';
+            } else if (score >= 50) {
+                finalScoreDisplay.style.background = '#fef08a';
+                finalScoreDisplay.style.color = '#ca8a04';
+            } else {
+                finalScoreDisplay.style.background = '#fee2e2';
+                finalScoreDisplay.style.color = '#dc2626';
+            }
+        }
+    </script>
+</body>
+</html>

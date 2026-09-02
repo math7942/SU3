@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 크기 변환기</title>
+    <style>
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .mode-select {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .mode-select label {
+            cursor: pointer;
+        }
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            width: 45%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        /* 비율 입력창은 하나만 있으므로 넓게 설정 */
+        #ratioGroup input {
+            width: 85%;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #preview {
+            max-width: 100%;
+            margin-top: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🖼️ 이미지 크기 변환기</h2>
+        
+        <input type="file" id="imageInput" accept="image/*">
+        
+        <div class="mode-select">
+            <label><input type="radio" name="resizeMode" value="px" checked> 픽셀(px)로 조절</label>
+            <label><input type="radio" name="resizeMode" value="ratio"> 비율(%)로 조절</label>
+        </div>
+        
+        <div class="input-group" id="pxGroup">
+            <input type="number" id="widthInput" placeholder="가로 크기 (px)">
+            <input type="number" id="heightInput" placeholder="세로 크기 (px)">
+        </div>
+        
+        <div class="input-group" id="ratioGroup" style="display: none;">
+            <input type="number" id="ratioInput" placeholder="비율 (%)" value="100">
+            <span>%</span>
+        </div>
+        
+        <button id="downloadBtn">크기 변경 및 다운로드</button>
+        
+        <img id="preview" alt="미리보기">
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const modeRadios = document.querySelectorAll('input[name="resizeMode"]');
+        const pxGroup = document.getElementById('pxGroup');
+        const ratioGroup = document.getElementById('ratioGroup');
+        const widthInput = document.getElementById('widthInput');
+        const heightInput = document.getElementById('heightInput');
+        const ratioInput = document.getElementById('ratioInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const preview = document.getElementById('preview');
+
+        let originalFile = null;
+        let imgElement = new Image();
+        let originalWidth = 0;
+        let originalHeight = 0;
+
+        // 1. 라디오 버튼 클릭 시 입력창 변경 로직
+        modeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'px') {
+                    pxGroup.style.display = 'flex';
+                    ratioGroup.style.display = 'none';
+                } else {
+                    pxGroup.style.display = 'none';
+                    ratioGroup.style.display = 'flex';
+                }
+            });
+        });
+
+        // 2. 이미지를 업로드했을 때
+        imageInput.addEventListener('change', (e) => {
+            originalFile = e.target.files[0];
+            if (originalFile) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    imgElement.src = event.target.result;
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    
+                    // 원본 이미지의 가로/세로 크기를 저장하고 입력창에 기본 세팅
+                    imgElement.onload = () => {
+                        originalWidth = imgElement.width;
+                        originalHeight = imgElement.height;
+                        widthInput.value = originalWidth;
+                        heightInput.value = originalHeight;
+                        ratioInput.value = 100; // 비율은 100%로 초기화
+                    }
+                };
+                reader.readAsDataURL(originalFile);
+            }
+        });
+
+        // 3. 다운로드 버튼을 눌렀을 때
+        downloadBtn.addEventListener('click', () => {
+            if (!originalFile) {
+                alert('이미지를 먼저 업로드해주세요!');
+                return;
+            }
+
+            let finalWidth, finalHeight;
+            const currentMode = document.querySelector('input[name="resizeMode"]:checked').value;
+
+            if (currentMode === 'px') {
+                // 픽셀 모드일 때
+                finalWidth = parseInt(widthInput.value);
+                finalHeight = parseInt(heightInput.value);
+                if (!finalWidth || !finalHeight) {
+                    alert('가로와 세로 크기를 모두 입력해주세요!');
+                    return;
+                }
+            } else {
+                // 비율 모드일 때
+                const ratio = parseFloat(ratioInput.value);
+                if (!ratio || ratio <= 0) {
+                    alert('올바른 비율(%)을 입력해주세요!');
+                    return;
+                }
+                // 원본 크기에 비율을 곱해서 최종 크기 계산 (소수점은 반올림)
+                finalWidth = Math.round(originalWidth * (ratio / 100));
+                finalHeight = Math.round(originalHeight * (ratio / 100));
+            }
+
+            // Canvas를 사용해 이미지 크기 변경
+            const canvas = document.createElement('canvas');
+            canvas.width = finalWidth;
+            canvas.height = finalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgElement, 0, 0, finalWidth, finalHeight);
+
+            // 요청한 파일명 생성 로직 (원본이름_가로x세로.확장자)
+            const lastDotIndex = originalFile.name.lastIndexOf('.');
+            const fileName = originalFile.name.substring(0, lastDotIndex);
+            const fileExtension = originalFile.name.substring(lastDotIndex);
+            
+            const newFileName = `${fileName}_${finalWidth}x${finalHeight}${fileExtension}`;
+
+            // 다운로드 링크 생성 및 자동 클릭
+            const downloadLink = document.createElement('a');
+            downloadLink.download = newFileName;
+            downloadLink.href = canvas.toDataURL(originalFile.type, 1.0); 
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>픽셀 에디터 & RGB 행렬 추출</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #eaf5f3;
+            font-family: 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-top: 0;
+            margin-bottom: 30px;
+            letter-spacing: -1px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* 공통 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            width: 100%;
+        }
+
+        /* 상단 두 패널 (색 알아보기 / 팔레트) */
+        .top-panels {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .top-panels > .card {
+            flex: 1;
+            min-width: 400px;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* --- 왼쪽 패널: 색 알아보기 --- */
+        .color-inputs-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .input-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            gap: 5px;
+        }
+        .input-col input[type="number"] {
+            width: 55px;
+            height: 32px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            height: 32px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 0 15px;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.8; }
+        .btn-green { background-color: #4ade80; color: #166534; border: 1px solid #22c55e; }
+        .btn-purple { background-color: #6366f1; }
+        
+        /* 숨겨진 네이티브 컬러 피커 */
+        .color-picker-wrapper { position: relative; display: inline-block; }
+        .color-picker-wrapper input[type="color"] {
+            position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+        }
+
+        .sliders-box {
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .slider-row span {
+            width: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .slider-row input[type="range"] {
+            flex-grow: 1;
+            -webkit-appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            outline: none;
+        }
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border: 2px solid #555;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #slider-r { background: linear-gradient(to right, black, red); }
+        #slider-g { background: linear-gradient(to right, black, lime); }
+        #slider-b { background: linear-gradient(to right, black, blue); }
+        
+        .slider-val {
+            width: 40px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px 0;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+
+        .mixer-preview-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        .preview-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            background-color: #808080;
+            border: 1px solid #ddd;
+        }
+        .preview-info {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.4;
+        }
+        .btn-use { padding: 0 20px; height: 40px; font-size: 0.95rem; }
+
+        /* --- 오른쪽 패널: 팔레트 --- */
+        .palette-desc {
+            text-align: center;
+            color: #6366f1;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .active-color-wrap {
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .active-color-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 6px;
+            background-color: #808080;
+            border: 3px solid #111;
+        }
+        .active-color-text {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+
+        .swatches-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+        }
+        .swatch {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .swatch.empty {
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            cursor: default;
+        }
+        .swatch:not(.empty):hover {
+            transform: scale(1.1);
+        }
+        .swatch.selected {
+            border: 3px solid #111;
+        }
+
+        /* --- 중간 사이즈 조절 --- */
+        .banner {
+            width: 100%;
+            background-color: #edf2ff;
+            color: #3b82f6;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: 1px solid #dbeafe;
+        }
+
+        .size-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .size-controls input {
+            width: 60px;
+            height: 32px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* --- 하단 그리드 --- */
+        .grid-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .grid-wrapper {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed #cbd5e1;
+            display: inline-block;
+        }
+
+        #pixel-grid {
+            display: grid;
+            border-top: 1px solid #eaeaea;
+            border-left: 1px solid #eaeaea;
+            user-select: none;
+            background-color: #fff;
+        }
+        
+        .pixel {
+            width: 40px;
+            height: 40px;
+            border-right: 1px solid #eaeaea;
+            border-bottom: 1px solid #eaeaea;
+            box-sizing: border-box;
+            cursor: crosshair;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: row; 
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+        }
+        .btn-large {
+            width: 180px;
+            height: 45px;
+            font-size: 1.05rem;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-blue { background-color: #4b86f7; }
+        .btn-red { background-color: #ef4444; }
+
+        .footer-status {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* --- 행렬 출력 UI --- */
+        #matrix-output-container {
+            display: none;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow-x: hidden; 
+        }
+
+        .matrix-title {
+            text-align: center;
+            font-size: 1.6rem;
+            color: #1e293b;
+            font-weight: 900;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .matrix-toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .btn-toolbar {
+            padding: 8px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            opacity: 0.4; /* 비활성화 상태 투명도 */
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .btn-toolbar:active { transform: scale(0.95); }
+        .btn-toolbar.active { opacity: 1; } /* 활성화 상태 */
+        
+        .bg-red { background-color: #e74c3c; }
+        .bg-green { background-color: #5cb85c; }
+
+        .matrices-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 20px; 
+            width: 100%; 
+            flex-wrap: wrap; 
+        }
+
+        .matrix-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: calc(33.33% - 14px); 
+            min-width: 0;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 900px) {
+            .matrix-section { max-width: 100%; }
+        }
+
+        .matrix-header {
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-copy {
+            background: #fff3e0;
+            border: 1px solid #ffe0b2;
+            color: #d84315;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background 0.2s;
+        }
+        .btn-copy:hover { background: #ffe0b2; }
+
+        .matrix-bracket {
+            position: relative;
+            padding: 10px 15px; 
+            display: flex;
+            justify-content: center;
+            width: 100%; 
+            overflow: visible; 
+        }
+        .matrix-bracket::before, .matrix-bracket::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 15px; 
+            border: 3px solid #111; 
+        }
+        .matrix-bracket::before {
+            left: 0;
+            border-right: none;
+            border-radius: 15px 0 0 15px; 
+        }
+        .matrix-bracket::after {
+            right: 0;
+            border-left: none;
+            border-radius: 0 15px 15px 0; 
+        }
+
+        .matrix-table {
+            border-collapse: separate; /* 셀 간격을 위해 separate 적용 */
+            border-spacing: 4px; /* 셀 사이 간격 */
+            font-family: monospace;
+            font-size: 0.9rem; 
+            font-weight: 700;
+            max-width: calc(100% - 30px); 
+        }
+        
+        .matrix-table td {
+            padding: 5px 6px; 
+            text-align: center;
+            min-width: 38px; 
+            white-space: nowrap; 
+            border-radius: 4px; /* 알약 모양처럼 둥글게 */
+            transition: background-color 0.2s, color 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>픽셀 에디터 & RGB 행렬 추출</h1>
+
+        <div class="top-panels">
+            <div class="card">
+                <div class="card-title">색 알아보기</div>
+                
+                <div class="color-inputs-row">
+                    <div class="input-col">
+                        <label>R 값</label>
+                        <input type="number" id="in-r" value="128" min="0" max="255">
+                    </div>
+                    <div class="input-col">
+                        <label>G 값</label>
+                        <input type="number" id="in-g" value="128" min="0" max="255">
+                    </div>
+                    <div class="input-col">
+                        <label>B 값</label>
+                        <input type="number" id="in-b" value="128" min="0" max="255">
+                    </div>
+                    <button class="btn btn-green" id="btn-apply">적용</button>
+                    <div class="color-picker-wrapper">
+                        <button class="btn btn-purple">색상 선택기</button>
+                        <input type="color" id="native-picker" value="#808080">
+                    </div>
+                </div>
+
+                <div class="sliders-box">
+                    <div class="slider-row">
+                        <span>빨강(R)</span>
+                        <input type="range" id="slider-r" min="0" max="255" value="128">
+                        <div class="slider-val" id="val-r">128</div>
+                    </div>
+                    <div class="slider-row">
+                        <span>초록(G)</span>
+                        <input type="range" id="slider-g" min="0" max="255" value="128">
+                        <div class="slider-val" id="val-g">128</div>
+                    </div>
+                    <div class="slider-row">
+                        <span>파랑(B)</span>
+                        <input type="range" id="slider-b" min="0" max="255" value="128">
+                        <div class="slider-val" id="val-b">128</div>
+                    </div>
+                </div>
+
+                <div class="mixer-preview-row">
+                    <div class="preview-box" id="mixer-preview"></div>
+                    <div class="preview-info">
+                        RGB: (<span id="txt-r">128</span>, <span id="txt-g">128</span>, <span id="txt-b">128</span>)<br>
+                        HEX: <span id="txt-hex">#808080</span>
+                    </div>
+                    <button class="btn btn-purple btn-use" id="btn-use-color">이 색상 사용하기</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">색상 팔레트</div>
+                <div class="palette-desc">🎨 현재 선택된 색상으로 그리기를 할 수 있습니다</div>
+                
+                <div class="active-color-wrap">
+                    <div class="active-color-box" id="active-box"></div>
+                    <div class="active-color-text" id="active-text">#808080 (128, 128, 128)</div>
+                </div>
+
+                <div class="swatches-grid" id="swatches-grid"></div>
+            </div>
+        </div>
+
+        <div class="banner">
+            ↓ 가로 및 세로를 입력하면 아래 표가 바뀝니다. ↓
+        </div>
+
+        <div class="card size-controls">
+            가로: <input type="number" id="grid-w" value="7" min="1" max="32">
+            세로: <input type="number" id="grid-h" value="7" min="1" max="32">
+            <button class="btn btn-green" id="btn-resize">변환</button>
+        </div>
+
+        <div class="footer-status" id="footer-status">선택된 색상: (128, 128, 128)</div>
+
+        <div class="grid-column">
+            <div class="grid-wrapper">
+                <div id="pixel-grid"></div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn-large btn-blue" id="btn-matrix">RGB 행렬 보기</button>
+                <button class="btn-large btn-red" id="btn-clear">전체 지우기</button>
+            </div>
+        </div>
+
+        <div id="matrix-output-container">
+            <h2 class="matrix-title">RGB 행렬</h2>
+            
+            <div class="matrix-toolbar">
+                <button class="btn-toolbar bg-red active" id="btn-view-number">숫자 보기</button>
+                <button class="btn-toolbar bg-green" id="btn-view-mixed">혼합 모드</button>
+            </div>
+
+            <div class="matrices-wrapper">
+                <div class="matrix-section">
+                    <div class="matrix-header">
+                        <span style="color:#d32f2f;">R</span> 행렬 
+                        <button class="btn-copy" data-target="table-r">복사</button>
+                    </div>
+                    <div class="matrix-bracket">
+                        <table class="matrix-table" id="table-r"></table>
+                    </div>
+                </div>
+
+                <div class="matrix-section">
+                    <div class="matrix-header">
+                        <span style="color:#388e3c;">G</span> 행렬 
+                        <button class="btn-copy" data-target="table-g">복사</button>
+                    </div>
+                    <div class="matrix-bracket">
+                        <table class="matrix-table" id="table-g"></table>
+                    </div>
+                </div>
+
+                <div class="matrix-section">
+                    <div class="matrix-header">
+                        <span style="color:#1976d2;">B</span> 행렬 
+                        <button class="btn-copy" data-target="table-b">복사</button>
+                    </div>
+                    <div class="matrix-bracket">
+                        <table class="matrix-table" id="table-b"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // 전역 상태
+        let currentColor = { r: 128, g: 128, b: 128 };
+        let isDrawing = false;
+        let matrixViewMode = 'number'; // 'number' 또는 'mixed'
+        
+        // 팔레트 상태 관리
+        const maxPaletteSlots = 24;
+        let nextPaletteIndex = 0;
+
+        // 유틸리티 함수
+        const rgbToHex = (r, g, b) => "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1).toUpperCase();
+        const hexToRgb = (hex) => {
+            const res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return res ? { r: parseInt(res[1], 16), g: parseInt(res[2], 16), b: parseInt(res[3], 16) } : null;
+        };
+
+        // DOM 요소
+        const inR = document.getElementById('in-r'), inG = document.getElementById('in-g'), inB = document.getElementById('in-b');
+        const slR = document.getElementById('slider-r'), slG = document.getElementById('slider-g'), slB = document.getElementById('slider-b');
+        const valR = document.getElementById('val-r'), valG = document.getElementById('val-g'), valB = document.getElementById('val-b');
+        const txtR = document.getElementById('txt-r'), txtG = document.getElementById('txt-g'), txtB = document.getElementById('txt-b'), txtHex = document.getElementById('txt-hex');
+        const mixerPreview = document.getElementById('mixer-preview');
+        const nativePicker = document.getElementById('native-picker');
+        const swatchesGrid = document.getElementById('swatches-grid');
+        
+        const btnViewNumber = document.getElementById('btn-view-number');
+        const btnViewMixed = document.getElementById('btn-view-mixed');
+
+        // 팔레트 초기화
+        for(let i = 0; i < maxPaletteSlots; i++) {
+            const div = document.createElement('div');
+            div.className = 'swatch empty';
+            div.addEventListener('click', () => {
+                if (!div.classList.contains('empty')) {
+                    const hex = div.dataset.hex;
+                    const c = hexToRgb(hex);
+                    updateMixer(c.r, c.g, c.b);
+                    applyActiveColor(c.r, c.g, c.b);
+                }
+            });
+            swatchesGrid.appendChild(div);
+        }
+
+        // 색상 팔레트 추가 함수
+        function addColorToPalette(r, g, b) {
+            const hex = rgbToHex(r, g, b);
+            const swatches = document.querySelectorAll('.swatch');
+            
+            let exists = false;
+            swatches.forEach(sw => {
+                if(!sw.classList.contains('empty') && sw.dataset.hex === hex) exists = true;
+            });
+
+            if(!exists) {
+                const targetSwatch = swatches[nextPaletteIndex];
+                targetSwatch.style.backgroundColor = hex;
+                targetSwatch.dataset.hex = hex;
+                targetSwatch.classList.remove('empty');
+                nextPaletteIndex = (nextPaletteIndex + 1) % maxPaletteSlots;
+            }
+            
+            swatches.forEach(sw => {
+                if (!sw.classList.contains('empty') && sw.dataset.hex === hex) {
+                    sw.classList.add('selected');
+                } else {
+                    sw.classList.remove('selected');
+                }
+            });
+        }
+
+        // 믹서 UI 업데이트
+        function updateMixer(r, g, b) {
+            r = Math.min(255, Math.max(0, parseInt(r)||0));
+            g = Math.min(255, Math.max(0, parseInt(g)||0));
+            b = Math.min(255, Math.max(0, parseInt(b)||0));
+
+            inR.value = slR.value = valR.innerText = txtR.innerText = r;
+            inG.value = slG.value = valG.innerText = txtG.innerText = g;
+            inB.value = slB.value = valB.innerText = txtB.innerText = b;
+
+            const hex = rgbToHex(r, g, b);
+            txtHex.innerText = hex;
+            mixerPreview.style.backgroundColor = hex;
+            nativePicker.value = hex;
+        }
+
+        // 현재 그리기 색상 적용
+        function applyActiveColor(r, g, b) {
+            currentColor = { r, g, b };
+            const hex = rgbToHex(r, g, b);
+            
+            document.getElementById('active-box').style.backgroundColor = hex;
+            document.getElementById('active-text').innerText = `${hex} (${r}, ${g}, ${b})`;
+            document.getElementById('footer-status').innerText = `선택된 색상: (${r}, ${g}, ${b})`;
+
+            document.querySelectorAll('.swatch').forEach(sw => {
+                if (!sw.classList.contains('empty') && sw.dataset.hex === hex) {
+                    sw.classList.add('selected');
+                } else {
+                    sw.classList.remove('selected');
+                }
+            });
+        }
+
+        // 믹서 이벤트
+        const onMixerChange = () => updateMixer(slR.value, slG.value, slB.value);
+        slR.addEventListener('input', onMixerChange); slG.addEventListener('input', onMixerChange); slB.addEventListener('input', onMixerChange);
+        document.getElementById('btn-apply').addEventListener('click', () => updateMixer(inR.value, inG.value, inB.value));
+        nativePicker.addEventListener('input', (e) => { const c = hexToRgb(e.target.value); if(c) updateMixer(c.r, c.g, c.b); });
+        
+        document.getElementById('btn-use-color').addEventListener('click', () => {
+            const r = parseInt(inR.value);
+            const g = parseInt(inG.value);
+            const b = parseInt(inB.value);
+            applyActiveColor(r, g, b);
+            addColorToPalette(r, g, b);
+        });
+
+        // 그리드 & 그리기 로직
+        const gridEl = document.getElementById('pixel-grid');
+        const gridW = document.getElementById('grid-w');
+        const gridH = document.getElementById('grid-h');
+        const matrixContainer = document.getElementById('matrix-output-container');
+        
+        const tableR = document.getElementById('table-r');
+        const tableG = document.getElementById('table-g');
+        const tableB = document.getElementById('table-b');
+
+        gridEl.addEventListener('mousedown', (e) => { e.preventDefault(); isDrawing = true; });
+        document.addEventListener('mouseup', () => isDrawing = false);
+
+        function drawCell(cell) {
+            cell.style.backgroundColor = `rgb(${currentColor.r}, ${currentColor.g}, ${currentColor.b})`;
+        }
+
+        function createGrid() {
+            const w = Math.min(32, Math.max(1, parseInt(gridW.value)));
+            const h = Math.min(32, Math.max(1, parseInt(gridH.value)));
+            gridW.value = w; gridH.value = h;
+
+            gridEl.innerHTML = '';
+            gridEl.style.gridTemplateColumns = `repeat(${w}, 40px)`; 
+            
+            for (let i = 0; i < w * h; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'pixel';
+                cell.style.backgroundColor = 'rgb(255, 255, 255)'; 
+                
+                cell.addEventListener('mousedown', () => drawCell(cell));
+                cell.addEventListener('mouseenter', () => { if(isDrawing) drawCell(cell); });
+                gridEl.appendChild(cell);
+            }
+            matrixContainer.style.display = 'none';
+        }
+
+        document.getElementById('btn-resize').addEventListener('click', createGrid);
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            document.querySelectorAll('.pixel').forEach(c => c.style.backgroundColor = 'rgb(255, 255, 255)');
+            matrixContainer.style.display = 'none';
+        });
+
+        // 보기 모드 적용 함수 (숫자 보기 / 혼합 모드)
+        function applyMatrixViewMode() {
+            const tds = document.querySelectorAll('.matrix-table td');
+            tds.forEach(td => {
+                const val = parseInt(td.dataset.val);
+                if (isNaN(val)) return;
+
+                if (matrixViewMode === 'mixed') {
+                    // 흰색 배경(255)과 컨테이너 배경의 구분을 위해 아주 약간 어둡게 처리
+                    const bgVal = Math.floor(val * (245 / 255));
+                    td.style.backgroundColor = `rgb(${bgVal}, ${bgVal}, ${bgVal})`;
+                    // 밝기에 따라 글씨 색상 대비 (128을 기준으로 흰/검 결정)
+                    td.style.color = val < 128 ? 'white' : 'black';
+                } else {
+                    td.style.backgroundColor = 'transparent';
+                    td.style.color = 'inherit';
+                }
+            });
+        }
+
+        // 보기 모드 버튼 이벤트
+        btnViewNumber.addEventListener('click', () => {
+            matrixViewMode = 'number';
+            btnViewNumber.classList.add('active');
+            btnViewMixed.classList.remove('active');
+            applyMatrixViewMode();
+        });
+
+        btnViewMixed.addEventListener('click', () => {
+            matrixViewMode = 'mixed';
+            btnViewMixed.classList.add('active');
+            btnViewNumber.classList.remove('active');
+            applyMatrixViewMode();
+        });
+
+        // RGB 행렬 추출
+        document.getElementById('btn-matrix').addEventListener('click', () => {
+            const w = parseInt(gridW.value);
+            const h = parseInt(gridH.value);
+            const cells = document.querySelectorAll('.pixel');
+            
+            tableR.innerHTML = '';
+            tableG.innerHTML = '';
+            tableB.innerHTML = '';
+
+            for (let y = 0; y < h; y++) {
+                const tr_R = document.createElement('tr');
+                const tr_G = document.createElement('tr');
+                const tr_B = document.createElement('tr');
+
+                for (let x = 0; x < w; x++) {
+                    const bg = window.getComputedStyle(cells[y * w + x]).backgroundColor;
+                    const rgb = bg.match(/\d+/g);
+                    let r = 255, g = 255, b = 255;
+                    
+                    if (rgb && rgb.length >= 3) {
+                        r = rgb[0]; g = rgb[1]; b = rgb[2];
+                    }
+
+                    // dataset에 실제 값을 저장해두고 혼합 모드 렌더링에 사용
+                    const td_R = document.createElement('td'); 
+                    td_R.innerText = r; td_R.dataset.val = r;
+                    
+                    const td_G = document.createElement('td'); 
+                    td_G.innerText = g; td_G.dataset.val = g;
+                    
+                    const td_B = document.createElement('td'); 
+                    td_B.innerText = b; td_B.dataset.val = b;
+
+                    tr_R.appendChild(td_R);
+                    tr_G.appendChild(td_G);
+                    tr_B.appendChild(td_B);
+                }
+                tableR.appendChild(tr_R);
+                tableG.appendChild(tr_G);
+                tableB.appendChild(tr_B);
+            }
+            
+            matrixContainer.style.display = 'block'; 
+            matrixContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // 행렬 생성 후 현재 보기 모드 즉시 적용
+            applyMatrixViewMode(); 
+        });
+
+        // 복사 버튼 기능 구현
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const targetId = e.target.getAttribute('data-target');
+                const table = document.getElementById(targetId);
+                let text = "[\n";
+                
+                for (let row of table.rows) {
+                    let rowData = [];
+                    for (let cell of row.cells) {
+                        rowData.push(cell.innerText.padStart(3, ' '));
+                    }
+                    text += "  [" + rowData.join(", ") + "],\n";
+                }
+                text = text.replace(/,\n$/, "\n");
+                text += "]";
+
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('복사되었습니다!');
+                }).catch(err => {
+                    alert('복사 실패: ' + err);
+                });
+            });
+        });
+
+        // 초기화
+        updateMixer(128, 128, 128); 
+        applyActiveColor(128, 128, 128);
+        addColorToPalette(128, 128, 128);
+        createGrid();
+    </script>
+</body>
+</html>
