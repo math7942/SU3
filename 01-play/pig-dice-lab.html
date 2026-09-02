@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>피그 주사위 실험실</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gothic+A1:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#F7E9C6;
+    --surface:#FFFCF2;
+    --surface-2:#F3E5C4;
+    --ink:#1F1B14;
+    --ink-soft:#5E5442;
+    --ink-faint:#8E8266;
+    --line:#1F1B14;
+    --line-soft:#D9C79A;
+    --shadow-col:#D3BC85;
+    --risk:#D2371D;
+    --risk-bg:#FBDDD4;
+    --gain:#1B7A57;
+    --gain-bg:#D5EBDF;
+    --gold:#E09A0C;
+    --gold-ink:#8F6208;
+    --gold-bg:#FBEBC4;
+    --blue:#3D5CC4;
+    --blue-bg:#DEE3FA;
+    --pig:#F0A7B0;
+    --pig-dark:#D9808C;
+    --oncap:#FFFCF2;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#191510;
+      --surface:#241F17;
+      --surface-2:#2F281D;
+      --ink:#F7E9C6;
+      --ink-soft:#B7A88A;
+      --ink-faint:#8A7C62;
+      --line:#0E0B07;
+      --line-soft:#463C2B;
+      --shadow-col:#0C0A06;
+      --risk:#F2694C;
+      --risk-bg:#3D2018;
+      --gain:#4CC08E;
+      --gain-bg:#153428;
+      --gold:#F0B437;
+      --gold-ink:#F0B437;
+      --gold-bg:#382A10;
+      --blue:#8496EE;
+      --blue-bg:#1E2340;
+      --pig:#E594A0;
+      --pig-dark:#B96877;
+      --oncap:#17130D;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#191510;
+    --surface:#241F17;
+    --surface-2:#2F281D;
+    --ink:#F7E9C6;
+    --ink-soft:#B7A88A;
+    --ink-faint:#8A7C62;
+    --line:#0E0B07;
+    --line-soft:#463C2B;
+    --shadow-col:#0C0A06;
+    --risk:#F2694C;
+    --risk-bg:#3D2018;
+    --gain:#4CC08E;
+    --gain-bg:#153428;
+    --gold:#F0B437;
+    --gold-ink:#F0B437;
+    --gold-bg:#382A10;
+    --blue:#8496EE;
+    --blue-bg:#1E2340;
+    --pig:#E594A0;
+    --pig-dark:#B96877;
+    --oncap:#17130D;
+  }
+
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{
+    margin:0;background:var(--ground);color:var(--ink);
+    font-family:"Gothic A1", system-ui, -apple-system, "Apple SD Gothic Neo", sans-serif;
+    font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1140px;margin:0 auto;padding:30px 20px 60px}
+
+  /* ---------- cover ---------- */
+  .cover{
+    border:3px solid var(--line);border-radius:20px;background:var(--surface);
+    box-shadow:8px 8px 0 var(--shadow-col);overflow:hidden;margin-bottom:24px;
+  }
+  .lid{
+    background:var(--gold);border-bottom:3px solid var(--line);color:#1B1710;
+    padding:24px 26px;display:grid;grid-template-columns:1fr auto;gap:18px 24px;align-items:center;
+  }
+  @media (max-width:640px){.lid{grid-template-columns:1fr}}
+  .badges{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
+  .badge{
+    border:2.5px solid #1B1710;border-radius:20px;padding:2px 11px;font-size:12px;font-weight:700;
+    background:rgba(255,255,255,.42);color:#1B1710;
+  }
+  h1{
+    font-family:"Black Han Sans","Gothic A1",sans-serif;font-weight:400;color:#1B1710;
+    font-size:clamp(46px,8vw,76px);line-height:.92;letter-spacing:.01em;margin:0;
+  }
+  h1 .ex{color:var(--risk);display:inline-block;transform:rotate(7deg)}
+  .catch{
+    font-family:"Black Han Sans","Gothic A1",sans-serif;font-weight:400;color:#1B1710;
+    font-size:clamp(17px,2.6vw,23px);margin:8px 0 0;line-height:1.35;
+  }
+  .catch .u{box-shadow:inset 0 -9px 0 rgba(210,55,29,.28)}
+  .lidpig{width:150px;justify-self:center}
+  .lidpig svg{width:100%;height:auto;display:block}
+  @media (max-width:640px){.lidpig{width:120px;justify-self:start}}
+
+  .specs{
+    display:grid;grid-template-columns:repeat(4,1fr);border-bottom:3px solid var(--line);
+    background:var(--surface-2);
+  }
+  @media (max-width:640px){.specs{grid-template-columns:repeat(2,1fr)}}
+  .spec{padding:11px 8px;text-align:center;border-right:2.5px solid var(--line-soft)}
+  .spec:last-child{border-right:0}
+  @media (max-width:640px){
+    .spec:nth-child(2n){border-right:0}
+    .spec:nth-child(-n+2){border-bottom:2.5px solid var(--line-soft)}
+  }
+  .spec .sk{font-size:11px;font-weight:700;color:var(--ink-faint)}
+  .spec .sv{font-family:"Black Han Sans",sans-serif;font-size:16px;color:var(--ink);line-height:1.3}
+
+  .coverbody{padding:22px 26px 24px}
+  .intro{display:grid;grid-template-columns:1.15fr .85fr;gap:26px}
+  @media (max-width:820px){.intro{grid-template-columns:1fr}}
+  .sec + .sec{margin-top:20px}
+  .sec h3{
+    font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:19px;margin:0 0 9px;
+    display:flex;align-items:center;gap:9px;
+  }
+  .sec h3::before{
+    content:"";width:13px;height:13px;border:2.5px solid var(--line);border-radius:4px;
+    background:var(--gold);flex:0 0 auto;
+  }
+  .sec h3.g::before{background:var(--gain)}
+  .sec h3.b::before{background:var(--blue)}
+  .sec h3.r::before{background:var(--risk)}
+  .sec p{margin:0 0 10px;color:var(--ink-soft);font-size:14.5px;max-width:60ch}
+  .sec p:last-child{margin-bottom:0}
+  .sec p b{color:var(--ink);font-weight:700}
+  .sec p .mark-r{color:var(--risk);font-weight:700}
+
+  /* turn flow */
+  .flow{display:flex;align-items:stretch;gap:7px;flex-wrap:wrap;margin-bottom:9px}
+  .fbox{
+    flex:1 1 128px;border:2.5px solid var(--line);border-radius:11px;background:var(--surface-2);
+    padding:9px 11px;font-size:13.5px;color:var(--ink-soft);display:flex;align-items:center;gap:7px;
+  }
+  .fbox b{color:var(--ink);font-weight:700}
+  .fbox.choose{background:var(--gold-bg);font-family:"Black Han Sans",sans-serif;color:var(--ink);font-size:15px}
+  .fnum{
+    flex:0 0 auto;width:21px;height:21px;border:2px solid var(--line);border-radius:6px;background:var(--surface);
+    display:grid;place-items:center;font-family:"Black Han Sans",sans-serif;font-size:12px;color:var(--ink);
+  }
+  .farrow{display:grid;place-items:center;font-size:16px;color:var(--ink-faint);flex:0 0 auto}
+  .flow2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  @media (max-width:560px){.flow2{grid-template-columns:1fr}}
+  .fout{
+    border:2.5px solid var(--line);border-radius:11px;padding:10px 12px;font-size:13.5px;
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .fout .ficon{
+    flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:2.5px solid var(--line);
+    display:grid;place-items:center;font-family:"Black Han Sans",sans-serif;font-size:13px;
+  }
+  .fout.good{background:var(--gain-bg);color:var(--ink-soft)}
+  .fout.good .ficon{background:var(--gain);color:var(--oncap)}
+  .fout.bad{background:var(--risk-bg);color:var(--ink-soft)}
+  .fout.bad .ficon{background:var(--risk);color:var(--oncap)}
+  .fout b{color:var(--ink);font-weight:700}
+
+  /* mode list on cover */
+  .modelist{display:flex;flex-direction:column;gap:9px}
+  .mode{
+    border:2.5px solid var(--line-soft);border-radius:12px;padding:10px 13px;background:var(--surface-2);
+  }
+  .mode .mn{font-family:"Black Han Sans",sans-serif;font-size:15px;margin-bottom:1px}
+  .mode .mn.a{color:var(--gain)}
+  .mode .mn.b{color:var(--blue)}
+  .mode .mn.c{color:var(--gold-ink)}
+  .mode .md2{font-size:13px;color:var(--ink-soft);line-height:1.5}
+
+  .pullquote{
+    border:3px solid var(--line);border-radius:14px;background:var(--blue-bg);
+    padding:14px 16px;margin-top:20px;
+  }
+  .pullquote .pq{
+    font-family:"Black Han Sans",sans-serif;font-size:clamp(16px,2.4vw,20px);color:var(--ink);
+    line-height:1.4;margin:0 0 6px;
+  }
+  .pullquote .pqs{font-size:13px;color:var(--ink-soft);margin:0}
+
+  .cta{
+    display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;
+  }
+  .ctabtn{
+    appearance:none;text-decoration:none;font-family:"Black Han Sans",sans-serif;font-size:21px;
+    background:var(--risk);color:var(--oncap);border:3px solid var(--line);border-radius:14px;
+    padding:13px 38px;box-shadow:5px 5px 0 var(--shadow-col);cursor:pointer;
+    transition:transform .09s,box-shadow .09s;
+  }
+  .ctabtn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--shadow-col)}
+  .ctabtn:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+
+  .playhead{
+    display:flex;align-items:center;gap:12px;margin:0 0 14px;
+  }
+  .playhead h2{
+    font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:clamp(24px,4vw,32px);margin:0;
+  }
+  .playhead .rule{flex:1;height:3px;background:var(--line);border-radius:2px}
+
+  /* ---------- controls ---------- */
+  .controls{
+    display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-bottom:22px;
+    background:var(--surface);border:3px solid var(--line);border-radius:14px;
+    box-shadow:5px 5px 0 var(--shadow-col);padding:12px 16px;
+  }
+  .cgroup{display:flex;align-items:center;gap:9px}
+  .clabel{
+    font-family:"Black Han Sans",sans-serif;font-size:13px;letter-spacing:.04em;color:var(--ink-faint);
+  }
+  .seg{display:flex;border:2.5px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2)}
+  .seg button{
+    appearance:none;border:0;background:transparent;color:var(--ink-soft);
+    font-family:inherit;font-size:13.5px;font-weight:700;padding:7px 14px;cursor:pointer;
+    border-right:2.5px solid var(--line);transition:background .12s,color .12s;
+  }
+  .seg button:last-child{border-right:0}
+  .seg button:hover{background:var(--gold-bg);color:var(--ink)}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+  .seg button:focus-visible{outline:3px solid var(--blue);outline-offset:-3px}
+  .reset{
+    margin-left:auto;appearance:none;background:var(--surface-2);border:2.5px solid var(--line);
+    border-radius:10px;color:var(--ink);font-family:inherit;font-weight:700;font-size:13.5px;
+    padding:7px 15px;cursor:pointer;box-shadow:3px 3px 0 var(--shadow-col);transition:transform .1s,box-shadow .1s;
+  }
+  .reset:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--shadow-col)}
+  .reset:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+  /* ---------- cards ---------- */
+  .row{display:grid;gap:22px;margin-bottom:22px;align-items:start}
+  .row-top{grid-template-columns:0.82fr 1.18fr}
+  .row-bot{grid-template-columns:1fr 1fr}
+  @media (max-width:940px){.row-top,.row-bot{grid-template-columns:1fr}}
+
+  .card{
+    background:var(--surface);border:3px solid var(--line);border-radius:16px;
+    box-shadow:6px 6px 0 var(--shadow-col);overflow:hidden;
+  }
+  .cap{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 16px;border-bottom:3px solid var(--line);
+  }
+  .cap h2{
+    font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:18px;
+    letter-spacing:.02em;margin:0;color:var(--oncap);
+  }
+  .cap .sub{font-size:12px;font-weight:700;color:var(--oncap);opacity:.82}
+  .cap-gold{background:var(--gold)}
+  .cap-gold h2,.cap-gold .sub{color:#1B1710}
+  .cap-green{background:var(--gain)}
+  .cap-blue{background:var(--blue)}
+  .cap-red{background:var(--risk)}
+  .body{padding:16px}
+
+  /* ---------- rules ---------- */
+  .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+  .steps li{display:flex;gap:11px;align-items:flex-start;font-size:14px;color:var(--ink-soft)}
+  .steps li b{color:var(--ink);font-weight:700}
+  .num{
+    flex:0 0 auto;width:25px;height:25px;border:2.5px solid var(--line);border-radius:8px;
+    background:var(--gold-bg);display:grid;place-items:center;color:var(--ink);
+    font-family:"Black Han Sans",sans-serif;font-size:14px;line-height:1;
+  }
+  .num.danger{background:var(--risk-bg);border-color:var(--risk);color:var(--risk)}
+  .num.safe{background:var(--gain-bg);border-color:var(--gain);color:var(--gain)}
+  .kicker{
+    margin-top:14px;background:var(--risk-bg);border:2.5px dashed var(--risk);border-radius:12px;
+    padding:11px 13px;font-size:13.5px;color:var(--ink);
+  }
+  .kicker b{font-family:"Black Han Sans",sans-serif;font-weight:400;color:var(--risk);font-size:15px}
+  .example{margin-top:13px;border:2.5px solid var(--line-soft);border-radius:12px;background:var(--surface-2);padding:11px 12px}
+  .example h4{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:13.5px;margin:0 0 9px;color:var(--ink-soft)}
+  .exline{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin-bottom:8px}
+  .exline:last-child{margin-bottom:0}
+  .md{
+    width:23px;height:23px;border:2px solid var(--line);border-radius:6px;display:grid;place-items:center;
+    background:var(--surface);font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;flex:0 0 auto;color:var(--ink);
+  }
+  .md.one{background:var(--risk);color:var(--oncap);border-color:var(--risk)}
+  .exres{font-weight:700;color:var(--gain)}
+  .exres.bad{font-weight:700;color:var(--risk)}
+  .prep{margin:12px 0 0;font-size:12.5px;color:var(--ink-faint)}
+
+  /* ---------- scoreboard ---------- */
+  .scores{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:14px 16px 0}
+  .scores.solo{grid-template-columns:1fr}
+  .pcard{
+    border:2.5px solid var(--line-soft);border-radius:12px;padding:9px 12px 10px;
+    background:var(--surface-2);transition:border-color .2s,background .2s,transform .2s;position:relative;
+  }
+  .pcard.active{border-color:var(--line);background:var(--gold-bg);transform:translateY(-2px);box-shadow:3px 3px 0 var(--shadow-col)}
+  .pcard.winner{border-color:var(--gain);background:var(--gain-bg)}
+  .pname{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft)}
+  .pname .tag{
+    font-size:10px;font-weight:700;padding:1px 6px;border:2px solid var(--line-soft);
+    border-radius:20px;color:var(--ink-faint);
+  }
+  .pname .crown{color:var(--gain);font-weight:900}
+  .pscore{
+    font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600;
+    font-size:40px;line-height:1.08;letter-spacing:-.03em;
+  }
+  .pbar{height:9px;background:var(--surface);border:2px solid var(--line-soft);border-radius:20px;overflow:hidden;margin-top:3px}
+  .pfill{height:100%;background:var(--gold);transition:width .45s cubic-bezier(.2,.8,.3,1)}
+  .pcard.winner .pfill{background:var(--gain)}
+
+  /* ---------- setup ---------- */
+  .setup{padding:22px 18px 24px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .setuphead{
+    font-family:"Black Han Sans",sans-serif;font-size:19px;text-align:center;line-height:1.35;
+  }
+  .setupsub{font-size:13px;color:var(--ink-soft);text-align:center;margin:-8px 0 0;max-width:34ch}
+  .fields{display:flex;flex-direction:column;gap:11px;width:100%;max-width:330px}
+  .namerow{display:flex;flex-direction:column;gap:4px}
+  .namerow label{font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .namerow input{
+    font-family:inherit;font-size:16px;font-weight:700;padding:10px 13px;color:var(--ink);
+    border:2.5px solid var(--line);border-radius:11px;background:var(--surface-2);width:100%;
+  }
+  .namerow input::placeholder{color:var(--ink-faint);font-weight:400}
+  .namerow input:focus{outline:3px solid var(--blue);outline-offset:1px}
+  .botwrap{width:100%;max-width:330px}
+  .botlab{font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px}
+  .bots{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .bot{
+    appearance:none;font-family:inherit;text-align:left;cursor:pointer;
+    border:2.5px solid var(--line-soft);border-radius:12px;padding:8px 10px;background:var(--surface-2);
+    transition:transform .1s,box-shadow .1s,border-color .12s,background .12s;
+  }
+  .bot[aria-pressed="true"]{border-color:var(--line);background:var(--gold-bg);box-shadow:3px 3px 0 var(--shadow-col)}
+  .bot:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  .bot .bn{display:block;font-family:"Black Han Sans",sans-serif;font-size:15px;color:var(--ink);line-height:1.25}
+  .bot .bt{display:block;font-size:11px;color:var(--ink-soft);line-height:1.4;margin-top:1px}
+
+  /* ---------- table ---------- */
+  .table{padding:14px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .turnbanner{
+    display:flex;align-items:center;gap:8px;border:2.5px solid var(--line);border-radius:22px;
+    padding:5px 15px;background:var(--gold-bg);
+    font-family:"Black Han Sans",sans-serif;font-size:15px;color:var(--ink);
+  }
+  .turnbanner.isbot{background:var(--blue-bg)}
+  .turnbanner .dotp{width:9px;height:9px;border-radius:50%;background:var(--gain);flex:0 0 auto}
+  .turnbanner.isbot .dotp{background:var(--blue);animation:blink .9s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.2}}
+  .rolllog{
+    display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:center;min-height:26px;
+    width:100%;
+  }
+  .rolllog .lgk{font-size:11.5px;font-weight:700;color:var(--ink-faint)}
+  .rolllog .lgsum{font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .stage{display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;padding:14px 0 6px}
+
+  .die{
+    width:118px;height:118px;border-radius:24px;background:var(--surface);
+    border:3px solid var(--line);box-shadow:5px 5px 0 var(--shadow-col);
+    display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+    padding:16px;gap:5px;
+  }
+  .die.rolling{animation:tumble .50s cubic-bezier(.3,.5,.4,1) 1}
+  .die.landed{animation:pop .36s cubic-bezier(.2,1.6,.4,1)}
+  .die.bust{background:var(--risk-bg);border-color:var(--risk);animation:wobble .45s ease}
+  @keyframes tumble{
+    0%  {transform:translate(0,0) rotate(0deg) scale(1)}
+    16% {transform:translate(-14px,-36px) rotate(170deg) scale(1.06)}
+    34% {transform:translate(9px,-5px) rotate(340deg) scale(.96)}
+    52% {transform:translate(16px,-26px) rotate(520deg) scale(1.04)}
+    72% {transform:translate(-5px,-3px) rotate(650deg) scale(.97)}
+    88% {transform:translate(-2px,-10px) rotate(705deg) scale(1.02)}
+    100%{transform:translate(0,0) rotate(720deg) scale(1)}
+  }
+  @keyframes pop{
+    0%{transform:rotate(-6deg) scale(.84)}
+    45%{transform:rotate(3deg) scale(1.09)}
+    75%{transform:rotate(-1deg) scale(.98)}
+    100%{transform:rotate(0deg) scale(1)}
+  }
+  @keyframes wobble{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+  .pip{border-radius:50%;background:var(--ink);align-self:center;justify-self:center;width:17px;height:17px}
+  .pip.hidden{visibility:hidden}
+  .die.one .pip{background:var(--risk);width:30px;height:30px}
+
+  .pigbox{width:132px;flex:0 0 auto;text-align:center}
+  .pigbox svg{width:118px;height:110px;display:block;margin:0 auto}
+  .pigmood{
+    font-family:"Black Han Sans",sans-serif;font-size:13px;color:var(--ink-soft);
+    margin-top:2px;min-height:19px;
+  }
+
+  .turnwrap{
+    width:100%;max-width:340px;border:3px solid var(--line);border-radius:14px;overflow:hidden;
+    background:var(--surface-2);
+  }
+  .turnhead{
+    display:flex;justify-content:space-between;align-items:center;padding:5px 12px;
+    border-bottom:2.5px solid var(--line);background:var(--surface);
+    font-size:12px;font-weight:700;color:var(--ink-soft);
+  }
+  .streak{display:flex;gap:3px;align-items:center}
+  .sdot{width:9px;height:9px;border-radius:50%;background:var(--line-soft)}
+  .sdot.on{background:var(--gain)}
+  .sdot.hot{background:var(--risk)}
+  .turntotal{
+    font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600;
+    font-size:56px;line-height:1.05;text-align:center;padding:4px 0 8px;letter-spacing:-.04em;
+    transition:color .2s;
+  }
+  .turntotal.zero{color:var(--ink-faint)}
+  .turntotal.hot{color:var(--gold-ink)}
+  .turntotal.danger{color:var(--risk)}
+
+  .msg{
+    min-height:44px;margin:0;text-align:center;font-size:14.5px;color:var(--ink-soft);
+    max-width:36ch;text-wrap:balance;display:flex;align-items:center;justify-content:center;
+  }
+  .msg strong{color:var(--ink);font-weight:700}
+  .msg .bust{color:var(--risk);font-family:"Black Han Sans",sans-serif;font-size:17px}
+  .msg .win{color:var(--gain);font-family:"Black Han Sans",sans-serif;font-size:17px}
+
+  .actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .btn{
+    appearance:none;font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:19px;
+    letter-spacing:.03em;padding:12px 34px;border-radius:13px;cursor:pointer;
+    border:3px solid var(--line);box-shadow:4px 4px 0 var(--shadow-col);
+    transition:transform .09s,box-shadow .09s,background .15s;
+  }
+  .btn:hover:not(:disabled){transform:translate(1px,1px);box-shadow:3px 3px 0 var(--shadow-col)}
+  .btn:active:not(:disabled){transform:translate(4px,4px);box-shadow:0 0 0 var(--shadow-col)}
+  .btn:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+  .btn-roll{background:var(--risk);color:var(--oncap)}
+  .btn-hold{background:var(--gain);color:var(--oncap)}
+  .btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:2px 2px 0 var(--shadow-col)}
+  .keyhint{font-size:11.5px;color:var(--ink-faint);text-align:center}
+  .keyhint kbd{
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;border:1.5px solid var(--line-soft);
+    border-radius:5px;padding:1px 5px;background:var(--surface-2);
+  }
+
+  /* ---------- EV ---------- */
+  .evtop{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+  .evcell{border:2.5px solid var(--line);border-radius:12px;padding:9px 8px}
+  .evcell.g{background:var(--gain-bg)}
+  .evcell.r{background:var(--risk-bg)}
+  .evcell .lab{font-size:11.5px;font-weight:700;color:var(--ink-soft)}
+  .evcell .num2{
+    font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600;
+    font-size:27px;line-height:1.15;
+  }
+  .evcell.g .num2{color:var(--gain)}
+  .evcell.r .num2{color:var(--risk)}
+  .evcell .sub2{font-size:10.5px;color:var(--ink-faint)}
+  .vs{font-family:"Black Han Sans",sans-serif;font-size:17px;color:var(--ink-faint)}
+
+  .netbar{
+    margin-top:12px;border:2.5px solid var(--line);border-radius:12px;overflow:hidden;
+    display:flex;align-items:stretch;
+  }
+  .netbar .nl{
+    padding:9px 13px;font-size:12.5px;font-weight:700;color:var(--ink-soft);
+    display:flex;align-items:center;border-right:2.5px solid var(--line);background:var(--surface-2);
+  }
+  .netbar .nv{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:7px 12px;
+    font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-weight:600;font-size:25px;
+  }
+  .nv.pos{background:var(--gain-bg);color:var(--gain)}
+  .nv.neg{background:var(--risk-bg);color:var(--risk)}
+  .verdictchip{
+    font-family:"Black Han Sans",sans-serif;font-size:14px;padding:3px 11px;border-radius:20px;
+    border:2.5px solid currentColor;white-space:nowrap;
+  }
+
+  .meter{margin-top:16px}
+  .mtop{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;color:var(--ink-faint)}
+  .track{
+    position:relative;height:30px;margin-top:6px;border:2.5px solid var(--line);border-radius:10px;
+    overflow:hidden;background:linear-gradient(90deg,var(--gain-bg) 0 50%,var(--risk-bg) 50% 100%);
+  }
+  .safe-zone{position:absolute;inset:0 50% 0 0;border-right:2.5px dashed var(--gold)}
+  .fill{position:absolute;left:0;top:0;bottom:0;background:var(--gold);opacity:.42;transition:width .35s cubic-bezier(.2,.8,.3,1)}
+  .marker{
+    position:absolute;top:-2px;bottom:-2px;width:5px;background:var(--ink);border-radius:3px;
+    transition:left .35s cubic-bezier(.2,.8,.3,1);
+  }
+  .mfoot{position:relative;height:20px;font-size:11px;color:var(--ink-faint);margin-top:4px}
+  .mfoot span{position:absolute;white-space:nowrap}
+  .mfoot .m0{left:0}
+  .mfoot .m20{left:50%;transform:translateX(-50%);color:var(--gold-ink);font-weight:700}
+  .mfoot .m40{right:0}
+
+  .chances{
+    margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px;
+  }
+  .chip3{
+    border:2.5px solid var(--line-soft);border-radius:11px;padding:7px 6px;text-align:center;
+    background:var(--surface-2);
+  }
+  .chip3 .ck{font-size:11px;color:var(--ink-soft);font-weight:700}
+  .chip3 .cv{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:17px;color:var(--blue)}
+
+  .tally{
+    margin-top:14px;padding-top:12px;border-top:2.5px dashed var(--line-soft);
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;
+  }
+  .tally .tk{font-size:11px;color:var(--ink-faint);font-weight:700}
+  .tally .tv{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:19px;font-weight:600}
+  .tally .tn{font-size:10.5px;color:var(--ink-faint)}
+
+  /* ---------- why 20 ---------- */
+  .why p{margin:0 0 11px;color:var(--ink-soft);font-size:14px}
+  .why p b{color:var(--ink);font-weight:700}
+  .bigformula{
+    border:3px solid var(--line);border-radius:12px;background:var(--gold-bg);
+    padding:13px;text-align:center;margin:0 0 13px;
+  }
+  .bigformula .f1{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--ink-soft);font-weight:500}
+  .bigformula .f2{
+    font-family:"Black Han Sans",sans-serif;font-size:clamp(20px,3.4vw,26px);margin-top:4px;color:var(--ink);
+  }
+  .bigformula .f2 em{font-style:normal;color:var(--risk)}
+  .balance{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:13px;flex-wrap:wrap}
+  .bside{
+    border:2.5px solid var(--line);border-radius:11px;padding:7px 13px;text-align:center;min-width:112px;
+  }
+  .bside.l{background:var(--gain-bg)}
+  .bside.r{background:var(--risk-bg)}
+  .bside .bk{font-size:11px;font-weight:700;color:var(--ink-soft)}
+  .bside .bv{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:18px}
+  .bside.l .bv{color:var(--gain)}
+  .bside.r .bv{color:var(--risk)}
+  .beq{font-family:"Black Han Sans",sans-serif;font-size:22px;color:var(--gold-ink)}
+
+  .strat{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+  .strat th,.strat td{text-align:left;padding:7px 9px;border-bottom:2px solid var(--line-soft)}
+  .strat th{font-size:11px;font-weight:700;color:var(--ink-faint);letter-spacing:.04em}
+  .strat td:last-child,.strat th:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+  .strat tr:last-child td{border-bottom:0}
+  .strat .hl td{color:var(--ink);font-weight:700;background:var(--gold-bg)}
+  .cite{margin:11px 0 0;font-size:11.5px;color:var(--ink-faint)}
+
+  /* ---------- footer ---------- */
+  .quests{
+    background:var(--surface);border:3px solid var(--line);border-radius:16px;
+    box-shadow:6px 6px 0 var(--shadow-col);padding:16px;
+  }
+  .quests h3{
+    font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:18px;margin:0 0 10px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .quests h3 .bulb{
+    width:24px;height:24px;border:2.5px solid var(--line);border-radius:8px;background:var(--blue);
+    color:var(--oncap);display:grid;place-items:center;font-size:13px;
+  }
+  .qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+  @media (max-width:760px){.qgrid{grid-template-columns:1fr}}
+  .q{border:2.5px solid var(--line-soft);border-radius:11px;padding:10px 12px;font-size:13.5px;color:var(--ink-soft);background:var(--surface-2)}
+  .q b{display:block;font-family:"Black Han Sans",sans-serif;font-weight:400;color:var(--blue);font-size:13px;margin-bottom:2px}
+
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+
+  @media (prefers-reduced-motion: no-preference){ html{scroll-behavior:smooth} }
+  #play{scroll-margin-top:16px}
+
+  @media (prefers-reduced-motion: reduce){
+    .die.rolling,.die.landed,.die.bust{animation:none}
+    .pfill,.fill,.marker,.pcard{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- ===== 표지 / 소개지 ===== -->
+  <section class="cover">
+    <div class="lid">
+      <div>
+        <div class="badges">
+          <span class="badge">수학체험부스</span>
+          <span class="badge">확률 · 기댓값</span>
+          <span class="badge">주사위 1개면 끝</span>
+        </div>
+        <h1>피그<span class="ex">!</span></h1>
+        <p class="catch"><span class="u">“한 번만 더…”</span> 그 한 번이 문제입니다.</p>
+      </div>
+      <div class="lidpig" id="lidPig" aria-hidden="true"></div>
+    </div>
+
+    <div class="specs">
+      <div class="spec"><div class="sk">인원</div><div class="sv">1~2명</div></div>
+      <div class="spec"><div class="sk">한 판</div><div class="sv">3~5분</div></div>
+      <div class="spec"><div class="sk">준비물</div><div class="sv">주사위 1개</div></div>
+      <div class="spec"><div class="sk">규칙 배우기</div><div class="sv">30초</div></div>
+    </div>
+
+    <div class="coverbody">
+      <div class="intro">
+        <div>
+          <div class="sec">
+            <h3>이런 게임입니다</h3>
+            <p><b>피그(Pig)</b>는 주사위 하나만 있으면 되는 아주 오래된 놀이입니다. 규칙은 30초면 다 배우는데, 어떻게 해야 이기는지는 수백 년 동안 아무도 확실히 몰랐습니다.</p>
+            <p>굴릴수록 점수는 쌓입니다. 그런데 언제든 한 방에 전부 잃을 수 있습니다. 그래서 매번 똑같은 질문 앞에 서게 됩니다. <b>여기서 멈출까, 한 번만 더 갈까.</b> 이 결정 하나가 사실상 게임의 전부입니다.</p>
+            <p>대부분은 감으로 정합니다. 그런데 이 감을 <b>숫자로 바꿔볼 수 있습니다.</b> 얻을 것으로 기대되는 점수와 잃을 것으로 기대되는 점수를 나란히 놓고 비교하면, 멈춰야 할 지점이 딱 하나로 정해집니다. 이 부스는 그 숫자를 직접 확인해보는 자리입니다.</p>
+          </div>
+
+          <div class="sec">
+            <h3 class="g">게임 방법</h3>
+            <p style="margin-bottom:12px">내 차례가 오면 이 흐름을 원하는 만큼 반복합니다.</p>
+            <div class="flow">
+              <div class="fbox"><span class="fnum">1</span>주사위를 굴린다</div>
+              <span class="farrow">→</span>
+              <div class="fbox"><span class="fnum">2</span><span><b>2~6</b>이면 턴 점수에 쌓인다</span></div>
+              <span class="farrow">→</span>
+              <div class="fbox choose">굴릴까? 멈출까?</div>
+            </div>
+            <div class="flow2">
+              <div class="fout good"><span class="ficon">✓</span><span><b>멈추면</b> 쌓인 점수가 내 점수로 확정됩니다. 이건 끝까지 안 뺏깁니다.</span></div>
+              <div class="fout bad"><span class="ficon">1</span><span><b>1이 나오면</b> 쌓인 점수가 전부 사라지고 차례가 넘어갑니다.</span></div>
+            </div>
+            <p style="margin-top:12px">먼저 <b>100점</b>(짧게 하려면 50점)에 닿는 사람이 이깁니다.</p>
+          </div>
+
+          <div class="sec">
+            <h3 class="b">여기서 수학이 나옵니다</h3>
+            <p>2, 3, 4, 5, 6의 평균은 <b>4점</b>이고 그중 하나가 나올 확률은 <b>6분의 5</b>. 반대로 <span class="mark-r">1</span>이 나올 확률은 <b>6분의 1</b>이고, 그때는 쌓아둔 점수 전부를 잃습니다. 이 둘이 정확히 맞부딪히는 지점을 계산하면 <b>턴 점수 20점</b>이 나옵니다.</p>
+            <p>아래 화면의 <b>기댓값 분석</b> 칸이 이 계산을 매 순간 대신 해줍니다. 내 직감이 멈추라고 말하는 순간과 숫자가 멈추라고 말하는 순간이 얼마나 다른지, 직접 비교해보세요.</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="sec">
+            <h3 class="r">세 가지로 즐기세요</h3>
+            <div class="modelist">
+              <div class="mode">
+                <div class="mn a">2인 대전</div>
+                <div class="md2">옆 사람과 한 화면에서 번갈아 한 판. 상대가 몇 점인지 보이는 순간부터 판단이 흔들립니다. 가장 재미있는 모드.</div>
+              </div>
+              <div class="mode">
+                <div class="mn b">컴퓨터 대결</div>
+                <div class="md2"><b>가우스 · 파스칼 · 피타고라스 · 오일러</b> 중에서 상대를 고릅니다. 넷 다 감정 없이 <b>20점에서만 멈추죠.</b> 사람의 감으로 이 계산기를 이길 수 있을까요?</div>
+              </div>
+              <div class="mode">
+                <div class="mn c">혼자 연습</div>
+                <div class="md2">목표 점수까지 몇 턴이 걸리는지 셉니다. 최소 턴 기록에 도전해보세요. 기록은 저장됩니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pullquote">
+            <p class="pq">규칙은 30초, 최적 전략은 2001년.</p>
+            <p class="pqs">2인 피그의 완전한 최적 전략은 2001년에야 컴퓨터로 계산됐습니다. 이렇게 단순해 보이는 게임에도 아직 손으로는 풀기 어려운 구석이 남아 있습니다.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta">
+        <a class="ctabtn" href="#play">↓ 지금 바로 해보기</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="playhead" id="play">
+    <h2>해보기</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="controls">
+    <div class="cgroup">
+      <span class="clabel">모드</span>
+      <div class="seg" id="modeSeg" role="group" aria-label="게임 모드">
+        <button type="button" data-mode="duo" aria-pressed="true">2인 대전</button>
+        <button type="button" data-mode="cpu" aria-pressed="false">컴퓨터 대결</button>
+        <button type="button" data-mode="solo" aria-pressed="false">혼자 연습</button>
+      </div>
+    </div>
+    <div class="cgroup">
+      <span class="clabel">목표</span>
+      <div class="seg" id="targetSeg" role="group" aria-label="목표 점수">
+        <button type="button" data-target="50" aria-pressed="false">50점</button>
+        <button type="button" data-target="100" aria-pressed="true">100점</button>
+      </div>
+    </div>
+    <button class="reset" id="nameBtn" type="button" style="margin-left:auto">✎ 이름 바꾸기</button>
+    <button class="reset" id="resetBtn" type="button" style="margin-left:0">↻ 새 게임</button>
+  </div>
+
+  <!-- ===== ROW 1 : 규칙 + 게임 테이블 ===== -->
+  <div class="row row-top">
+    <section class="card">
+      <div class="cap cap-gold"><h2>게임 규칙</h2><span class="sub">30초면 이해 끝</span></div>
+      <div class="body">
+        <ol class="steps">
+          <li><span class="num">1</span><span>내 차례에 주사위를 굴린다.</span></li>
+          <li><span class="num safe">2</span><span><b>2~6</b>이 나오면 그 수를 <b>턴 점수</b>에 더한다. 계속 굴릴지 멈출지 내 마음.</span></li>
+          <li><span class="num danger">3</span><span><b style="color:var(--risk)">1이 나오면 턴 점수 전부 소멸!</b> 차례가 상대에게 넘어간다.</span></li>
+          <li><span class="num safe">4</span><span><b>멈추면</b> 턴 점수가 내 총점으로 확정된다. 이건 절대 안 뺏긴다.</span></li>
+          <li><span class="num">5</span><span>먼저 목표 점수에 닿는 사람이 <b>승리</b>.</span></li>
+        </ol>
+        <div class="kicker"><b>핵심은 이거!</b><br>더 굴리면 점수가 커지지만, 잃을 것도 같이 커진다. 욕심과 안전 사이 어디에서 손을 뗄 것인가.</div>
+        <div class="example">
+          <h4>같은 상황, 갈리는 결말</h4>
+          <div class="exline">
+            <span class="md">4</span><span class="md">3</span><span class="md">6</span>
+            <span>= 13점에서 멈춤 →</span><span class="exres">13점 확정</span>
+          </div>
+          <div class="exline">
+            <span class="md">4</span><span class="md">3</span><span class="md">6</span><span class="md one">1</span>
+            <span>한 번 더 갔더니 →</span><span class="exres bad">0점, 차례 끝</span>
+          </div>
+        </div>
+        <p class="prep">준비물: 주사위 1개 + 종이. 교실에서 짝과 바로 할 수 있어요.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cap cap-green"><h2>게임 테이블</h2><span class="sub" id="targetNote">먼저 100점!</span></div>
+      <div class="scores" id="scores" hidden></div>
+
+      <div class="setup" id="setup">
+        <div class="setuphead">이름을 정하고 시작하세요</div>
+        <p class="setupsub" id="setupSub">점수판에 이 이름이 표시됩니다.</p>
+        <div class="fields" id="nameFields"></div>
+        <div class="botwrap" id="botPick" hidden>
+          <div class="botlab">상대 고르기 — 모두 “20에서 멈추기” 전략을 씁니다</div>
+          <div class="bots" id="bots"></div>
+        </div>
+        <button class="btn btn-hold" id="startBtn" type="button">시작하기</button>
+      </div>
+
+      <div class="table" id="playArea" hidden>
+        <div class="turnbanner" id="turnBanner"><span class="dotp"></span><span id="turnWho"></span></div>
+        <div class="stage">
+          <div class="die" id="die" role="img" aria-label="주사위"></div>
+          <div class="pigbox">
+            <div id="pig"></div>
+            <div class="pigmood" id="pigMood">굴려 볼까?</div>
+          </div>
+        </div>
+
+        <div class="rolllog" id="rollLog"></div>
+
+        <div class="turnwrap">
+          <div class="turnhead">
+            <span>이번 턴에 쌓은 점수</span>
+            <span class="streak" id="streak" aria-label="이번 턴 연속 성공"></span>
+          </div>
+          <div class="turntotal zero" id="turnTotal">0</div>
+        </div>
+
+        <p class="msg" id="msg" aria-live="polite"></p>
+
+        <div class="actions">
+          <button class="btn btn-roll" id="rollBtn" type="button">굴리기</button>
+          <button class="btn btn-hold" id="holdBtn" type="button">멈추기</button>
+        </div>
+        <div class="keyhint"><kbd>Space</kbd> 굴리기 &nbsp; <kbd>Enter</kbd> 멈추기</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== ROW 2 : 기댓값 분석 + 왜 하필 20 ===== -->
+  <div class="row row-bot">
+    <section class="card">
+      <div class="cap cap-blue"><h2>기댓값 분석</h2><span class="sub">한 번 더 굴리면?</span></div>
+      <div class="body">
+        <div class="evtop">
+          <div class="evcell g">
+            <div class="lab">얻을 것 같은 점수</div>
+            <div class="num2">+3.33</div>
+            <div class="sub2">⁵⁄₆ × 평균 4점</div>
+          </div>
+          <div class="vs">VS</div>
+          <div class="evcell r">
+            <div class="lab">잃을 것 같은 점수</div>
+            <div class="num2" id="evLoss">0.00</div>
+            <div class="sub2">¹⁄₆ × <span id="evT">0</span>점</div>
+          </div>
+        </div>
+
+        <div class="netbar">
+          <div class="nl">계산 결과</div>
+          <div class="nv pos" id="evNetBox">
+            <span id="evNet">+3.33</span>
+            <span class="verdictchip" id="verdictChip">굴려!</span>
+          </div>
+        </div>
+        <p class="why" style="margin:9px 0 0"><span id="verdictWhy" style="font-size:13px;color:var(--ink-soft)"></span></p>
+
+        <div class="meter">
+          <div class="mtop"><span>욕심 미터</span><span id="tLabel">턴 점수 0점</span></div>
+          <div class="track">
+            <div class="safe-zone"></div>
+            <div class="fill" id="fill" style="width:0%"></div>
+            <div class="marker" id="marker" style="left:0%"></div>
+          </div>
+          <div class="mfoot">
+            <span class="m0">안전 지대</span>
+            <span class="m20">▲ 손익분기 20점</span>
+            <span class="m40">욕심 지대</span>
+          </div>
+        </div>
+
+        <div class="chances">
+          <div class="chip3"><div class="ck">1번 더 성공</div><div class="cv">83.3%</div></div>
+          <div class="chip3"><div class="ck">2번 연속</div><div class="cv">69.4%</div></div>
+          <div class="chip3"><div class="ck">3번 연속</div><div class="cv">57.9%</div></div>
+        </div>
+
+        <div class="tally">
+          <div><div class="tk">굴린 횟수</div><div class="tv" id="tRolls">0</div><div class="tn">누적</div></div>
+          <div><div class="tk">1이 나온 횟수</div><div class="tv" id="tOnes">0</div><div class="tn">누적</div></div>
+          <div><div class="tk">실제 비율</div><div class="tv" id="tRatio">—</div><div class="tn">이론값 16.7%</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="cap cap-red"><h2>왜 하필 20일까</h2><span class="sub">손익분기점 찾기</span></div>
+      <div class="body why">
+        <p>주사위에서 <b>2, 3, 4, 5, 6</b>의 평균은 <b>4</b>이고, 이 중 하나가 나올 확률은 <b>⁵⁄₆</b>입니다. 반대로 <b style="color:var(--risk)">1</b>이 나올 확률은 <b>¹⁄₆</b>이고, 그때는 쌓아둔 <b>t</b>점을 통째로 잃습니다.</p>
+
+        <div class="balance">
+          <div class="bside l"><div class="bk">얻는 쪽</div><div class="bv">⁵⁄₆ × 4 = 3.33</div></div>
+          <span class="beq">=</span>
+          <div class="bside r"><div class="bk">잃는 쪽</div><div class="bv">¹⁄₆ × t</div></div>
+        </div>
+
+        <div class="bigformula">
+          <div class="f1">E = (5/6)×4 − (1/6)×t = (20 − t) ÷ 6</div>
+          <div class="f2">그래서 손익분기는 <em>t = 20</em></div>
+        </div>
+
+        <p>t가 20보다 작으면 굴리는 쪽이 이득, 20을 넘으면 멈추는 쪽이 이득입니다. 그런데 이 계산은 <b>"다음 한 번"만</b> 본 근시안적 판단이에요. 상대 점수와 남은 거리까지 넣고 푼 진짜 최적 전략과 비교하면 이 정도 차이가 납니다.</p>
+
+        <table class="strat">
+          <thead><tr><th>전략</th><th>최적 대비 손해</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>20에서 멈추기</td><td>8%</td></tr>
+            <tr><td>25에서 멈추기</td><td>4.2%</td></tr>
+            <tr><td>남은 턴 수로 조정</td><td>3.3%</td></tr>
+            <tr><td>막판 추격 / 속도 유지</td><td>0.9%</td></tr>
+          </tbody>
+        </table>
+        <p class="cite">2인 피그의 완전한 최적해는 2001년 Todd W. Neller가 계산하고 Clifton G. M. Presser가 시각화했습니다.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="quests">
+    <h3><span class="bulb">?</span>더 파고들기</h3>
+    <div class="qgrid">
+      <div class="q"><b>탐구 1</b>목표를 50점으로 바꾸면 멈춰야 할 지점도 달라질까?</div>
+      <div class="q"><b>탐구 2</b>내가 30점 뒤지고 있다면 20에서 멈추는 게 여전히 맞을까?</div>
+      <div class="q"><b>탐구 3</b>주사위를 2개로 하면 손익분기는 어디로 움직일까?</div>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  var PIPS = {1:[5],2:[1,9],3:[1,5,9],4:[1,3,7,9],5:[1,3,5,7,9],6:[1,3,4,6,7,9]};
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var BOTS = [
+    {name:'가우스',     line:'합 계산은 내가 제일 빠르지.'},
+    {name:'파스칼',     line:'확률은 내 전공이야.'},
+    {name:'피타고라스', line:'딱 20에서 직각으로 멈춘다.'},
+    {name:'오일러',     line:'e만큼 침착하게 간다.'}
+  ];
+
+  var S = {mode:'duo',target:100,scores:[0,0],cur:0,tt:0,streak:0,
+           phase:'setup',p1:'',p2:'',bot:0,log:[],logOwner:0,pendingClear:false,
+           rolling:false,over:false,face:5,bust:false,landed:false,
+           rolls:0,ones:0,soloTurns:0,best:null,mood:'idle'};
+
+  var el = {};
+  ['scores','die','pig','pigMood','turnTotal','streak','msg','rollBtn','holdBtn','resetBtn',
+   'modeSeg','targetSeg','targetNote','evLoss','evT','evNet','evNetBox','verdictChip','verdictWhy',
+   'fill','marker','tLabel','tRolls','tOnes','tRatio','confetti','lidPig',
+   'setup','setupSub','playArea','nameFields','botPick','bots','startBtn','nameBtn',
+   'turnBanner','turnWho','rollLog'].forEach(function(id){
+    el[id] = document.getElementById(id);
+  });
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ---------- pig mascot ---------- */
+  var MOODS = {
+    idle:   {eyes:'normal', mouth:'smile', text:'굴려 볼까?'},
+    happy:  {eyes:'arc',    mouth:'grin',  text:'좋았어!'},
+    greedy: {eyes:'star',   mouth:'grin',  text:'더 가자!'},
+    nervous:{eyes:'small',  mouth:'wave',  text:'이쯤에서 멈출까...'},
+    bust:   {eyes:'x',      mouth:'sad',   text:'꿀꿀... 다 날아갔어'},
+    safe:   {eyes:'arc',    mouth:'smile', text:'안전하게 확정!'},
+    win:    {eyes:'star',   mouth:'grin',  text:'우승! 🏆'}
+  };
+  function pigSVG(mood){
+    var m = MOODS[mood] || MOODS.idle;
+    var eyes;
+    if(m.eyes==='arc') eyes = '<path d="M36 50q8 -9 16 0" fill="none" stroke="#1F1B14" stroke-width="4" stroke-linecap="round"/><path d="M68 50q8 -9 16 0" fill="none" stroke="#1F1B14" stroke-width="4" stroke-linecap="round"/>';
+    else if(m.eyes==='x') eyes = '<g stroke="#1F1B14" stroke-width="4" stroke-linecap="round"><path d="M37 44l14 12M51 44l-14 12"/><path d="M69 44l14 12M83 44l-14 12"/></g>';
+    else if(m.eyes==='small') eyes = '<circle cx="44" cy="50" r="4"/><circle cx="76" cy="50" r="4"/>';
+    else if(m.eyes==='star') eyes = '<g fill="#1F1B14"><path d="M44 41l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><path d="M76 41l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/></g>';
+    else eyes = '<circle cx="44" cy="49" r="6"/><circle cx="76" cy="49" r="6"/><circle cx="46" cy="47" r="2" fill="#FFFCF2"/><circle cx="78" cy="47" r="2" fill="#FFFCF2"/>';
+
+    var mouth;
+    if(m.mouth==='grin') mouth = '<path d="M46 84q14 12 28 0" fill="none" stroke="#1F1B14" stroke-width="4" stroke-linecap="round"/>';
+    else if(m.mouth==='wave') mouth = '<path d="M48 86q6 -6 12 0t12 0" fill="none" stroke="#1F1B14" stroke-width="4" stroke-linecap="round"/>';
+    else if(m.mouth==='sad') mouth = '<path d="M48 88q12 -11 24 0" fill="none" stroke="#1F1B14" stroke-width="4" stroke-linecap="round"/>';
+    else mouth = '<path d="M50 85q10 7 20 0" fill="none" stroke="#1F1B14" stroke-width="4" stroke-linecap="round"/>';
+
+    var extra = '';
+    if(mood==='nervous') extra = '<path d="M96 34c0 0 -7 9 -7 13a7 7 0 0 0 14 0c0-4-7-13-7-13z" fill="#7FC4E8" stroke="#1F1B14" stroke-width="3"/>';
+    if(mood==='bust') extra = '<path d="M84 58c0 0 -5 8 -5 11a5 5 0 0 0 10 0c0-3-5-11-5-11z" fill="#7FC4E8" stroke="#1F1B14" stroke-width="3"/>';
+    if(mood==='win') extra = '<path d="M40 16l8 10 12-13 12 13 8-10 3 14H37z" fill="#E09A0C" stroke="#1F1B14" stroke-width="3" stroke-linejoin="round"/>';
+
+    return '<svg viewBox="0 0 120 112" aria-hidden="true">'
+      + '<g stroke="#1F1B14" stroke-width="3.5" stroke-linejoin="round">'
+      +   '<path d="M22 42L20 22l22 8z" fill="#F0A7B0"/>'
+      +   '<path d="M98 42l2-20-22 8z" fill="#F0A7B0"/>'
+      +   '<ellipse cx="60" cy="62" rx="45" ry="40" fill="#F0A7B0"/>'
+      + '</g>'
+      + '<g fill="#1F1B14">' + eyes + '</g>'
+      + '<ellipse cx="30" cy="70" rx="7" ry="5" fill="#D9808C" opacity=".75"/>'
+      + '<ellipse cx="90" cy="70" rx="7" ry="5" fill="#D9808C" opacity=".75"/>'
+      + '<ellipse cx="60" cy="72" rx="18" ry="13" fill="#D9808C" stroke="#1F1B14" stroke-width="3.5"/>'
+      + '<ellipse cx="53" cy="72" rx="3.4" ry="5" fill="#1F1B14"/>'
+      + '<ellipse cx="67" cy="72" rx="3.4" ry="5" fill="#1F1B14"/>'
+      + mouth + extra
+      + '</svg>';
+  }
+  function drawPig(){
+    el.pig.innerHTML = pigSVG(S.mood);
+    el.pigMood.textContent = (MOODS[S.mood] || MOODS.idle).text;
+  }
+  function setMood(m){ S.mood = m; drawPig(); }
+  function moodFromTurn(){
+    if(S.over) return;
+    if(S.tt === 0) setMood('idle');
+    else if(S.tt >= 20) setMood('nervous');
+    else if(S.tt >= 10) setMood('greedy');
+    else setMood('happy');
+  }
+
+  /* ---------- rendering ---------- */
+  function defName(i){
+    if(S.mode==='duo') return i===0 ? '플레이어 1' : '플레이어 2';
+    return '나';
+  }
+  function names(){
+    var a = S.p1 || defName(0);
+    if(S.mode==='solo') return [a];
+    if(S.mode==='cpu') return [a, BOTS[S.bot].name];
+    return [a, S.p2 || defName(1)];
+  }
+  function isCpuTurn(){ return S.mode==='cpu' && S.cur===1; }
+
+  /* ---------- setup screen ---------- */
+  function renderSetup(){
+    var f = '';
+    if(S.mode==='duo'){
+      f += '<div class="namerow"><label for="in_p1">플레이어 1 이름</label>'
+         + '<input id="in_p1" data-k="p1" maxlength="10" placeholder="플레이어 1" value="'+esc(S.p1)+'"></div>'
+         + '<div class="namerow"><label for="in_p2">플레이어 2 이름</label>'
+         + '<input id="in_p2" data-k="p2" maxlength="10" placeholder="플레이어 2" value="'+esc(S.p2)+'"></div>';
+    }else{
+      f += '<div class="namerow"><label for="in_p1">내 이름</label>'
+         + '<input id="in_p1" data-k="p1" maxlength="10" placeholder="나" value="'+esc(S.p1)+'"></div>';
+    }
+    el.nameFields.innerHTML = f;
+
+    el.setupSub.textContent = S.mode==='cpu'
+      ? '이름을 적고 상대를 고르면 시작합니다.'
+      : (S.mode==='solo' ? '목표 점수까지 몇 턴이 걸리는지 세어 봅니다.'
+                         : '점수판에 이 이름이 표시됩니다.');
+
+    el.botPick.hidden = (S.mode !== 'cpu');
+    if(S.mode === 'cpu'){
+      var b = '';
+      for(var i=0;i<BOTS.length;i++){
+        b += '<button type="button" class="bot" data-bot="'+i+'" aria-pressed="'+(i===S.bot)+'">'
+           + '<span class="bn">'+BOTS[i].name+'</span><span class="bt">'+BOTS[i].line+'</span></button>';
+      }
+      el.bots.innerHTML = b;
+    }
+  }
+  function toSetup(){
+    S.phase = 'setup'; S.over = true; S.rolling = false;
+    el.setup.hidden = false; el.playArea.hidden = true; el.scores.hidden = true;
+    renderSetup();
+  }
+  function readNames(){
+    Array.prototype.forEach.call(el.nameFields.querySelectorAll('input'), function(inp){
+      S[inp.getAttribute('data-k')] = inp.value.trim().slice(0,10);
+    });
+    try{
+      localStorage.setItem('pig.p1', S.p1);
+      localStorage.setItem('pig.p2', S.p2);
+    }catch(e){}
+  }
+  function startGame(){
+    readNames();
+    S.phase = 'play';
+    el.setup.hidden = true; el.playArea.hidden = false; el.scores.hidden = false;
+    reset(false);
+  }
+
+  function drawDie(){
+    var on = PIPS[S.face] || [], html='';
+    for(var i=1;i<=9;i++) html += '<span class="pip'+(on.indexOf(i)===-1?' hidden':'')+'"></span>';
+    el.die.innerHTML = html;
+    el.die.className = 'die'
+      + (S.rolling?' rolling':'')
+      + (S.landed && !S.rolling?' landed':'')
+      + (S.face===1?' one':'')
+      + (S.bust?' bust':'');
+    el.die.setAttribute('aria-label','주사위 '+S.face);
+  }
+
+  function drawScores(){
+    var n = names(), html='';
+    for(var i=0;i<n.length;i++){
+      var sc = S.scores[i];
+      var active = (i===S.cur && !S.over);
+      var win = S.over && sc>=S.target;
+      var pct = Math.min(100, sc/S.target*100);
+      var tag = (S.mode==='cpu'&&i===1) ? '<span class="tag">20에서 멈춤</span>' : '';
+      var extra = (S.mode==='solo') ? '<span class="tag">'+S.soloTurns+'턴째</span>' : '';
+      html += '<div class="pcard'+(active?' active':'')+(win?' winner':'')+'">'
+            +   '<div class="pname">'+n[i]+tag+extra+(win?'<span class="crown">WIN</span>':'')+'</div>'
+            +   '<div class="pscore">'+sc+'</div>'
+            +   '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'
+            + '</div>';
+    }
+    el.scores.className = 'scores' + (S.mode==='solo'?' solo':'');
+    el.scores.innerHTML = html;
+  }
+
+  function drawStreak(){
+    var html='';
+    var n = Math.min(8, S.streak);
+    for(var i=0;i<n;i++) html += '<span class="sdot '+(S.tt>=20?'hot':'on')+'"></span>';
+    for(var j=n;j<3;j++) html += '<span class="sdot"></span>';
+    el.streak.innerHTML = html + (S.streak>8 ? '<span style="font-size:11px;color:var(--ink-faint)">+'+(S.streak-8)+'</span>' : '');
+  }
+
+  function drawLog(){
+    if(!S.log.length){
+      el.rollLog.innerHTML = '<span class="lgk">주사위를 굴리면 여기에 기록됩니다</span>';
+      return;
+    }
+    var n = names(), owner = n[S.logOwner] || n[0];
+    var html = '<span class="lgk">' + esc(owner) + '의 턴 ▸</span>';
+    var busted = false;
+    for(var i=0;i<S.log.length;i++){
+      var v = S.log[i];
+      if(v === 1) busted = true;
+      html += '<span class="md'+(v===1?' one':'')+'">'+v+'</span>';
+    }
+    var sum = 0;
+    for(var j=0;j<S.log.length;j++){ if(S.log[j]!==1) sum += S.log[j]; }
+    html += busted
+      ? '<span class="lgsum" style="color:var(--risk)">= 0점</span>'
+      : '<span class="lgsum">= ' + sum + '점</span>';
+    el.rollLog.innerHTML = html;
+  }
+
+  function drawBanner(){
+    var n = names(), who = n[S.cur] || n[0];
+    var bot = isCpuTurn() && !S.over;
+    el.turnBanner.className = 'turnbanner' + (bot ? ' isbot' : '');
+    if(S.over){
+      el.turnWho.textContent = '게임 종료';
+      el.turnBanner.className = 'turnbanner';
+    }else if(bot){
+      el.turnWho.textContent = who + '의 차례 — 던지는 중…';
+    }else if(S.mode==='solo'){
+      el.turnWho.textContent = (S.soloTurns + 1) + '번째 턴';
+    }else{
+      el.turnWho.textContent = who + '의 차례';
+    }
+  }
+
+  function drawEV(){
+    var t = S.tt, loss = t/6, net = (20-t)/6;
+    el.evLoss.textContent = (loss > 0 ? '−' : '') + loss.toFixed(2);
+    el.evT.textContent = t;
+    el.evNet.textContent = (net>=0?'+':'−') + Math.abs(net).toFixed(2);
+    el.evNetBox.className = 'nv ' + (net>=0?'pos':'neg');
+
+    var MAX = 40, pct = Math.min(100, t/MAX*100);
+    el.fill.style.width = pct + '%';
+    el.marker.style.left = pct + '%';
+    el.tLabel.textContent = '턴 점수 ' + t + '점';
+
+    var winnable = (S.scores[S.cur] + t >= S.target) && !S.over && t>0;
+    if(winnable){
+      el.verdictChip.textContent = '지금 멈춰!';
+      el.verdictWhy.textContent = '멈추는 순간 ' + S.target + '점에 닿습니다. 여기선 기댓값 계산이 필요 없어요.';
+    }else if(t < 20){
+      el.verdictChip.textContent = '굴려!';
+      el.verdictWhy.textContent = '잃을 수 있는 ' + t + '점보다 기대 이득이 큽니다. 평균적으로 굴리는 쪽이 +' + net.toFixed(2) + '점 이득.';
+    }else if(t === 20){
+      el.verdictChip.textContent = '딱 반반';
+      el.verdictWhy.textContent = '얻을 것과 잃을 것이 3.33점으로 정확히 같아지는 지점입니다.';
+    }else{
+      el.verdictChip.textContent = '멈춰!';
+      el.verdictWhy.textContent = '한 번 더 굴리면 평균적으로 ' + Math.abs(net).toFixed(2) + '점 손해입니다.';
+    }
+
+    el.tRolls.textContent = S.rolls;
+    el.tOnes.textContent = S.ones;
+    el.tRatio.textContent = S.rolls ? (S.ones/S.rolls*100).toFixed(1)+'%' : '—';
+  }
+
+  function render(){
+    drawScores(); drawDie(); drawEV(); drawStreak(); drawLog(); drawBanner();
+    el.turnTotal.textContent = S.tt;
+    el.turnTotal.className = 'turntotal' + (S.tt===0?' zero':(S.tt>=20?' danger':' hot'));
+    el.targetNote.textContent = '먼저 ' + S.target + '점!';
+    var lock = S.rolling || S.over || isCpuTurn();
+    el.rollBtn.disabled = lock;
+    el.holdBtn.disabled = lock || S.tt===0;
+  }
+  function say(html){ el.msg.innerHTML = '<span>'+html+'</span>'; }
+
+  /* ---------- confetti ---------- */
+  var cv = el.confetti, ctx = cv.getContext('2d'), parts = [], raf = null;
+  function fit(){ cv.width = innerWidth; cv.height = innerHeight; }
+  addEventListener('resize', fit); fit();
+  function burst(){
+    if(reduce) return;
+    var cols = ['#E09A0C','#D2371D','#1B7A57','#3D5CC4','#F0A7B0'];
+    parts = [];
+    for(var i=0;i<110;i++){
+      parts.push({x:innerWidth/2 + (Math.random()-.5)*220, y:innerHeight*0.42,
+        vx:(Math.random()-.5)*11, vy:Math.random()*-13-4,
+        w:5+Math.random()*7, h:8+Math.random()*8,
+        r:Math.random()*6, vr:(Math.random()-.5)*.4,
+        c:cols[(Math.random()*cols.length)|0], life:120});
+    }
+    if(!raf) raf = requestAnimationFrame(tick);
+  }
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    var alive = 0;
+    for(var i=0;i<parts.length;i++){
+      var p = parts[i];
+      if(p.life<=0) continue;
+      alive++;
+      p.vy += .38; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life--;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    }
+    if(alive>0){ raf = requestAnimationFrame(tick); }
+    else { ctx.clearRect(0,0,cv.width,cv.height); raf = null; }
+  }
+
+  /* ---------- flow ---------- */
+  function nextPlayer(){
+    S.tt = 0; S.streak = 0; S.pendingClear = true;
+    if(S.mode==='solo'){ S.soloTurns++; return; }
+    S.cur = 1 - S.cur;
+    if(isCpuTurn()) setTimeout(cpuStep, 950);
+  }
+  function canAct(){ return S.phase==='play' && !S.rolling && !S.over && !isCpuTurn(); }
+
+  function roll(byCpu){
+    if(S.rolling || S.over || S.phase!=='play') return;
+    if(!byCpu && isCpuTurn()) return;
+    if(S.pendingClear){ S.log = []; S.pendingClear = false; }
+    S.logOwner = S.cur;
+    S.rolling = true; S.bust = false; S.landed = false;
+    render();
+    var ticks = 0;
+    var iv = setInterval(function(){
+      S.face = 1 + Math.floor(Math.random()*6);
+      drawDie();
+      if(++ticks > 7 || reduce){ clearInterval(iv); resolve(); }
+    }, reduce ? 1 : 62);
+
+    function resolve(){
+      var v = 1 + Math.floor(Math.random()*6);
+      S.face = v; S.rolling = false; S.landed = true; S.rolls++;
+      S.log.push(v);
+      var who = names()[S.cur];
+      if(v === 1){
+        S.ones++; S.bust = true;
+        var lost = S.tt;
+        setMood('bust');
+        say(lost === 0
+          ? '<span class="bust">시작하자마자 1!</span><br>' + who + ', 아무것도 못 쌓고 차례가 넘어갑니다.'
+          : '<span class="bust">1이 나왔다!</span><br>' + who + '의 턴 점수 ' + lost + '점이 사라졌습니다.');
+        nextPlayer();
+        render();
+        setTimeout(function(){ S.bust=false; drawDie(); if(!S.over) moodFromTurn(); }, 900);
+      }else{
+        S.tt += v; S.streak++;
+        var line = ['좋아!','나이스!','계속 간다!','착실하게!','쌓인다!'][(Math.random()*5)|0];
+        say('<strong>' + v + '</strong> — ' + (isCpuTurn() ? who + ', ' : '') + line + ' 턴 점수 ' + S.tt + '점.');
+        moodFromTurn();
+        render();
+        if(isCpuTurn()) setTimeout(cpuStep, 950);
+      }
+    }
+  }
+
+  function hold(byCpu){
+    if(S.rolling || S.over || S.tt===0 || S.phase!=='play') return;
+    if(!byCpu && isCpuTurn()) return;
+    var who = names()[S.cur], gained = S.tt;
+    S.scores[S.cur] += S.tt;
+
+    if(S.scores[S.cur] >= S.target){
+      S.over = true; S.tt = 0; S.streak = 0;
+      setMood('win'); burst();
+      if(S.mode==='solo'){
+        S.soloTurns++;
+        var m = '<span class="win">' + S.target + '점 도달!</span><br>' + S.soloTurns + '턴 걸렸습니다.';
+        if(S.best===null || S.soloTurns < S.best){
+          S.best = S.soloTurns;
+          try{ localStorage.setItem('pig.best.'+S.target, String(S.best)); }catch(e){}
+          m += ' 🏅 개인 최고 기록!';
+        }else{ m += ' (최고 기록 ' + S.best + '턴)'; }
+        say(m);
+      }else{
+        say('<span class="win">' + who + ' 승리!</span><br>' + S.scores[S.cur] + '점으로 게임 종료.');
+      }
+      render();
+      return;
+    }
+    setMood('safe');
+    say(who + '가 <strong>' + gained + '점</strong>을 안전하게 확정. 총 ' + S.scores[S.cur] + '점.');
+    nextPlayer();
+    render();
+    setTimeout(function(){ if(!S.over) moodFromTurn(); }, 900);
+  }
+
+  /* ---------- cpu ---------- */
+  function cpuDecide(){
+    var me = S.scores[1], opp = S.scores[0];
+    if(me + S.tt >= S.target) return 'hold';
+    var th = 20;
+    if(opp >= S.target - 20) th = Math.max(th, S.target - me);
+    th = Math.min(th, S.target - me);
+    return S.tt >= th ? 'hold' : 'roll';
+  }
+  function cpuStep(){
+    if(S.over || !isCpuTurn() || S.rolling) return;
+    if(cpuDecide()==='hold') hold(true); else roll(true);
+  }
+
+  /* ---------- setup ---------- */
+  function reset(keepStats){
+    S.scores=[0,0]; S.cur=0; S.tt=0; S.streak=0; S.over=false;
+    S.rolling=false; S.bust=false; S.landed=false; S.face=5; S.soloTurns=0;
+    S.log=[]; S.logOwner=0; S.pendingClear=false;
+    if(!keepStats){ S.rolls=0; S.ones=0; }
+    try{ var b = localStorage.getItem('pig.best.'+S.target); S.best = b ? parseInt(b,10) : null; }catch(e){ S.best=null; }
+    var n = names();
+    var opening = {
+      duo: n[0] + '님부터! 굴릴수록 쌓이고, 1이 나오면 전부 사라집니다.',
+      cpu: '“' + BOTS[S.bot].line + '” — ' + n[1] + '은(는) 20점에서만 멈춥니다. 이길 수 있을까요?',
+      solo:'목표 점수까지 몇 턴이 걸리는지 세어 봅시다.'
+    }[S.mode];
+    if(S.mode==='solo' && S.best) opening += ' 최고 기록 ' + S.best + '턴.';
+    say(opening);
+    setMood('idle');
+    render();
+  }
+
+  el.rollBtn.addEventListener('click', function(){ if(canAct()) roll(false); });
+  el.holdBtn.addEventListener('click', function(){ if(canAct()) hold(false); });
+  el.resetBtn.addEventListener('click', function(){
+    if(S.phase==='setup') startGame(); else reset(true);
+  });
+  el.nameBtn.addEventListener('click', function(){ toSetup(); });
+  el.startBtn.addEventListener('click', function(){ startGame(); });
+  el.setup.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); startGame(); }
+  });
+  el.bots.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    S.bot = parseInt(b.getAttribute('data-bot'),10);
+    Array.prototype.forEach.call(el.bots.querySelectorAll('.bot'), function(x){
+      x.setAttribute('aria-pressed', x===b ? 'true':'false');
+    });
+  });
+
+  el.modeSeg.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    S.mode = b.getAttribute('data-mode');
+    Array.prototype.forEach.call(el.modeSeg.querySelectorAll('button'), function(x){
+      x.setAttribute('aria-pressed', x===b ? 'true':'false');
+    });
+    if(S.phase==='play') readNames();
+    toSetup();
+  });
+  el.targetSeg.addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    S.target = parseInt(b.getAttribute('data-target'),10);
+    Array.prototype.forEach.call(el.targetSeg.querySelectorAll('button'), function(x){
+      x.setAttribute('aria-pressed', x===b ? 'true':'false');
+    });
+    if(S.phase==='play'){ reset(false); } else { renderSetup(); }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.target && /INPUT|TEXTAREA|BUTTON|SELECT/.test(e.target.tagName)) return;
+    if(e.key === ' ' || e.key === 'r' || e.key === 'R'){
+      e.preventDefault(); if(canAct()) roll(false);
+    }else if(e.key === 'Enter' || e.key === 'h' || e.key === 'H'){
+      e.preventDefault(); if(canAct() && S.tt>0) hold(false);
+    }
+  });
+
+  if(el.lidPig) el.lidPig.innerHTML = pigSVG('greedy');
+  try{
+    S.p1 = localStorage.getItem('pig.p1') || '';
+    S.p2 = localStorage.getItem('pig.p2') || '';
+  }catch(e){}
+  setMood('idle');
+  toSetup();
+})();
+</script>
+
+</body></html>

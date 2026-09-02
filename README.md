@@ -36,6 +36,8 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 | 위치 | 파일 | 내용 |
 |---|---|---|
 | 수학과 놀자 | `01-play/teachable-machine.html` | 티처블 머신 소리 실험 |
+| 수학과 놀자 | `01-play/river-crossing-game.html` | 강 건너기 게임 |
+| 수학과 놀자 | `01-play/pig-dice-lab.html` | 피그 주사위 실험실 |
 | 수학실험 › 대수 | `02-lab/02-algebra/sound-anc.html` | 삼각함수와 소음 제거 |
 | 수학실험 › 인공지능 수학 | `02-lab/06-ai-math/rgb-matrix.html` | 픽셀 에디터와 RGB 행렬 |
 | 수학실험 › 인공지능 수학 | `02-lab/06-ai-math/image-blender.html` | 이미지 블렌더 |

@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강 건너기 게임</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=Gaegu:wght@700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+
+<style>
+/* ── 토큰: 라이트가 기본, 다크는 토큰만 재정의 ───────────────── */
+:root{
+  --paper:#F3FAF7;
+  --card:#FFFFFF;
+  --card-2:#E6F6F3;
+  --ink:#10333B;
+  --ink-soft:#436A72;
+  --ink-faint:#7BA3A6;
+  --line:#D2EAE4;
+  --line-strong:#A8D3CB;
+
+  --water-deep:#0E7C90;
+  --water:#43C0D4;
+  --water-mid:#1FA3B8;
+  --water-pale:#C8F0F4;
+  --bank:#FCE7AE;
+  --bank-edge:#EFD189;
+  --reed:#5FC257;
+  --flag:#F2543D;
+  --stone-face:#DCE4DC;
+  --stone-edge:#B2C0B7;
+  --river-ink:#07424E;
+
+  --go-white:#FFFFFF;
+  --go-white-edge:#96A8A1;
+  --go-black:#2B3336;
+  --go-black-edge:#101618;
+
+  --shadow:0 2px 0 rgba(16,51,59,.07), 0 10px 24px -14px rgba(16,51,59,.34);
+  --focus:#0E7C90;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#112A30;
+    --card:#1B383F;
+    --card-2:#24484F;
+    --ink:#EDF8F4;
+    --ink-soft:#AECBC9;
+    --ink-faint:#8AACAD;
+    --line:#31555C;
+    --line-strong:#4A757D;
+
+    --water-deep:#12798B;
+    --water:#3EB4C7;
+    --water-mid:#1E93A6;
+    --water-pale:#215C68;
+    --bank:#6E5C36;
+    --bank-edge:#8E7944;
+    --reed:#93D172;
+    --flag:#FF7C67;
+    --stone-face:#75857F;
+    --stone-edge:#556360;
+    --river-ink:#E9FCFF;
+
+    --go-white:#F7F8F2;
+    --go-white-edge:#93A099;
+    --go-black:#333C3F;
+    --go-black-edge:#8C9A9D;
+
+    --shadow:0 2px 0 rgba(0,0,0,.3), 0 12px 26px -16px rgba(0,0,0,.85);
+    --focus:#7FE0EF;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#112A30; --card:#1B383F; --card-2:#24484F;
+  --ink:#EDF8F4; --ink-soft:#AECBC9; --ink-faint:#8AACAD;
+  --line:#31555C; --line-strong:#4A757D;
+  --water-deep:#12798B; --water:#3EB4C7; --water-mid:#1E93A6; --water-pale:#215C68;
+  --bank:#6E5C36; --bank-edge:#8E7944; --reed:#93D172; --flag:#FF7C67;
+  --stone-face:#75857F; --stone-edge:#556360; --river-ink:#E9FCFF;
+  --go-white:#F7F8F2; --go-white-edge:#93A099; --go-black:#333C3F; --go-black-edge:#8C9A9D;
+  --shadow:0 2px 0 rgba(0,0,0,.3), 0 12px 26px -16px rgba(0,0,0,.85);
+  --focus:#7FE0EF;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  font-size:16px; line-height:1.75; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1060px; margin:0 auto; padding:0 20px 72px}
+h1,h2,h3{font-family:"Jua","Gowun Dodum",sans-serif; font-weight:400; text-wrap:balance; margin:0; line-height:1.25}
+p{margin:0}
+:focus-visible{outline:3px solid var(--focus); outline-offset:2px; border-radius:6px}
+
+.eyebrow{
+  font-family:"Gaegu",cursive; font-size:19px; letter-spacing:.06em;
+  color:var(--water-deep); margin:0 0 2px;
+}
+:root[data-theme="dark"] .eyebrow, :root:not([data-theme="light"]) .eyebrow{}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .eyebrow{color:#7FE0EF}}
+:root[data-theme="dark"] .eyebrow{color:#7FE0EF}
+
+/* ── 히어로 ───────────────────────────────────────────────── */
+.hero{position:relative; margin:0 -20px 34px; padding:0}
+.hero-scene{display:block; width:100%; height:auto}
+.hero-text{padding:28px 20px 0; max-width:640px; margin:0 auto; text-align:center}
+.hero h1{font-size:clamp(38px,7.4vw,66px); letter-spacing:-.01em}
+.hero .sub{margin-top:10px; color:var(--ink-soft); font-size:17px}
+.pull{
+  margin:22px auto 0; max-width:520px; padding:14px 18px;
+  font-family:"Gaegu",cursive; font-size:clamp(20px,3.4vw,26px); line-height:1.5;
+  color:var(--ink); border-top:2px solid var(--line-strong); border-bottom:2px solid var(--line-strong);
+}
+.pull b{color:var(--flag); font-weight:inherit}
+
+/* ── 공통 카드 ────────────────────────────────────────────── */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  padding:22px 22px 24px; box-shadow:var(--shadow);
+}
+section{margin-top:34px}
+.sec-head{margin-bottom:14px}
+.sec-head h2{font-size:clamp(23px,3.6vw,29px)}
+.sec-head .note{color:var(--ink-soft); font-size:15px; margin-top:4px}
+
+/* 소개 4꼭지 */
+.intro-grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
+.intro-grid .card{padding:18px}
+.intro-grid h3{font-size:19px; margin-bottom:6px}
+.intro-grid p{font-size:15px; color:var(--ink-soft)}
+.flow{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:10px;
+  font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--ink)}
+.flow span{background:var(--card-2); border:1px solid var(--line); border-radius:999px; padding:3px 10px}
+.flow em{font-style:normal; color:var(--ink-faint)}
+
+/* 규칙 */
+.rules{counter-reset:r; display:grid; gap:9px; margin:0; padding:0; list-style:none}
+.rules li{display:flex; gap:11px; align-items:flex-start; font-size:15.5px}
+.rules li::before{
+  counter-increment:r; content:counter(r);
+  flex:none; width:24px; height:24px; margin-top:3px; border-radius:50%;
+  background:var(--water-deep); color:#fff; font-family:"IBM Plex Mono",monospace;
+  font-size:13px; display:grid; place-items:center;
+}
+.kit{
+  margin-bottom:14px; padding:10px 14px; border-radius:10px;
+  background:var(--card-2); border:1px dashed var(--line-strong);
+  font-size:14.5px; color:var(--ink-soft);
+}
+.kit b{color:var(--ink); font-weight:normal; font-family:"Jua",sans-serif}
+
+/* ── 컨트롤 ───────────────────────────────────────────────── */
+.controls{display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; margin-bottom:16px}
+.ctl{display:flex; flex-direction:column; gap:6px}
+.ctl > span{font-size:12.5px; letter-spacing:.08em; color:var(--ink-faint)}
+.seg{display:flex; background:var(--card-2); border:1px solid var(--line); border-radius:10px; padding:3px; gap:3px}
+.seg button{
+  font:inherit; font-size:14.5px; padding:6px 13px; border:0; border-radius:7px;
+  background:transparent; color:var(--ink-soft); cursor:pointer; white-space:nowrap;
+}
+.seg button[aria-pressed="true"]{background:var(--water-deep); color:#fff}
+.seg button:hover:not([aria-pressed="true"]){color:var(--ink)}
+
+.btn{
+  font-family:"Jua",sans-serif; font-size:16px; padding:10px 20px; cursor:pointer;
+  border:1px solid var(--water-deep); border-radius:10px;
+  background:var(--water-deep); color:#fff; box-shadow:var(--shadow);
+}
+.btn:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.4; cursor:not-allowed; filter:none}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--line-strong)}
+.btn.small{font-size:14px; padding:7px 14px}
+
+/* ── 보드 ─────────────────────────────────────────────────── */
+.board-outer{overflow-x:auto; padding:2px 2px 6px; -webkit-overflow-scrolling:touch}
+.board{min-width:720px}
+
+.goal{
+  display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:11px;
+  background:var(--bank); border:1px solid var(--bank-edge); color:var(--ink);
+}
+.goal .flagmark{font-size:19px; line-height:1}
+.goal .who{font-family:"Jua",sans-serif; font-size:15.5px}
+.goal .count{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:15px;
+  margin-left:auto; background:var(--card); border:1px solid var(--bank-edge);
+  border-radius:999px; padding:1px 11px; font-variant-numeric:tabular-nums;
+}
+.goal .tray{display:flex; gap:4px; flex-wrap:wrap; min-height:20px}
+
+.cols{display:grid; grid-template-columns:repeat(11,1fr); gap:5px}
+.side{min-height:96px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px}
+.side.top{align-items:flex-start; padding:4px 0 0}
+
+.river{
+  position:relative; margin:16px 0; padding:14px 0 24px;
+  background:linear-gradient(180deg,var(--water) 0%,var(--water-mid) 55%,var(--water) 100%);
+}
+.river .wave{position:absolute; left:0; width:100%; height:13px; display:block; color:var(--water)}
+.river .wave.t{top:-12px}
+.river .wave.b{bottom:-12px; transform:scaleY(-1)}
+.river .cols{position:relative; z-index:1}
+
+.stepstone{
+  position:relative; height:52px; border-radius:50% 50% 46% 54% / 52% 48% 52% 48%;
+  background:radial-gradient(120% 120% at 34% 26%, color-mix(in srgb,var(--stone-face) 88%, #fff) 0%, var(--stone-face) 60%, var(--stone-edge) 100%);
+  border:1px solid var(--stone-edge);
+  display:grid; place-items:center;
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:17px; color:var(--ink);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.stepstone.lit{
+  transform:translateY(-4px) scale(1.06);
+  box-shadow:0 0 0 3px var(--flag), 0 0 22px 2px rgba(206,68,56,.55);
+}
+.stepstone .p{
+  position:absolute; bottom:-18px; font-family:"IBM Plex Mono",monospace;
+  font-size:10.5px; color:var(--river-ink); letter-spacing:.02em; opacity:.85;
+}
+
+/* 바둑돌 */
+.stone{
+  width:26px; height:26px; border-radius:50%; display:block; flex:none;
+  box-shadow:inset -3px -4px 6px rgba(0,0,0,.24), inset 3px 3px 4px rgba(255,255,255,.5),
+             0 1px 2px rgba(0,0,0,.22);
+}
+.stone.w{background:var(--go-white); border:1px solid var(--go-white-edge)}
+.stone.b{background:var(--go-black); border:1px solid var(--go-black-edge)}
+.stone.tiny{width:19px; height:19px}
+.stack{display:flex; flex-direction:column-reverse; align-items:center; gap:0}
+.stack.top{flex-direction:column}
+.stack .stone{margin-top:-11px}
+.stack.top .stone{margin-top:0; margin-bottom:-11px}
+.stack .stone:first-child{margin:0}
+.stack .more{
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-faint);
+  margin-top:3px;
+}
+/* 강을 건너는 바둑돌 */
+.stone.flying{position:fixed; z-index:60; pointer-events:none; margin:0 !important}
+.stone.arrived{animation:plop .45s cubic-bezier(.2,1.5,.4,1)}
+@keyframes plop{0%{transform:scale(1.5)}60%{transform:scale(.9)}100%{transform:scale(1)}}
+.splash{position:fixed; z-index:59; pointer-events:none; width:46px; height:46px; margin:-23px 0 0 -23px;
+  border-radius:50%; border:2px solid var(--water-pale); opacity:.9}
+.veil{width:26px; height:26px; border-radius:50%; display:grid; place-items:center;
+  background:var(--card-2); border:1px dashed var(--line-strong);
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-faint)}
+.stack .zero{width:26px; height:26px; border-radius:50%; border:1px dashed var(--line-strong); opacity:.5}
+
+/* 배치 스테퍼 */
+.stepper{display:flex; flex-direction:column; align-items:center; gap:3px}
+.stepper button{
+  width:26px; height:22px; border-radius:6px; cursor:pointer; font:inherit; font-size:14px; line-height:1;
+  border:1px solid var(--line-strong); background:var(--card); color:var(--ink);
+}
+.stepper button:hover:not(:disabled){background:var(--card-2)}
+.stepper button:disabled{opacity:.3; cursor:not-allowed}
+.stepper .n{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px}
+
+/* 주사위 / 상태 */
+.playbar{display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin-top:18px}
+.dice{display:flex; gap:14px; padding:11px 16px 13px; border-radius:14px;
+  background:var(--card-2); border:1px solid var(--line); align-items:center}
+.die{
+  width:60px; height:60px; border-radius:13px; padding:8px; will-change:transform;
+  display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); gap:2px;
+  border:1px solid var(--line-strong); background:var(--card); box-shadow:var(--shadow);
+}
+.die.red{background:var(--flag); border-color:var(--flag)}
+.die i{border-radius:50%; background:transparent}
+.die i.on{background:var(--ink)}
+.die.red i.on{background:#FFF3F1}
+.die.rolling{animation:tumbleA .32s linear infinite}
+#die2.rolling{animation:tumbleB .27s linear infinite}
+.die.land{animation:land .42s cubic-bezier(.2,1.5,.4,1)}
+@keyframes tumbleA{
+  0%{transform:translate(0,0) rotate(0deg)}
+  25%{transform:translate(-7px,-15px) rotate(-92deg)}
+  50%{transform:translate(5px,3px) rotate(-181deg)}
+  75%{transform:translate(9px,-13px) rotate(-288deg)}
+  100%{transform:translate(0,0) rotate(-360deg)}
+}
+@keyframes tumbleB{
+  0%{transform:translate(0,0) rotate(0deg)}
+  25%{transform:translate(8px,-12px) rotate(88deg)}
+  50%{transform:translate(-4px,4px) rotate(179deg)}
+  75%{transform:translate(-9px,-16px) rotate(281deg)}
+  100%{transform:translate(0,0) rotate(360deg)}
+}
+@keyframes land{
+  0%{transform:translateY(-18px) scale(1.14) rotate(7deg)}
+  55%{transform:translateY(0) scale(.94) rotate(-2deg)}
+  100%{transform:none}
+}
+.sum.pop{animation:sumpop .4s cubic-bezier(.2,1.5,.4,1)}
+@keyframes sumpop{0%{transform:scale(.5); opacity:.2}100%{transform:scale(1); opacity:1}}
+.sum{
+  font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:22px;
+  min-width:56px; text-align:center; font-variant-numeric:tabular-nums;
+}
+.status{flex:1 1 240px; min-width:200px; font-size:15.5px; color:var(--ink-soft)}
+.status b{color:var(--ink); font-family:"Jua",sans-serif; font-weight:400}
+.rollsleft{font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ink-faint)}
+
+.banner{
+  margin-top:16px; padding:14px 18px; border-radius:12px; text-align:center;
+  background:var(--card-2); border:1px solid var(--line-strong);
+  font-family:"Jua",sans-serif; font-size:20px;
+}
+.banner .small{font-family:"Gowun Dodum",sans-serif; font-size:14.5px; color:var(--ink-soft); display:block; margin-top:4px}
+
+.log{
+  margin-top:14px; max-height:112px; overflow-y:auto; padding:10px 12px;
+  background:var(--card-2); border:1px solid var(--line); border-radius:10px;
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink-soft);
+  display:flex; flex-direction:column; gap:2px;
+}
+.log .hit{color:var(--water-deep)}
+:root[data-theme="dark"] .log .hit{color:#6FDCEC}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .log .hit{color:#6FDCEC}}
+
+/* ── 접이식 탐구 패널 ─────────────────────────────────────── */
+details.panel{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  box-shadow:var(--shadow); margin-top:14px; overflow:hidden;
+}
+details.panel > summary{
+  cursor:pointer; list-style:none; padding:16px 20px;
+  display:flex; align-items:center; gap:12px;
+  font-family:"Jua",sans-serif; font-size:19px;
+}
+details.panel > summary::-webkit-details-marker{display:none}
+details.panel > summary::after{
+  content:"펼치기"; margin-left:auto; font-family:"Gowun Dodum",sans-serif;
+  font-size:13px; color:var(--ink-faint);
+}
+details.panel[open] > summary::after{content:"접기"}
+details.panel > summary .chev{
+  flex:none; width:22px; height:22px; border-radius:6px; background:var(--card-2);
+  border:1px solid var(--line-strong); display:grid; place-items:center;
+  font-size:12px; color:var(--ink-soft); transition:transform .2s ease;
+}
+details.panel[open] > summary .chev{transform:rotate(90deg)}
+details.panel > summary:hover{background:var(--card-2)}
+.panel-body{padding:4px 20px 22px; border-top:1px solid var(--line)}
+.panel-body > * + *{margin-top:14px}
+.panel-body p{font-size:15px; color:var(--ink-soft)}
+.panel-body p b{color:var(--ink); font-weight:normal; font-family:"Jua",sans-serif}
+
+/* 분포 차트 */
+.chart{display:grid; grid-template-columns:repeat(11,1fr); gap:6px; align-items:end; height:190px; margin-top:6px}
+.bar{display:flex; flex-direction:column; justify-content:flex-end; align-items:center; height:100%; gap:3px}
+.bar .pair{display:flex; gap:2px; width:100%; flex:1 1 auto; min-height:0; align-items:flex-end; justify-content:center}
+.bar .th,.bar .ob{width:44%; border-radius:4px 4px 0 0; min-height:2px; transition:height .35s ease}
+.bar .th{background:var(--water)}
+.bar .ob{background:var(--flag); opacity:.85}
+.bar .lab{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft)}
+.bar .val{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-faint)}
+.legend{display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--ink-soft); margin-top:10px}
+.legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+
+/* 36칸 격자 */
+.grid36{display:grid; grid-template-columns:auto repeat(6,1fr); gap:3px; max-width:360px; margin-top:6px}
+.grid36 div{
+  aspect-ratio:1; display:grid; place-items:center; border-radius:5px;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink);
+}
+.grid36 .hd{background:transparent; color:var(--ink-faint); font-size:11px; aspect-ratio:auto; padding:2px}
+.grid36 .cell{border:1px solid var(--line)}
+
+/* 표 */
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse; width:100%; min-width:520px; font-size:13.5px}
+th,td{padding:6px 8px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-family:"Jua",sans-serif; font-weight:400; color:var(--ink-soft); font-size:13px; white-space:nowrap}
+td.mono,th.mono{font-family:"IBM Plex Mono",monospace}
+tr.best td{background:color-mix(in srgb,var(--water) 16%, transparent)}
+
+.callout{
+  padding:14px 16px; border-radius:11px; background:var(--card-2);
+  border-left:4px solid var(--flag); font-size:15px;
+}
+.callout b{font-family:"Jua",sans-serif; font-weight:400}
+
+.evbox{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.evcell{padding:12px 14px; border-radius:11px; background:var(--card-2); border:1px solid var(--line)}
+.evcell .k{font-size:12.5px; color:var(--ink-faint)}
+.evcell .v{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:22px; font-variant-numeric:tabular-nums}
+.evcell.hi{border-color:var(--water-deep)}
+
+.qs{display:grid; gap:10px; counter-reset:q}
+.qs li{
+  list-style:none; padding:13px 16px; border-radius:11px;
+  background:var(--card); border:1px solid var(--line); font-size:15px;
+}
+.qs li::before{
+  counter-increment:q; content:"탐구 " counter(q); display:block;
+  font-family:"Gaegu",cursive; font-size:16px; color:var(--flag); margin-bottom:2px;
+}
+
+footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line);
+  font-size:13.5px; color:var(--ink-faint); text-align:center}
+
+@media (max-width:640px){
+  .hero-text{padding-top:20px}
+  .card{padding:18px 16px 20px}
+  .playbar{gap:12px}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important; transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ 히어로 ══ -->
+<header class="hero">
+  <svg class="hero-scene" viewBox="0 0 800 210" role="img" aria-label="징검다리가 놓인 강과 양쪽 강가의 깃발">
+    <rect x="0" y="0" width="800" height="210" fill="var(--bank)"/>
+    <path d="M0,54 C120,34 200,74 320,64 C440,54 520,24 640,38 C720,47 770,60 800,56 L800,166 C760,158 700,180 600,172 C500,164 430,186 320,178 C210,170 120,192 0,178 Z" fill="var(--water)"/>
+    <path d="M0,74 C120,56 210,92 330,84 C450,76 530,50 650,62 C725,70 772,80 800,76 L800,150 C760,144 700,162 600,155 C500,148 430,168 320,161 C210,154 120,172 0,160 Z" fill="var(--water-mid)" opacity=".7"/>
+    <g fill="var(--stone-face)" stroke="var(--stone-edge)">
+      <ellipse cx="70" cy="150" rx="26" ry="17"/><ellipse cx="140" cy="128" rx="25" ry="16"/>
+      <ellipse cx="212" cy="112" rx="27" ry="17"/><ellipse cx="286" cy="103" rx="25" ry="16"/>
+      <ellipse cx="360" cy="100" rx="27" ry="17"/><ellipse cx="434" cy="104" rx="25" ry="16"/>
+      <ellipse cx="506" cy="96" rx="27" ry="17"/><ellipse cx="578" cy="88" rx="25" ry="16"/>
+      <ellipse cx="648" cy="78" rx="26" ry="17"/><ellipse cx="716" cy="66" rx="24" ry="16"/>
+    </g>
+    <g stroke="var(--reed)" stroke-width="3" stroke-linecap="round" fill="none">
+      <path d="M258,140 q6,-22 2,-34"/><path d="M266,140 q10,-18 16,-26"/>
+      <path d="M600,44 q-6,-20 -2,-30"/><path d="M608,44 q8,-16 15,-22"/>
+    </g>
+    <g>
+      <rect x="60" y="96" width="3" height="46" fill="var(--ink)"/>
+      <path d="M63,98 L96,108 L63,120 Z" fill="var(--flag)"/>
+      <rect x="736" y="24" width="3" height="46" fill="var(--ink)"/>
+      <path d="M739,26 L772,36 L739,48 Z" fill="var(--flag)"/>
+    </g>
+    <g>
+      <circle cx="392" cy="60" r="9" fill="var(--go-white)" stroke="var(--go-white-edge)"/>
+      <circle cx="414" cy="66" r="9" fill="var(--go-black)" stroke="var(--go-black-edge)"/>
+      <circle cx="436" cy="58" r="9" fill="var(--go-white)" stroke="var(--go-white-edge)"/>
+    </g>
+  </svg>
+  <div class="hero-text">
+    <p class="eyebrow">주사위 2개 · 바둑돌 11개 · 확률 한 그릇</p>
+    <h1>강 건너기 게임</h1>
+    <p class="sub">2부터 12까지 놓인 징검돌 위에 바둑돌을 나눠 놓고, 주사위 두 개의 합이 부르는 자리에서 하나씩 강을 건넙니다. 놓는 순간 승부의 절반이 끝납니다.</p>
+    <p class="pull">7이 제일 잘 나온다.<br>그런데 <b>7에 다 몰면 진다.</b></p>
+  </div>
+</header>
+
+<!-- ══ 소개 ══ -->
+<section id="intro">
+  <div class="sec-head">
+    <p class="eyebrow">소개</p>
+    <h2>이런 게임입니다</h2>
+  </div>
+  <div class="intro-grid">
+    <div class="card">
+      <h3>규칙은 1분, 고민은 오래</h3>
+      <p>주사위를 굴리는 데는 실력이 필요 없습니다. 이 게임에서 사람이 결정하는 것은 딱 하나 — <b>바둑돌 11개를 어디에 놓을 것인가</b>. 굴리기 시작하면 남은 건 확률뿐입니다.</p>
+    </div>
+    <div class="card">
+      <h3>게임 방법</h3>
+      <p>강 이쪽 편이 내 구역. 2~12 위에 돌을 마음대로 나눠 놓습니다.</p>
+      <div class="flow"><span>주사위 2개</span><em>→</em><span>합 = s</span><em>→</em><span>s에 돌이 있으면 강 건너로</span></div>
+    </div>
+    <div class="card">
+      <h3>여기서 수학이 나옵니다</h3>
+      <p>두 주사위의 결과는 36가지. 합이 7인 경우가 6가지로 가장 많고, 2와 12는 각 1가지뿐입니다. 그렇다고 7에 몰아 놓으면? 한 번 굴려 건너는 돌은 <b>딱 한 개</b>라서 크게 손해입니다.</p>
+    </div>
+    <div class="card">
+      <h3>세 가지로 즐기세요</h3>
+      <p>짝과 하는 <b>2인 대전</b>, 혼자 하는 <b>컴퓨터 대결</b>(초보·고수), 그리고 게임을 마친 뒤 아래 두 패널을 펼쳐 배치의 근거를 계산으로 확인하는 <b>탐구</b>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 규칙 ══ -->
+<section id="rules">
+  <div class="sec-head">
+    <p class="eyebrow">규칙</p>
+    <h2>강 건너기 게임</h2>
+  </div>
+  <div class="card">
+    <p class="kit"><b>준비물</b> &nbsp;주사위 2개, 흰 바둑돌 11개, 검은 바둑돌 11개 &nbsp;(종이와 실물로도 그대로 할 수 있습니다)</p>
+    <ol class="rules">
+      <li>짝과 강의 위·아래 구역을 나누고, 바둑돌의 색을 정한다.</li>
+      <li>자기 구역의 2부터 12까지의 수 위에 바둑돌 11개를 놓는다. 한 수에 여러 개를 놓아도 되고, 아예 놓지 않아도 된다.</li>
+      <li>짝과 교대로 서로 다른 주사위 2개를 동시에 던져 나온 눈의 수의 합을 구한다. 자기 구역의 그 수 위에 바둑돌이 있으면 한 개를 상대편 깃발 옆으로 옮긴다. 없으면 옮기지 않는다.</li>
+      <li>③의 과정을 총 18회 반복한다. (한 사람당 9번씩)</li>
+      <li>바둑돌을 강 건너로 더 많이 옮긴 사람이 승리한다.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══ 게임 ══ -->
+<section id="play">
+  <div class="sec-head">
+    <p class="eyebrow">해보기</p>
+    <h2>강 건너기 판</h2>
+    <p class="note">먼저 바둑돌 11개를 놓고, 다 놓았으면 주사위를 굴립니다.</p>
+  </div>
+  <div class="card">
+    <div class="controls">
+      <label class="ctl"><span>모드</span>
+        <div class="seg" id="modeSeg" role="group" aria-label="모드 선택">
+          <button type="button" data-mode="pvp" aria-pressed="true">2인 대전</button>
+          <button type="button" data-mode="easy" aria-pressed="false">컴퓨터 · 초보</button>
+          <button type="button" data-mode="hard" aria-pressed="false">컴퓨터 · 고수</button>
+        </div>
+      </label>
+      <label class="ctl"><span>굴림 횟수</span>
+        <div class="seg" id="rollSeg" role="group" aria-label="굴림 횟수 선택">
+          <button type="button" data-rolls="18" aria-pressed="true">총 18회</button>
+          <button type="button" data-rolls="36" aria-pressed="false">총 36회</button>
+        </div>
+      </label>
+      <button class="btn ghost small" type="button" id="btnReset">새 판</button>
+    </div>
+
+    <div class="board-outer">
+      <div class="board">
+        <div class="goal" id="goalTop">
+          <span class="flagmark">🚩</span><span class="who">아래 구역이 건너온 돌</span>
+          <span class="tray" id="trayTop"></span><span class="count" id="cntTop">0</span>
+        </div>
+
+        <div class="cols" id="rowTop"></div>
+
+        <div class="river">
+          <svg class="wave t" viewBox="0 0 800 13" preserveAspectRatio="none" aria-hidden="true"><path d="M0,13 C60,0 110,13 170,7 C240,0 300,12 370,7 C440,2 500,13 570,8 C640,3 720,12 800,5 L800,13 Z" fill="currentColor"/></svg>
+          <div class="cols" id="rowRiver"></div>
+          <svg class="wave b" viewBox="0 0 800 13" preserveAspectRatio="none" aria-hidden="true"><path d="M0,13 C60,0 110,13 170,7 C240,0 300,12 370,7 C440,2 500,13 570,8 C640,3 720,12 800,5 L800,13 Z" fill="currentColor"/></svg>
+        </div>
+
+        <div class="cols" id="rowBot"></div>
+
+        <div class="goal" id="goalBot">
+          <span class="flagmark">🚩</span><span class="who">위 구역이 건너온 돌</span>
+          <span class="tray" id="trayBot"></span><span class="count" id="cntBot">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="playbar">
+      <div class="dice">
+        <div class="die" id="die1" aria-hidden="true"></div>
+        <div class="die red" id="die2" aria-hidden="true"></div>
+      </div>
+      <div class="sum" id="sumOut">–</div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+      <span class="rollsleft" id="rollsLeft"></span>
+      <button class="btn" type="button" id="btnMain">주사위 굴리기</button>
+      <button class="btn ghost small" type="button" id="btnHint">추천 배치</button>
+      <button class="btn ghost small" type="button" id="btnClear">배치 지우기</button>
+    </div>
+
+    <div class="banner" id="banner" hidden></div>
+    <div class="log" id="log" aria-label="굴림 기록"></div>
+  </div>
+</section>
+
+<!-- ══ 탐구 패널 ══ -->
+<section id="explore">
+  <div class="sec-head">
+    <p class="eyebrow">탐구</p>
+    <h2>왜 그렇게 놓아야 할까</h2>
+    <p class="note">게임을 먼저 해 본 뒤 펼쳐 보세요. 두 패널 모두 지금 판의 상황을 그대로 씁니다.</p>
+  </div>
+
+  <details class="panel" id="panelDist">
+    <summary><span class="chev">▶</span>두 주사위의 합, 어떤 수가 잘 나올까 — 확률 분포 보기</summary>
+    <div class="panel-body">
+      <p>두 주사위를 굴렸을 때 나올 수 있는 경우는 모두 <b>36가지</b>이고, 모두 똑같이 나올 가능성을 가집니다. 합이 7인 경우가 6가지로 가장 많고, 2와 12는 각각 1가지뿐입니다. 파란 막대가 이론값, 빨간 막대가 <b>이 페이지에서 실제로 굴린 결과</b>입니다. 많이 굴릴수록 두 막대가 닮아 갑니다.</p>
+      <div class="chart" id="chart"></div>
+      <p class="legend"><span><i style="background:var(--water)"></i>이론 확률</span><span><i style="background:var(--flag)"></i>실제 굴림 <b id="obsN">0</b>회</span></p>
+      <div class="grid36" id="grid36"></div>
+      <p style="font-size:13.5px">↑ 가로는 흰 주사위, 세로는 붉은 주사위. 칸의 색이 진할수록 그 합이 나오는 경우가 많은 수입니다. 대각선으로 같은 수가 늘어선 것이 보이나요?</p>
+    </div>
+  </details>
+
+  <details class="panel" id="panelOpt">
+    <summary><span class="chev">▶</span>11개를 어떻게 나눠 놓아야 할까 — 최적 배치 해설</summary>
+    <div class="panel-body">
+      <p><b>1단계 · 돌 하나가 건널 확률.</b> 내 차례는 <span class="mono" id="myTurns">9</span>번. 수 <i>s</i>가 나올 확률을 <i>p</i>라 하면, <i>s</i> 위의 돌 하나가 건널 확률은 “한 번도 안 나오지 않을 확률”, 즉 1 − (1−<i>p</i>)<sup><span id="nExp">9</span></sup> 입니다.</p>
+
+      <p><b>2단계 · 두 번째 돌은 사정이 다릅니다.</b> 한 번 굴려 건너는 돌은 한 개뿐이라, <i>s</i>에 놓은 두 번째 돌이 건너려면 <i>s</i>가 <b>두 번 이상</b> 나와야 합니다. 그래서 같은 자리에 돌을 쌓을수록 한 개당 효율이 뚝뚝 떨어집니다.</p>
+
+      <div class="tbl-wrap">
+        <table id="tblMarg">
+          <thead><tr><th>수</th><th class="mono">확률</th><th class="mono">1번째 돌</th><th class="mono">2번째 돌</th><th class="mono">3번째 돌</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p><b>3단계 · 이득이 큰 순서대로 한 개씩.</b> 위 표의 값이 곧 “그 자리에 돌 한 개를 더 놓았을 때 늘어나는 기대 개수”입니다. 값이 큰 칸부터 11개를 차례로 채우면 그것이 최적 배치입니다.</p>
+
+      <div class="callout" id="optText"></div>
+
+      <p><b>4단계 · 내 배치와 견줘 보기.</b> 판에 놓인 아래 구역의 배치로 계산한 값입니다.</p>
+      <div class="evbox">
+        <div class="evcell hi"><div class="k">최적 배치</div><div class="v" id="evOpt">–</div></div>
+        <div class="evcell"><div class="k">내 배치 (아래 구역)</div><div class="v" id="evMine">–</div></div>
+        <div class="evcell"><div class="k">2~12에 골고루 한 개씩</div><div class="v" id="evUni">–</div></div>
+        <div class="evcell"><div class="k">전부 7에 몰아 놓기</div><div class="v" id="evAll7">–</div></div>
+      </div>
+      <p style="font-size:13.5px">단위는 “건널 것으로 기대되는 바둑돌 개수”. 전부 7에 몰면 왜 그렇게 나쁜지, 2와 12를 왜 비워 두는지가 숫자로 드러납니다.</p>
+    </div>
+  </details>
+
+  <ol class="qs" style="margin-top:22px; padding:0">
+    <li>2와 12를 비워 두는 것이 정말 이득일까? 굴림 횟수를 36회로 늘리면 답이 달라질까?</li>
+    <li>7에 돌을 두 개 놓는 것과 3에 한 개·11에 한 개 놓는 것, 어느 쪽이 나을까? 표에서 근거를 찾아보자.</li>
+    <li>주사위를 <b>세 개</b>로 늘려 3~18에 놓는 게임으로 바꾸면, 가장 좋은 배치는 어떤 모양이 될까?</li>
+  </ol>
+</section>
+
+<footer>강 건너기 게임 · 두 주사위의 합과 확률 분포를 몸으로 익히는 수학 체험</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const SUMS = [2,3,4,5,6,7,8,9,10,11,12];
+  const P = {}; SUMS.forEach(s => P[s] = (6 - Math.abs(7 - s)) / 36);
+
+  /* ── 확률 도구 ─────────────────────────────── */
+  function logC(n,k){ let r=0; for(let i=1;i<=k;i++) r += Math.log(n-k+i) - Math.log(i); return r; }
+  function pGE(p, j, n){            // P(Bin(n,p) >= j)
+    if(j <= 0) return 1;
+    if(j > n) return 0;
+    let s = 0;
+    for(let i=j;i<=n;i++) s += Math.exp(logC(n,i) + i*Math.log(p) + (n-i)*Math.log(1-p));
+    return s;
+  }
+  function evOf(place, n){          // 기대 건넌 돌 개수
+    let e = 0;
+    SUMS.forEach(s => { for(let j=1;j<=(place[s]||0);j++) e += pGE(P[s], j, n); });
+    return e;
+  }
+  function optimal(n){              // 탐욕적 배분 (한계 이득이 감소하므로 최적)
+    const k = {}; SUMS.forEach(s => k[s]=0);
+    for(let t=0;t<11;t++){
+      let best=null, bv=-1;
+      SUMS.forEach(s => { const v = pGE(P[s], k[s]+1, n); if(v > bv + 1e-12){ bv=v; best=s; } });
+      k[best]++;
+    }
+    return k;
+  }
+
+  /* ── 상태 ──────────────────────────────────── */
+  const st = {
+    mode:'pvp', totalRolls:18, phase:'place', placing:1,
+    stones:{1:blank(), 2:blank()}, initial:null, crossed:{1:0,2:0},
+    rolled:0, turn:1, tally:blank(), obs:0, log:[], busy:false, gen:0
+  };
+  function blank(){ const o={}; SUMS.forEach(s=>o[s]=0); return o; }
+  function placed(p){ return SUMS.reduce((a,s)=>a+st.stones[p][s],0); }
+  function myTurns(){ return st.totalRolls/2; }
+  const NAME = {1:'아래 구역', 2:'위 구역'};
+  function stoneClass(p){ return p===1 ? 'w' : 'b'; }
+
+  /* ── DOM ───────────────────────────────────── */
+  const $ = id => document.getElementById(id);
+  const rowTop=$('rowTop'), rowRiver=$('rowRiver'), rowBot=$('rowBot');
+  const btnMain=$('btnMain'), btnHint=$('btnHint'), btnClear=$('btnClear'), btnReset=$('btnReset');
+  const statusEl=$('status'), banner=$('banner'), logEl=$('log'), sumOut=$('sumOut'), rollsLeftEl=$('rollsLeft');
+
+  function stoneStack(p, s, top){
+    const n = st.stones[p][s];
+    const cls = stoneClass(p);
+    if(n === 0) return '<span class="zero"></span>';
+    const show = Math.min(n, 4);
+    let h = '';
+    for(let i=0;i<show;i++) h += '<span class="stone '+cls+'"></span>';
+    if(n > show) h += '<span class="more">×'+n+'</span>';
+    return '<span class="stack'+(top?' top':'')+'">'+h+'</span>';
+  }
+
+  function sideCell(p, s, top){
+    const isPlacing = st.phase==='place' && st.placing===p;
+    const covered = st.phase==='place' && st.placing===2 && p===1;
+    if(covered) return '<div class="side'+(top?' top':'')+'"><span class="veil">?</span></div>';
+    if(isPlacing){
+      const left = 11 - placed(p);
+      return '<div class="side'+(top?' top':'')+'" data-p="'+p+'" data-s="'+s+'"><div class="stepper">'
+        + (top ? '' : stoneStack(p,s,top))
+        + '<button type="button" class="plus" data-s="'+s+'"'+(left<=0?' disabled':'')+' aria-label="'+s+'에 돌 놓기">＋</button>'
+        + '<span class="n">'+st.stones[p][s]+'</span>'
+        + '<button type="button" class="minus" data-s="'+s+'"'+(st.stones[p][s]<=0?' disabled':'')+' aria-label="'+s+'에서 돌 빼기">－</button>'
+        + (top ? stoneStack(p,s,top) : '')
+        + '</div></div>';
+    }
+    return '<div class="side'+(top?' top':'')+'" data-p="'+p+'" data-s="'+s+'">'+stoneStack(p,s,top)+'</div>';
+  }
+
+  function render(){
+    rowTop.innerHTML  = SUMS.map(s => sideCell(2, s, true)).join('');
+    rowBot.innerHTML  = SUMS.map(s => sideCell(1, s, false)).join('');
+    rowRiver.innerHTML = SUMS.map(s =>
+      '<div class="stepstone" data-s="'+s+'">'+s+'<span class="p">'+(P[s]*36)+'/36</span></div>').join('');
+
+    $('cntTop').textContent = st.crossed[1];
+    $('cntBot').textContent = st.crossed[2];
+    $('trayTop').innerHTML = Array.from({length:st.crossed[1]}, ()=>'<span class="stone w tiny"></span>').join('');
+    $('trayBot').innerHTML = Array.from({length:st.crossed[2]}, ()=>'<span class="stone b tiny"></span>').join('');
+
+    logEl.innerHTML = st.log.map(l => '<div class="'+(l.hit?'hit':'')+'">'+l.t+'</div>').join('');
+    rollsLeftEl.textContent = st.phase==='play' ? '남은 굴림 '+(st.totalRolls - st.rolled)+'회' : '';
+    updateStatus();
+    updateExplore();
+  }
+
+  function updateStatus(){
+    if(st.phase === 'place'){
+      const p = st.placing, left = 11 - placed(p);
+      const cpu = st.mode !== 'pvp';
+      btnMain.textContent = left>0 ? '바둑돌을 다 놓아 주세요' : (p===1 && !cpu ? '위 구역 차례로 넘기기' : '게임 시작');
+      btnMain.disabled = left > 0;
+      btnHint.hidden = false; btnClear.hidden = false;
+      statusEl.innerHTML = '<b>'+NAME[p]+'</b>에 바둑돌을 놓는 중 — 남은 돌 <b>'+left+'개</b>'
+        + (cpu ? ' <span style="color:var(--ink-faint)">(위 구역은 컴퓨터가 놓습니다)</span>' : '')
+        + (p===2 ? ' <span style="color:var(--ink-faint)">아래 구역 배치는 가려 두었습니다.</span>' : '');
+    } else if(st.phase === 'play'){
+      btnHint.hidden = true; btnClear.hidden = true;
+      btnMain.disabled = st.busy;
+      const cpuTurn = st.mode!=='pvp' && st.turn===2;
+      btnMain.textContent = cpuTurn ? '컴퓨터 차례' : '주사위 굴리기';
+      statusEl.innerHTML = '<b>'+NAME[st.turn]+'</b> 차례입니다.';
+    } else {
+      btnHint.hidden = true; btnClear.hidden = true;
+      btnMain.textContent = '한 판 더'; btnMain.disabled = false;
+      statusEl.textContent = '';
+    }
+  }
+
+  /* ── 배치 ─────────────────────────────────── */
+  document.addEventListener('click', function(e){
+    const plus = e.target.closest('.plus'), minus = e.target.closest('.minus');
+    if(!plus && !minus) return;
+    const p = st.placing, s = +(plus||minus).dataset.s;
+    if(plus && placed(p) < 11) st.stones[p][s]++;
+    if(minus && st.stones[p][s] > 0) st.stones[p][s]--;
+    render();
+  });
+
+  btnHint.addEventListener('click', function(){
+    st.stones[st.placing] = optimal(myTurns());
+    render();
+  });
+  btnClear.addEventListener('click', function(){
+    st.stones[st.placing] = blank();
+    render();
+  });
+
+  function randomPlace(){
+    const k = blank();
+    for(let i=0;i<11;i++) k[SUMS[Math.floor(Math.random()*11)]]++;
+    return k;
+  }
+
+  /* ── 주사위 ───────────────────────────────── */
+  const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function drawDie(el, v){
+    let h=''; for(let i=0;i<9;i++) h += '<i class="'+(PIPS[v].indexOf(i)>=0?'on':'')+'"></i>';
+    el.innerHTML = h;
+  }
+  function d6(){ return 1+Math.floor(Math.random()*6); }
+
+  /* 주사위가 구르는 동안 눈이 계속 바뀌다가 착지한다 */
+  function tumble(d1, d2, done){
+    const e1 = $('die1'), e2 = $('die2');
+    if(calm){ drawDie(e1,d1); drawDie(e2,d2); done(); return; }
+    e1.classList.remove('land'); e2.classList.remove('land');
+    e1.classList.add('rolling'); e2.classList.add('rolling');
+    const iv = setInterval(function(){ drawDie(e1, d6()); drawDie(e2, d6()); }, 65);
+    setTimeout(function(){ clearInterval(iv); e1.classList.remove('rolling'); drawDie(e1, d1);
+      void e1.offsetWidth; e1.classList.add('land'); }, 760);
+    setTimeout(function(){ e2.classList.remove('rolling'); drawDie(e2, d2);
+      void e2.offsetWidth; e2.classList.add('land'); done(); }, 950);
+  }
+
+  /* 바둑돌이 강을 건너 날아가는 모습 */
+  function flyStone(fromEl, toEl, cls, done){
+    if(calm || !fromEl || !toEl){ done(); return; }
+    const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+    const fly = document.createElement('span');
+    fly.className = 'stone ' + cls + ' flying';
+    fly.style.left = a.left + 'px'; fly.style.top = a.top + 'px';
+    document.body.appendChild(fly);
+    const dx = b.left - a.left, dy = b.top - a.top;
+    const up = Math.min(120, Math.abs(dy) * 0.55 + 40);
+
+    const ripple = document.createElement('span');
+    ripple.className = 'splash';
+    ripple.style.left = (a.left + dx/2 + 13) + 'px';
+    ripple.style.top  = (a.top  + dy/2 + 13) + 'px';
+
+    const anim = fly.animate([
+      {transform:'translate(0,0) scale(1)', offset:0},
+      {transform:'translate('+(dx*.5)+'px,'+(dy*.5 - up)+'px) scale(1.45)', offset:.5},
+      {transform:'translate('+dx+'px,'+dy+'px) scale(1)', offset:1}
+    ], {duration:720, easing:'cubic-bezier(.35,.05,.35,1)'});
+
+    setTimeout(function(){
+      document.body.appendChild(ripple);
+      ripple.animate([{transform:'scale(.2)',opacity:.95},{transform:'scale(1.6)',opacity:0}],
+        {duration:520, easing:'ease-out'}).onfinish = function(){ ripple.remove(); };
+    }, 300);
+
+    anim.onfinish = function(){
+      fly.remove();
+      toEl.style.visibility = '';
+      toEl.classList.add('arrived');
+      done();
+    };
+  }
+
+  function doRoll(){
+    if(st.busy || st.phase !== 'play') return;
+    st.busy = true; updateStatus();
+    const d1 = d6(), d2 = d6(), s = d1 + d2, gen = st.gen;
+    sumOut.textContent = '…'; sumOut.classList.remove('pop');
+
+    tumble(d1, d2, function(){
+      if(gen !== st.gen) return;
+      sumOut.textContent = s;
+      void sumOut.offsetWidth; sumOut.classList.add('pop');
+      st.tally[s]++; st.obs++;
+
+      const p = st.turn;
+      const hit = st.stones[p][s] > 0;
+      st.rolled++;
+      st.log.unshift({hit:hit, t:'#'+String(st.rolled).padStart(2,'0')+'  '+NAME[p]+'  '+d1+'+'+d2+'='+String(s).padStart(2,' ')+'  '+(hit?'→ 강 건넘 ✓':'· 없음')});
+
+      const cell = rowRiver.querySelector('[data-s="'+s+'"]');
+      if(cell) cell.classList.add('lit');
+
+      // 날아갈 돌의 출발 지점(움직이기 전 화면 위치)을 먼저 잡아 둔다
+      const fromEl = hit
+        ? document.querySelector('.side[data-p="'+p+'"][data-s="'+s+'"] .stone:not(.zero)')
+        : null;
+      const fromRect = fromEl ? fromEl.getBoundingClientRect() : null;
+      const ghost = fromRect ? {getBoundingClientRect:function(){ return fromRect; }} : null;
+
+      if(hit){ st.stones[p][s]--; st.crossed[p]++; }
+      render();
+
+      const after = function(){
+        if(gen !== st.gen) return;
+        if(cell) cell.classList.remove('lit');
+        if(st.rolled >= st.totalRolls){ finish(); }
+        else { st.turn = st.turn===1 ? 2 : 1; st.busy = false; render(); maybeCpu(); }
+      };
+
+      if(hit){
+        const tray = p===1 ? $('trayTop') : $('trayBot');
+        const landing = tray.lastElementChild;
+        if(landing) landing.style.visibility = 'hidden';
+        setTimeout(function(){ flyStone(ghost, landing, stoneClass(p), after); }, 180);
+      } else {
+        setTimeout(after, 620);
+      }
+    });
+  }
+
+  function maybeCpu(){
+    if(st.mode!=='pvp' && st.phase==='play' && st.turn===2 && !st.busy){
+      setTimeout(doRoll, 480);
+    }
+  }
+
+  function finish(){
+    st.phase = 'end'; st.busy = false;
+    const a = st.crossed[1], b = st.crossed[2];
+    const who = a>b ? '아래 구역 승리!' : b>a ? '위 구역 승리!' : '무승부!';
+    banner.hidden = false;
+    banner.innerHTML = who + ' <span class="small">아래 구역 ' + a + '개 · 위 구역 ' + b + '개 건넜습니다. '
+      + '아래 <b>최적 배치 해설</b>을 펼쳐 이 배치의 기댓값과 견줘 보세요.</span>';
+    render();
+  }
+
+  btnMain.addEventListener('click', function(){
+    if(st.phase === 'place'){
+      if(placed(st.placing) < 11) return;
+      if(st.mode === 'pvp' && st.placing === 1){ st.placing = 2; render(); return; }
+      if(st.mode !== 'pvp'){
+        st.stones[2] = st.mode === 'hard' ? optimal(myTurns()) : randomPlace();
+      }
+      st.phase = 'play'; st.turn = 1;
+      st.initial = {1:Object.assign({},st.stones[1]), 2:Object.assign({},st.stones[2])};
+      render(); return;
+    }
+    if(st.phase === 'play'){ doRoll(); return; }
+    newGame();
+  });
+
+  function newGame(){
+    st.phase='place'; st.placing=1; st.stones={1:blank(),2:blank()};
+    st.initial=null; st.crossed={1:0,2:0}; st.rolled=0; st.turn=1; st.log=[]; st.busy=false; st.gen++;
+    document.querySelectorAll('.stone.flying,.splash').forEach(function(n){ n.remove(); });
+    banner.hidden = true; sumOut.textContent='–';
+    $('die1').innerHTML=''; $('die2').innerHTML='';
+    render();
+  }
+  btnReset.addEventListener('click', newGame);
+
+  /* ── 컨트롤 세그먼트 ───────────────────────── */
+  $('modeSeg').addEventListener('click', function(e){
+    const b = e.target.closest('button'); if(!b) return;
+    st.mode = b.dataset.mode;
+    [...this.children].forEach(x => x.setAttribute('aria-pressed', String(x===b)));
+    newGame();
+  });
+  $('rollSeg').addEventListener('click', function(e){
+    const b = e.target.closest('button'); if(!b) return;
+    st.totalRolls = +b.dataset.rolls;
+    [...this.children].forEach(x => x.setAttribute('aria-pressed', String(x===b)));
+    newGame();
+  });
+
+  /* ── 탐구 패널 ─────────────────────────────── */
+  function buildGrid36(){
+    const g = $('grid36');
+    let h = '<div class="hd"></div>';
+    for(let j=1;j<=6;j++) h += '<div class="hd">'+j+'</div>';
+    for(let i=1;i<=6;i++){
+      h += '<div class="hd">'+i+'</div>';
+      for(let j=1;j<=6;j++){
+        const s = i+j, w = P[s]*36;                 // 1~6
+        const alpha = 0.05 + 0.065*w;
+        h += '<div class="cell" style="background:color-mix(in srgb, var(--water) '+(alpha*100).toFixed(0)+'%, var(--card))">'+s+'</div>';
+      }
+    }
+    g.innerHTML = h;
+  }
+
+  function updateExplore(){
+    const n = myTurns();
+    $('myTurns').textContent = n; $('nExp').textContent = n;
+    $('obsN').textContent = st.obs;
+
+    // 분포 차트
+    const maxTh = 6/36, maxOb = Math.max(1, ...SUMS.map(s=>st.tally[s]));
+    const obDen = st.obs || 1;
+    $('chart').innerHTML = SUMS.map(function(s){
+      const th = P[s]/maxTh*100;
+      const ob = st.obs ? (st.tally[s]/obDen) / maxTh * 100 : 0;
+      return '<div class="bar"><span class="val">'+(P[s]*36)+'/36</span>'
+        + '<div class="pair"><span class="th" style="height:'+th.toFixed(1)+'%"></span>'
+        + '<span class="ob" style="height:'+Math.min(100,ob).toFixed(1)+'%"></span></div>'
+        + '<span class="lab">'+s+'</span></div>';
+    }).join('');
+
+    // 한계 이득 표
+    const opt = optimal(n);
+    const rows = SUMS.map(function(s){
+      const c = [1,2,3].map(j => pGE(P[s], j, n));
+      return '<tr'+(opt[s]>0?' class="best"':'')+'><td class="mono">'+s+'</td><td class="mono">'+(P[s]*36)+'/36</td>'
+        + c.map(v => '<td class="mono">'+v.toFixed(3)+'</td>').join('') + '</tr>';
+    }).join('');
+    document.querySelector('#tblMarg tbody').innerHTML = rows;
+
+    // 최적 배치 문장
+    const parts = SUMS.filter(s=>opt[s]>0).map(s => s+'에 '+opt[s]+'개');
+    const empty = SUMS.filter(s=>opt[s]===0);
+    $('optText').innerHTML = '<b>최적 배치 ('+st.totalRolls+'회 판, 내 차례 '+n+'번)</b><br>'
+      + parts.join(' · ') + '<br>'
+      + (empty.length ? '<span style="color:var(--ink-soft)">비워 두는 수: ' + empty.join(', ')
+          + ' — 나올 확률이 너무 낮아, 그 돌을 다른 자리에 놓는 편이 언제나 낫습니다. (6과 8, 5와 9처럼 확률이 같은 짝은 서로 바꿔 놓아도 값이 같습니다.)</span>' : '');
+
+    const uni = blank(); SUMS.forEach(s=>uni[s]=1);
+    const all7 = blank(); all7[7] = 11;
+    $('evOpt').textContent  = evOf(opt, n).toFixed(2) + '개';
+    $('evUni').textContent  = evOf(uni, n).toFixed(2) + '개';
+    $('evAll7').textContent = evOf(all7, n).toFixed(2) + '개';
+    const mine = st.initial ? st.initial[1] : st.stones[1];
+    const ready = SUMS.reduce((a,s2)=>a+mine[s2],0) === 11;
+    $('evMine').textContent = ready ? evOf(mine, n).toFixed(2)+'개' : '돌 11개를 다 놓으면 계산됩니다';
+    $('evMine').style.fontSize = ready ? '' : '13px';
+  }
+
+  buildGrid36();
+  newGame();
+})();
+</script>
+
+</body></html>
