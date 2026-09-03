@@ -191,8 +191,9 @@
   td.range-cell { color: var(--ink-soft); min-width: 240px; }
   tr.pending td.teacher-cell { color: var(--muted); font-style: italic; }
 
-  .range-display { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .range-display { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
   .range-display .txt { white-space: pre-line; }
+  .range-display .btns { flex: none; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
   .pill {
     display: inline-block;
     padding: 2px 9px;
@@ -204,7 +205,7 @@
   }
   .pill.wait { background: var(--accent-soft); color: var(--accent); }
 
-  .edit-link {
+  .edit-link, .add-link {
     flex: none;
     padding: 4px 11px;
     border: 1px solid var(--line);
@@ -215,8 +216,10 @@
     font-weight: 700;
     cursor: pointer;
     font-family: inherit;
+    white-space: nowrap;
   }
-  .edit-link:hover { border-color: var(--accent); color: var(--accent); }
+  .edit-link:hover, .add-link:hover { border-color: var(--accent); color: var(--accent); }
+  .add-link { color: var(--accent); border-style: dashed; }
 
   /* 인라인 편집 */
   input[type="text"], textarea {
@@ -272,13 +275,14 @@
   @media (max-width: 560px) {
     .summary { flex-wrap: wrap; }
     td.range-cell { min-width: 200px; }
-    .range-display { flex-direction: column; }
+    .range-display { flex-direction: column; align-items: stretch; }
+    .range-display .btns { flex-direction: row; align-items: center; }
   }
 
   /* 학생 배부용 출력 */
   @media print {
     body { background: #fff; padding: 0; }
-    .back, .summary, .setup-banner, .table-toolbar, .edit-link { display: none !important; }
+    .back, .summary, .setup-banner, .table-toolbar, .edit-link, .add-link { display: none !important; }
     .print-header, .print-footer { display: block; }
     .print-header {
       margin: 0 0 14px;
@@ -320,7 +324,7 @@
   <header class="hero">
     <span class="eyebrow">3학년 평가계</span>
     <h1>2026학년도 2학기 1차 정기시험 시험범위</h1>
-    <p>담당 선생님은 아래 표에서 본인 과목 줄의 [입력] 버튼을 눌러 바로 시험범위를 적어 주세요. 학생과 선생님 모두 같은 화면에서 실시간으로 확인합니다.</p>
+    <p>담당 선생님은 아래 표에서 본인 과목 줄의 [입력] 버튼을 눌러 바로 시험범위를 적어 주세요. 한 과목을 두 분 이상이 나눠 맡으신 경우, 각자 [담당교사 추가]를 눌러 본인 몫을 따로 적어 주시면 됩니다.</p>
   </header>
 
   <div id="setupBanner" class="setup-banner">
@@ -332,7 +336,7 @@
     <div class="ring" id="progressRing"><span id="progressPct">0%</span></div>
     <div class="text">
       <h2 id="progressLabel">제출 현황 확인 중…</h2>
-      <p>3학년 22개 과목 중 시험범위가 등록된 과목 수입니다.</p>
+      <p>3학년 22개 과목 중 시험범위가 하나 이상 등록된 과목 수입니다.</p>
     </div>
     <a class="sheet-link" id="sheetLink" href="#" target="_blank" rel="noopener">평가계용 · 원본 시트 열기</a>
   </div>
@@ -398,8 +402,8 @@
     { date: "2026-10-02", dayLabel: "10월 2일(금)", period: 4, time: "12:05~12:55", subject: "생활과 과학" }
   ];
 
-  let submissions = {}; // subject -> { teacher, rangeText, updatedAt }
-  let editingSubject = null;
+  let submissions = {}; // subject -> [{ id, teacher, rangeText, updatedAt }, ...] (담당교사별로 각각)
+  let editing = null; // { subject, index } | null — index === entries.length 이면 '새로 추가' 중
   let saving = false;
 
   document.getElementById("sheetLink").href = CONFIG.SHEET_VIEW_URL;
@@ -412,6 +416,40 @@
   }
   function escapeAttr(str) {
     return escapeHtml(str).replace(/"/g, "&quot;");
+  }
+
+  // 한 과목에 표시할 줄 목록을 만든다: 제출된 담당교사 수만큼 줄이 생기고,
+  // 아직 아무도 없으면 '미제출' 한 줄, 새로 추가 중이면 빈 입력 줄이 맨 끝에 붙는다.
+  function buildSubjectRows(subject) {
+    const entries = submissions[subject] || [];
+    const isEditingThis = editing && editing.subject === subject;
+    const editIndex = isEditingThis ? editing.index : -1;
+    const rows = [];
+    for (let idx = 0; idx < entries.length; idx++) {
+      rows.push({ type: idx === editIndex ? "edit" : "view", index: idx, entry: entries[idx] });
+    }
+    if (editIndex === entries.length) {
+      rows.push({ type: "new", index: entries.length });
+    }
+    if (rows.length === 0) {
+      rows.push({ type: "empty" });
+    }
+    return rows;
+  }
+
+  function editFormHtml(subject, index, teacher, rangeText) {
+    return `
+      <td class="teacher-cell">
+        <input type="text" id="editTeacherInput" value="${escapeAttr(teacher)}" placeholder="담당교사 성함">
+      </td>
+      <td class="range-cell">
+        <textarea id="editRangeInput" placeholder="시험범위를 입력하세요">${escapeHtml(rangeText)}</textarea>
+        <div class="edit-actions">
+          <button class="save-btn" type="button" data-action="save" data-subject="${escapeAttr(subject)}" data-index="${index}">저장</button>
+          <button class="cancel-btn" type="button" data-action="cancel">취소</button>
+        </div>
+        <div class="edit-status" id="editStatus"></div>
+      </td>`;
   }
 
   function renderTable() {
@@ -434,63 +472,78 @@
       while (j < SCHEDULE.length && SCHEDULE[j].date === row.date && SCHEDULE[j].period === row.period) {
         j++;
       }
-      const span = j - i;
+
+      // 이 교시에 들어갈 실제 표시 줄 수(과목별 담당교사 줄 수의 합)
+      let periodRowCount = 0;
+      for (let k = i; k < j; k++) periodRowCount += buildSubjectRows(SCHEDULE[k].subject).length;
+      let periodRowsLeft = periodRowCount;
+
       for (let k = i; k < j; k++) {
         const r = SCHEDULE[k];
-        const sub = submissions[r.subject];
-        const done = !!(sub && sub.rangeText);
-        const tr = document.createElement("tr");
-        const isEditing = editingSubject === r.subject;
-        if (!done && !isEditing) tr.className = "pending";
-        if (isEditing) tr.className = "editing";
+        const subjectRows = buildSubjectRows(r.subject);
 
-        let periodCell = "";
-        if (k === i) {
-          periodCell = `<td class="period-cell" rowspan="${span}">${r.period}교시<br>${r.time}</td>`;
-        }
+        subjectRows.forEach((item, rIdx) => {
+          const tr = document.createElement("tr");
+          let periodCell = "";
+          if (periodRowsLeft === periodRowCount) {
+            periodCell = `<td class="period-cell" rowspan="${periodRowCount}">${r.period}교시<br>${r.time}</td>`;
+          }
+          periodRowsLeft--;
 
-        if (isEditing) {
-          const curTeacher = sub && sub.teacher ? sub.teacher : "";
-          const curRange = sub && sub.rangeText ? sub.rangeText : "";
-          tr.innerHTML = `
-            ${periodCell}
-            <td class="subject-cell">${escapeHtml(r.subject)}</td>
-            <td class="teacher-cell">
-              <input type="text" id="editTeacherInput" value="${escapeAttr(curTeacher)}" placeholder="예: 김윤미, 박태호 (여러 명이면 쉼표로 구분)">
-            </td>
-            <td class="range-cell">
-              <textarea id="editRangeInput" placeholder="시험범위를 입력하세요">${escapeHtml(curRange)}</textarea>
-              <div class="edit-actions">
-                <button class="save-btn" type="button" data-action="save" data-subject="${escapeAttr(r.subject)}">저장</button>
-                <button class="cancel-btn" type="button" data-action="cancel">취소</button>
-              </div>
-              <div class="edit-status" id="editStatus"></div>
-            </td>`;
-        } else {
-          tr.innerHTML = `
-            ${periodCell}
-            <td class="subject-cell">${escapeHtml(r.subject)}</td>
-            <td class="teacher-cell">${sub && sub.teacher ? escapeHtml(sub.teacher) : "—"}</td>
-            <td class="range-cell">
-              <div class="range-display">
-                <span class="txt">${done ? escapeHtml(sub.rangeText) : '<span class="pill wait">미제출</span>'}</span>
-                <button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}">${done ? "수정" : "입력"}</button>
-              </div>
-            </td>`;
-        }
-        body.appendChild(tr);
+          let subjectCell = "";
+          if (rIdx === 0) {
+            subjectCell = `<td class="subject-cell" rowspan="${subjectRows.length}">${escapeHtml(r.subject)}</td>`;
+          }
+
+          if (item.type === "empty") {
+            tr.className = "pending";
+            tr.innerHTML = `
+              ${periodCell}${subjectCell}
+              <td class="teacher-cell">—</td>
+              <td class="range-cell">
+                <div class="range-display">
+                  <span class="txt"><span class="pill wait">미제출</span></span>
+                  <span class="btns"><button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="0">입력</button></span>
+                </div>
+              </td>`;
+          } else if (item.type === "view") {
+            const entryCount = subjectRows.filter(x => x.type !== "new").length;
+            const isLast = item.index === entryCount - 1;
+            const alreadyAdding = subjectRows.some(x => x.type === "new");
+            tr.innerHTML = `
+              ${periodCell}${subjectCell}
+              <td class="teacher-cell">${escapeHtml(item.entry.teacher || "—")}</td>
+              <td class="range-cell">
+                <div class="range-display">
+                  <span class="txt">${escapeHtml(item.entry.rangeText)}</span>
+                  <span class="btns">
+                    <button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index}">수정</button>
+                    ${isLast && !alreadyAdding ? `<button class="add-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index + 1}">+ 담당교사 추가</button>` : ""}
+                  </span>
+                </div>
+              </td>`;
+          } else if (item.type === "edit") {
+            tr.className = "editing";
+            tr.innerHTML = `${periodCell}${subjectCell}${editFormHtml(r.subject, item.index, item.entry.teacher || "", item.entry.rangeText || "")}`;
+          } else if (item.type === "new") {
+            tr.className = "editing";
+            tr.innerHTML = `${periodCell}${subjectCell}${editFormHtml(r.subject, item.index, "", "")}`;
+          }
+
+          body.appendChild(tr);
+        });
       }
       i = j;
     }
 
     const total = SCHEDULE.length;
-    const doneCount = SCHEDULE.filter(r => submissions[r.subject] && submissions[r.subject].rangeText).length;
+    const doneCount = SCHEDULE.filter(r => submissions[r.subject] && submissions[r.subject].length > 0).length;
     const pct = Math.round((doneCount / total) * 100);
     document.getElementById("progressPct").textContent = pct + "%";
     document.getElementById("progressRing").style.setProperty("--pct", pct);
     document.getElementById("progressLabel").textContent = `제출 완료 ${doneCount} / ${total}과목`;
 
-    if (editingSubject) {
+    if (editing) {
       const input = document.getElementById("editTeacherInput");
       if (input) input.focus();
     }
@@ -510,7 +563,9 @@
       const data = await res.json();
       submissions = {};
       (data.rows || []).forEach(r => {
-        if (r.subject) submissions[r.subject] = { teacher: r.teacher, rangeText: r.range_text, updatedAt: r.updated_at };
+        if (!r.subject || !r.teacher) return; // 담당교사가 아직 없는(미사용) 빈 자리는 건너뜀
+        if (!submissions[r.subject]) submissions[r.subject] = [];
+        submissions[r.subject].push({ id: r.id, teacher: r.teacher, rangeText: r.range_text, updatedAt: r.updated_at });
       });
       document.getElementById("updatedAt").textContent = "마지막 확인: " + new Date().toLocaleTimeString("ko-KR");
     } catch (err) {
@@ -522,7 +577,7 @@
   document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
 
   document.getElementById("printBtn").addEventListener("click", () => {
-    if (editingSubject) { editingSubject = null; renderTable(); }
+    if (editing) { editing = null; renderTable(); }
     document.getElementById("printFooter").textContent =
       "출력일: " + new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
     window.print();
@@ -535,13 +590,13 @@
     const action = btn.dataset.action;
 
     if (action === "edit") {
-      editingSubject = btn.dataset.subject;
+      editing = { subject: btn.dataset.subject, index: Number(btn.dataset.index) };
       renderTable();
       return;
     }
 
     if (action === "cancel") {
-      editingSubject = null;
+      editing = null;
       renderTable();
       return;
     }
@@ -549,6 +604,7 @@
     if (action === "save") {
       if (saving) return;
       const subject = btn.dataset.subject;
+      const index = Number(btn.dataset.index);
       const teacher = document.getElementById("editTeacherInput").value.trim();
       const rangeText = document.getElementById("editRangeInput").value.trim();
       const statusEl = document.getElementById("editStatus");
@@ -556,6 +612,10 @@
       if (!teacher) { statusEl.className = "edit-status err"; statusEl.textContent = "담당교사 성함을 입력해 주세요."; return; }
       if (!rangeText) { statusEl.className = "edit-status err"; statusEl.textContent = "시험범위를 입력해 주세요."; return; }
       if (!CONFIG.APPS_SCRIPT_URL) { statusEl.className = "edit-status err"; statusEl.textContent = "저장소가 연결되지 않았습니다."; return; }
+
+      const scheduleRow = SCHEDULE.find(r => r.subject === subject);
+      const entries = submissions[subject] || [];
+      const existingId = entries[index] ? entries[index].id : undefined;
 
       saving = true;
       btn.disabled = true;
@@ -565,18 +625,23 @@
         const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ subject, teacher, rangeText })
+          body: JSON.stringify({
+            id: existingId,
+            subject, teacher, rangeText,
+            date: scheduleRow.date, period: scheduleRow.period, time: scheduleRow.time
+          })
         });
         const data = await res.json();
         if (!data.ok) {
           statusEl.className = "edit-status err";
           statusEl.textContent = "저장 실패: " + (data.error || "알 수 없는 오류") +
-            " — 구글 시트의 '과목' 칸 이름이 이 과목명과 정확히 같은지 확인해 주세요.";
+            " — Apps Script 코드가 최신(한글 헤더 + id 매핑) 버전으로 재배포됐는지 확인해 주세요.";
           btn.disabled = false;
           return;
         }
-        submissions[subject] = { teacher, rangeText, updatedAt: new Date().toISOString() };
-        editingSubject = null;
+        if (!submissions[subject]) submissions[subject] = [];
+        submissions[subject][index] = { id: data.id || existingId, teacher, rangeText, updatedAt: new Date().toISOString() };
+        editing = null;
         renderTable();
       } catch (err) {
         statusEl.className = "edit-status err";
