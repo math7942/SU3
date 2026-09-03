@@ -58,9 +58,12 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 
 1. 데이터를 담을 구글 시트가 이미 만들어져 있습니다: `2026-2학기 1차 정기시험 3학년 시험범위 수합`
    (열: `날짜, 교시, 시간, 과목, 담당교사, 시험범위, 최종수정`, 3학년 22과목이 미리 채워져 있음)
-2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기본 코드를 지우고 아래 코드를 붙여넣습니다.
-   (시트의 열 제목은 한글 그대로 두고, 코드에서 한글 열 이름을 찾아 페이지가 쓰는 영문 키로
-   바꿔 보내 줍니다.)
+2. 한 과목을 여러 선생님이 나눠 맡는 경우를 지원하려면 시트에 열을 하나 더 추가해야 합니다.
+   시트에서 H1 칸을 클릭해 `id`라고 입력하세요 (담당교사별 제출 항목을 구분하는 값으로,
+   Apps Script가 자동으로 채웁니다. 직접 값을 넣지 않아도 됩니다).
+3. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기존 코드를 전부 지우고 아래 코드를
+   붙여넣습니다. (한 과목에 담당교사가 이미 있는 행이 있으면 새 담당교사는 새 행을 추가하고,
+   `id`가 있는 요청은 그 행만 찾아 수정합니다.)
 
    ```js
    function doGet(e) {
@@ -71,10 +74,12 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
        subject: headers.indexOf("과목"),
        teacher: headers.indexOf("담당교사"),
        range_text: headers.indexOf("시험범위"),
-       updated_at: headers.indexOf("최종수정")
+       updated_at: headers.indexOf("최종수정"),
+       id: headers.indexOf("id")
      };
      var rows = data.slice(1).map(function (row) {
        return {
+         id: row[col.id],
          subject: row[col.subject],
          teacher: row[col.teacher],
          range_text: row[col.range_text],
@@ -90,35 +95,69 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
      var subject = payload.subject;
      var teacher = payload.teacher || "";
      var rangeText = payload.rangeText || "";
+     var id = payload.id || "";
 
      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
      var data = sheet.getDataRange().getValues();
      var headers = data[0];
-     var subjectCol = headers.indexOf("과목");
-     var teacherCol = headers.indexOf("담당교사");
-     var rangeCol = headers.indexOf("시험범위");
-     var updatedCol = headers.indexOf("최종수정");
+     var col = {
+       date: headers.indexOf("날짜"),
+       period: headers.indexOf("교시"),
+       time: headers.indexOf("시간"),
+       subject: headers.indexOf("과목"),
+       teacher: headers.indexOf("담당교사"),
+       range_text: headers.indexOf("시험범위"),
+       updated_at: headers.indexOf("최종수정"),
+       id: headers.indexOf("id")
+     };
+     var now = new Date();
 
-     for (var r = 1; r < data.length; r++) {
-       if (data[r][subjectCol] === subject) {
-         sheet.getRange(r + 1, teacherCol + 1).setValue(teacher);
-         sheet.getRange(r + 1, rangeCol + 1).setValue(rangeText);
-         sheet.getRange(r + 1, updatedCol + 1).setValue(new Date());
-         return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+     // 1) id로 지정된 기존 항목이면 그 행만 찾아 수정
+     if (id) {
+       for (var r = 1; r < data.length; r++) {
+         if (String(data[r][col.id]) === String(id)) {
+           sheet.getRange(r + 1, col.teacher + 1).setValue(teacher);
+           sheet.getRange(r + 1, col.range_text + 1).setValue(rangeText);
+           sheet.getRange(r + 1, col.updated_at + 1).setValue(now);
+           return ContentService.createTextOutput(JSON.stringify({ ok: true, id: id }))
+             .setMimeType(ContentService.MimeType.JSON);
+         }
+       }
+     }
+
+     // 2) 그 과목의 미리 만들어둔 빈 자리(담당교사 없음)가 있으면 그 자리를 채움
+     for (var r2 = 1; r2 < data.length; r2++) {
+       if (data[r2][col.subject] === subject && !data[r2][col.teacher]) {
+         var newId = Utilities.getUuid();
+         sheet.getRange(r2 + 1, col.teacher + 1).setValue(teacher);
+         sheet.getRange(r2 + 1, col.range_text + 1).setValue(rangeText);
+         sheet.getRange(r2 + 1, col.updated_at + 1).setValue(now);
+         sheet.getRange(r2 + 1, col.id + 1).setValue(newId);
+         return ContentService.createTextOutput(JSON.stringify({ ok: true, id: newId }))
            .setMimeType(ContentService.MimeType.JSON);
        }
      }
-     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "subject not found" }))
+
+     // 3) 빈 자리가 없으면(두 번째 이상 담당교사) 새 행을 추가
+     var newId2 = Utilities.getUuid();
+     sheet.appendRow([
+       payload.date || "", payload.period || "", payload.time || "",
+       subject, teacher, rangeText, now, newId2
+     ]);
+     return ContentService.createTextOutput(JSON.stringify({ ok: true, id: newId2 }))
        .setMimeType(ContentService.MimeType.JSON);
    }
    ```
 
-3. 오른쪽 위 **배포 → 새 배포**를 누르고, 유형은 **웹앱**을 선택합니다.
+4. 오른쪽 위 **배포 → 새 배포**를 누르고, 유형은 **웹앱**을 선택합니다.
    - 실행 계정: **나**
    - 액세스 권한이 있는 사용자: **모든 사용자**
-4. 배포하면 나오는 웹앱 URL(`https://script.google.com/macros/s/.../exec`)을 복사합니다.
-5. `03-work/exam-range.html` 파일 맨 아래 `<script>`의 `CONFIG.APPS_SCRIPT_URL` 값에
+5. 배포하면 나오는 웹앱 URL(`https://script.google.com/macros/s/.../exec`)을 복사합니다.
+6. `03-work/exam-range.html` 파일 맨 아래 `<script>`의 `CONFIG.APPS_SCRIPT_URL` 값에
    그 URL을 붙여넣고 저장합니다.
+
+이미 배포해 두었다면: **배포 → 배포 관리 → 연필(수정) 아이콘 → 버전: 새 버전 → 배포**로
+코드만 새로 반영하면 됩니다 (URL은 그대로 유지).
 
 이후 시트 내용을 바꾸려면(과목 추가·삭제, 오타 수정) 시트를 직접 편집해도 되고, 코드를 수정한 뒤
 **배포 → 배포 관리 → 수정 → 새 버전**으로 다시 배포하면 됩니다(웹앱 URL은 그대로 유지됩니다).
