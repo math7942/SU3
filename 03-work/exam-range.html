@@ -136,6 +136,22 @@
   }
   .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+  .print-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .print-btn:hover { opacity: 0.92; }
+  .toolbar-actions { display: flex; gap: 8px; }
+
+  .print-header, .print-footer { display: none; }
+
   .table-wrap {
     overflow-x: auto;
     border: 1px solid var(--line);
@@ -258,6 +274,39 @@
     td.range-cell { min-width: 200px; }
     .range-display { flex-direction: column; }
   }
+
+  /* 학생 배부용 출력 */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .back, .summary, .setup-banner, .table-toolbar, .edit-link { display: none !important; }
+    .print-header, .print-footer { display: block; }
+    .print-header {
+      margin: 0 0 14px;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .print-footer {
+      margin-top: 14px;
+      color: #555;
+      font-size: 0.78rem;
+    }
+    .table-wrap { border: none; border-radius: 0; }
+    table.range { min-width: 0; font-size: 11pt; }
+    table.range thead th {
+      background: #eee !important;
+      color: #000 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    tr.day-row td {
+      background: #f3f3f3 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .pill.wait { background: #f0f0f0 !important; color: #555 !important; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
+  }
 </style>
 </head>
 <body>
@@ -290,8 +339,12 @@
 
   <div class="table-toolbar">
     <span class="updated" id="updatedAt">불러오는 중…</span>
-    <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
+    <div class="toolbar-actions">
+      <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
+      <button class="print-btn" id="printBtn" type="button">🖨 출력 (학생 배부용)</button>
+    </div>
   </div>
+  <div class="print-header">2026학년도 2학기 1차 정기시험 시험범위 (3학년)</div>
   <div class="table-wrap">
     <table class="range">
       <thead>
@@ -300,6 +353,7 @@
       <tbody id="rangeBody"></tbody>
     </table>
   </div>
+  <p class="print-footer" id="printFooter"></p>
 
 </div>
 
@@ -460,6 +514,13 @@
   }
 
   document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
+
+  document.getElementById("printBtn").addEventListener("click", () => {
+    if (editingSubject) { editingSubject = null; renderTable(); }
+    document.getElementById("printFooter").textContent =
+      "출력일: " + new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+    window.print();
+  });
 
   // ── 표 안에서 바로 입력/수정 ──────────────────────────────────────
   document.getElementById("rangeBody").addEventListener("click", async (e) => {
