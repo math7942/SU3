@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3학년 시험범위 수합</title>
 <style>
-  @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
-
   :root {
     --bg: #f2f0fa;
     --surface: #ffffff;
@@ -29,14 +27,14 @@
     padding: 0 20px 72px;
     background: var(--bg);
     color: var(--ink);
-    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
-      "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+      "Malgun Gothic", "Segoe UI", sans-serif;
     font-size: 16px;
     line-height: 1.6;
     word-break: keep-all;
   }
 
-  .page { max-width: 880px; margin: 0 auto; }
+  .page { max-width: 900px; margin: 0 auto; }
 
   .back {
     display: inline-flex;
@@ -77,7 +75,7 @@
     display: flex;
     align-items: center;
     gap: 18px;
-    margin: 22px 0 26px;
+    margin: 22px 0 22px;
     padding: 18px 22px;
     border: 1px solid var(--line);
     border-radius: 16px;
@@ -103,30 +101,20 @@
     font-weight: 800;
     color: var(--accent);
   }
+  .summary .text { flex: 1 1 auto; min-width: 0; }
   .summary .text h2 { margin: 0 0 3px; font-size: 1.02rem; font-weight: 700; }
   .summary .text p { margin: 0; color: var(--muted); font-size: 0.86rem; }
-
-  /* 탭 */
-  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
-  .tab-btn {
-    padding: 10px 18px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink-soft);
-    font-size: 0.92rem;
+  .summary .sheet-link {
+    flex: none;
+    color: var(--accent);
+    font-size: 0.82rem;
     font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
+    text-decoration: none;
+    white-space: nowrap;
   }
-  .tab-btn[aria-selected="true"] {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-  }
-  .panel[hidden] { display: none; }
+  .summary .sheet-link:hover { text-decoration: underline; }
 
-  /* 결과 표 */
+  /* 표 툴바 */
   .table-toolbar {
     display: flex;
     align-items: center;
@@ -157,7 +145,7 @@
   table.range {
     width: 100%;
     border-collapse: collapse;
-    min-width: 640px;
+    min-width: 700px;
     font-size: 0.92rem;
   }
   table.range th, table.range td {
@@ -180,11 +168,15 @@
     font-size: 0.9rem;
     padding: 10px 14px;
   }
+  tr.editing { background: var(--accent-soft); }
   td.period-cell { white-space: nowrap; color: var(--ink-soft); font-weight: 700; width: 1%; }
   td.subject-cell { font-weight: 700; white-space: nowrap; }
   td.teacher-cell { white-space: nowrap; color: var(--ink-soft); width: 1%; }
-  td.range-cell { color: var(--ink-soft); white-space: pre-line; }
-  tr.pending td.teacher-cell, tr.pending td.range-cell { color: var(--muted); font-style: italic; }
+  td.range-cell { color: var(--ink-soft); min-width: 240px; }
+  tr.pending td.teacher-cell { color: var(--muted); font-style: italic; }
+
+  .range-display { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .range-display .txt { white-space: pre-line; }
   .pill {
     display: inline-block;
     padding: 2px 9px;
@@ -196,76 +188,50 @@
   }
   .pill.wait { background: var(--accent-soft); color: var(--accent); }
 
-  /* 제출 폼 */
-  .form-card {
-    padding: 26px 26px 24px;
+  .edit-link {
+    flex: none;
+    padding: 4px 11px;
     border: 1px solid var(--line);
-    border-radius: 16px;
+    border-radius: 999px;
     background: var(--surface);
-  }
-  .field { margin-bottom: 18px; }
-  .field label { display: block; margin-bottom: 7px; font-size: 0.88rem; font-weight: 700; color: var(--ink); }
-  .field .hint { margin: 5px 0 0; color: var(--muted); font-size: 0.8rem; }
-  select, input[type="text"], textarea {
-    width: 100%;
-    padding: 11px 13px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: inherit;
-    font-size: 0.95rem;
-  }
-  select:focus, input[type="text"]:focus, textarea:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-  textarea { resize: vertical; min-height: 120px; line-height: 1.55; }
-
-  .slot-info {
-    display: none;
-    margin: -6px 0 18px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 0.84rem;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
     font-weight: 700;
-  }
-  .slot-info.show { display: block; }
-
-  .submit-btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.98rem;
-    font-weight: 800;
     cursor: pointer;
     font-family: inherit;
   }
-  .submit-btn:disabled { opacity: 0.6; cursor: default; }
+  .edit-link:hover { border-color: var(--accent); color: var(--accent); }
 
-  #submitStatus {
-    margin-top: 14px;
-    font-size: 0.88rem;
-    font-weight: 700;
-    min-height: 1.4em;
+  /* 인라인 편집 */
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.9rem;
   }
-  #submitStatus.ok { color: var(--good); }
-  #submitStatus.err { color: #b3261e; }
+  input[type="text"]:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; margin-top: 6px; }
 
-  .admin-note {
-    margin-top: 18px;
-    padding-top: 16px;
-    border-top: 1px dashed var(--line);
-    color: var(--muted);
+  .edit-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .save-btn, .cancel-btn {
+    padding: 7px 14px;
+    border: none;
+    border-radius: 8px;
     font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
   }
-  .admin-note a { color: var(--accent); font-weight: 700; text-decoration: none; }
-  .admin-note a:hover { text-decoration: underline; }
+  .save-btn { background: var(--accent); color: #fff; }
+  .save-btn:disabled { opacity: 0.6; cursor: default; }
+  .cancel-btn { background: var(--surface); border: 1px solid var(--line); color: var(--ink-soft); }
+  .cancel-btn:hover { border-color: var(--muted); }
+  .edit-status { font-size: 0.8rem; font-weight: 700; min-height: 1.2em; }
+  .edit-status.err { color: #b3261e; }
 
   .setup-banner {
     display: none;
@@ -288,8 +254,9 @@
   }
 
   @media (max-width: 560px) {
-    .summary { flex-direction: column; align-items: flex-start; }
-    td.range-cell { min-width: 220px; }
+    .summary { flex-wrap: wrap; }
+    td.range-cell { min-width: 200px; }
+    .range-display { flex-direction: column; }
   }
 </style>
 </head>
@@ -304,7 +271,7 @@
   <header class="hero">
     <span class="eyebrow">3학년 평가계</span>
     <h1>2026학년도 2학기 1차 정기시험 시험범위</h1>
-    <p>담당 선생님은 [시험범위 입력] 탭에서 과목을 선택해 범위를 등록해 주세요. 학생과 선생님 모두 같은 화면에서 실시간으로 확인할 수 있습니다.</p>
+    <p>담당 선생님은 아래 표에서 본인 과목 줄의 [입력] 버튼을 눌러 바로 시험범위를 적어 주세요. 학생과 선생님 모두 같은 화면에서 실시간으로 확인합니다.</p>
   </header>
 
   <div id="setupBanner" class="setup-banner">
@@ -318,51 +285,21 @@
       <h2 id="progressLabel">제출 현황 확인 중…</h2>
       <p>3학년 22개 과목 중 시험범위가 등록된 과목 수입니다.</p>
     </div>
+    <a class="sheet-link" id="sheetLink" href="#" target="_blank" rel="noopener">평가계용 · 원본 시트 열기</a>
   </div>
 
-  <div class="tabs" role="tablist">
-    <button class="tab-btn" id="tabBtnView" role="tab" aria-selected="true" aria-controls="panelView">시험범위 보기</button>
-    <button class="tab-btn" id="tabBtnSubmit" role="tab" aria-selected="false" aria-controls="panelSubmit">시험범위 입력 (교사용)</button>
+  <div class="table-toolbar">
+    <span class="updated" id="updatedAt">불러오는 중…</span>
+    <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
   </div>
-
-  <section id="panelView" class="panel" role="tabpanel" aria-labelledby="tabBtnView">
-    <div class="table-toolbar">
-      <span class="updated" id="updatedAt">불러오는 중…</span>
-      <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
-    </div>
-    <div class="table-wrap">
-      <table class="range">
-        <thead>
-          <tr><th>교시</th><th>과목</th><th>담당교사</th><th>시험범위</th></tr>
-        </thead>
-        <tbody id="rangeBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="panelSubmit" class="panel" hidden role="tabpanel" aria-labelledby="tabBtnSubmit">
-    <div class="form-card">
-      <div class="field">
-        <label for="subjectSelect">담당 과목</label>
-        <select id="subjectSelect">
-          <option value="">과목을 선택하세요</option>
-        </select>
-      </div>
-      <div class="slot-info" id="slotInfo"></div>
-      <div class="field">
-        <label for="teacherName">담당교사 성함</label>
-        <input type="text" id="teacherName" placeholder="예: 김윤미" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="rangeText">시험범위</label>
-        <textarea id="rangeText" placeholder="예)&#10;선택형 80점 서술형 20점&#10;교과서 48~177쪽, 204~251쪽, 278~307쪽&#10;수능특강 수학Ⅰ 1강~6강의 level1, 2강 level2, 수능특강 수학Ⅱ 1강~5강 level1"></textarea>
-        <p class="hint">이미 제출한 과목을 다시 선택하면 기존 내용이 불러와지며, 저장하면 그 내용이 덮어써집니다.</p>
-      </div>
-      <button class="submit-btn" id="submitBtn" type="button">시험범위 저장</button>
-      <div id="submitStatus" role="status"></div>
-      <p class="admin-note">평가계용 &mdash; <a id="sheetLink" href="#" target="_blank" rel="noopener">원본 구글 시트에서 전체 내용 보기 / 직접 수정</a></p>
-    </div>
-  </section>
+  <div class="table-wrap">
+    <table class="range">
+      <thead>
+        <tr><th>교시</th><th>과목</th><th>담당교사</th><th>시험범위</th></tr>
+      </thead>
+      <tbody id="rangeBody"></tbody>
+    </table>
+  </div>
 
 </div>
 
@@ -402,25 +339,20 @@
   ];
 
   let submissions = {}; // subject -> { teacher, rangeText, updatedAt }
+  let editingSubject = null;
+  let saving = false;
 
-  // ── 초기 화면 구성 ─────────────────────────────────────────────
   document.getElementById("sheetLink").href = CONFIG.SHEET_VIEW_URL;
 
-  const subjectSelect = document.getElementById("subjectSelect");
-  let lastGroupLabel = null;
-  let optgroup = null;
-  SCHEDULE.forEach(row => {
-    if (row.dayLabel !== lastGroupLabel) {
-      optgroup = document.createElement("optgroup");
-      optgroup.label = row.dayLabel;
-      subjectSelect.appendChild(optgroup);
-      lastGroupLabel = row.dayLabel;
-    }
-    const opt = document.createElement("option");
-    opt.value = row.subject;
-    opt.textContent = `${row.period}교시 (${row.time}) · ${row.subject}`;
-    optgroup.appendChild(opt);
-  });
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/"/g, "&quot;");
+  }
 
   function renderTable() {
     const body = document.getElementById("rangeBody");
@@ -448,20 +380,44 @@
         const sub = submissions[r.subject];
         const done = !!(sub && sub.rangeText);
         const tr = document.createElement("tr");
-        if (!done) tr.className = "pending";
+        const isEditing = editingSubject === r.subject;
+        if (!done && !isEditing) tr.className = "pending";
+        if (isEditing) tr.className = "editing";
+
         let periodCell = "";
         if (k === i) {
           periodCell = `<td class="period-cell" rowspan="${span}">${r.period}교시<br>${r.time}</td>`;
         }
-        tr.innerHTML = `
-          ${periodCell}
-          <td class="subject-cell">${r.subject}</td>
-          <td class="teacher-cell">${sub && sub.teacher ? sub.teacher : "—"}</td>
-          <td class="range-cell">${
-            done
-              ? escapeHtml(sub.rangeText)
-              : '<span class="pill wait">미제출</span>'
-          }</td>`;
+
+        if (isEditing) {
+          const curTeacher = sub && sub.teacher ? sub.teacher : "";
+          const curRange = sub && sub.rangeText ? sub.rangeText : "";
+          tr.innerHTML = `
+            ${periodCell}
+            <td class="subject-cell">${escapeHtml(r.subject)}</td>
+            <td class="teacher-cell">
+              <input type="text" id="editTeacherInput" value="${escapeAttr(curTeacher)}" placeholder="담당교사 성함">
+            </td>
+            <td class="range-cell">
+              <textarea id="editRangeInput" placeholder="시험범위를 입력하세요">${escapeHtml(curRange)}</textarea>
+              <div class="edit-actions">
+                <button class="save-btn" type="button" data-action="save" data-subject="${escapeAttr(r.subject)}">저장</button>
+                <button class="cancel-btn" type="button" data-action="cancel">취소</button>
+              </div>
+              <div class="edit-status" id="editStatus"></div>
+            </td>`;
+        } else {
+          tr.innerHTML = `
+            ${periodCell}
+            <td class="subject-cell">${escapeHtml(r.subject)}</td>
+            <td class="teacher-cell">${sub && sub.teacher ? escapeHtml(sub.teacher) : "—"}</td>
+            <td class="range-cell">
+              <div class="range-display">
+                <span class="txt">${done ? escapeHtml(sub.rangeText) : '<span class="pill wait">미제출</span>'}</span>
+                <button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}">${done ? "수정" : "입력"}</button>
+              </div>
+            </td>`;
+        }
         body.appendChild(tr);
       }
       i = j;
@@ -473,13 +429,11 @@
     document.getElementById("progressPct").textContent = pct + "%";
     document.getElementById("progressRing").style.setProperty("--pct", pct);
     document.getElementById("progressLabel").textContent = `제출 완료 ${doneCount} / ${total}과목`;
-  }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    if (editingSubject) {
+      const input = document.getElementById("editTeacherInput");
+      if (input) input.focus();
+    }
   }
 
   async function loadSubmissions() {
@@ -507,79 +461,57 @@
 
   document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
 
-  // ── 탭 전환 ────────────────────────────────────────────────────
-  const tabBtnView = document.getElementById("tabBtnView");
-  const tabBtnSubmit = document.getElementById("tabBtnSubmit");
-  const panelView = document.getElementById("panelView");
-  const panelSubmit = document.getElementById("panelSubmit");
+  // ── 표 안에서 바로 입력/수정 ──────────────────────────────────────
+  document.getElementById("rangeBody").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
 
-  function showTab(which) {
-    const viewing = which === "view";
-    panelView.hidden = !viewing;
-    panelSubmit.hidden = viewing;
-    tabBtnView.setAttribute("aria-selected", String(viewing));
-    tabBtnSubmit.setAttribute("aria-selected", String(!viewing));
-    if (!viewing) loadSubmissions();
-  }
-  tabBtnView.addEventListener("click", () => showTab("view"));
-  tabBtnSubmit.addEventListener("click", () => showTab("submit"));
-
-  // ── 과목 선택 시 기존 제출 내용 불러오기 ──────────────────────────
-  subjectSelect.addEventListener("change", () => {
-    const subject = subjectSelect.value;
-    const slotInfo = document.getElementById("slotInfo");
-    const teacherInput = document.getElementById("teacherName");
-    const rangeInput = document.getElementById("rangeText");
-
-    if (!subject) {
-      slotInfo.classList.remove("show");
-      return;
-    }
-    const row = SCHEDULE.find(r => r.subject === subject);
-    slotInfo.textContent = `${row.dayLabel} ${row.period}교시 (${row.time}) · ${row.subject}`;
-    slotInfo.classList.add("show");
-
-    const sub = submissions[subject];
-    teacherInput.value = sub && sub.teacher ? sub.teacher : "";
-    rangeInput.value = sub && sub.rangeText ? sub.rangeText : "";
-  });
-
-  // ── 제출 ──────────────────────────────────────────────────────
-  document.getElementById("submitBtn").addEventListener("click", async () => {
-    const subject = subjectSelect.value;
-    const teacher = document.getElementById("teacherName").value.trim();
-    const rangeText = document.getElementById("rangeText").value.trim();
-    const statusEl = document.getElementById("submitStatus");
-    const btn = document.getElementById("submitBtn");
-
-    statusEl.className = "";
-    if (!subject) { statusEl.className = "err"; statusEl.textContent = "담당 과목을 선택해 주세요."; return; }
-    if (!teacher) { statusEl.className = "err"; statusEl.textContent = "담당교사 성함을 입력해 주세요."; return; }
-    if (!rangeText) { statusEl.className = "err"; statusEl.textContent = "시험범위를 입력해 주세요."; return; }
-    if (!CONFIG.APPS_SCRIPT_URL) {
-      statusEl.className = "err";
-      statusEl.textContent = "저장소가 아직 연결되지 않았습니다. 관리자에게 문의해 주세요.";
+    if (action === "edit") {
+      editingSubject = btn.dataset.subject;
+      renderTable();
       return;
     }
 
-    btn.disabled = true;
-    statusEl.textContent = "저장 중…";
-    try {
-      const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ subject, teacher, rangeText })
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "unknown");
-      submissions[subject] = { teacher, rangeText, updatedAt: new Date().toISOString() };
-      statusEl.className = "ok";
-      statusEl.textContent = "저장했습니다. [시험범위 보기] 탭에서 확인할 수 있어요.";
-    } catch (err) {
-      statusEl.className = "err";
-      statusEl.textContent = "저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
-    } finally {
-      btn.disabled = false;
+    if (action === "cancel") {
+      editingSubject = null;
+      renderTable();
+      return;
+    }
+
+    if (action === "save") {
+      if (saving) return;
+      const subject = btn.dataset.subject;
+      const teacher = document.getElementById("editTeacherInput").value.trim();
+      const rangeText = document.getElementById("editRangeInput").value.trim();
+      const statusEl = document.getElementById("editStatus");
+
+      if (!teacher) { statusEl.className = "edit-status err"; statusEl.textContent = "담당교사 성함을 입력해 주세요."; return; }
+      if (!rangeText) { statusEl.className = "edit-status err"; statusEl.textContent = "시험범위를 입력해 주세요."; return; }
+      if (!CONFIG.APPS_SCRIPT_URL) { statusEl.className = "edit-status err"; statusEl.textContent = "저장소가 연결되지 않았습니다."; return; }
+
+      saving = true;
+      btn.disabled = true;
+      statusEl.className = "edit-status";
+      statusEl.textContent = "저장 중…";
+      try {
+        const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ subject, teacher, rangeText })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "unknown");
+        submissions[subject] = { teacher, rangeText, updatedAt: new Date().toISOString() };
+        editingSubject = null;
+        renderTable();
+      } catch (err) {
+        statusEl.className = "edit-status err";
+        statusEl.textContent = "저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+        btn.disabled = false;
+      } finally {
+        saving = false;
+      }
     }
   });
 
