@@ -285,47 +285,60 @@
     .range-display .btns { flex-direction: row; align-items: center; }
   }
 
-  /* 학생 배부용 출력 — 가로 방향, 한 페이지에 들어가도록 여백·글자를 최대한 압축 */
+  /* 학생 배부용 출력 — 가로 방향, 한 페이지에 들어가도록 여백·글자를 압축.
+     내용 분량에 따른 최종 축소 비율은 인쇄 직전 JS가 #printArea에 zoom으로 적용한다. */
   @page { size: A4 landscape; margin: 9mm 11mm; }
-  @media print {
-    html, body { background: #fff; padding: 0; font-size: 9pt; }
-    .page { max-width: none; }
-    .back, .summary, .setup-banner, .table-toolbar, .edit-link, .add-link, .delete-link { display: none !important; }
-    .print-header, .print-footer { display: block; }
-    .print-header {
-      margin: 0 0 6px;
-      font-size: 13pt;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .print-footer {
-      margin-top: 6px;
-      color: #555;
-      font-size: 7.5pt;
-    }
-    .table-wrap { border: none; border-radius: 0; }
-    table.range { min-width: 0; width: 100%; font-size: 8pt; table-layout: fixed; }
-    table.range th, table.range td { padding: 3px 6px; line-height: 1.3; }
-    .col-period { width: 60px; }
-    .col-subject { width: 90px; }
-    .col-teacher { width: 90px; }
-    table.range thead th {
-      background: #eee !important;
-      color: #000 !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    tr.day-row td {
-      background: #f3f3f3 !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      padding: 3px 6px;
-      font-size: 8.5pt;
-    }
-    .pill.wait { background: #f0f0f0 !important; color: #555 !important; padding: 1px 6px; font-size: 7pt; }
-    .range-display { display: block; }
-    tr { break-inside: avoid; page-break-inside: avoid; }
+
+  #printArea { display: none; }
+
+  body.print-mode { background: #fff; padding: 0; }
+  body.print-mode .page { max-width: none; }
+  body.print-mode .back,
+  body.print-mode .summary,
+  body.print-mode .setup-banner,
+  body.print-mode .table-toolbar,
+  body.print-mode #screenTableWrap,
+  body.print-mode .edit-link,
+  body.print-mode .add-link,
+  body.print-mode .delete-link { display: none !important; }
+  body.print-mode #printArea { display: block; }
+  body.print-mode .print-footer { display: block; }
+
+  body.print-mode .print-header {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 13pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
   }
+  body.print-mode .print-footer {
+    margin-top: 6px;
+    color: #555;
+    font-size: 7.5pt;
+  }
+  body.print-mode .table-wrap { border: none; border-radius: 0; }
+  body.print-mode table.range { min-width: 0; width: 100%; font-size: 8pt; table-layout: fixed; }
+  body.print-mode table.range th,
+  body.print-mode table.range td { padding: 3px 6px; line-height: 1.3; }
+  body.print-mode .col-period { width: 60px; }
+  body.print-mode .col-subject { width: 90px; }
+  body.print-mode .col-teacher { width: 90px; }
+  body.print-mode table.range thead th {
+    background: #eee !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body.print-mode tr.day-row td {
+    background: #f3f3f3 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 3px 6px;
+    font-size: 8.5pt;
+  }
+  body.print-mode .pill.wait { background: #f0f0f0 !important; color: #555 !important; padding: 1px 6px; font-size: 7pt; }
+  body.print-mode .range-display { display: block; }
+  body.print-mode tr { break-inside: avoid; page-break-inside: avoid; }
 </style>
 </head>
 <body>
@@ -363,8 +376,7 @@
       <button class="print-btn" id="printBtn" type="button">🖨 출력 (학생 배부용)</button>
     </div>
   </div>
-  <div class="print-header">2026학년도 2학기 1차 정기시험 시험범위 (3학년)</div>
-  <div class="table-wrap">
+  <div class="table-wrap" id="screenTableWrap">
     <table class="range">
       <colgroup>
         <col class="col-period">
@@ -378,7 +390,25 @@
       <tbody id="rangeBody"></tbody>
     </table>
   </div>
-  <p class="print-footer" id="printFooter"></p>
+
+  <div id="printArea">
+    <div class="print-header">2026학년도 2학기 1차 정기시험 시험범위 (3학년)</div>
+    <div class="table-wrap">
+      <table class="range">
+        <colgroup>
+          <col class="col-period">
+          <col class="col-subject">
+          <col class="col-teacher">
+          <col class="col-range">
+        </colgroup>
+        <thead>
+          <tr><th>교시</th><th>과목</th><th>담당교사</th><th>시험범위</th></tr>
+        </thead>
+        <tbody id="printRangeBody"></tbody>
+      </table>
+    </div>
+    <p class="print-footer" id="printFooter"></p>
+  </div>
 
 </div>
 
@@ -594,12 +624,47 @@
 
   document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
 
-  document.getElementById("printBtn").addEventListener("click", () => {
-    if (editing) { editing = null; renderTable(); }
+  // 인쇄 전용 영역(#printArea)에 현재 표를 그대로 복사하고, 실제 렌더링된 높이를 측정해
+  // A4 가로 한 페이지 안에 들어가도록 필요한 만큼만 축소(zoom)한다.
+  function preparePrintArea() {
+    document.getElementById("printRangeBody").innerHTML = document.getElementById("rangeBody").innerHTML;
     document.getElementById("printFooter").textContent =
       "출력일: " + new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+
+    document.body.classList.add("print-mode");
+    const printArea = document.getElementById("printArea");
+    printArea.style.zoom = "";
+    printArea.style.width = "";
+
+    const mmToPx = 96 / 25.4;
+    const usableWidthPx = (297 - 22) * mmToPx;  // A4 가로 - 좌우 여백(11mm×2)
+    const usableHeightPx = (210 - 18) * mmToPx; // A4 가로 - 상하 여백(9mm×2)
+
+    printArea.style.width = usableWidthPx + "px";
+    void printArea.offsetHeight; // 강제 리플로우 후 측정
+    const measuredHeight = printArea.scrollHeight;
+
+    if (measuredHeight > usableHeightPx) {
+      const zoom = Math.max(0.45, usableHeightPx / measuredHeight);
+      printArea.style.width = (usableWidthPx / zoom) + "px";
+      printArea.style.zoom = zoom;
+    }
+  }
+
+  function resetPrintArea() {
+    document.body.classList.remove("print-mode");
+    const printArea = document.getElementById("printArea");
+    printArea.style.zoom = "";
+    printArea.style.width = "";
+  }
+
+  document.getElementById("printBtn").addEventListener("click", () => {
+    if (editing) { editing = null; renderTable(); }
+    preparePrintArea();
     window.print();
   });
+
+  window.addEventListener("afterprint", resetPrintArea);
 
   // ── 표 안에서 바로 입력/수정 ──────────────────────────────────────
   document.getElementById("rangeBody").addEventListener("click", async (e) => {
