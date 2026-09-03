@@ -57,19 +57,29 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 연결하면 됩니다.
 
 1. 데이터를 담을 구글 시트가 이미 만들어져 있습니다: `2026-2학기 1차 정기시험 3학년 시험범위 수합`
-   (열: `date, day_label, period, time, subject, teacher, range_text, updated_at`, 3학년 22과목이
-   미리 채워져 있음)
+   (열: `날짜, 교시, 시간, 과목, 담당교사, 시험범위, 최종수정`, 3학년 22과목이 미리 채워져 있음)
 2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기본 코드를 지우고 아래 코드를 붙여넣습니다.
+   (시트의 열 제목은 한글 그대로 두고, 코드에서 한글 열 이름을 찾아 페이지가 쓰는 영문 키로
+   바꿔 보내 줍니다.)
 
    ```js
    function doGet(e) {
      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
      var data = sheet.getDataRange().getValues();
      var headers = data[0];
+     var col = {
+       subject: headers.indexOf("과목"),
+       teacher: headers.indexOf("담당교사"),
+       range_text: headers.indexOf("시험범위"),
+       updated_at: headers.indexOf("최종수정")
+     };
      var rows = data.slice(1).map(function (row) {
-       var obj = {};
-       headers.forEach(function (h, i) { obj[h] = row[i]; });
-       return obj;
+       return {
+         subject: row[col.subject],
+         teacher: row[col.teacher],
+         range_text: row[col.range_text],
+         updated_at: row[col.updated_at]
+       };
      });
      return ContentService.createTextOutput(JSON.stringify({ rows: rows }))
        .setMimeType(ContentService.MimeType.JSON);
@@ -84,10 +94,10 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
      var data = sheet.getDataRange().getValues();
      var headers = data[0];
-     var subjectCol = headers.indexOf("subject");
-     var teacherCol = headers.indexOf("teacher");
-     var rangeCol = headers.indexOf("range_text");
-     var updatedCol = headers.indexOf("updated_at");
+     var subjectCol = headers.indexOf("과목");
+     var teacherCol = headers.indexOf("담당교사");
+     var rangeCol = headers.indexOf("시험범위");
+     var updatedCol = headers.indexOf("최종수정");
 
      for (var r = 1; r < data.length; r++) {
        if (data[r][subjectCol] === subject) {
@@ -112,6 +122,9 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 
 이후 시트 내용을 바꾸려면(과목 추가·삭제, 오타 수정) 시트를 직접 편집해도 되고, 코드를 수정한 뒤
 **배포 → 배포 관리 → 수정 → 새 버전**으로 다시 배포하면 됩니다(웹앱 URL은 그대로 유지됩니다).
+
+시트를 좀 더 보기 좋게 꾸미고 싶다면: 1행을 선택해 굵게 하고 **보기 → 고정 → 1행**으로 머리글을
+고정하면 스크롤해도 열 제목이 계속 보입니다.
 
 ## 도구를 추가하려면
 
