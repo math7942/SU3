@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3학년 시험범위 수합</title>
+<style id="pageSizeStyle">@page { size: A4 portrait; margin: 9mm 11mm; }</style>
 <style>
   :root {
     --bg: #f2f0fa;
@@ -305,13 +306,10 @@
   }
 
   /* 학생 배부용 출력 — 세로/가로는 선택 가능, 한 페이지에 들어가도록 여백·글자를 압축.
+     실제 용지 방향은 #pageSizeStyle의 @page 규칙을 JS가 인쇄 직전에 새로 써서 정한다
+     (명명된 페이지(@page name)는 브라우저별로 빈 페이지가 끼어드는 문제가 있어 쓰지 않음).
      내용 분량에 따른 최종 축소 비율은 인쇄 직전 JS가 #printArea에 zoom으로 적용한다. */
-  @page { size: A4 portrait; margin: 9mm 11mm; }
-  @page print-portrait { size: A4 portrait; margin: 9mm 11mm; }
-  @page print-landscape { size: A4 landscape; margin: 9mm 11mm; }
-
-  #printArea { display: none; page: print-portrait; }
-  #printArea.landscape { page: print-landscape; }
+  #printArea { display: none; }
 
   body.print-mode { background: #fff; padding: 0; }
   body.print-mode .page { max-width: none; }
@@ -675,6 +673,10 @@
     document.getElementById("printFooter").textContent =
       "출력일: " + new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
 
+    // @page 규칙을 이 시점의 방향으로 다시 써서 용지 방향을 정한다.
+    document.getElementById("pageSizeStyle").textContent =
+      `@page { size: A4 ${printOrientation}; margin: 9mm 11mm; }`;
+
     document.body.classList.add("print-mode");
     const printArea = document.getElementById("printArea");
     printArea.classList.toggle("landscape", printOrientation === "landscape");
@@ -691,8 +693,10 @@
     void printArea.offsetHeight; // 강제 리플로우 후 측정
     const measuredHeight = printArea.scrollHeight;
 
-    if (measuredHeight > usableHeightPx) {
-      const zoom = Math.max(0.45, usableHeightPx / measuredHeight);
+    // measuredHeight가 0이면(레이아웃이 아직 반영되지 않은 경우) 배율 계산이 무한대로
+    // 튀어 인쇄 미리보기가 깨질 수 있으므로, 정상적인 값일 때만 축소를 적용한다.
+    if (measuredHeight > usableHeightPx && measuredHeight > 0) {
+      const zoom = Math.max(0.45, Math.min(1, usableHeightPx / measuredHeight));
       printArea.style.width = (usableWidthPx / zoom) + "px";
       printArea.style.zoom = zoom;
     }
@@ -704,6 +708,7 @@
     printArea.style.zoom = "";
     printArea.style.width = "";
     printArea.classList.remove("landscape");
+    document.getElementById("pageSizeStyle").textContent = "@page { size: A4 portrait; margin: 9mm 11mm; }";
   }
 
   document.getElementById("printBtn").addEventListener("click", () => {
