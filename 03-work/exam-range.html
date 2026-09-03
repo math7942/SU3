@@ -205,7 +205,7 @@
   }
   .pill.wait { background: var(--accent-soft); color: var(--accent); }
 
-  .edit-link, .add-link {
+  .edit-link, .add-link, .delete-link {
     flex: none;
     padding: 4px 11px;
     border: 1px solid var(--line);
@@ -220,6 +220,9 @@
   }
   .edit-link:hover, .add-link:hover { border-color: var(--accent); color: var(--accent); }
   .add-link { color: var(--accent); border-style: dashed; }
+  .delete-link { color: #b3261e; }
+  .delete-link:hover { border-color: #b3261e; background: #fdecea; }
+  .row-btns { display: flex; gap: 6px; }
 
   /* 인라인 편집 */
   input[type="text"], textarea {
@@ -282,7 +285,7 @@
   /* 학생 배부용 출력 */
   @media print {
     body { background: #fff; padding: 0; }
-    .back, .summary, .setup-banner, .table-toolbar, .edit-link, .add-link { display: none !important; }
+    .back, .summary, .setup-banner, .table-toolbar, .edit-link, .add-link, .delete-link { display: none !important; }
     .print-header, .print-footer { display: block; }
     .print-header {
       margin: 0 0 14px;
@@ -517,7 +520,10 @@
                 <div class="range-display">
                   <span class="txt">${escapeHtml(item.entry.rangeText)}</span>
                   <span class="btns">
-                    <button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index}">수정</button>
+                    <span class="row-btns">
+                      <button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index}">수정</button>
+                      <button class="delete-link" type="button" data-action="delete" data-subject="${escapeAttr(r.subject)}" data-index="${item.index}">삭제</button>
+                    </span>
                     ${isLast && !alreadyAdding ? `<button class="add-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index + 1}">+ 담당교사 추가</button>` : ""}
                   </span>
                 </div>
@@ -598,6 +604,44 @@
     if (action === "cancel") {
       editing = null;
       renderTable();
+      return;
+    }
+
+    if (action === "delete") {
+      const subject = btn.dataset.subject;
+      const index = Number(btn.dataset.index);
+      const entries = submissions[subject] || [];
+      const entry = entries[index];
+      if (!entry) return;
+
+      const ok = confirm(`"${entry.teacher}" 선생님이 적은 "${subject}" 시험범위를 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`);
+      if (!ok) return;
+
+      if (!CONFIG.APPS_SCRIPT_URL) { alert("저장소가 연결되지 않았습니다."); return; }
+      if (saving) return;
+      saving = true;
+      btn.disabled = true;
+      try {
+        const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "delete", id: entry.id })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          alert("삭제 실패: " + (data.error || "알 수 없는 오류"));
+          btn.disabled = false;
+          return;
+        }
+        entries.splice(index, 1);
+        if (editing && editing.subject === subject) editing = null;
+        renderTable();
+      } catch (err) {
+        alert("네트워크 오류로 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        btn.disabled = false;
+      } finally {
+        saving = false;
+      }
       return;
     }
 

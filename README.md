@@ -112,6 +112,22 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
      };
      var now = new Date();
 
+     // 0) 삭제 요청이면 그 행의 담당교사/시험범위/id만 비워서 다시 빈 자리로 되돌림
+     if (payload.action === "delete") {
+       for (var rDel = 1; rDel < data.length; rDel++) {
+         if (String(data[rDel][col.id]) === String(id)) {
+           sheet.getRange(rDel + 1, col.teacher + 1).setValue("");
+           sheet.getRange(rDel + 1, col.range_text + 1).setValue("");
+           sheet.getRange(rDel + 1, col.updated_at + 1).setValue("");
+           sheet.getRange(rDel + 1, col.id + 1).setValue("");
+           return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+             .setMimeType(ContentService.MimeType.JSON);
+         }
+       }
+       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "id not found" }))
+         .setMimeType(ContentService.MimeType.JSON);
+     }
+
      // 1) id로 지정된 기존 항목이면 그 행만 찾아 수정
      if (id) {
        for (var r = 1; r < data.length; r++) {
