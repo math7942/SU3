@@ -312,20 +312,21 @@
     .col-period { width: 46px; }
     .col-subject { width: 74px; }
     .col-teacher { width: 70px; }
-    table.range thead th {
-      background: #eee !important;
-      color: #000 !important;
+    * {
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+    table.range thead th {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
     tr.day-row td {
-      background: #f3f3f3 !important;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      background: var(--bg);
+      color: var(--ink);
       padding: 3px 6px;
       font-size: 8.5pt;
     }
-    .pill.wait { background: #f0f0f0 !important; color: #555 !important; padding: 1px 6px; font-size: 7pt; }
+    .pill.wait { background: var(--accent-soft); color: var(--accent); padding: 1px 6px; font-size: 7pt; }
     .range-display { display: block; }
     tr { break-inside: avoid; page-break-inside: avoid; }
   }
