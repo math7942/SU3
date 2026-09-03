@@ -148,7 +148,26 @@
     font-family: inherit;
   }
   .print-btn:hover { opacity: 0.92; }
-  .toolbar-actions { display: flex; gap: 8px; }
+  .toolbar-actions { display: flex; align-items: center; gap: 8px; }
+
+  .orient-toggle {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .orient-btn {
+    padding: 7px 12px;
+    border: none;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .orient-btn + .orient-btn { border-left: 1px solid var(--line); }
+  .orient-btn[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
 
   .print-header, .print-footer { display: none; }
 
@@ -285,11 +304,14 @@
     .range-display .btns { flex-direction: row; align-items: center; }
   }
 
-  /* 학생 배부용 출력 — 가로 방향, 한 페이지에 들어가도록 여백·글자를 압축.
+  /* 학생 배부용 출력 — 세로/가로는 선택 가능, 한 페이지에 들어가도록 여백·글자를 압축.
      내용 분량에 따른 최종 축소 비율은 인쇄 직전 JS가 #printArea에 zoom으로 적용한다. */
   @page { size: A4 portrait; margin: 9mm 11mm; }
+  @page print-portrait { size: A4 portrait; margin: 9mm 11mm; }
+  @page print-landscape { size: A4 landscape; margin: 9mm 11mm; }
 
-  #printArea { display: none; }
+  #printArea { display: none; page: print-portrait; }
+  #printArea.landscape { page: print-landscape; }
 
   body.print-mode { background: #fff; padding: 0; }
   body.print-mode .page { max-width: none; }
@@ -325,6 +347,9 @@
   body.print-mode .col-period { width: 46px; }
   body.print-mode .col-subject { width: 74px; }
   body.print-mode .col-teacher { width: 70px; }
+  body.print-mode #printArea.landscape .col-period { width: 60px; }
+  body.print-mode #printArea.landscape .col-subject { width: 90px; }
+  body.print-mode #printArea.landscape .col-teacher { width: 90px; }
   body.print-mode table.range thead th {
     background: #eee !important;
     color: #000 !important;
@@ -375,6 +400,10 @@
     <span class="updated" id="updatedAt">불러오는 중…</span>
     <div class="toolbar-actions">
       <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
+      <div class="orient-toggle" role="group" aria-label="인쇄 방향 선택">
+        <button class="orient-btn" id="orientPortraitBtn" type="button" aria-pressed="true">세로</button>
+        <button class="orient-btn" id="orientLandscapeBtn" type="button" aria-pressed="false">가로</button>
+      </div>
       <button class="print-btn" id="printBtn" type="button">🖨 출력 (학생 배부용)</button>
     </div>
   </div>
@@ -626,8 +655,21 @@
 
   document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
 
+  // ── 인쇄 방향 선택 ─────────────────────────────────────────────
+  let printOrientation = "portrait"; // "portrait" | "landscape"
+  const orientPortraitBtn = document.getElementById("orientPortraitBtn");
+  const orientLandscapeBtn = document.getElementById("orientLandscapeBtn");
+
+  function setPrintOrientation(orientation) {
+    printOrientation = orientation;
+    orientPortraitBtn.setAttribute("aria-pressed", String(orientation === "portrait"));
+    orientLandscapeBtn.setAttribute("aria-pressed", String(orientation === "landscape"));
+  }
+  orientPortraitBtn.addEventListener("click", () => setPrintOrientation("portrait"));
+  orientLandscapeBtn.addEventListener("click", () => setPrintOrientation("landscape"));
+
   // 인쇄 전용 영역(#printArea)에 현재 표를 그대로 복사하고, 실제 렌더링된 높이를 측정해
-  // A4 가로 한 페이지 안에 들어가도록 필요한 만큼만 축소(zoom)한다.
+  // 선택한 방향의 A4 한 페이지 안에 들어가도록 필요한 만큼만 축소(zoom)한다.
   function preparePrintArea() {
     document.getElementById("printRangeBody").innerHTML = document.getElementById("rangeBody").innerHTML;
     document.getElementById("printFooter").textContent =
@@ -635,12 +677,15 @@
 
     document.body.classList.add("print-mode");
     const printArea = document.getElementById("printArea");
+    printArea.classList.toggle("landscape", printOrientation === "landscape");
     printArea.style.zoom = "";
     printArea.style.width = "";
 
     const mmToPx = 96 / 25.4;
-    const usableWidthPx = (210 - 22) * mmToPx;  // A4 세로 - 좌우 여백(11mm×2)
-    const usableHeightPx = (297 - 18) * mmToPx; // A4 세로 - 상하 여백(9mm×2)
+    const pageWmm = printOrientation === "landscape" ? 297 : 210;
+    const pageHmm = printOrientation === "landscape" ? 210 : 297;
+    const usableWidthPx = (pageWmm - 22) * mmToPx;  // 좌우 여백(11mm×2)
+    const usableHeightPx = (pageHmm - 18) * mmToPx; // 상하 여백(9mm×2)
 
     printArea.style.width = usableWidthPx + "px";
     void printArea.offsetHeight; // 강제 리플로우 후 측정
@@ -658,6 +703,7 @@
     const printArea = document.getElementById("printArea");
     printArea.style.zoom = "";
     printArea.style.width = "";
+    printArea.classList.remove("landscape");
   }
 
   document.getElementById("printBtn").addEventListener("click", () => {
