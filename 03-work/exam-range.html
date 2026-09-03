@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3학년 시험범위 수합</title>
+<style>
+  @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+
+  :root {
+    --bg: #f2f0fa;
+    --surface: #ffffff;
+    --ink: #1b1830;
+    --ink-soft: #4a4666;
+    --muted: #7c7796;
+    --line: #e3dff2;
+    --accent: #c2601f;
+    --accent-soft: #fdeee0;
+    --good: #2f8f5b;
+    --good-soft: #e3f5ea;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 0 20px 72px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+      "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+
+  .page { max-width: 880px; margin: 0 auto; }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 28px 0 22px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .back:hover { color: var(--accent); }
+
+  header.hero { padding: 4px 0 28px; }
+  .eyebrow {
+    display: inline-block;
+    margin: 0 0 14px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.6rem, 4vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  header.hero > p { max-width: 46em; margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+  /* 진행 요약 카드 */
+  .summary {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 22px 0 26px;
+    padding: 18px 22px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .summary .ring {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: conic-gradient(var(--accent) calc(var(--pct, 0) * 1%), var(--accent-soft) 0);
+  }
+  .summary .ring span {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .summary .text h2 { margin: 0 0 3px; font-size: 1.02rem; font-weight: 700; }
+  .summary .text p { margin: 0; color: var(--muted); font-size: 0.86rem; }
+
+  /* 탭 */
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tab-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab-btn[aria-selected="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .panel[hidden] { display: none; }
+
+  /* 결과 표 */
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+  .table-toolbar .updated { color: var(--muted); font-size: 0.82rem; }
+  .refresh-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  table.range {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 640px;
+    font-size: 0.92rem;
+  }
+  table.range th, table.range td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+  table.range thead th {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  tr.day-row td {
+    background: var(--bg);
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 10px 14px;
+  }
+  td.period-cell { white-space: nowrap; color: var(--ink-soft); font-weight: 700; width: 1%; }
+  td.subject-cell { font-weight: 700; white-space: nowrap; }
+  td.teacher-cell { white-space: nowrap; color: var(--ink-soft); width: 1%; }
+  td.range-cell { color: var(--ink-soft); white-space: pre-line; }
+  tr.pending td.teacher-cell, tr.pending td.range-cell { color: var(--muted); font-style: italic; }
+  .pill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: var(--good-soft);
+    color: var(--good);
+  }
+  .pill.wait { background: var(--accent-soft); color: var(--accent); }
+
+  /* 제출 폼 */
+  .form-card {
+    padding: 26px 26px 24px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; margin-bottom: 7px; font-size: 0.88rem; font-weight: 700; color: var(--ink); }
+  .field .hint { margin: 5px 0 0; color: var(--muted); font-size: 0.8rem; }
+  select, input[type="text"], textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.95rem;
+  }
+  select:focus, input[type="text"]:focus, textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  textarea { resize: vertical; min-height: 120px; line-height: 1.55; }
+
+  .slot-info {
+    display: none;
+    margin: -6px 0 18px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+  .slot-info.show { display: block; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.98rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+  #submitStatus {
+    margin-top: 14px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    min-height: 1.4em;
+  }
+  #submitStatus.ok { color: var(--good); }
+  #submitStatus.err { color: #b3261e; }
+
+  .admin-note {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+  .admin-note a { color: var(--accent); font-weight: 700; text-decoration: none; }
+  .admin-note a:hover { text-decoration: underline; }
+
+  .setup-banner {
+    display: none;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border: 1px solid #f0c896;
+    border-radius: 14px;
+    background: #fff7ec;
+    color: #7a4a0f;
+    font-size: 0.86rem;
+    line-height: 1.6;
+  }
+  .setup-banner.show { display: block; }
+  .setup-banner code {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: #fceedb;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+  }
+
+  @media (max-width: 560px) {
+    .summary { flex-direction: column; align-items: flex-start; }
+    td.range-cell { min-width: 220px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back" href="index.html">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    업무 도구
+  </a>
+
+  <header class="hero">
+    <span class="eyebrow">3학년 평가계</span>
+    <h1>2026학년도 2학기 1차 정기시험 시험범위</h1>
+    <p>담당 선생님은 [시험범위 입력] 탭에서 과목을 선택해 범위를 등록해 주세요. 학생과 선생님 모두 같은 화면에서 실시간으로 확인할 수 있습니다.</p>
+  </header>
+
+  <div id="setupBanner" class="setup-banner">
+    ⚠️ 아직 저장소(구글 시트)가 연결되지 않았습니다. 지금은 시간표만 보이고 입력한 범위는 저장되지 않습니다.
+    이 페이지 맨 아래의 <code>CONFIG.APPS_SCRIPT_URL</code> 값에 배포한 Apps Script 웹앱 주소를 넣어야 정상 작동합니다.
+  </div>
+
+  <div class="summary">
+    <div class="ring" id="progressRing"><span id="progressPct">0%</span></div>
+    <div class="text">
+      <h2 id="progressLabel">제출 현황 확인 중…</h2>
+      <p>3학년 22개 과목 중 시험범위가 등록된 과목 수입니다.</p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn" id="tabBtnView" role="tab" aria-selected="true" aria-controls="panelView">시험범위 보기</button>
+    <button class="tab-btn" id="tabBtnSubmit" role="tab" aria-selected="false" aria-controls="panelSubmit">시험범위 입력 (교사용)</button>
+  </div>
+
+  <section id="panelView" class="panel" role="tabpanel" aria-labelledby="tabBtnView">
+    <div class="table-toolbar">
+      <span class="updated" id="updatedAt">불러오는 중…</span>
+      <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
+    </div>
+    <div class="table-wrap">
+      <table class="range">
+        <thead>
+          <tr><th>교시</th><th>과목</th><th>담당교사</th><th>시험범위</th></tr>
+        </thead>
+        <tbody id="rangeBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="panelSubmit" class="panel" hidden role="tabpanel" aria-labelledby="tabBtnSubmit">
+    <div class="form-card">
+      <div class="field">
+        <label for="subjectSelect">담당 과목</label>
+        <select id="subjectSelect">
+          <option value="">과목을 선택하세요</option>
+        </select>
+      </div>
+      <div class="slot-info" id="slotInfo"></div>
+      <div class="field">
+        <label for="teacherName">담당교사 성함</label>
+        <input type="text" id="teacherName" placeholder="예: 김윤미" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="rangeText">시험범위</label>
+        <textarea id="rangeText" placeholder="예)&#10;선택형 80점 서술형 20점&#10;교과서 48~177쪽, 204~251쪽, 278~307쪽&#10;수능특강 수학Ⅰ 1강~6강의 level1, 2강 level2, 수능특강 수학Ⅱ 1강~5강 level1"></textarea>
+        <p class="hint">이미 제출한 과목을 다시 선택하면 기존 내용이 불러와지며, 저장하면 그 내용이 덮어써집니다.</p>
+      </div>
+      <button class="submit-btn" id="submitBtn" type="button">시험범위 저장</button>
+      <div id="submitStatus" role="status"></div>
+      <p class="admin-note">평가계용 &mdash; <a id="sheetLink" href="#" target="_blank" rel="noopener">원본 구글 시트에서 전체 내용 보기 / 직접 수정</a></p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ── 설정 ────────────────────────────────────────────────────────
+  // 구글 시트에 연결한 Apps Script 웹앱 배포 URL을 아래에 붙여넣으세요.
+  // (형식: https://script.google.com/macros/s/AKfycb.../exec)
+  const CONFIG = {
+    APPS_SCRIPT_URL: "",
+    SHEET_VIEW_URL: "https://docs.google.com/spreadsheets/d/11uXxJcITAGuIYO-5vJ_5B6lXrFLoPPpUt7Qx2FnHgNU/edit"
+  };
+
+  // ── 3학년 정기시험 시간표 (변하지 않는 뼈대) ──────────────────────
+  const SCHEDULE = [
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 1, time: "08:50~09:40", subject: "윤리와 사상" },
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 2, time: "9:55~10:45", subject: "경제수학" },
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 2, time: "9:55~10:45", subject: "심화수학Ⅰ" },
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 2, time: "9:55~10:45", subject: "통합수학Ⅰ" },
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 3, time: "11:00~11:50", subject: "여행지리" },
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 4, time: "12:05~12:55", subject: "화학Ⅱ" },
+    { date: "2026-09-29", dayLabel: "9월 29일(화)", period: 5, time: "13:50~14:40", subject: "심화국어" },
+    { date: "2026-09-30", dayLabel: "9월 30일(수)", period: 1, time: "08:50~09:40", subject: "일본어Ⅱ" },
+    { date: "2026-09-30", dayLabel: "9월 30일(수)", period: 2, time: "9:55~10:45", subject: "생명과학Ⅱ" },
+    { date: "2026-09-30", dayLabel: "9월 30일(수)", period: 3, time: "11:00~11:50", subject: "화법과 작문" },
+    { date: "2026-09-30", dayLabel: "9월 30일(수)", period: 4, time: "12:05~12:55", subject: "심화영어Ⅰ" },
+    { date: "2026-09-30", dayLabel: "9월 30일(수)", period: 5, time: "13:50~14:40", subject: "지구과학Ⅱ" },
+    { date: "2026-10-01", dayLabel: "10월 1일(목)", period: 1, time: "08:50~09:40", subject: "지식재산일반" },
+    { date: "2026-10-01", dayLabel: "10월 1일(목)", period: 2, time: "9:55~10:45", subject: "세계 지리" },
+    { date: "2026-10-01", dayLabel: "10월 1일(목)", period: 2, time: "9:55~10:45", subject: "물리학Ⅱ" },
+    { date: "2026-10-01", dayLabel: "10월 1일(목)", period: 3, time: "11:00~11:50", subject: "현대문학감상" },
+    { date: "2026-10-01", dayLabel: "10월 1일(목)", period: 4, time: "12:05~12:55", subject: "영어 독해와 작문" },
+    { date: "2026-10-01", dayLabel: "10월 1일(목)", period: 5, time: "13:50~14:40", subject: "정치와 법" },
+    { date: "2026-10-02", dayLabel: "10월 2일(금)", period: 1, time: "08:50~09:40", subject: "사회문제탐구" },
+    { date: "2026-10-02", dayLabel: "10월 2일(금)", period: 2, time: "9:55~10:45", subject: "미적분" },
+    { date: "2026-10-02", dayLabel: "10월 2일(금)", period: 3, time: "11:00~11:50", subject: "진로 영어" },
+    { date: "2026-10-02", dayLabel: "10월 2일(금)", period: 4, time: "12:05~12:55", subject: "생활과 과학" }
+  ];
+
+  let submissions = {}; // subject -> { teacher, rangeText, updatedAt }
+
+  // ── 초기 화면 구성 ─────────────────────────────────────────────
+  document.getElementById("sheetLink").href = CONFIG.SHEET_VIEW_URL;
+
+  const subjectSelect = document.getElementById("subjectSelect");
+  let lastGroupLabel = null;
+  let optgroup = null;
+  SCHEDULE.forEach(row => {
+    if (row.dayLabel !== lastGroupLabel) {
+      optgroup = document.createElement("optgroup");
+      optgroup.label = row.dayLabel;
+      subjectSelect.appendChild(optgroup);
+      lastGroupLabel = row.dayLabel;
+    }
+    const opt = document.createElement("option");
+    opt.value = row.subject;
+    opt.textContent = `${row.period}교시 (${row.time}) · ${row.subject}`;
+    optgroup.appendChild(opt);
+  });
+
+  function renderTable() {
+    const body = document.getElementById("rangeBody");
+    body.innerHTML = "";
+
+    let lastDate = null;
+    let i = 0;
+    while (i < SCHEDULE.length) {
+      const row = SCHEDULE[i];
+      if (row.date !== lastDate) {
+        const tr = document.createElement("tr");
+        tr.className = "day-row";
+        tr.innerHTML = `<td colspan="4">${row.dayLabel}</td>`;
+        body.appendChild(tr);
+        lastDate = row.date;
+      }
+      // 같은 날짜 + 같은 교시(선택과목 여러 개)를 한 묶음으로 처리
+      let j = i;
+      while (j < SCHEDULE.length && SCHEDULE[j].date === row.date && SCHEDULE[j].period === row.period) {
+        j++;
+      }
+      const span = j - i;
+      for (let k = i; k < j; k++) {
+        const r = SCHEDULE[k];
+        const sub = submissions[r.subject];
+        const done = !!(sub && sub.rangeText);
+        const tr = document.createElement("tr");
+        if (!done) tr.className = "pending";
+        let periodCell = "";
+        if (k === i) {
+          periodCell = `<td class="period-cell" rowspan="${span}">${r.period}교시<br>${r.time}</td>`;
+        }
+        tr.innerHTML = `
+          ${periodCell}
+          <td class="subject-cell">${r.subject}</td>
+          <td class="teacher-cell">${sub && sub.teacher ? sub.teacher : "—"}</td>
+          <td class="range-cell">${
+            done
+              ? escapeHtml(sub.rangeText)
+              : '<span class="pill wait">미제출</span>'
+          }</td>`;
+        body.appendChild(tr);
+      }
+      i = j;
+    }
+
+    const total = SCHEDULE.length;
+    const doneCount = SCHEDULE.filter(r => submissions[r.subject] && submissions[r.subject].rangeText).length;
+    const pct = Math.round((doneCount / total) * 100);
+    document.getElementById("progressPct").textContent = pct + "%";
+    document.getElementById("progressRing").style.setProperty("--pct", pct);
+    document.getElementById("progressLabel").textContent = `제출 완료 ${doneCount} / ${total}과목`;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  async function loadSubmissions() {
+    if (!CONFIG.APPS_SCRIPT_URL) {
+      document.getElementById("setupBanner").classList.add("show");
+      document.getElementById("updatedAt").textContent = "저장소 미연결";
+      renderTable();
+      return;
+    }
+    document.getElementById("updatedAt").textContent = "불러오는 중…";
+    try {
+      const res = await fetch(CONFIG.APPS_SCRIPT_URL, { method: "GET" });
+      if (!res.ok) throw new Error("network");
+      const data = await res.json();
+      submissions = {};
+      (data.rows || []).forEach(r => {
+        if (r.subject) submissions[r.subject] = { teacher: r.teacher, rangeText: r.range_text, updatedAt: r.updated_at };
+      });
+      document.getElementById("updatedAt").textContent = "마지막 확인: " + new Date().toLocaleTimeString("ko-KR");
+    } catch (err) {
+      document.getElementById("updatedAt").textContent = "불러오기 실패 — 새로고침을 눌러 다시 시도해 주세요.";
+    }
+    renderTable();
+  }
+
+  document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
+
+  // ── 탭 전환 ────────────────────────────────────────────────────
+  const tabBtnView = document.getElementById("tabBtnView");
+  const tabBtnSubmit = document.getElementById("tabBtnSubmit");
+  const panelView = document.getElementById("panelView");
+  const panelSubmit = document.getElementById("panelSubmit");
+
+  function showTab(which) {
+    const viewing = which === "view";
+    panelView.hidden = !viewing;
+    panelSubmit.hidden = viewing;
+    tabBtnView.setAttribute("aria-selected", String(viewing));
+    tabBtnSubmit.setAttribute("aria-selected", String(!viewing));
+    if (!viewing) loadSubmissions();
+  }
+  tabBtnView.addEventListener("click", () => showTab("view"));
+  tabBtnSubmit.addEventListener("click", () => showTab("submit"));
+
+  // ── 과목 선택 시 기존 제출 내용 불러오기 ──────────────────────────
+  subjectSelect.addEventListener("change", () => {
+    const subject = subjectSelect.value;
+    const slotInfo = document.getElementById("slotInfo");
+    const teacherInput = document.getElementById("teacherName");
+    const rangeInput = document.getElementById("rangeText");
+
+    if (!subject) {
+      slotInfo.classList.remove("show");
+      return;
+    }
+    const row = SCHEDULE.find(r => r.subject === subject);
+    slotInfo.textContent = `${row.dayLabel} ${row.period}교시 (${row.time}) · ${row.subject}`;
+    slotInfo.classList.add("show");
+
+    const sub = submissions[subject];
+    teacherInput.value = sub && sub.teacher ? sub.teacher : "";
+    rangeInput.value = sub && sub.rangeText ? sub.rangeText : "";
+  });
+
+  // ── 제출 ──────────────────────────────────────────────────────
+  document.getElementById("submitBtn").addEventListener("click", async () => {
+    const subject = subjectSelect.value;
+    const teacher = document.getElementById("teacherName").value.trim();
+    const rangeText = document.getElementById("rangeText").value.trim();
+    const statusEl = document.getElementById("submitStatus");
+    const btn = document.getElementById("submitBtn");
+
+    statusEl.className = "";
+    if (!subject) { statusEl.className = "err"; statusEl.textContent = "담당 과목을 선택해 주세요."; return; }
+    if (!teacher) { statusEl.className = "err"; statusEl.textContent = "담당교사 성함을 입력해 주세요."; return; }
+    if (!rangeText) { statusEl.className = "err"; statusEl.textContent = "시험범위를 입력해 주세요."; return; }
+    if (!CONFIG.APPS_SCRIPT_URL) {
+      statusEl.className = "err";
+      statusEl.textContent = "저장소가 아직 연결되지 않았습니다. 관리자에게 문의해 주세요.";
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = "저장 중…";
+    try {
+      const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ subject, teacher, rangeText })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "unknown");
+      submissions[subject] = { teacher, rangeText, updatedAt: new Date().toISOString() };
+      statusEl.className = "ok";
+      statusEl.textContent = "저장했습니다. [시험범위 보기] 탭에서 확인할 수 있어요.";
+    } catch (err) {
+      statusEl.className = "err";
+      statusEl.textContent = "저장에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  loadSubmissions();
+</script>
+</body>
+</html>

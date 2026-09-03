@@ -46,8 +46,72 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 | 업무 도구 | `03-work/random-order.html` | 랜덤 순서 뽑기 |
 | 업무 도구 | `03-work/image-resize.html` | 이미지 크기 변환 |
 | 업무 도구 | `03-work/photo-format.html` | 원서용 사진 규격 변환 |
+| 업무 도구 | `03-work/exam-range.html` | 3학년 시험범위 수합 |
 
 수학축제, 수수, 6번 분류는 아직 비어 있습니다.
+
+## 시험범위 수합 도구 설정 (`03-work/exam-range.html`)
+
+이 도구만은 다른 도구와 달리 브라우저 안에서 끝나지 않고, 구글 시트를 저장소로 씁니다.
+선생님마다 로그인 없이 링크만 열어 입력할 수 있게 하기 위해서입니다. 아래 순서로 한 번만
+연결하면 됩니다.
+
+1. 데이터를 담을 구글 시트가 이미 만들어져 있습니다: `2026-2학기 1차 정기시험 3학년 시험범위 수합`
+   (열: `date, day_label, period, time, subject, teacher, range_text, updated_at`, 3학년 22과목이
+   미리 채워져 있음)
+2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기본 코드를 지우고 아래 코드를 붙여넣습니다.
+
+   ```js
+   function doGet(e) {
+     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+     var data = sheet.getDataRange().getValues();
+     var headers = data[0];
+     var rows = data.slice(1).map(function (row) {
+       var obj = {};
+       headers.forEach(function (h, i) { obj[h] = row[i]; });
+       return obj;
+     });
+     return ContentService.createTextOutput(JSON.stringify({ rows: rows }))
+       .setMimeType(ContentService.MimeType.JSON);
+   }
+
+   function doPost(e) {
+     var payload = JSON.parse(e.postData.contents);
+     var subject = payload.subject;
+     var teacher = payload.teacher || "";
+     var rangeText = payload.rangeText || "";
+
+     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+     var data = sheet.getDataRange().getValues();
+     var headers = data[0];
+     var subjectCol = headers.indexOf("subject");
+     var teacherCol = headers.indexOf("teacher");
+     var rangeCol = headers.indexOf("range_text");
+     var updatedCol = headers.indexOf("updated_at");
+
+     for (var r = 1; r < data.length; r++) {
+       if (data[r][subjectCol] === subject) {
+         sheet.getRange(r + 1, teacherCol + 1).setValue(teacher);
+         sheet.getRange(r + 1, rangeCol + 1).setValue(rangeText);
+         sheet.getRange(r + 1, updatedCol + 1).setValue(new Date());
+         return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+           .setMimeType(ContentService.MimeType.JSON);
+       }
+     }
+     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "subject not found" }))
+       .setMimeType(ContentService.MimeType.JSON);
+   }
+   ```
+
+3. 오른쪽 위 **배포 → 새 배포**를 누르고, 유형은 **웹앱**을 선택합니다.
+   - 실행 계정: **나**
+   - 액세스 권한이 있는 사용자: **모든 사용자**
+4. 배포하면 나오는 웹앱 URL(`https://script.google.com/macros/s/.../exec`)을 복사합니다.
+5. `03-work/exam-range.html` 파일 맨 아래 `<script>`의 `CONFIG.APPS_SCRIPT_URL` 값에
+   그 URL을 붙여넣고 저장합니다.
+
+이후 시트 내용을 바꾸려면(과목 추가·삭제, 오타 수정) 시트를 직접 편집해도 되고, 코드를 수정한 뒤
+**배포 → 배포 관리 → 수정 → 새 버전**으로 다시 배포하면 됩니다(웹앱 URL은 그대로 유지됩니다).
 
 ## 도구를 추가하려면
 
