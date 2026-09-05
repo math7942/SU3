@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시 · 무게중심이란 무엇인가? · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .shape-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .shapecard {
+    border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 12px;
+    text-align: center; cursor: pointer; user-select: none;
+  }
+  .shapecard:hover { border-color: var(--accent); }
+  .shapecard svg { width: 100%; height: 96px; }
+  .shapecard .overlay { opacity: 0; transition: opacity 0.2s; }
+  .shapecard.revealed .overlay { opacity: 1; }
+  .shapecard .name { font-size: 0.82rem; font-weight: 700; margin-top: 6px; color: var(--ink-soft); }
+  .shapecard .hint { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .butterfly-wrap { display: flex; justify-content: center; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab current" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅐 Part A · 1 / 3차시</span>
+    <h1>무게중심이란 무엇인가?</h1>
+    <p class="sub">직관에서 공리로 — 실생활 사례와 손으로 하는 실험, 그리고 반례를 통해 무게중심에 대한 첫 감각을 세웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>무게중심의 의미를 실생활 예시와 연결하여 설명할 수 있다.</li>
+        <li>아르키메데스의 지렛대 공리를 이해하고, 주어진 상황에 알맞은 공리를 판단할 수 있다.</li>
+        <li>'무게중심을 지나는 선은 항상 넓이를 이등분한다'는 오개념을 반례를 통해 스스로 수정할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>명언 감상 및 '나만의 무게중심 정의' 써보기</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>무게중심의 활용 사례 찾기</td><td class="time">5분</td></tr>
+        <tr><td>활동2</td><td>MDF 도형 무게중심 찾기 실험</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>삼각형의 무게중심은 넓이 이등분점인가? (오개념 교정)</td><td class="time">15분</td></tr>
+        <tr><td>활동4</td><td>아르키메데스의 지렛대 공리와 시소 문제</td><td class="time">10분</td></tr>
+        <tr><td>정리</td><td>정의 다시 써보기 및 차시 예고</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>무게중심이란 무엇일까?</h2>
+    <p class="lead">다음 명언들을 함께 읽어 봅시다.</p>
+    <div class="qbox">
+      “수학자는 존재하지 않는 검은 고양이를 찾아 어두운 방을 더듬거리는 맹인이다.” — 찰스 다윈<br>
+      “자연의 거대한 책은 수학적 기호들로 쓰여졌다.” — 갈릴레오
+    </div>
+    <p>오늘부터 3차시 동안 탐구할 '무게중심'에 대해, 지금 알고 있는(또는 짐작되는) 내용을 자유롭게 적어 봅시다.</p>
+    <p><strong>1. 무게중심이란 무엇이라고 생각하나요?</strong></p>
+    <textarea class="think" placeholder="나만의 무게중심 정의를 적어 보세요 (이 입력은 저장되지 않으니, 노트에도 함께 옮겨 적어 두세요)"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 5분</span>
+    <h2>무게중심은 어디에 활용될까요?</h2>
+    <p class="lead">아래 예시 중 무게중심과 관련 있다고 생각되는 상황을 하나 골라 체크하고, 그 이유를 짧게 써 봅시다.</p>
+    <div class="qbox" style="display:grid; gap:6px;">
+      <label><input type="checkbox"> 오뚝이가 쓰러져도 다시 일어나는 이유</label>
+      <label><input type="checkbox"> 다이빙·체조·피겨스케이팅 선수가 공중에서 회전 속도를 조절하는 원리</label>
+      <label><input type="checkbox"> 크레인이 무거운 물체를 들어 올려도 넘어지지 않는 이유</label>
+      <label><input type="checkbox"> 자동차·이륜차가 코너를 돌 때 전복되지 않도록 설계하는 방법</label>
+      <label><input type="checkbox"> 인공위성·우주선의 자세 제어(무게중심을 기준으로 회전)</label>
+      <label><input type="checkbox"> 젠가·와인잔 받침대 등 균형 장난감·도구의 설계</label>
+    </div>
+    <textarea class="think" placeholder="고른 상황과 그 이유를 적어 보세요"></textarea>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 진행 Tip 보기</button>
+      <div class="reveal-content tip hidden">
+        <p>학생이 예시를 고르기 어려워하면 '오뚝이는 왜 항상 아래가 무거운 모양일까?'처럼 구체적 질문으로 유도한다.</p>
+        <p>가능하면 1~2명의 답을 전체 공유하여 도입 분위기를 살린다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>MDF 도형의 무게중심 찾기 실험</h2>
+    <p class="lead">MDF로 만든 다음 6개 도형을 아이스크림 막대(또는 얇은 자) 위에 얹어 균형이 잡히는 지점(무게중심)을 직접 찾아봅니다. 아래 카드를 클릭하면 실제 무게중심 위치를 확인할 수 있어요.</p>
+    <div class="widget">
+      <div class="widget-title">도형을 클릭해 무게중심을 확인해 보세요</div>
+      <div class="shape-grid" id="shape-grid"></div>
+    </div>
+    <p><strong>질문 :</strong> 어떤 도형의 무게중심을 찾는 것이 가장 어려웠나요? 그 이유는 무엇일까요?</p>
+    <textarea class="think" placeholder="생각을 적어 보세요"></textarea>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>①~④는 대칭축이 있어 대칭축의 교점을 어림잡으면 비교적 쉽게 찾을 수 있다. → 이는 뒤에서 배울 「공리5. 대칭축을 가진 도형의 무게중심은 반드시 그 대칭축 위에 있다」를 몸으로 먼저 확인하는 장면이다(대칭축이 두 개면 그 교점이 곧 무게중심).</p>
+        <p>⑤ 오각형(불규칙)은 대칭축이 없어 단순한 기준이 없으므로 학생들이 가장 어려워한다.</p>
+        <p>⑥ 구멍 뚫린 원은 무게중심이 재질이 없는 '구멍(빈 공간)' 안, 즉 도형의 몸체 밖에 위치한다는 사실을 발견하는 것이 포인트이다. → 이는 뒤에서 배울 「공리6. 볼록도형의 무게중심은 도형 내부에 있다」가 볼록이 아닌 도형에는 적용되지 않는다는 것을 몸으로 먼저 확인하는 장면이다. 이 연결을 활동3 이후 꼭 짚어줄 것.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>삼각형의 무게중심은 '넓이를 이등분하는 선들의 교점'일까?</h2>
+    <p class="lead">A(0,6), B(−2,0), C(2,0)을 꼭짓점으로 하는 삼각형이 있습니다. 두 중선의 교점을 G, 직선 y=k가 변 AB, AC와 만나는 점을 각각 D, E라 합시다. 슬라이더로 k를 움직이며 △ADE와 사다리꼴 DECB의 넓이를 비교해 보세요.</p>
+
+    <div class="widget">
+      <div class="widget-title">직선 y = k 를 움직여 위·아래 넓이를 비교해 보세요</div>
+      <canvas id="triCanvas"></canvas>
+      <div class="control-row">
+        <label for="kSlider">직선의 높이 k</label>
+        <input type="range" id="kSlider" min="0.2" max="5.8" step="0.05" value="2">
+        <span class="val" id="kVal">2.00</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">△ADE 넓이</div><div class="v" id="areaTop">–</div></div>
+        <div class="cell"><div class="k">사다리꼴 DECB 넓이</div><div class="v" id="areaBottom">–</div></div>
+        <div class="cell"><div class="k">두 넓이 비교</div><div class="v" id="areaCompare">–</div></div>
+      </div>
+      <div class="control-row">
+        <button class="btn" onclick="jumpTo(2)">G의 높이(y=2)로 이동</button>
+        <button class="btn solid" onclick="jumpTo(6-6/Math.SQRT2)">넓이를 진짜 이등분하는 높이로 이동</button>
+      </div>
+    </div>
+
+    <p>① G의 좌표를 구하시오. ② △ADE와 사다리꼴 DECB의 넓이를 각각 구하고, 두 넓이가 같은지 비교하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>① 삼각형의 무게중심 G = ((0+(−2)+2)/3, (6+0+0)/3) = (0, 2) → 직선 y=2는 실제로 G를 지난다.</p>
+        <p>② 직선 AB : y = 3x+6, 직선 AC : y = −3x+6. y=2를 대입하면 D(−4/3, 2), E(4/3, 2). △ABC의 넓이 = (1/2)×4×6 = 12. △ADE ∽ △ABC이고 닮음비는 (6−2)/6 = 2/3이므로 넓이비는 (2/3)² = 4/9. 따라서 △ADE의 넓이 = 12×4/9 = 16/3 ≈ 5.33, 사다리꼴 DECB의 넓이 = 12 − 16/3 = 20/3 ≈ 6.67.</p>
+        <p>⇒ 16/3 ≠ 20/3 이므로 두 넓이는 같지 않다! 즉, 무게중심 G를 지나는 선(y=2)이라고 해서 항상 넓이를 이등분하는 것은 아니다.</p>
+      </div>
+    </div>
+
+    <p>③ [탐구 확장] 그렇다면 꼭짓점 A와 대변 BC의 중점을 잇는 '중선' AM(M은 BC의 중점)은 넓이를 이등분할까? △ABM과 △ACM의 넓이를 비교해 확인해 봅시다.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>M = BC의 중점 = (0,0). △ABM과 △ACM은 밑변 BM=MC=2로 같고, 꼭짓점 A에서 밑변 BC까지의 높이도 6으로 같다. 따라서 두 삼각형의 넓이는 각각 (1/2)×2×6 = 6으로 항상 같다.</p>
+        <p><strong>결론 :</strong> 삼각형의 '중선'(꼭짓점–대변의 중점을 잇는 선)은 항상 넓이를 이등분하지만, 무게중심을 지나는 '임의의' 직선이 모두 그런 것은 아니다.</p>
+      </div>
+    </div>
+
+    <div class="stage-block">
+      <p>(2) 넓이가 각각 2로 같은 두 삼각형이 한 꼭짓점에서 맞닿아 있는 나비 모양 도형이 있습니다. 이 도형 전체의 무게중심은 어디에 있을까요?</p>
+      <div class="butterfly-wrap">
+        <svg width="220" height="130" viewBox="0 0 220 130">
+          <polygon points="20,20 100,65 20,110" fill="#0f8f86" opacity="0.75"/>
+          <polygon points="200,20 100,65 200,110" fill="#c2601f" opacity="0.75"/>
+          <circle id="butterflyG" cx="100" cy="65" r="4" fill="#1b1830" opacity="0"/>
+          <line id="butterflyLine" x1="60" y1="42.5" x2="150" y2="42.5" stroke="#1b1830" stroke-width="1.5" stroke-dasharray="3 3" opacity="0"/>
+        </svg>
+      </div>
+      <div class="reveal">
+        <button class="reveal-btn" onclick="toggleReveal(this); document.getElementById('butterflyG').setAttribute('opacity', document.getElementById('butterflyG').getAttribute('opacity')==0?1:0); document.getElementById('butterflyLine').setAttribute('opacity', document.getElementById('butterflyLine').getAttribute('opacity')==0?1:0);">💡 교사용 정답 / 풀이 보기</button>
+        <div class="reveal-content ok hidden">
+          <p>공리7 「두 도형 전체의 무게중심은 각 도형의 무게중심을 연결한 선분 위에 위치한다」에 의해, 전체 무게중심은 두 삼각형 각각의 무게중심을 잇는 선분 위에 있다. 두 삼각형의 넓이가 2로 같으므로, 전체 무게중심은 그 선분의 정확히 '중점'이 된다(그림의 검은 점).</p>
+          <p>이 도형은 오목(비볼록)도형이므로, 계산된 중점이 반드시 색칠된 부분(도형 내부) 안에 있다는 보장이 없다 — 실제로 두 삼각형이 맞닿은 점 부근, 즉 도형 몸체가 거의 없는 곳에 위치하게 된다. → 「공리6. 볼록도형의 무게중심은 내부에 있다」는 볼록하지 않은 도형에는 적용되지 않는다는 것을 다시 한 번 확인하는 예시이다(활동2의 도넛 모양과 같은 맥락!).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 4 · 10분</span>
+    <h2>아르키메데스의 지렛대 공리</h2>
+    <p class="lead">다음 7가지 공리를 함께 읽고, 시소 그림에 각 공리를 적용해 봅시다.</p>
+    <table class="data">
+      <tr><th>공리</th><th>내용</th></tr>
+      <tr><td>공리1</td><td>무게가 같은 두 물체는 받침점으로부터 같은 거리에서 평형을 이룬다. (거리가 다르면 거리가 긴 쪽이 아래로 기운다.)</td></tr>
+      <tr><td>공리2</td><td>평형을 이루는 두 물체 중 한쪽에 무게를 더하면, 무게가 더해진 쪽으로 기운다.</td></tr>
+      <tr><td>공리3</td><td>평형을 이루는 두 물체 중 한쪽에서 무게를 덜어내면, 반대쪽으로 기운다.</td></tr>
+      <tr><td>공리4</td><td>닮은 두 도형의 무게중심은 닮음에 의해 서로 대응하는 위치에 있다.</td></tr>
+      <tr><td>공리5</td><td>대칭축을 가진 도형의 무게중심은 반드시 그 대칭축 위에 있다.</td></tr>
+      <tr><td>공리6</td><td>볼록도형의 무게중심은 그 도형 내부에 있다.</td></tr>
+      <tr><td>공리7</td><td>두 도형 전체의 무게중심은 각 도형의 무게중심을 연결한 선분 위에 위치한다.</td></tr>
+    </table>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 공리 목록에 대한 안내</button>
+      <div class="reveal-content tip hidden">
+        <p>이 7가지는 고대 아르키메데스의 「평면의 평형에 관하여」에 담긴 정역학 공리·명제와, 최근 학생이 접한 인터랙티브 보고서(SPA)가 소개한 '대칭축 공리'를 하나의 목록으로 통합한 것이다. 공리5(대칭축)는 새로 추가된 것이고, 나머지 6개는 기존 공리와 같되 번호가 한 칸씩 뒤로 밀렸다(이전의 '공리5(볼록도형)'는 '공리6', '공리6(선분 위)'는 '공리7').</p>
+      </div>
+    </div>
+
+    <p><strong>[시소 문제]</strong> 받침점에서 왼쪽으로 x m 떨어진 곳에 40kg 학생이, 오른쪽으로 0.5m 떨어진 곳에 80kg 학생이 앉아 평형을 이루었다. 어떤 공리(들)로 이 상황을 설명할 수 있을까요? 아래 시소에서 직접 왼쪽 학생의 몸무게와 거리를 조절하며 평형점을 찾아보세요.</p>
+
+    <div class="widget">
+      <div class="widget-title">시소 시뮬레이터 — 왼쪽을 조절해 평형을 맞춰 보세요 (오른쪽 : 80kg, 0.5m 고정)</div>
+      <canvas id="seesawCanvas"></canvas>
+      <div class="control-row">
+        <label for="m1Slider">왼쪽 학생 몸무게 m₁ (kg)</label>
+        <input type="range" id="m1Slider" min="10" max="100" step="1" value="40">
+        <span class="val" id="m1Val">40 kg</span>
+      </div>
+      <div class="control-row">
+        <label for="d1Slider">왼쪽 거리 d₁ (m)</label>
+        <input type="range" id="d1Slider" min="0.1" max="2.5" step="0.05" value="1">
+        <span class="val" id="d1Val">1.00 m</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">왼쪽 모멘트 m₁d₁</div><div class="v" id="momentLeft">–</div></div>
+        <div class="cell"><div class="k">오른쪽 모멘트 m₂d₂</div><div class="v" id="momentRight">–</div></div>
+        <div class="cell"><div class="k">상태</div><div class="v" id="seesawState">–</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>무게가 다른 두 사람이 평형을 이루려면 거리도 달라야 한다(공리1의 대우). 무게가 더 무거운 80kg 쪽이 받침점에 더 가까이(0.5m) 있어야 하고, 가벼운 40kg 쪽은 더 멀리(x&gt;0.5m) 있어야 한다.</p>
+        <p>만약 40kg 학생이 받침점에 더 가까이 다가오면 80kg 쪽으로 기울고(공리1), 40kg 쪽에 사람이 더 타면 40kg 쪽이 내려간다(공리2) 등으로 설명할 수 있다.</p>
+        <p>정확한 거리 x는 다음 시간에 배우는 지렛대 원리(m₁d₁=m₂d₂)로 계산한다. (정답 : x=1m — 위 시뮬레이터에서 m₁=40, d₁=1로 맞추면 평형이 되는 것을 직접 확인해 보세요.)</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>오늘 배운 내용을 정리해 봅시다</h2>
+    <p>도입에서 썼던 '나만의 무게중심 정의'를 다시 꺼내어, 지금 시점에서 최종적으로 수정해 봅시다.</p>
+    <textarea class="think" placeholder="수정된 무게중심 정의를 적어 보세요"></textarea>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 무게중심을 '느낌'과 '공리'로 이해했습니다. 다음 시간에는 무게중심을 '숫자'와 '식'으로 정확히 계산해 봅니다 — 지렛대 원리를 공식화하고, 좌표평면 위 도형의 무게중심 공식을 유도합니다.</p>
+    <div class="next">다음 차시 : 2차시 — 무게중심을 계산하기 (이산에서 대수로)</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="index.html">← 미적분 실험실 목록으로</a>
+    <a href="2-lever.html">2차시 — 무게중심을 계산하기 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  // 활동2 — MDF 도형 6종
+  const shapes = [
+    { name: '① 원', hint: '대칭축 무한개', svg: `<circle cx="50" cy="48" r="30" fill="#0f8f86" opacity="0.7"/>`, cx: 50, cy: 48, axes: [[10,48,90,48],[50,8,50,88]] },
+    { name: '② 직사각형', hint: '대칭축 2개', svg: `<rect x="15" y="20" width="70" height="56" fill="#2a6fbe" opacity="0.7"/>`, cx: 50, cy: 48, axes: [[15,48,85,48],[50,20,50,76]] },
+    { name: '③ 평행사변형', hint: '대칭축 없음(점대칭)', svg: `<polygon points="25,20 90,20 65,76 0,76" fill="#c2601f" opacity="0.7"/>`, cx: 45, cy: 48, axes: [] },
+    { name: '④ 사다리꼴', hint: '대칭축 1개', svg: `<polygon points="30,18 70,18 90,78 10,78" fill="#b03b62" opacity="0.7"/>`, cx: 50, cy: 48, axes: [[50,10,50,86]] },
+    { name: '⑤ 불규칙 오각형', hint: '대칭축 없음 — 가장 어려움', svg: `<polygon points="50,14 88,42 74,82 26,82 12,42" fill="#4a7c2f" opacity="0.7"/>`, cx: 49, cy: 47, axes: [] },
+    { name: '⑥ 구멍 뚫린 원(도넛)', hint: '무게중심이 구멍(밖) 안에!', svg: `<circle cx="50" cy="48" r="34" fill="#5b4bd6" opacity="0.7"/><circle cx="50" cy="48" r="15" fill="#f2faf9"/>`, cx: 50, cy: 48, axes: [[10,48,90,48],[50,8,50,88]] },
+  ];
+  const grid = document.getElementById('shape-grid');
+  shapes.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'shapecard';
+    const axesSvg = s.axes.map(a => `<line x1="${a[0]}" y1="${a[1]}" x2="${a[2]}" y2="${a[3]}" stroke="#1b1830" stroke-width="1" stroke-dasharray="3 2"/>`).join('');
+    card.innerHTML = `
+      <svg viewBox="0 0 100 96">
+        ${s.svg}
+        <g class="overlay">
+          ${axesSvg}
+          <circle cx="${s.cx}" cy="${s.cy}" r="3.5" fill="#1b1830"/>
+        </g>
+      </svg>
+      <div class="name">${s.name}</div>
+      <div class="hint overlay">${s.hint}</div>
+      <div class="hint" style="opacity:1">클릭해서 확인</div>
+    `;
+    card.addEventListener('click', () => card.classList.toggle('revealed'));
+    grid.appendChild(card);
+  });
+
+  // 활동3 — 삼각형 넓이 이등분 위젯
+  const triCanvas = document.getElementById('triCanvas');
+  const kSlider = document.getElementById('kSlider');
+  const kVal = document.getElementById('kVal');
+  const areaTop = document.getElementById('areaTop');
+  const areaBottom = document.getElementById('areaBottom');
+  const areaCompare = document.getElementById('areaCompare');
+
+  const A = [0, 6], B = [-2, 0], C = [2, 0];
+  const worldToScreen = (x, y, w, h) => {
+    const xmin = -3.2, xmax = 3.2, ymin = -0.6, ymax = 6.8;
+    const sx = w / (xmax - xmin), sy = h / (ymax - ymin);
+    const s = Math.min(sx, sy);
+    const ox = w / 2, oy = h - (0 - ymin) * s - 20;
+    return [ox + x * s, oy - (y - 0) * s];
+  };
+
+  function drawTriangle() {
+    const { ctx, w, h } = fitCanvas(triCanvas, 320);
+    ctx.clearRect(0, 0, w, h);
+    const k = parseFloat(kSlider.value);
+    kVal.textContent = fmt(k);
+
+    const P = (x, y) => worldToScreen(x, y, w, h);
+    const pA = P(...A), pB = P(...B), pC = P(...C);
+
+    const Dx = (k - 6) / 3, Ex = (6 - k) / 3;
+    const pD = P(Dx, k), pE = P(Ex, k);
+
+    // 사다리꼴 DECB (아래쪽)
+    ctx.beginPath();
+    ctx.moveTo(...pD); ctx.lineTo(...pE); ctx.lineTo(...pC); ctx.lineTo(...pB); ctx.closePath();
+    ctx.fillStyle = 'rgba(42,111,190,0.28)'; ctx.fill();
+
+    // 삼각형 ADE (위쪽)
+    ctx.beginPath();
+    ctx.moveTo(...pA); ctx.lineTo(...pD); ctx.lineTo(...pE); ctx.closePath();
+    ctx.fillStyle = 'rgba(194,96,31,0.32)'; ctx.fill();
+
+    // 삼각형 외곽선
+    ctx.beginPath();
+    ctx.moveTo(...pA); ctx.lineTo(...pB); ctx.lineTo(...pC); ctx.closePath();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    // 직선 y=k
+    const pL = P(-3, k), pR = P(3, k);
+    ctx.beginPath(); ctx.moveTo(...pL); ctx.lineTo(...pR);
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 2; ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+
+    // G 점 (무게중심)
+    const pG = P(0, 2);
+    ctx.beginPath(); ctx.arc(...pG, 4, 0, 7); ctx.fillStyle = '#c2601f'; ctx.fill();
+    ctx.font = '11px sans-serif'; ctx.fillStyle = '#1b1830';
+    ctx.fillText('G(0,2)', pG[0] + 7, pG[1] - 6);
+
+    // 점 라벨
+    const labelAt = (p, text, dx, dy) => { ctx.fillStyle = '#1b1830'; ctx.fillText(text, p[0] + dx, p[1] + dy); };
+    labelAt(pA, 'A(0,6)', 6, -6);
+    labelAt(pB, 'B(-2,0)', -46, 14);
+    labelAt(pC, 'C(2,0)', 6, 14);
+    labelAt(pD, 'D', -12, -6);
+    labelAt(pE, 'E', 6, -6);
+
+    const ratio = (6 - k) / 6;
+    const top = 12 * ratio * ratio;
+    const bottom = 12 - top;
+    areaTop.textContent = fmt(top);
+    areaBottom.textContent = fmt(bottom);
+    areaCompare.textContent = Math.abs(top - bottom) < 0.02 ? '같음 (이등분!)' : (top < bottom ? '위 < 아래' : '위 > 아래');
+  }
+  function jumpTo(k) { kSlider.value = Math.max(0.2, Math.min(5.8, k)); drawTriangle(); }
+  kSlider.addEventListener('input', drawTriangle);
+  window.addEventListener('resize', drawTriangle);
+  drawTriangle();
+
+  // 활동4 — 시소 시뮬레이터
+  const seesawCanvas = document.getElementById('seesawCanvas');
+  const m1Slider = document.getElementById('m1Slider');
+  const d1Slider = document.getElementById('d1Slider');
+  const m1Val = document.getElementById('m1Val');
+  const d1Val = document.getElementById('d1Val');
+  const momentLeft = document.getElementById('momentLeft');
+  const momentRight = document.getElementById('momentRight');
+  const seesawState = document.getElementById('seesawState');
+  const M2 = 80, D2 = 0.5;
+
+  function drawSeesaw() {
+    const { ctx, w, h } = fitCanvas(seesawCanvas, 260);
+    ctx.clearRect(0, 0, w, h);
+    const m1 = parseFloat(m1Slider.value);
+    const d1 = parseFloat(d1Slider.value);
+    m1Val.textContent = m1 + ' kg';
+    d1Val.textContent = fmt(d1) + ' m';
+
+    const mLeft = m1 * d1, mRight = M2 * D2;
+    momentLeft.textContent = fmt(mLeft, 1);
+    momentRight.textContent = fmt(mRight, 1);
+    const diff = mLeft - mRight;
+    seesawState.textContent = Math.abs(diff) < 0.6 ? '평형 ✓' : (diff > 0 ? '왼쪽으로 기움' : '오른쪽으로 기움');
+
+    const cx = w / 2, cy = h - 70;
+    const angle = Math.max(-16, Math.min(16, diff * 1.1)) * Math.PI / 180;
+    const beamLen = Math.min(w * 0.42, 260);
+
+    // 받침점
+    ctx.beginPath();
+    ctx.moveTo(cx - 22, cy + 60); ctx.lineTo(cx + 22, cy + 60); ctx.lineTo(cx, cy + 14); ctx.closePath();
+    ctx.fillStyle = '#3d5c58'; ctx.fill();
+
+    // 빔
+    const lx = cx - Math.cos(angle) * beamLen, ly = cy + 14 - Math.sin(angle) * beamLen;
+    const rx = cx + Math.cos(angle) * beamLen, ry = cy + 14 + Math.sin(angle) * beamLen;
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
+
+    // 눈금(거리 표시용 위치) — d를 0~2.5m 범위를 빔 길이에 비례 매핑
+    const maxD = 2.5;
+    const posOnBeam = (d, side) => {
+      const t = (d / maxD) * side; // side: -1 left, +1 right
+      return [cx + Math.cos(angle) * beamLen * t, cy + 14 + Math.sin(angle) * beamLen * t];
+    };
+    const [wx1, wy1] = posOnBeam(d1, -1);
+    const [wx2, wy2] = posOnBeam(D2, 1);
+
+    const r1 = 10 + Math.sqrt(m1) * 1.6;
+    const r2 = 10 + Math.sqrt(M2) * 1.6;
+
+    ctx.beginPath(); ctx.arc(wx1, wy1 - r1, r1, 0, 7); ctx.fillStyle = '#2a6fbe'; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.fillText(m1 + 'kg', wx1, wy1 - r1 + 4);
+
+    ctx.beginPath(); ctx.arc(wx2, wy2 - r2, r2, 0, 7); ctx.fillStyle = '#c2601f'; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillText(M2 + 'kg', wx2, wy2 - r2 + 4);
+    ctx.textAlign = 'left';
+  }
+  m1Slider.addEventListener('input', drawSeesaw);
+  d1Slider.addEventListener('input', drawSeesaw);
+  window.addEventListener('resize', drawSeesaw);
+  drawSeesaw();
+</script>
+</body>
+</html>
