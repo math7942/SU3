@@ -263,11 +263,10 @@
     ctx.fillText('책상', 10, deskY - 8);
     ctx.beginPath(); ctx.moveTo(deskEdgeX, deskY); ctx.lineTo(deskEdgeX, 20); ctx.strokeStyle = '#c2601f'; ctx.setLineDash([4,3]); ctx.lineWidth = 1.2; ctx.stroke(); ctx.setLineDash([]);
 
-    // 아래에서 j번째(1-indexed) 블록 위로 쌓인 블록들의 무게중심이 그 블록의 오른쪽 끝에 있어야 하므로,
-    // 아래에서 j번째 블록의 왼쪽 끝 = deskEdge - unit + (O_n - O_{j-1})
+    // 아래에서 j번째(1-indexed) 블록은 그 블록까지만 쌓았을 때의 오버행 O_j만큼 튀어나와 있다.
+    // O_j는 j에 대해 증가하므로, 위로 갈수록(j가 클수록) 책상 밖으로 더 많이 튀어나온다.
     for (let j = 1; j <= n; j++) {
-      const Oj1 = 0.5 * harmonicSum(j - 1);
-      const overhangHere = On - Oj1;
+      const overhangHere = 0.5 * harmonicSum(j);
       const x = deskEdgeX - unit + overhangHere * unit;
       const y = deskY - j * (unit * 0.62);
       const isTop = j === n;
