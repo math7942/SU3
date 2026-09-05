@@ -305,6 +305,62 @@ body {
   font-size: 0.85em;
 }
 
+/* 설명형 본문 (단계별 학습 콘텐츠) -------------------------------- */
+.lesson { max-width: 760px; }
+
+.lesson h2 {
+  margin: 40px 0 14px;
+  font-size: 1.28rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lesson h2:first-child { margin-top: 0; }
+
+.lesson h3 { margin: 24px 0 10px; font-size: 1.02rem; font-weight: 700; }
+
+.lesson p { margin: 0 0 14px; color: var(--ink-soft); }
+
+.lesson ol,
+.lesson ul { margin: 0 0 14px; padding-left: 1.3em; color: var(--ink-soft); }
+
+.lesson li { margin-bottom: 7px; }
+.lesson li::marker { color: var(--accent); font-weight: 700; }
+.lesson strong { color: var(--ink); }
+
+.callout {
+  margin: 18px 0;
+  padding: 16px 20px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.callout h4 { margin: 0 0 6px; font-size: 0.9rem; font-weight: 700; }
+.callout p:last-child { margin-bottom: 0; }
+
+.callout.tip { border-color: transparent; background: var(--accent-soft); }
+.callout.tip h4 { color: var(--accent); }
+
+.callout.warn { border-color: #f3d9b0; background: #fdf3e2; }
+.callout.warn h4 { color: #a15c1f; }
+.callout.warn p { color: #8a5420; }
+
+.table-scroll { overflow-x: auto; margin: 8px 0 20px; }
+
+.compare-table {
+  width: 100%;
+  min-width: 480px;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.compare-table th,
+.compare-table td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+.compare-table th { background: var(--accent-soft); color: var(--ink); font-weight: 700; }
+.compare-table td { color: var(--ink-soft); }
+
 /* 바닥글 -------------------------------------------------------- */
 .foot-note {
   margin-top: 56px;
