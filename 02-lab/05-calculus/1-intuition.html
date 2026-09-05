@@ -408,7 +408,8 @@
     seesawState.textContent = Math.abs(diff) < 0.6 ? '평형 ✓' : (diff > 0 ? '왼쪽으로 기움' : '오른쪽으로 기움');
 
     const cx = w / 2, cy = h - 70;
-    const angle = Math.max(-16, Math.min(16, diff * 1.1)) * Math.PI / 180;
+    // 모멘트가 더 큰 쪽이 아래로 내려가야 하므로, diff>0(왼쪽이 무거움)일 때 각도는 음수(왼쪽이 낮아지는 방향)여야 한다.
+    const angle = Math.max(-16, Math.min(16, -diff * 1.1)) * Math.PI / 180;
     const beamLen = Math.min(w * 0.42, 260);
 
     // 받침점
