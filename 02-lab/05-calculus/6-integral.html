@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6차시 · 선적분과 이중적분 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .mode-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .mode-btn {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: #fff;
+    font-weight: 700; font-size: 0.86rem; color: var(--ink-soft); cursor: pointer;
+  }
+  .mode-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab current" href="6-integral.html">6차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅒 Part C · 1 / 2차시</span>
+    <h1>선적분과 이중적분 — 고리와 반원판</h1>
+    <p class="sub">3차시의 리만합 근사를 정적분·이중적분으로 '정확히' 계산합니다. 새로운 원리가 아니라, 잘게 쪼개서 더한 뒤 극한을 취한다는 같은 아이디어를 극좌표에 적용한 것입니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>정적분 기호(∫, dθ)가 3차시 리만합의 Δx→0 극한을 압축한 표기임을 이해한다.</li>
+        <li>선적분으로 1차원 반원형 고리의 무게중심을 구할 수 있다.</li>
+        <li>이중적분(극좌표)으로 2차원 반원판의 무게중심을 구하고, 3차시 근삿값과 비교할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>기호 읽는 법 — 3차시 내용과의 대응</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>1차원 반원형 고리 — 선적분</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>2차원 반원판 — 이중적분</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>3차시 근삿값(2.536)과의 비교</td><td class="time">10분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>기호 읽는 법 — 3차시 내용과의 대응</h2>
+    <ul style="font-size:0.92rem; color:var(--ink-soft);">
+      <li>∫ (인테그럴) 기호는 '무한히 잘게 쪼갠 조각들을 모두 더한 것의 극한값'을 뜻합니다. 3차시에서 Δx를 한없이 작게 하며 조각의 개수를 늘렸던 과정 전체를 하나의 기호로 압축한 것입니다.</li>
+      <li>dθ, dr, dz는 '극한적으로 0에 가까워지는 아주 작은 조각의 크기'를 의미합니다. 3차시의 Δx와 정확히 같은 역할이며, Δx→0인 극한 상황을 표기법으로 나타낸 것입니다.</li>
+      <li>즉 아래 예시들은 모두 3차시 활동2(반원의 무게중심 근사)의 '정확한 버전'입니다. 자세한 적분 계산 방법은 미적분Ⅱ에서 배우게 되므로, 지금은 결과와 흐름을 이해하는 데 집중합니다.</li>
+    </ul>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>1차원 반원형 고리 (Semicircular Ring) — 선적분</h2>
+    <p class="lead">반지름 R인 아주 얇은 반원 모양의 '철사 고리'를 생각해 봅시다. 철사의 선밀도(단위 길이당 질량) λ가 일정하다고 가정합니다.</p>
+    <p>고리 위의 한 점을 극좌표로 나타내면 $x=R\cos\theta, y=R\sin\theta$ $(0\le\theta\le\pi)$입니다. 이 점에서 각도가 dθ만큼 변할 때 움직인 거리(호의 길이)는 $ds=R\,d\theta$입니다.</p>
+    <p>이 조각 하나의 '높이'는 $y=R\sin\theta$입니다. 3차시에서 배운 무게중심 공식 「$\bar y=$ Σ(조각의 위치×조각의 크기) / Σ(조각의 크기)」에서 합(Σ) 대신 적분(∫)을 쓰면 다음과 같습니다.</p>
+    <div class="qbox">$$\bar y = \dfrac{\displaystyle\int_0^\pi (R\sin\theta)(R\,d\theta)}{\displaystyle\int_0^\pi R\,d\theta}$$</div>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>분자 = $R^2\displaystyle\int_0^\pi \sin\theta\,d\theta = R^2\times2=2R^2$ ($\int\sin\theta\,d\theta=-\cos\theta$라는 계산은 미적분Ⅱ에서 배웁니다)</p>
+        <p>분모 = $R\times\pi=\pi R$ (반원 둘레의 길이와 같습니다)</p>
+        <p>⇒ $\bar y = 2R^2/(\pi R) = 2R/\pi \approx 0.637R$</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>2차원 반원판 (Semicircular Lamina) — 이중적분</h2>
+    <p class="lead">이번엔 철사가 아니라 반원 모양의 얇은 '판'(면 전체에 밀도가 고르게 퍼진 도형)을 생각합니다. 3차시에서는 반원을 세로로 얇은 직사각형 조각으로 잘랐는데, 극좌표를 쓰면 반지름 방향(dr)과 각도 방향(dθ)으로 이루어진 작은 부채꼴 조각으로 자르는 것이 더 자연스럽습니다. 이 조각의 넓이는 $dA=r\,dr\,d\theta$입니다.</p>
+    <p>반지름 방향으로 먼저 더하고(안쪽 적분) 각도 방향으로 다시 더하는(바깥쪽 적분) 것이 '이중적분'입니다 — 조각을 두 단계로 쪼갠 것일 뿐입니다.</p>
+    <div class="qbox">$$\bar y = \dfrac{\displaystyle\int_0^\pi\!\!\int_0^R (r\sin\theta)(r\,dr\,d\theta)}{\displaystyle\int_0^\pi\!\!\int_0^R r\,dr\,d\theta}$$</div>
+
+    <div class="widget">
+      <div class="widget-title">조각의 개수 n을 늘려가며 고리·반원판의 리만합이 실제값으로 수렴하는 모습을 확인해 보세요</div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="btnRing" onclick="setMode('ring')">1차원 고리 (선적분)</button>
+        <button class="mode-btn" id="btnDisk" onclick="setMode('disk')">2차원 반원판 (이중적분)</button>
+      </div>
+      <canvas id="polarCanvas"></canvas>
+      <div class="control-row">
+        <label for="polarN">조각 개수 n</label>
+        <input type="range" id="polarN" min="2" max="60" step="1" value="12">
+        <span class="val" id="polarNVal">12</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">근사 ȳ</div><div class="v" id="polarApprox">–</div></div>
+        <div class="cell"><div class="k">실제값</div><div class="v" id="polarExact">–</div></div>
+        <div class="cell"><div class="k">오차</div><div class="v" id="polarErr">–</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>분자 = $\left(\displaystyle\int_0^R r^2\,dr\right)\times\left(\displaystyle\int_0^\pi \sin\theta\,d\theta\right) = \dfrac{R^3}{3}\times2=\dfrac{2R^3}{3}$</p>
+        <p>분모 = $\left(\displaystyle\int_0^R r\,dr\right)\times\left(\displaystyle\int_0^\pi d\theta\right) = \dfrac{R^2}{2}\times\pi = \dfrac{\pi R^2}{2}$ (반원의 넓이 공식과 정확히 같습니다!)</p>
+        <p>⇒ $\bar y = \dfrac{2R^3/3}{\pi R^2/2} = \dfrac{4R}{3\pi} \approx 0.424R$</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 3차시 활동과의 연결</button>
+      <div class="reveal-content tip hidden">
+        <p>이 값 $4R/3\pi$는 3차시 활동2에서 반지름 6인 반원을 12조각으로 근사해 구한 값($\bar y\approx2.536$)의 '정확한 버전'입니다. R=6을 대입하면 $4\times6/(3\pi)=8/\pi\approx2.546$으로, 근삿값과 거의 일치합니다. 즉 3차시에서 표를 채워가며 구한 근삿값이 바로 이 정적분 값에 다가가고 있었던 것입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 10분</span>
+    <h2>3차시 근삿값과의 비교</h2>
+    <table class="data">
+      <tr><th>대상</th><th>방법</th><th>값 (R=6)</th></tr>
+      <tr><td>반원판 (3차시)</td><td>직사각형 12조각 리만합 근사</td><td>ȳ ≈ 2.536</td></tr>
+      <tr><td>반원형 고리 (6차시)</td><td>선적분(정확)</td><td>ȳ = 2R/π ≈ 3.820</td></tr>
+      <tr><td>반원판 (6차시)</td><td>이중적분(정확)</td><td>ȳ = 4R/3π ≈ 2.546</td></tr>
+    </table>
+    <p>6차시에서는 3차시의 리만합 근사(ȳ≈2.536)를 정적분·이중적분으로 '정확히' 계산해 2R/π(고리)와 4R/3π(반원판)라는 두 값을 얻었습니다. 고리와 반원판의 무게중심이 서로 다르다는 점도 눈여겨봅시다 — 같은 반지름이라도 '어디에 질량이 있는지'(테두리뿐인지, 안까지 꽉 차 있는지)에 따라 무게중심의 위치가 달라집니다. 다음 시간에는 평면 도형을 넘어 입체(원뿔)까지 확장하고, 1차원·2차원·3차원 세 결과를 비교해 봅니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>다음 시간에는 삼중적분으로 원뿔의 무게중심을 구하고, 1차원(선)·2차원(면)·3차원(입체) 무게중심 결과를 한 번에 비교합니다.</p>
+    <div class="next">다음 차시(7차시)는 준비 중입니다.</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="5-deltoid.html">← 5차시 — 델토이드의 완성과 탐구 학습지</a>
+    <a href="index.html">미적분 실험실 목록으로 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const R = 6;
+  const polarCanvas = document.getElementById('polarCanvas');
+  const polarN = document.getElementById('polarN'), polarNVal = document.getElementById('polarNVal');
+  const polarApprox = document.getElementById('polarApprox'), polarExact = document.getElementById('polarExact'), polarErr = document.getElementById('polarErr');
+  const btnRing = document.getElementById('btnRing'), btnDisk = document.getElementById('btnDisk');
+  let mode = 'ring';
+
+  function setMode(m) {
+    mode = m;
+    btnRing.classList.toggle('active', m === 'ring');
+    btnDisk.classList.toggle('active', m === 'disk');
+    drawPolar();
+  }
+
+  const pXmin=-7, pXmax=7, pYmin=-1, pYmax=7.5;
+  function pMap(x,y,w,h){
+    const sx=(w-30)/(pXmax-pXmin), sy=(h-40)/(pYmax-pYmin), s=Math.min(sx,sy);
+    const ox=w/2, oy=h-30;
+    return [ox+x*s, oy-y*s];
+  }
+
+  function drawPolar(){
+    const { ctx, w, h } = fitCanvas(polarCanvas, 320);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => pMap(x,y,w,h);
+    const n = +polarN.value;
+    polarNVal.textContent = n;
+
+    // 축
+    ctx.strokeStyle = '#cfd8d6'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(...P(pXmin,0)); ctx.lineTo(...P(pXmax,0)); ctx.stroke();
+
+    let num = 0, den = 0;
+
+    if (mode === 'ring') {
+      const dtheta = Math.PI / n;
+      for (let i=0;i<n;i++){
+        const th = (i+0.5)*dtheta;
+        const w_i = R*dtheta;
+        const y_i = R*Math.sin(th);
+        num += w_i*y_i; den += w_i;
+        const th0 = i*dtheta, th1=(i+1)*dtheta;
+        ctx.beginPath();
+        ctx.moveTo(...P(R*Math.cos(th0), R*Math.sin(th0)));
+        for (let t=0;t<=6;t++){ const tt=th0+(th1-th0)*(t/6); ctx.lineTo(...P(R*Math.cos(tt), R*Math.sin(tt))); }
+        ctx.strokeStyle = 'rgba(15,143,134,0.85)'; ctx.lineWidth = n>60?1.5:4; ctx.stroke();
+      }
+    } else {
+      const dtheta = Math.PI / n, dr = R / n;
+      for (let i=0;i<n;i++){
+        const r = (i+0.5)*dr;
+        for (let j=0;j<n;j++){
+          const th = (j+0.5)*dtheta;
+          const area = r*dr*dtheta;
+          const y = r*Math.sin(th);
+          num += area*y; den += area;
+        }
+        // 그리기는 반지름 링 단위로만(성능/시인성)
+        const th0=0, th1=Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(...P((r-dr/2)*Math.cos(th0), (r-dr/2)*Math.sin(th0)));
+        for (let t=0;t<=40;t++){ const tt=th0+(th1-th0)*(t/40); ctx.lineTo(...P((r+dr/2)*Math.cos(tt), (r+dr/2)*Math.sin(tt))); }
+        ctx.lineTo(...P((r-dr/2)*Math.cos(th1), (r-dr/2)*Math.sin(th1)));
+        ctx.closePath();
+        ctx.fillStyle = i%2===0 ? 'rgba(15,143,134,0.22)' : 'rgba(15,143,134,0.34)';
+        ctx.fill();
+      }
+      // 각도 분할선(참고용, 너무 많으면 생략)
+      if (n <= 24) {
+        for (let j=0;j<=n;j++){
+          const th = j*dtheta;
+          ctx.beginPath(); ctx.moveTo(...P(0,0)); ctx.lineTo(...P(R*Math.cos(th), R*Math.sin(th)));
+          ctx.strokeStyle = 'rgba(27,24,48,0.15)'; ctx.lineWidth = 0.6; ctx.stroke();
+        }
+      }
+    }
+
+    // 반원 경계
+    ctx.beginPath();
+    for (let i=0;i<=100;i++){ const th=Math.PI*(i/100); const pt=P(R*Math.cos(th), R*Math.sin(th)); if(i===0)ctx.moveTo(...pt); else ctx.lineTo(...pt); }
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    const ybar = num/den;
+    const exact = mode === 'ring' ? 2*R/Math.PI : 4*R/(3*Math.PI);
+    polarApprox.textContent = fmt(ybar);
+    polarExact.textContent = fmt(exact) + (mode==='ring' ? ' (2R/π)' : ' (4R/3π)');
+    polarErr.textContent = fmt(Math.abs(ybar-exact)/exact*100, 2) + '%';
+
+    const pg = P(0, exact);
+    ctx.beginPath(); ctx.moveTo(P(pXmin,exact)[0], pg[1]); ctx.lineTo(P(pXmax,exact)[0], pg[1]);
+    ctx.strokeStyle = '#c2601f'; ctx.setLineDash([5,4]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#c2601f'; ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('실제 ȳ ≈ ' + fmt(exact), P(pXmin,exact)[0]+4, pg[1]-6);
+  }
+  polarN.addEventListener('input', drawPolar);
+  window.addEventListener('resize', drawPolar);
+  drawPolar();
+</script>
+</body>
+</html>
