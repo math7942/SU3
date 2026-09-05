@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11차시 · 실험실 Ⅰ : 반원판 팽이와 집 모양 다각형 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .toggle-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.86rem; margin: 8px 0; }
+  .toggle-row label { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+      <a class="session-tab" href="10-flight.html">10차시</a>
+      <a class="session-tab current" href="11-workshop1.html">11차시</a>
+      <a class="session-tab" href="12-workshop2.html">12차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅔 Part E · 1 / 2차시</span>
+    <h1>실험실 Ⅰ — 반원판 팽이와 집 모양 다각형</h1>
+    <p class="sub">6~7차시에서 적분으로 '정확히' 계산한 무게중심과 2차시의 가중평균 공식을 직접 손으로 만든 모형(의 디지털 버전)으로 검증합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>이중적분으로 구한 반원판 무게중심 공식($\bar y=4R/3\pi$)을 직접 만든 팽이 실험으로 검증할 수 있다.</li>
+        <li>두 개 이상의 도형으로 이루어진 복합도형의 무게중심을 가중평균 공식으로 계산하고, 실제 균형으로 확인할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>이론값과 실제 실험이 얼마나 일치할지 예상해보기</td><td class="time">5분</td></tr>
+        <tr><td>실험1</td><td>반원판 팽이 — 이중적분 무게중심 검증</td><td class="time">20분</td></tr>
+        <tr><td>실험2</td><td>집 모양 복합다각형 — 가중평균 무게중심 검증</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>두 실험 결과 정리 및 오차 원인 토의</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">실험 1 · 20분</span>
+    <h2>반원판 팽이</h2>
+    <p class="lead"><strong>준비물</strong> : 반지름 R=10cm인 반원 모양으로 자른 아크릴판(또는 두꺼운 도화지 여러 겹을 붙인 것), 이쑤시개(또는 꼬치)</p>
+    <p>(1) 6차시에서 배운 공식 $\bar y=4R/3\pi$를 이용해, R=10cm인 반원판의 무게중심이 지름(밑변)으로부터 얼마나 떨어져 있는지 계산하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$\bar y = 4\times10/(3\pi) = 40/(3\pi) \approx 4.24$ (cm)</p></div>
+    </div>
+    <p>(2) 반원판의 대칭축(수직 이등분선) 위, 밑변으로부터 4.24cm 되는 지점에 구멍을 뚫고 이쑤시개를 수직으로 꽂아 팽이처럼 돌려 보자. 흔들림(wobble) 없이 매끄럽게 도는가?</p>
+
+    <div class="widget">
+      <div class="widget-title">반지름과 회전축 위치를 바꾸며, 축이 이론적 무게중심과 얼마나 어긋나는지 확인해 보세요</div>
+      <canvas id="topCanvas"></canvas>
+      <div class="control-row">
+        <label for="topR">반지름 R (cm)</label>
+        <input type="range" id="topR" min="5" max="15" step="0.5" value="10">
+        <span class="val" id="topRVal">10</span>
+      </div>
+      <div class="control-row">
+        <label for="pivotSlider">회전축 위치 (밑변으로부터, cm)</label>
+        <input type="range" id="pivotSlider" min="0" max="15" step="0.01" value="4.24">
+        <span class="val" id="pivotVal">4.24</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">이론적 무게중심 ȳ</div><div class="v" id="ybarVal">–</div></div>
+        <div class="cell"><div class="k">축과의 차이</div><div class="v" id="diffVal">–</div></div>
+        <div class="cell"><div class="k">회전 상태</div><div class="v" id="spinState">–</div></div>
+      </div>
+      <div class="control-row">
+        <button class="btn" onclick="jumpPivot(3)">3cm 지점에 꽂기</button>
+        <button class="btn" onclick="jumpPivot(6)">6cm 지점에 꽂기</button>
+        <button class="btn solid" onclick="jumpPivotExact()">이론값에 정확히 꽂기</button>
+      </div>
+    </div>
+
+    <p>(3) 왜 회전축이 정확히 무게중심을 지나야 흔들리지 않고 돌아갈까?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>회전축이 무게중심을 지나지 않으면, 회전할 때마다 무게중심 자체가 축 주위를 원운동하게 되어 매 순간 방향이 바뀌는 원심력이 발생한다. 이 힘이 축에 주기적으로 전달되어 흔들림(진동)을 만든다.</p>
+        <p>축이 무게중심을 정확히 지나면, 회전해도 무게중심의 위치가 이동하지 않고 축 위에 고정되어 있으므로 원심력이 축에 대해 상쇄되어 흔들림 없는 안정적인 회전이 가능하다.</p>
+      </div>
+    </div>
+    <p>(4) [탐구 확장] 반지름을 R=8cm로 바꾼다면, 이론적인 회전축 위치는 몇 cm일까? (위 위젯에서 R을 8로 옮겨 확인해 보세요)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$\bar y = 4\times8/(3\pi) = 32/(3\pi) \approx 3.40$ (cm)</p></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">실험 2 · 20분</span>
+    <h2>집 모양 복합다각형</h2>
+    <p class="lead"><strong>준비물</strong> : 두꺼운 도화지(또는 우드록)로 만든, 폭 12cm×높이 8cm 직사각형 '몸체' 위에 밑변 12cm·높이 6cm인 이등변삼각형 '지붕'을 붙인 집 모양 도형</p>
+    <p>(1) 몸체(직사각형)와 지붕(삼각형)의 넓이와, 밑변(집의 바닥)으로부터 각 도형 무게중심까지의 높이를 각각 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>몸체 : $A_1=12\times8=96$ (cm²), 높이 $c_1=8/2=4$ (cm)</p>
+        <p>지붕 : $A_2=(1/2)\times12\times6=36$ (cm²), 높이 $c_2=8+6/3=10$ (cm) (삼각형의 무게중심은 밑변에서 높이의 1/3 지점)</p>
+      </div>
+    </div>
+    <p>(2) 공리7 「두 도형 전체의 무게중심은 각 도형의 무게중심을 이은 선분 위에 있다」와 2차시의 가중평균 공식을 이용해, 집 전체의 무게중심 높이 $\bar y$를 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$\bar y=(A_1c_1+A_2c_2)/(A_1+A_2)=(96\times4+36\times10)/(96+36)=(384+360)/132=744/132\approx5.64$ (cm)</p></div>
+    </div>
+    <p>(3) 집 모양은 좌우 대칭이다. 공리5(대칭축 공리)에 따르면 이 도형의 무게중심의 가로(수평) 위치는 어디에 있어야 하는가?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>공리5에 의해 무게중심은 반드시 대칭축(좌우를 나누는 세로 중심선) 위, 즉 밑변의 정중앙(가로 6cm 지점) 위에 있다. 따라서 계산 없이도 대칭축 바로 아래를 받치면 도형이 수평으로 균형을 이루어야 한다.</p></div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">지붕 높이를 바꾸거나 굴뚝을 붙여보며 집 모양의 무게중심이 이동하는 것을 확인해 보세요</div>
+      <canvas id="houseCanvas"></canvas>
+      <div class="control-row">
+        <label for="roofSlider">지붕 높이 (cm)</label>
+        <input type="range" id="roofSlider" min="2" max="10" step="0.5" value="6">
+        <span class="val" id="roofVal">6</span>
+      </div>
+      <div class="toggle-row">
+        <label><input type="checkbox" id="chimneyToggle"> 굴뚝 붙이기 (2×3cm, 넓이 6cm²)</label>
+      </div>
+      <div class="control-row">
+        <label for="chimneySlider">굴뚝 가로 위치 (cm)</label>
+        <input type="range" id="chimneySlider" min="0" max="12" step="0.5" value="10">
+        <span class="val" id="chimneyVal">10</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">ȳ (세로 무게중심)</div><div class="v" id="houseYbar">–</div></div>
+        <div class="cell"><div class="k">x̄ (가로 무게중심)</div><div class="v" id="houseXbar">–</div></div>
+      </div>
+    </div>
+
+    <p>(4) [탐구 확장] 만약 이 집 지붕 위 오른쪽(가로 10cm 지점)에 작은 굴뚝(2cm×3cm 직사각형, 넓이 6cm²)을 추가로 붙인다면, 도형은 더 이상 좌우 대칭이 아니다. 굴뚝을 포함한 전체의 가로(수평) 무게중심 $\bar x$를 구하시오. (몸체·지붕의 가로 중심은 각각 6cm이다.)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$\bar x=(A_1\times6+A_2\times6+A_3\times10)/(A_1+A_2+A_3)=(96\times6+36\times6+6\times10)/(96+36+6)=(576+216+60)/138=852/138\approx6.17$ (cm)</p>
+        <p>굴뚝이 오른쪽(10cm)에 붙었으므로 무게중심도 중앙(6cm)에서 굴뚝 쪽으로 아주 조금(약 0.17cm) 이동한다 — 굴뚝의 넓이가 전체에 비해 작으므로 이동량도 작다는 점을 눈으로 확인할 수 있다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>두 실험 결과 정리 및 오차 원인 토의</h2>
+    <p>두 실험 모두 '무게중심 = 넓이(또는 무게)로 가중평균한 위치'라는 하나의 원리를 손으로 확인한 것입니다. 실제 실험에서 이론값과 정확히 일치하지 않았다면 어떤 오차 원인이 있었을지 이야기해 봅시다 (재질의 두께 불균일, 자르는 과정의 오차, 축 마찰 등).</p>
+    <textarea class="think" placeholder="예상되는 오차 원인을 적어 보세요"></textarea>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>다음 시간에는 물병-젓가락 텐세그리티 실험으로 3차시 오버행 개념의 실전 버전을 확인하고, 지금까지 배운 내용을 활용해 자유탐구 주제를 설계합니다.</p>
+    <div class="next">다음 차시 : 12차시 — 실험실 Ⅱ : 텐세그리티와 자유탐구 설계</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="10-flight.html">← 10차시 — 항공우주공학 : 비행 안정성</a>
+    <a href="12-workshop2.html">12차시 — 실험실 Ⅱ →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  // 실험1 — 반원판 팽이
+  const topCanvas = document.getElementById('topCanvas');
+  const topR = document.getElementById('topR'), pivotSlider = document.getElementById('pivotSlider');
+  const topRVal = document.getElementById('topRVal'), pivotVal = document.getElementById('pivotVal');
+  const ybarVal = document.getElementById('ybarVal'), diffVal = document.getElementById('diffVal'), spinState = document.getElementById('spinState');
+
+  const tXmin=-16, tXmax=16, tYmin=-2, tYmax=17;
+  function tMap(x,y,w,h){
+    const sx=(w-30)/(tXmax-tXmin), sy=(h-30)/(tYmax-tYmin), s=Math.min(sx,sy);
+    const ox=w/2, oy=h-15;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawTop(){
+    const { ctx, w, h } = fitCanvas(topCanvas, 300);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => tMap(x,y,w,h);
+    const R = parseFloat(topR.value);
+    if (parseFloat(pivotSlider.max) !== 1.5*R) pivotSlider.max = (1.5*R).toFixed(1);
+    const pivot = Math.min(parseFloat(pivotSlider.value), 1.5*R);
+    topRVal.textContent = fmt(R,1); pivotVal.textContent = fmt(pivot,2);
+
+    // 반원
+    ctx.beginPath();
+    for (let i=0;i<=100;i++){ const th=Math.PI*(i/100); const p=P(R*Math.cos(th), R*Math.sin(th)); if(i===0)ctx.moveTo(...p); else ctx.lineTo(...p); }
+    ctx.lineTo(...P(-R,0)); ctx.closePath();
+    ctx.fillStyle = 'rgba(91,75,214,0.18)'; ctx.fill();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    const ybar = 4*R/(3*Math.PI);
+    // 이론적 무게중심 선(초록)
+    const py = P(0, ybar);
+    ctx.beginPath(); ctx.moveTo(P(-R,ybar)[0], py[1]); ctx.lineTo(P(R,ybar)[0], py[1]);
+    ctx.strokeStyle = '#0f8f86'; ctx.setLineDash([4,3]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#0f8f86'; ctx.font='bold 10px sans-serif'; ctx.fillText('ȳ=' + fmt(ybar,2), P(R,ybar)[0]+4, py[1]+3);
+
+    // 회전축(이쑤시개) 표시
+    const pAxisBottom = P(0,-1.2), pAxisTop = P(0, Math.max(R*1.15, pivot+2));
+    ctx.beginPath(); ctx.moveTo(...pAxisBottom); ctx.lineTo(...pAxisTop);
+    ctx.strokeStyle = '#7a5b17'; ctx.lineWidth = 1.5; ctx.stroke();
+    const pPivot = P(0, pivot);
+    ctx.beginPath(); ctx.arc(...pPivot, 5, 0, 7); ctx.fillStyle = '#c2601f'; ctx.fill();
+    ctx.fillStyle = '#c2601f'; ctx.font='bold 10px sans-serif'; ctx.fillText('축 ' + fmt(pivot,2), pPivot[0]-40, pPivot[1]+4);
+
+    const diff = pivot - ybar;
+    ybarVal.textContent = fmt(ybar,2) + ' cm';
+    diffVal.textContent = (diff>=0?'+':'') + fmt(diff,2) + ' cm';
+    const ok = Math.abs(diff) < 0.05;
+    spinState.textContent = ok ? '흔들림 없이 매끄럽게 회전!' : '흔들림(wobble) 발생';
+    spinState.style.color = ok ? '#1e6b3c' : '#b03b62';
+  }
+  function jumpPivot(v){ pivotSlider.value = v; drawTop(); }
+  function jumpPivotExact(){ const R=parseFloat(topR.value); pivotSlider.value = (4*R/(3*Math.PI)).toFixed(2); drawTop(); }
+  topR.addEventListener('input', drawTop);
+  pivotSlider.addEventListener('input', drawTop);
+  window.addEventListener('resize', drawTop);
+  drawTop();
+
+  // 실험2 — 집 모양 다각형
+  const houseCanvas = document.getElementById('houseCanvas');
+  const roofSlider = document.getElementById('roofSlider'), roofVal = document.getElementById('roofVal');
+  const chimneyToggle = document.getElementById('chimneyToggle');
+  const chimneySlider = document.getElementById('chimneySlider'), chimneyVal = document.getElementById('chimneyVal');
+  const houseYbar = document.getElementById('houseYbar'), houseXbar = document.getElementById('houseXbar');
+
+  const BODY_W = 12, BODY_H = 8;
+  const hXmin=-3, hXmax=15, hYmin=-1, hYmax=20;
+  function hMap(x,y,w,h){
+    const sx=(w-30)/(hXmax-hXmin), sy=(h-30)/(hYmax-hYmin), s=Math.min(sx,sy);
+    const ox=15-hXmin*s, oy=h-15+hYmin*s;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawHouse(){
+    const { ctx, w, h } = fitCanvas(houseCanvas, 320);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => hMap(x,y,w,h);
+    const roofH = parseFloat(roofSlider.value);
+    roofVal.textContent = fmt(roofH,1);
+    const chimX = parseFloat(chimneySlider.value);
+    chimneyVal.textContent = fmt(chimX,1);
+    const hasChim = chimneyToggle.checked;
+
+    // 몸체
+    ctx.beginPath(); ctx.rect(...P(0,BODY_H), P(BODY_W,0)[0]-P(0,BODY_H)[0], P(0,0)[1]-P(0,BODY_H)[1]);
+    ctx.fillStyle = 'rgba(42,111,190,0.25)'; ctx.fill(); ctx.strokeStyle='#1b1830'; ctx.lineWidth=1.4; ctx.stroke();
+    // 지붕
+    ctx.beginPath(); ctx.moveTo(...P(0,BODY_H)); ctx.lineTo(...P(BODY_W/2, BODY_H+roofH)); ctx.lineTo(...P(BODY_W,BODY_H)); ctx.closePath();
+    ctx.fillStyle = 'rgba(194,96,31,0.35)'; ctx.fill(); ctx.stroke();
+
+    const A1 = BODY_W*BODY_H, c1 = BODY_H/2;
+    const A2 = 0.5*BODY_W*roofH, c2 = BODY_H + roofH/3;
+    let A3=0, c3x=0, c3y=0;
+    if (hasChim) {
+      A3 = 6; // 2x3
+      c3x = chimX;
+      c3y = BODY_H + roofH*0.6 + 1.5;
+      const cw=2, ch=3;
+      ctx.beginPath(); ctx.rect(...P(chimX-cw/2, c3y+ch/2), P(chimX+cw/2,0)[0]-P(chimX-cw/2,0)[0], -(P(0,c3y+ch/2)[1]-P(0,c3y-ch/2)[1]));
+      ctx.fillStyle = 'rgba(176,59,98,0.5)'; ctx.fill(); ctx.stroke();
+    }
+
+    const ybar = (A1*c1 + A2*c2) / (A1+A2);
+    const totalA = A1+A2+A3;
+    const xbar = (A1*6 + A2*6 + A3*c3x) / totalA;
+
+    houseYbar.textContent = fmt(ybar,2) + ' cm';
+    houseXbar.textContent = fmt(xbar,2) + ' cm';
+
+    // 무게중심 표시
+    const pG = P(xbar, ybar);
+    ctx.beginPath(); ctx.arc(...pG, 5, 0, 7); ctx.fillStyle = '#0f8f86'; ctx.fill();
+    ctx.fillStyle = '#0f8f86'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('G', pG[0]+8, pG[1]-6);
+    // 대칭축(참고)
+    ctx.beginPath(); ctx.moveTo(...P(6,-0.5)); ctx.lineTo(...P(6, BODY_H+roofH+1));
+    ctx.strokeStyle = 'rgba(27,24,48,0.2)'; ctx.setLineDash([3,3]); ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+  }
+  roofSlider.addEventListener('input', drawHouse);
+  chimneyToggle.addEventListener('change', drawHouse);
+  chimneySlider.addEventListener('input', drawHouse);
+  window.addEventListener('resize', drawHouse);
+  drawHouse();
+</script>
+</body>
+</html>

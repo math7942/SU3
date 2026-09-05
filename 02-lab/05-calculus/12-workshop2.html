@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12차시 · 실험실 Ⅱ : 텐세그리티와 자유탐구 설계 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+      <a class="session-tab" href="10-flight.html">10차시</a>
+      <a class="session-tab" href="11-workshop1.html">11차시</a>
+      <a class="session-tab current" href="12-workshop2.html">12차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅔 Part E · 2 / 2차시</span>
+    <h1>실험실 Ⅱ — 텐세그리티와 자유탐구 설계</h1>
+    <p class="sub">물병이 허공에 떠 있는 것처럼 보이는 텐세그리티 구조로 3차시 오버행 개념의 실전 버전을 확인하고, 지금까지 배운 내용으로 스스로 탐구 주제를 설계합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>여러 물체가 결합된 시스템에서, 전체 무게중심이 지지 기반 위에 있어야 균형이 유지됨을 계산으로 확인할 수 있다.</li>
+        <li>지금까지 배운 무게중심 개념(공리·공식·적분·공학 응용)을 활용해 스스로 탐구 주제를 설계할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>물병이 허공에 떠 있는 사진/영상 관찰 — 어떻게 가능할까?</td><td class="time">5분</td></tr>
+        <tr><td>실험3</td><td>물병-젓가락 텐세그리티 — 오버행의 실전 버전</td><td class="time">20분</td></tr>
+        <tr><td>활동</td><td>자유탐구 미니프로젝트 주제 설계</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>Part E 전체 정리 및 Part F 예고</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">실험 3 · 20분</span>
+    <h2>물병-젓가락 텐세그리티</h2>
+    <p class="lead"><strong>준비물</strong> : 책 여러 권, 나무젓가락 2개, 물이 담긴 페트병</p>
+    <p><strong>절차</strong> : 책상 위에 책을 여러 권 쌓고, 나무젓가락 두 개를 X자로 교차시켜 한쪽 끝을 책 아래에 눌러 고정한다. 다른 쪽 끝(교차점 너머)이 책상 모서리를 넘어 허공에 걸치도록 하고, 그 끝에 물병을 걸어 매단다.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 3차시 오버행 실험과의 연결</button>
+      <div class="reveal-content tip hidden">
+        <p>이것은 사실 3차시에서 배운 '블록 쌓기 오버행' 문제와 완전히 같은 원리입니다 — 여러 물체가 서로 연결되어 있을 때, 전체 시스템이 무너지지 않으려면 전체의 무게중심이 반드시 지지 기반(책상) 위에 있어야 합니다(공리7).</p>
+        <p>책상 모서리를 기준(x=0, 책상 안쪽이 음수)으로 삼으면, 전체 무게중심의 x좌표 $\bar x = \sum(\text{무게}\times\text{위치})/\sum\text{무게}$가 반드시 0보다 작아야(모서리 안쪽에 있어야) 시스템이 무너지지 않습니다.</p>
+      </div>
+    </div>
+
+    <p>(1) 책 무게 $W_1=1.6$kg이 책상 모서리로부터 안쪽으로 15cm 지점($x_1=-15$cm)에, 젓가락(대표점) 무게 $W_2=0.05$kg이 모서리 밖 10cm 지점($x_2=+10$cm)에, 물병 무게 $W_3=0.5$kg이 모서리 밖 35cm 지점($x_3=+35$cm)에 놓여 있다고 하자. 전체 시스템의 무게중심 $\bar x$를 구하고, 이 시스템이 균형을 유지하는지 판정하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$\bar x=\dfrac{W_1x_1+W_2x_2+W_3x_3}{W_1+W_2+W_3}=\dfrac{1.6\times(-15)+0.05\times10+0.5\times35}{1.6+0.05+0.5}=\dfrac{-24+0.5+17.5}{2.15}=\dfrac{-6}{2.15}\approx-2.79$ (cm)</p>
+        <p>$\bar x\approx-2.79$cm $<0$이므로 무게중심이 책상 모서리 안쪽에 있다 — 균형이 유지된다!</p>
+      </div>
+    </div>
+    <p>(2) 물병에 물을 더 채워 무게가 1.2kg이 되었다면(다른 조건은 동일), 이 시스템은 여전히 균형을 유지할까? 계산으로 확인하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$\bar x=\dfrac{1.6\times(-15)+0.05\times10+1.2\times35}{1.6+0.05+1.2}=\dfrac{-24+0.5+42}{2.85}=\dfrac{18.5}{2.85}\approx+6.49$ (cm)</p>
+        <p>$\bar x>0$, 즉 무게중심이 책상 모서리 '밖'으로 나가버린다 — 이 경우 시스템은 균형을 잃고 무너진다! → 책의 무게(또는 책과 젓가락 접점까지의 거리)가 충분히 크지 않으면, 물병을 무겁게 할수록 오히려 무너지기 쉬워진다는 것을 알 수 있다.</p>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">책 무게와 물병 무게를 바꾸며 텐세그리티 시스템이 균형을 유지하는지 확인해 보세요</div>
+      <canvas id="tensCanvas"></canvas>
+      <div class="control-row">
+        <label for="bookSlider">책 무게 W₁ (kg)</label>
+        <input type="range" id="bookSlider" min="0.5" max="5" step="0.1" value="1.6">
+        <span class="val" id="bookVal">1.6</span>
+      </div>
+      <div class="control-row">
+        <label for="bottleSlider">물병 무게 W₃ (kg)</label>
+        <input type="range" id="bottleSlider" min="0.1" max="2" step="0.05" value="0.5">
+        <span class="val" id="bottleVal">0.5</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">전체 무게중심 x̄</div><div class="v" id="tensX">–</div></div>
+        <div class="cell"><div class="k">상태</div><div class="v" id="tensState">–</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 · 20분</span>
+    <h2>자유탐구 미니프로젝트 설계</h2>
+    <p class="lead">지금까지 1~12차시에서 배운 무게중심의 공리·공식·적분·공학 응용·실험 중 하나 이상을 활용해, 스스로 탐구 주제를 설계해 봅시다. 다음 차시(13~14차시)에서 계산·발표를 진행합니다.</p>
+    <div class="qbox" style="display:grid; gap:6px;">
+      <strong>주제 예시</strong>
+      <span>• 오뚝이가 쓰러지지 않는 이유를 무게중심과 볼록도형 공리(공리6)로 설명하기</span>
+      <span>• 여러 크기의 자전거·킥보드 안장 높이와 무게중심의 관계 조사하기</span>
+      <span>• 스마트폰 거치대·북스탠드가 쓰러지지 않는 최소 조건을 공리7로 분석하기</span>
+      <span>• 다이빙·체조 선수가 공중에서 회전 속도를 조절하는 원리(무게중심 주위의 회전)를 조사하기</span>
+      <span>• 직접 만든 불규칙한 도형(예: 손모양 종이)의 무게중심을 실험(매달기 방법)과 근사 계산으로 비교하기</span>
+    </div>
+    <p><strong>탐구 주제 :</strong></p>
+    <textarea class="think" placeholder="탐구 주제를 적어 보세요"></textarea>
+    <p><strong>가설(예상 결과) :</strong></p>
+    <textarea class="think" placeholder="가설을 적어 보세요"></textarea>
+    <p><strong>필요한 계산/실험 방법 (몇 차시 내용을 활용할 것인지 표시) :</strong></p>
+    <textarea class="think" placeholder="예: 2차시 가중평균 공식 + 11차시 실험 방법 활용"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>Part E 전체 정리 및 Part F 예고</h2>
+    <p>Part E(11~12차시)에서는 6~7차시의 정확한 적분값, 2차시의 가중평균 공식, 3차시의 오버행 개념, 1차시의 공리들을 모두 직접 손으로 확인했습니다. 다음 13~14차시에서는 지금까지 배운 모든 내용을 하나의 계산 도구로 정리하고, 자유탐구 결과를 발표합니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>다음 시간부터는 Part F — 지금까지 배운 공식을 총정리하는 계산기 워크벤치와 형성평가, 그리고 자유탐구 발표회가 이어집니다.</p>
+    <div class="next">다음 차시(13차시)는 준비 중입니다.</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="11-workshop1.html">← 11차시 — 실험실 Ⅰ : 반원판 팽이와 집 모양 다각형</a>
+    <a href="index.html">미적분 실험실 목록으로 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const tensCanvas = document.getElementById('tensCanvas');
+  const bookSlider = document.getElementById('bookSlider'), bottleSlider = document.getElementById('bottleSlider');
+  const bookVal = document.getElementById('bookVal'), bottleVal = document.getElementById('bottleVal');
+  const tensX = document.getElementById('tensX'), tensState = document.getElementById('tensState');
+  const X1=-15, X2=10, X3=35, W2=0.05;
+
+  const ttXmin=-22, ttXmax=42, ttYmin=-10, ttYmax=14;
+  function ttMap(x,y,w,h){
+    const sx=(w-30)/(ttXmax-ttXmin), sy=(h-30)/(ttYmax-ttYmin), s=Math.min(sx,sy);
+    const ox=15-ttXmin*s, oy=h-40+ttYmin*s;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawTens(){
+    const { ctx, w, h } = fitCanvas(tensCanvas, 260);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => ttMap(x,y,w,h);
+    const W1 = parseFloat(bookSlider.value), W3 = parseFloat(bottleSlider.value);
+    bookVal.textContent = fmt(W1,1); bottleVal.textContent = fmt(W3,2);
+
+    // 책상
+    ctx.fillStyle = '#c8b892';
+    ctx.fillRect(0, P(0,0)[1], P(0,0)[0], 60);
+    ctx.fillStyle = '#3d5c58'; ctx.font='bold 11px sans-serif'; ctx.fillText('책상', 8, P(0,0)[1]-8);
+    // 모서리 표시선
+    ctx.beginPath(); ctx.moveTo(...P(0,-8)); ctx.lineTo(...P(0,12));
+    ctx.strokeStyle = '#c2601f'; ctx.setLineDash([4,3]); ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
+
+    // 책 더미(x1 근방)
+    const bookH = 6 + W1*2;
+    ctx.fillStyle = 'rgba(91,75,214,0.5)';
+    ctx.fillRect(P(X1-8,0)[0], P(0,0)[1]-bookH*4, P(X1+8,0)[0]-P(X1-8,0)[0], bookH*4);
+    ctx.fillStyle='#1b1830'; ctx.font='10px sans-serif'; ctx.fillText('책 '+fmt(W1,1)+'kg', P(X1,0)[0]-20, P(0,0)[1]-bookH*4-6);
+
+    // 젓가락(X1 위쪽 지점 -> X3)
+    const pStart = P(X1, 2), pEnd = P(X3, -2);
+    ctx.beginPath(); ctx.moveTo(...pStart); ctx.lineTo(...pEnd);
+    ctx.strokeStyle = '#7a5b17'; ctx.lineWidth = 2; ctx.stroke();
+
+    // 젓가락 대표점(X2)
+    const p2 = P(X2, 0);
+    ctx.beginPath(); ctx.arc(...p2, 3, 0, 7); ctx.fillStyle='#7a5b17'; ctx.fill();
+
+    // 물병(X3)
+    const bottleR = 8 + W3*8;
+    ctx.beginPath(); ctx.arc(P(X3,0)[0], P(X3,-2)[1]+bottleR, bottleR, 0, 7);
+    ctx.fillStyle = 'rgba(42,111,190,0.6)'; ctx.fill();
+    ctx.fillStyle='#1b1830'; ctx.font='10px sans-serif'; ctx.fillText('물병 '+fmt(W3,2)+'kg', P(X3,0)[0]-20, P(X3,-2)[1]+bottleR*2+14);
+
+    const total = W1+W2+W3;
+    const xbar = (W1*X1 + W2*X2 + W3*X3) / total;
+    tensX.textContent = fmt(xbar,2) + ' cm';
+    const stable = xbar < 0;
+    tensState.textContent = stable ? '균형 유지 ✓' : '무너짐! (모서리 밖으로 이탈)';
+    tensState.style.color = stable ? '#1e6b3c' : '#b03b62';
+
+    const pG = P(xbar, 5);
+    ctx.beginPath(); ctx.arc(...pG, 5, 0, 7); ctx.fillStyle = stable ? '#0f8f86' : '#b03b62'; ctx.fill();
+    ctx.font='bold 10px sans-serif'; ctx.fillStyle = stable ? '#0f8f86' : '#b03b62';
+    ctx.fillText('x̄=' + fmt(xbar,2), pG[0]-16, pG[1]-8);
+  }
+  bookSlider.addEventListener('input', drawTens);
+  bottleSlider.addEventListener('input', drawTens);
+  window.addEventListener('resize', drawTens);
+  drawTens();
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10차시 · 항공우주공학 : 비행 안정성 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+      <a class="session-tab current" href="10-flight.html">10차시</a>
+      <a class="session-tab" href="11-workshop1.html">11차시</a>
+      <a class="session-tab" href="12-workshop2.html">12차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅓 Part D · 3 / 3차시</span>
+    <h1>항공우주공학 — 비행 안정성</h1>
+    <p class="sub">무게중심(CG)과 양력중심(CP)이 서로 어긋난 정도가 비행기의 안정성을 결정합니다. 8·9차시의 CM/CR, G/M 패턴이 여기서도 그대로 반복됩니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>무게중심(CG)과 압력중심/양력중심(CP)의 차이와 물리적 의미를 설명할 수 있다.</li>
+        <li>정적 마진(static margin)의 부호가 세로(피치) 안정성에 미치는 영향을 판단할 수 있다.</li>
+        <li>연료 소모·화물 배치에 따른 CG 이동을 가중평균 공식으로 계산할 수 있다.</li>
+        <li>완화된 정적 안정성(relaxed static stability)과 Fly-by-Wire의 관계, 즉 안정성과 기동성의 트레이드오프를 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>종이비행기를 접어 무게중심을 바꿔가며 날려보기</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>무게중심(CG)과 양력중심(CP)의 관계, 정적 마진</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>연료·화물에 따른 CG 이동 계산과 안정성 판정</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>완화된 정적 안정성과 Fly-by-Wire (토론)</td><td class="time">5분</td></tr>
+        <tr><td>정리</td><td>Part D 전체 정리 — 세 공학 분야의 공통 패턴</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>CG vs CP, 그리고 정적 마진</h2>
+    <p class="lead"><strong>무게중심(CG)</strong> : 비행기 전체(동체+날개+엔진+연료+승객·화물)의 무게중심입니다. 역시 2차시의 가중평균 공식 그대로입니다.</p>
+    <p><strong>양력중심(CP, Center of Pressure)</strong> : 날개 표면 전체에 분포된 양력(공기가 밀어 올리는 힘)의 합력이 작용하는 위치입니다. 이번에는 '무게'가 아니라 '양력(압력)'을 가중치로 사용한 가중평균 위치라는 점에서, CG와 수학적으로 같은 구조를 가진 또 다른 '중심'입니다.</p>
+    <p><strong>정적 마진(static margin)</strong> = (CP의 위치 − CG의 위치)를 기체 길이로 나눈 비율입니다. CG가 CP보다 앞쪽(기수 쪽)에 있으면 정적 마진이 양수입니다.</p>
+    <ul style="font-size:0.92rem; color:var(--ink-soft);">
+      <li>정적 마진 &gt; 0 (CG가 CP보다 앞) : 기수가 위로 들리는(피치업) 외란이 생기면, CG를 중심으로 한 모멘트가 자동으로 기수를 다시 낮추는 방향으로 작용 → 조종사가 아무 것도 안 해도 스스로 원래 자세로 돌아오려는 '정적 안정'</li>
+      <li>정적 마진 ≈ 0 또는 &lt; 0 (CG가 CP에 가깝거나 뒤) : 복원 모멘트가 약하거나 오히려 반대로 작용 → 스스로는 안정을 유지하지 못하지만, 조종면 반응이 훨씬 민감해져 기동성은 좋아짐</li>
+    </ul>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>연료·화물에 따른 CG 이동 계산</h2>
+    <p class="lead">어떤 소형 항공기의 빈 기체 무게는 $W_e=40000$kg이며 기준선(기수)으로부터 $CG_e=12.0$m 지점에 있다. 여기에 연료 8000kg을 11.0m 지점의 연료탱크에, 승객·화물 2000kg을 14.5m 지점에 실었다.</p>
+
+    <p>(1) 이 비행기 전체의 무게중심 CG를 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$CG=\dfrac{40000\times12.0+8000\times11.0+2000\times14.5}{40000+8000+2000}=\dfrac{480000+88000+29000}{50000}=\dfrac{597000}{50000}=11.94$ m</p></div>
+    </div>
+    <p>(2) 이 비행기의 양력중심은 CP=12.6m에 고정되어 있다고 한다. 정적 마진의 부호를 판정하고, 이 비행기가 정적으로 안정한지 설명하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$CP-CG=12.6-11.94=0.66$ (m) $>0 \implies$ CG가 CP보다 앞쪽에 있으므로 정적 마진은 양수이다. 따라서 이 비행기는 정적으로 안정하다 — 자세가 흐트러져도 스스로 원래 자세로 돌아오려는 경향이 있다.</p></div>
+    </div>
+    <p>(3) [탐구] 비행 중 연료가 소모되어 연료 무게가 8000kg→2000kg으로 줄었다면(나머지 조건은 동일), CG는 어느 방향으로 이동하겠는가? 계산으로 확인해 보시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$CG_{new}=\dfrac{40000\times12.0+2000\times11.0+2000\times14.5}{40000+2000+2000}=\dfrac{480000+22000+29000}{44000}=\dfrac{531000}{44000}\approx12.07$ m</p>
+        <p>11.94m → 12.07m로 CG가 뒤쪽(꼬리쪽)으로 약간 이동한다. 연료탱크(11.0m)가 CG보다 앞쪽에 있었으므로, 그 무게가 줄어들면 무게중심은 상대적으로 뒤로 밀린다. 실제 여객기는 이런 CG 이동을 비행계획 단계에서 미리 계산해 항상 안전 범위 안에 있도록 관리한다.</p>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">연료·화물 무게를 바꾸며 CG가 이동하는 모습과 정적 마진을 확인해 보세요</div>
+      <canvas id="flightCanvas"></canvas>
+      <div class="control-row">
+        <label for="fuelSlider">연료 무게 (kg)</label>
+        <input type="range" id="fuelSlider" min="0" max="8000" step="100" value="8000">
+        <span class="val" id="fuelVal">8000</span>
+      </div>
+      <div class="control-row">
+        <label for="cargoSlider">화물·승객 무게 (kg)</label>
+        <input type="range" id="cargoSlider" min="0" max="3000" step="100" value="2000">
+        <span class="val" id="cargoVal">2000</span>
+      </div>
+      <div class="control-row">
+        <label for="cpSlider">양력중심 CP (m)</label>
+        <input type="range" id="cpSlider" min="10" max="15" step="0.1" value="12.6">
+        <span class="val" id="cpVal">12.6</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">CG</div><div class="v" id="cgVal">–</div></div>
+        <div class="cell"><div class="k">정적 마진 (CP−CG)</div><div class="v" id="marginVal">–</div></div>
+        <div class="cell"><div class="k">안정성</div><div class="v" id="stabVal">–</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 5분 (토론)</span>
+    <h2>완화된 정적 안정성과 Fly-by-Wire</h2>
+    <p class="lead">✈️ <strong>인위적 불안정 설계 (Relaxed Static Stability)</strong> : F-22, F-35와 같은 전투기는 CG를 CP보다 뒤쪽에 두어(정적 마진 &lt; 0) 일부러 정적 안정성을 낮춥니다. 그 대신 비행제어 컴퓨터(Fly-by-Wire)가 1초에 수십~수백 번씩 조종면을 미세 조정하여 안정성을 실시간으로 보정합니다.</p>
+    <p>안정성을 인간 조종사 대신 컴퓨터가 대신 책임지는 대가로, 비행기는 훨씬 빠르고 급격하게 자세를 바꿀 수 있는 기동성을 얻습니다. 즉 안정성과 기동성은 정적 마진의 부호를 사이에 두고 트레이드오프 관계에 있습니다.</p>
+    <p>(토론) 여객기는 왜 전투기와 반대로 항상 정적 마진을 양수로 유지하도록 설계할까요?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>여객기는 기동성보다 승객의 안전과 승차감, 조종사의 피로도가 훨씬 중요하다. 정적 마진이 양수이면 작은 돌풍 등의 외란에도 비행기 스스로 자세를 회복하려 하므로, 조종사의 개입 없이도 안전하게 비행할 수 있다.</p>
+        <p>반면 전투기는 극한의 기동성이 생존과 직결되므로, 컴퓨터의 실시간 보정을 전제로 정적 안정성을 과감히 낮추는 설계를 선택한 것이다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>Part D 전체를 관통하는 하나의 패턴</h2>
+    <table class="data">
+      <tr><th>분야</th><th>힘의 중심 ↔ 저항의 중심</th><th>어긋남</th><th>결과</th></tr>
+      <tr><td>건축 (8차시)</td><td>질량중심 CM ↔ 강성중심 CR</td><td>편심 e</td><td>비틀림모멘트 $M_t=V\times e$</td></tr>
+      <tr><td>조선 (9차시)</td><td>무게중심 G ↔ 메타센터 M</td><td>GM의 부호</td><td>복원정 $GZ=GM\cdot\sin\theta$</td></tr>
+      <tr><td>항공 (10차시)</td><td>무게중심 CG ↔ 양력중심 CP</td><td>정적 마진의 부호</td><td>피치 안정/불안정</td></tr>
+    </table>
+    <p>세 분야 모두 '힘(또는 부력·양력)이 작용하는 중심'과 '그것에 저항하거나 균형을 잡아주는 또 다른 중심'이 서로 얼마나 떨어져 있는지가 안전과 성능을 결정합니다. 이는 결국 1차시에서 배운 아르키메데스의 모멘트($M=m\times d$) 개념이 형태를 바꾸어 가며 현대 공학 곳곳에 살아있는 것입니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>6~7차시에서 적분으로 '정확히' 계산한 무게중심, 그리고 2차시에서 배운 '가중평균' 공식을 다음 시간부터는 직접 손으로 만든 모형으로 실증합니다.</p>
+    <div class="next">다음 차시 : 11차시 — 실험실 Ⅰ : 반원판 팽이와 집 모양 다각형</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="9-metacenter.html">← 9차시 — 조선공학 : 선박의 복원성</a>
+    <a href="11-workshop1.html">11차시 — 실험실 Ⅰ →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const flightCanvas = document.getElementById('flightCanvas');
+  const fuelSlider = document.getElementById('fuelSlider'), cargoSlider = document.getElementById('cargoSlider'), cpSlider = document.getElementById('cpSlider');
+  const fuelVal = document.getElementById('fuelVal'), cargoVal = document.getElementById('cargoVal'), cpVal = document.getElementById('cpVal');
+  const cgVal = document.getElementById('cgVal'), marginVal = document.getElementById('marginVal'), stabVal = document.getElementById('stabVal');
+  const We = 40000, CGe = 12.0, FUEL_POS = 11.0, CARGO_POS = 14.5, L_NOSE = 0, L_TAIL = 20;
+
+  const fXmin=-1, fXmax=21, fYmin=-3, fYmax=5;
+  function fMap(x,y,w,h){
+    const sx=(w-30)/(fXmax-fXmin), sy=(h-30)/(fYmax-fYmin), s=Math.min(sx,sy);
+    const ox=15-fXmin*s, oy=h/2;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawFlight(){
+    const { ctx, w, h } = fitCanvas(flightCanvas, 220);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => fMap(x,y,w,h);
+    const fuel = +fuelSlider.value, cargo = +cargoSlider.value, cp = +cpSlider.value;
+    fuelVal.textContent = fuel; cargoVal.textContent = cargo; cpVal.textContent = fmt(cp,1);
+
+    // 동체(기수→꼬리)
+    ctx.beginPath();
+    ctx.moveTo(...P(0,0)); ctx.lineTo(...P(1.5,1.2)); ctx.lineTo(...P(18,1.2)); ctx.lineTo(...P(20,0));
+    ctx.lineTo(...P(18,-1.2)); ctx.lineTo(...P(1.5,-1.2)); ctx.closePath();
+    ctx.fillStyle = 'rgba(42,111,190,0.12)'; ctx.fill();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.4; ctx.stroke();
+    ctx.fillStyle = '#1b1830'; ctx.font = '10px sans-serif';
+    ctx.fillText('기수', P(0,0)[0]-6, P(0,0)[1]+22);
+    ctx.fillText('꼬리', P(20,0)[0]-6, P(20,0)[1]+22);
+
+    const totalW = We+fuel+cargo;
+    const CG = (We*CGe + fuel*FUEL_POS + cargo*CARGO_POS) / totalW;
+
+    // 위치 마커들
+    const markers = [ [FUEL_POS,'연료','#5b4bd6'], [CARGO_POS,'화물','#c2601f'], [cp,'CP','#b03b62'], [CG,'CG','#0f8f86'] ];
+    markers.forEach(([pos,label,color]) => {
+      const p = P(pos, 0);
+      ctx.beginPath(); ctx.moveTo(p[0], p[1]-18); ctx.lineTo(p[0], p[1]+18);
+      ctx.strokeStyle = color; ctx.lineWidth = label==='CG'||label==='CP' ? 2.4 : 1.2; ctx.stroke();
+      ctx.fillStyle = color; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(label, p[0], p[1]-22);
+    });
+    ctx.textAlign = 'left';
+
+    const margin = cp - CG;
+    cgVal.textContent = fmt(CG) + ' m';
+    marginVal.textContent = fmt(margin) + ' m';
+    stabVal.textContent = margin > 0.05 ? '안정 (양의 정적 마진)' : (margin < -0.05 ? '불안정 (음의 정적 마진)' : '중립');
+    stabVal.style.color = margin > 0.05 ? '#1e6b3c' : (margin < -0.05 ? '#b03b62' : '#7a5b17');
+  }
+  fuelSlider.addEventListener('input', drawFlight);
+  cargoSlider.addEventListener('input', drawFlight);
+  cpSlider.addEventListener('input', drawFlight);
+  window.addEventListener('resize', drawFlight);
+  drawFlight();
+</script>
+</body>
+</html>
