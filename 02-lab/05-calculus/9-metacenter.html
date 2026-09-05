@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9차시 · 조선공학 : 선박의 복원성 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab current" href="9-metacenter.html">9차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅓 Part D · 2 / 3차시</span>
+    <h1>조선공학 — 선박의 복원성</h1>
+    <p class="sub">배가 파도에 기울었다가 다시 똑바로 서는 이유는 무엇일까요? 무게중심 G, 부심 B, 메타센터 M의 관계로 알아봅니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>무게중심(G)·부심(B)·메타센터(M)의 관계를 이해하고 GM의 부호가 갖는 의미를 설명할 수 있다.</li>
+        <li>$GZ=GM\cdot\sin\theta$ 공식으로 복원정(righting arm)을 계산하고 그래프로 나타낼 수 있다.</li>
+        <li>화물 적재 위치에 따라 선박 전체의 무게중심이 이동함을 가중평균 공식으로 계산하고, 이것이 GM과 안정성에 미치는 영향을 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>배가 파도에 기울었다가 다시 똑바로 서는 이유는? (문제 제기)</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>무게중심 G · 부심 B · 메타센터 M, 그리고 GZ 곡선</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>GZ 계산 실습 및 화물 적재에 따른 무게중심 이동</td><td class="time">25분</td></tr>
+        <tr><td>정리</td><td>작은 각도 근사와 3차시 극한 개념의 연결</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>G · B · M과 복원정 GZ</h2>
+    <p class="lead"><strong>무게중심 G</strong> : 배 전체(선체+엔진+화물+승객 등)의 무게중심으로, 2차시에서 배운 바로 그 개념입니다.</p>
+    <p><strong>부심 B</strong> : 배가 밀어낸 물(배수량)의 부피, 즉 '물에 잠긴 부분의 형상'의 무게중심입니다. 부력은 바로 이 B에서 위쪽으로 작용합니다 — 7차시에서 다룬 3차원 입체(원뿔)의 무게중심과 같은 종류의 계산입니다.</p>
+    <p><strong>메타센터 M</strong> : 배가 아주 작은 각도로 기울어질 때, 새로 이동한 부심 B′을 지나는 부력의 작용선이 처음의 대칭축과 다시 만나는 점입니다. 작은 기울기 범위에서는 이 점이 거의 고정되어 있다고 볼 수 있습니다.</p>
+    <div class="qbox">복원정(righting arm) : $GZ = GM\cdot\sin\theta$<br>복원 모멘트 = (배의 무게) × GZ — 이 모멘트가 배를 원래 자세로 되돌리는 힘이다.</div>
+    <ul style="font-size:0.92rem; color:var(--ink-soft);">
+      <li>$GM>0$ (M이 G보다 위) ⟹ θ가 커질수록 GZ&gt;0, 복원 우력 발생 → 안정</li>
+      <li>$GM<0$ (M이 G보다 아래) ⟹ GZ&lt;0, 오히려 기우는 방향으로 모멘트 발생 → 전복 위험</li>
+    </ul>
+
+    <div class="widget">
+      <div class="widget-title">GM 값을 바꾸며 복원정 GZ 곡선의 모양이 바뀌는 것을 확인해 보세요</div>
+      <canvas id="gzCanvas"></canvas>
+      <div class="control-row">
+        <label for="gmSlider">GM (m)</label>
+        <input type="range" id="gmSlider" min="-0.5" max="2" step="0.05" value="1.4">
+        <span class="val" id="gmVal">1.40</span>
+      </div>
+      <div class="control-row">
+        <label for="thetaSlider">기울기 θ (°)</label>
+        <input type="range" id="thetaSlider" min="0" max="60" step="1" value="30">
+        <span class="val" id="thetaVal">30°</span>
+      </div>
+      <div class="control-row">
+        <label><input type="checkbox" id="showApprox"> 작은각 근사선 GM·θ(라디안) 보기</label>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">GZ = GM·sinθ</div><div class="v" id="gzVal">–</div></div>
+        <div class="cell"><div class="k">안정성</div><div class="v" id="stabState">–</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 25분</span>
+    <h2>GZ 계산 실습과 화물 적재 문제</h2>
+    <p>(1) GM=1.4 m인 배가 θ=10°, 20°, 30°로 기울었을 때 각각의 복원정 GZ를 계산하시오. (sin10°≈0.1736, sin20°≈0.3420, sin30°=0.5)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>θ=10° : GZ = 1.4×0.1736 ≈ 0.243 m</p>
+        <p>θ=20° : GZ = 1.4×0.3420 ≈ 0.479 m</p>
+        <p>θ=30° : GZ = 1.4×0.5 = 0.700 m</p>
+        <p>(위 그림 7의 파란 곡선 값과 일치합니다 — GM 슬라이더를 1.4로, θ 슬라이더를 10/20/30으로 맞춰 확인해 보세요.)</p>
+      </div>
+    </div>
+
+    <p>(2) [화물 적재와 무게중심 이동] 빈 배의 무게는 $W_0=5000$톤이며 용골(배 바닥)로부터 무게중심까지의 높이는 $G_0=4.0$ m이다. 이제 갑판 위 높이 8.5 m 지점에 화물 $W_c=800$톤을 실었다. 화물을 실은 후 배 전체의 무게중심 높이 $G_{new}$를 구하시오. (2차시의 가중평균 공식을 그대로 사용한다.)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$G_{new} = \dfrac{W_0G_0+W_ch_c}{W_0+W_c} = \dfrac{5000\times4.0+800\times8.5}{5000+800} = \dfrac{20000+6800}{5800} = \dfrac{26800}{5800} \approx 4.621$ m</p></div>
+    </div>
+
+    <p>(3) 이 배의 메타센터 높이는 (용골 기준) M=5.2 m로 거의 일정하다고 하자. 화물을 싣기 전과 후의 GM을 각각 구하고, 화물 적재가 배의 복원성에 어떤 영향을 주는지 설명하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>적재 전 : GM = 5.2 − 4.0 = 1.2 m. 적재 후 : GM = 5.2 − 4.621 ≈ 0.579 m</p>
+        <p>화물을 갑판 위 높은 곳에 실으면 배 전체의 무게중심이 위로 올라가(4.0→4.621m) GM이 1.2m에서 0.58m로 크게 줄어든다. 여전히 GM&gt;0이라 안정은 하지만, 복원력이 훨씬 약해져 파도나 바람에 더 쉽게 크게 기울게 된다.</p>
+        <p>만약 화물을 더 무겁게, 혹은 더 높은 곳에 실으면 GM이 0보다 작아질 수도 있다 — 실제 선박 사고(과적·고박 불량으로 인한 전복)의 상당수가 바로 이 원리로 설명된다.</p>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">화물 적재 시뮬레이터 — 화물의 무게·높이를 바꾸며 GM 변화를 확인하고, 위 GZ 곡선에 바로 적용해 보세요</div>
+      <div class="control-row">
+        <label for="wcSlider">화물 무게 Wc (톤)</label>
+        <input type="range" id="wcSlider" min="0" max="2000" step="50" value="800">
+        <span class="val" id="wcVal">800</span>
+      </div>
+      <div class="control-row">
+        <label for="hcSlider">화물 적재 높이 hc (m)</label>
+        <input type="range" id="hcSlider" min="0" max="12" step="0.5" value="8.5">
+        <span class="val" id="hcVal">8.5</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">G_new</div><div class="v" id="gNewVal">–</div></div>
+        <div class="cell"><div class="k">GM (적재 전 → 후)</div><div class="v" id="gmChangeVal">–</div></div>
+        <div class="cell"><div class="k">안정성</div><div class="v" id="cargoStabState">–</div></div>
+      </div>
+      <div class="control-row">
+        <button class="btn solid" onclick="applyToGZ()">↑ 위 GZ 곡선에 적용</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>작은 각도, 그리고 극한 — 3차시 극한 개념과의 연결</h2>
+    <p>각도 θ를 라디안으로 잴 때, θ가 아주 작으면 $\sin\theta\approx\theta$라는 근사가 성립합니다 (이는 나중에 미적분Ⅱ에서 극한 $\lim_{\theta\to0}\sin\theta/\theta=1$로 배우게 됩니다).</p>
+    <p>그렇다면 θ가 작을 때 $GZ=GM\cdot\sin\theta\approx GM\cdot\theta$이므로, GZ 곡선의 원점 부근 기울기는 거의 정확히 GM과 같습니다 — 위 위젯에서 '작은각 근사선'을 켜고 θ를 작게 두면 두 곡선이 거의 겹치는 것을 볼 수 있습니다.</p>
+    <p>즉 조선공학자는 배를 살짝만 기울여 본 뒤 그 초기 반응(기울기)만 측정해도 GM을 추정할 수 있습니다. 극한적 사고(아주 작은 변화만 보는 것)가 실제로 배의 안전성을 재는 도구가 되는 셈입니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>다음 시간에는 CG(무게중심)와 CP(압력중심)의 관계로 비행기의 안정성을 살펴봅니다.</p>
+    <div class="next">다음 차시(10차시)는 준비 중입니다.</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="8-torsion.html">← 8차시 — 건축공학 : 내진 설계와 비틀림</a>
+    <a href="index.html">미적분 실험실 목록으로 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const gzCanvas = document.getElementById('gzCanvas');
+  const gmSlider = document.getElementById('gmSlider'), thetaSlider = document.getElementById('thetaSlider');
+  const gmVal = document.getElementById('gmVal'), thetaVal = document.getElementById('thetaVal');
+  const showApprox = document.getElementById('showApprox');
+  const gzVal = document.getElementById('gzVal'), stabState = document.getElementById('stabState');
+
+  const gzXmin=-5, gzXmax=65, gzYmin=-1.2, gzYmax=2.2;
+  function gzMap(x,y,w,h){
+    const sx=(w-40)/(gzXmax-gzXmin), sy=(h-30)/(gzYmax-gzYmin), s=Math.min(sx,sy);
+    const ox=25-gzXmin*s, oy=h-15+gzYmin*s;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawGZ(){
+    const { ctx, w, h } = fitCanvas(gzCanvas, 300);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => gzMap(x,y,w,h);
+    const GM = parseFloat(gmSlider.value), theta = parseFloat(thetaSlider.value);
+    gmVal.textContent = fmt(GM); thetaVal.textContent = theta + '°';
+
+    // 축
+    ctx.strokeStyle = '#cfd8d6'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(...P(0,gzYmin)); ctx.lineTo(...P(0,gzYmax)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(...P(gzXmin,0)); ctx.lineTo(...P(gzXmax,0)); ctx.stroke();
+    ctx.fillStyle = '#6b8985'; ctx.font = '10px sans-serif';
+    [0,10,20,30,40,50,60].forEach(t => { const p=P(t,0); ctx.fillText(t+'°', p[0]-6, p[1]+14); });
+
+    // GZ = GM sinθ 곡선
+    ctx.beginPath();
+    for (let t=0;t<=60;t++){ const gz = GM*Math.sin(t*Math.PI/180); const p=P(t,gz); if(t===0)ctx.moveTo(...p); else ctx.lineTo(...p); }
+    ctx.strokeStyle = '#2a6fbe'; ctx.lineWidth = 2.4; ctx.stroke();
+
+    if (showApprox.checked) {
+      ctx.beginPath();
+      for (let t=0;t<=60;t++){ const gz = GM*(t*Math.PI/180); const p=P(t,gz); if(t===0)ctx.moveTo(...p); else ctx.lineTo(...p); }
+      ctx.strokeStyle = 'rgba(120,120,120,0.7)'; ctx.setLineDash([5,4]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    // 현재 θ 지점 표시
+    const curGZ = GM*Math.sin(theta*Math.PI/180);
+    const pt = P(theta, curGZ);
+    ctx.beginPath(); ctx.arc(...pt, 5, 0, 7); ctx.fillStyle = '#c2601f'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(...P(theta,0)); ctx.lineTo(...pt); ctx.strokeStyle='#c2601f'; ctx.setLineDash([3,3]); ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+
+    gzVal.textContent = fmt(curGZ,3) + ' m';
+    stabState.textContent = GM > 0 ? '안정 (GM>0)' : (GM < 0 ? '전복 위험 (GM<0)' : '중립 (GM=0)');
+    stabState.style.color = GM > 0 ? '#1e6b3c' : (GM < 0 ? '#b03b62' : '#7a5b17');
+  }
+  gmSlider.addEventListener('input', drawGZ);
+  thetaSlider.addEventListener('input', drawGZ);
+  showApprox.addEventListener('change', drawGZ);
+  window.addEventListener('resize', drawGZ);
+  drawGZ();
+
+  // 화물 적재 시뮬레이터
+  const W0 = 5000, G0 = 4.0, M_HEIGHT = 5.2;
+  const wcSlider = document.getElementById('wcSlider'), hcSlider = document.getElementById('hcSlider');
+  const wcVal = document.getElementById('wcVal'), hcVal = document.getElementById('hcVal');
+  const gNewVal = document.getElementById('gNewVal'), gmChangeVal = document.getElementById('gmChangeVal'), cargoStabState = document.getElementById('cargoStabState');
+  let lastGMafter = 1.2;
+
+  function drawCargo(){
+    const Wc = parseFloat(wcSlider.value), hc = parseFloat(hcSlider.value);
+    wcVal.textContent = Wc; hcVal.textContent = fmt(hc,1);
+    const Gnew = (W0*G0 + Wc*hc) / (W0+Wc);
+    const gmBefore = M_HEIGHT - G0, gmAfter = M_HEIGHT - Gnew;
+    lastGMafter = gmAfter;
+    gNewVal.textContent = fmt(Gnew,3) + ' m';
+    gmChangeVal.textContent = fmt(gmBefore,2) + ' → ' + fmt(gmAfter,2) + ' m';
+    cargoStabState.textContent = gmAfter > 0 ? '안정 유지 (GM>0)' : '전복 위험! (GM≤0)';
+    cargoStabState.style.color = gmAfter > 0 ? '#1e6b3c' : '#b03b62';
+  }
+  function applyToGZ(){ gmSlider.value = Math.max(-0.5, Math.min(2, lastGMafter)); drawGZ(); window.scrollTo({ top: document.getElementById('gzCanvas').getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' }); }
+  wcSlider.addEventListener('input', drawCargo);
+  hcSlider.addEventListener('input', drawCargo);
+  drawCargo();
+</script>
+</body>
+</html>

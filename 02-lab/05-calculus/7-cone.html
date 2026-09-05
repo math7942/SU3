@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7차시 · 삼중적분 : 원뿔과 차원별 비교 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .compare-bar { position: relative; height: 34px; background: #eef6f5; border-radius: 8px; margin: 6px 0 22px; }
+  .compare-bar .track { position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: var(--line); }
+  .compare-bar .mark { position: absolute; top: 2px; width: 2px; height: 30px; }
+  .compare-bar .mark .dot { position: absolute; top: -5px; left: -5px; width: 12px; height: 12px; border-radius: 50%; }
+  .compare-bar .mark .lbl { position: absolute; top: 14px; left: 8px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab current" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅒 Part C · 2 / 2차시</span>
+    <h1>삼중적분 — 원뿔과 차원별 비교</h1>
+    <p class="sub">평면 도형을 넘어 입체(원뿔)까지 확장하고, 1차원(고리)·2차원(반원판)·3차원(원뿔) 무게중심을 한 번에 비교합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>삼중적분(원판 적층)으로 3차원 원뿔의 무게중심을 구할 수 있다.</li>
+        <li>1D 고리, 2D 반원판, 3D 원뿔의 무게중심 결과를 비교하고, 질량 분포와 무게중심 위치의 관계를 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>6차시 복습 — 고리·반원판 결과</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>3차원 입체 원뿔 — 삼중적분(원판 적층)</td><td class="time">20분</td></tr>
+        <tr><td>활동2</td><td>세 결과 비교 및 해석</td><td class="time">15분</td></tr>
+        <tr><td>정리</td><td>Part C 전체 정리</td><td class="time">10분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 20분</span>
+    <h2>3차원 입체 원뿔 (Solid Cone) — 삼중적분</h2>
+    <p class="lead">이번엔 평면 도형이 아니라 입체 도형인 원뿔을 다룹니다. 높이 h, 밑면 반지름 R인 원뿔을 z축에 수직인 아주 얇은 원판들로 잘게 썹니다(원뿔 모양 케이크를 수평으로 얇게 써는 것과 같습니다).</p>
+    <p>밑면(z=0)에서 꼭짓점(z=h)으로 갈수록 원판의 반지름이 선형으로 줄어들므로, 높이 z에서의 반지름은 $r(z)=R(h-z)/h$입니다. 이 원판 하나의 부피는 $dV=\pi r(z)^2\,dz$입니다.</p>
+    <div class="qbox">$$\bar z = \dfrac{\displaystyle\int_0^h z\cdot\pi r(z)^2\,dz}{\displaystyle\int_0^h \pi r(z)^2\,dz}$$</div>
+
+    <div class="widget">
+      <div class="widget-title">원판 개수 n을 늘려가며 원뿔 무게중심 근사가 h/4로 수렴하는 모습을 확인해 보세요</div>
+      <canvas id="coneCanvas"></canvas>
+      <div class="control-row">
+        <label for="coneN">원판 개수 n</label>
+        <input type="range" id="coneN" min="2" max="120" step="1" value="10">
+        <span class="val" id="coneNVal">10</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">근사 z̄</div><div class="v" id="coneApprox">–</div></div>
+        <div class="cell"><div class="k">실제값 (h/4)</div><div class="v" id="coneExact">–</div></div>
+        <div class="cell"><div class="k">오차</div><div class="v" id="coneErr">–</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>분모(전체 부피)를 계산하면 원뿔의 부피 공식 $\tfrac13\pi R^2 h$가 그대로 나옵니다.</p>
+        <p>분자를 계산하면 $\pi R^2h^2/12$가 됩니다(전개 과정은 미적분Ⅱ에서 다항식 적분으로 배우게 됩니다).</p>
+        <p>$\implies \bar z = \dfrac{\pi R^2h^2/12}{\tfrac13\pi R^2h} = \dfrac{h}{4} = 0.25h$</p>
+        <p>즉 원뿔의 무게중심은 밑면으로부터 전체 높이의 1/4 지점에 있습니다 (반대로 꼭짓점에서부터 재면 3/4 지점입니다).</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 15분</span>
+    <h2>세 결과를 비교해보면 — 왜 값이 다를까?</h2>
+    <table class="data">
+      <tr><th>도형 (질량의 분포)</th><th>기준</th><th>정확한 값</th><th>근삿값</th></tr>
+      <tr><td>1D 고리 — 테두리에만 질량이 있음</td><td>반지름 R</td><td>2R/π</td><td>≈ 0.637R</td></tr>
+      <tr><td>2D 판 — 내부 전체에 질량이 퍼짐</td><td>반지름 R</td><td>4R/(3π)</td><td>≈ 0.424R</td></tr>
+      <tr><td>3D 원뿔 — 꼭짓점으로 갈수록 가늘어짐</td><td>높이 h</td><td>h/4</td><td>= 0.25h</td></tr>
+    </table>
+
+    <div class="widget">
+      <div class="widget-title">전체 길이(반지름 또는 높이)를 1로 두었을 때, 무게중심이 상대적으로 어디에 있는지 비교해 보세요</div>
+      <div class="compare-bar">
+        <div class="track"></div>
+        <div class="mark" style="left:63.7%;"><div class="dot" style="background:#0f8f86;"></div><div class="lbl" style="color:#0f8f86;">1D 고리 0.637</div></div>
+      </div>
+      <div class="compare-bar">
+        <div class="track"></div>
+        <div class="mark" style="left:42.4%;"><div class="dot" style="background:#2a6fbe;"></div><div class="lbl" style="color:#2a6fbe;">2D 판 0.424</div></div>
+      </div>
+      <div class="compare-bar" style="margin-bottom:6px;">
+        <div class="track"></div>
+        <div class="mark" style="left:25%;"><div class="dot" style="background:#c2601f;"></div><div class="lbl" style="color:#c2601f;">3D 원뿔 0.250</div></div>
+      </div>
+    </div>
+
+    <p>1차원 고리는 모든 질량이 테두리(기준선에서 가장 먼 지점)에 몰려 있으므로 평균 위치(무게중심)가 가장 높습니다. 2차원 판은 테두리뿐 아니라 기준선에 가까운 안쪽 영역까지 질량이 채워져 있으므로 평균이 더 낮아집니다. 이는 2차시 활동3에서 '점의 무게중심'과 '면의 무게중심'을 비교했던 것과 똑같은 원리입니다 — 무게(질량)가 어디에 얼마만큼 분포되어 있는지가 무게중심의 위치를 결정합니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 10분</span>
+    <h2>Part C 전체 정리</h2>
+    <p>이 세 계산은 모두 '쪼개서 더한 뒤 극한을 취한다'는 3차시 리만합 활동과 완전히 같은 원리입니다. 다만 미적분Ⅱ에서 배우는 정적분·이중적분·삼중적분이라는 정확한 계산 도구를 사용했을 뿐입니다.</p>
+    <p>여러분이 3차시에서 표를 채워가며 손으로 구한 근삿값은, 사실 이렇게 정확한 값으로 수렴해 가는 과정의 한 단계였던 것입니다. 다음 8차시부터는 이 무게중심 개념이 실제 건축·조선·항공 공학에서 어떻게 쓰이는지 살펴봅니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>지금까지(1~7차시) 우리는 '무게중심이란 무엇이고 어떻게 계산하는가'를 공리·좌표·적분으로 다졌습니다. 다음 시간부터는 그 무게중심 개념이 실제 건축물·선박·비행기 설계에서 어떻게 '안전'과 직결되는지 살펴봅니다.</p>
+    <div class="next">다음 차시 : 8차시 — 건축공학 : 내진 설계와 비틀림</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="6-integral.html">← 6차시 — 선적분과 이중적분</a>
+    <a href="8-torsion.html">8차시 — 건축공학 : 내진 설계와 비틀림 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const R = 6, H = 8; // h/4 = 2 (깔끔한 값)
+  const coneCanvas = document.getElementById('coneCanvas');
+  const coneN = document.getElementById('coneN'), coneNVal = document.getElementById('coneNVal');
+  const coneApprox = document.getElementById('coneApprox'), coneExact = document.getElementById('coneExact'), coneErr = document.getElementById('coneErr');
+
+  const cXmin=-7, cXmax=7, cYmin=-0.6, cYmax=9.2;
+  function cMap(x,y,w,h){
+    const sx=(w-30)/(cXmax-cXmin), sy=(h-30)/(cYmax-cYmin), s=Math.min(sx,sy);
+    const ox=w/2, oy=h-20;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawCone(){
+    const { ctx, w, h } = fitCanvas(coneCanvas, 320);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => cMap(x,y,w,h);
+    const n = +coneN.value;
+    coneNVal.textContent = n;
+    const dz = H/n;
+
+    let num = 0, den = 0;
+    for (let i=0;i<n;i++){
+      const z = (i+0.5)*dz;
+      const r = R*(H-z)/H;
+      const dV = Math.PI*r*r*dz;
+      num += dV*z; den += dV;
+      const r0 = R*(H-i*dz)/H, r1 = R*(H-(i+1)*dz)/H;
+      const z0 = i*dz, z1=(i+1)*dz;
+      ctx.beginPath();
+      ctx.moveTo(...P(-r0,z0)); ctx.lineTo(...P(-r1,z1)); ctx.lineTo(...P(r1,z1)); ctx.lineTo(...P(r0,z0)); ctx.closePath();
+      ctx.fillStyle = i%2===0 ? 'rgba(194,96,31,0.28)' : 'rgba(194,96,31,0.42)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(27,24,48,0.15)'; ctx.lineWidth = n>60?0.3:0.8; ctx.stroke();
+    }
+
+    // 원뿔 윤곽
+    ctx.beginPath(); ctx.moveTo(...P(-R,0)); ctx.lineTo(...P(0,H)); ctx.lineTo(...P(R,0)); ctx.closePath();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    const zbar = num/den, exact = H/4;
+    coneApprox.textContent = fmt(zbar); coneExact.textContent = fmt(exact);
+    coneErr.textContent = fmt(Math.abs(zbar-exact)/exact*100, 2) + '%';
+
+    const py = P(0, exact);
+    ctx.beginPath(); ctx.moveTo(...P(-R-0.6, exact)); ctx.lineTo(...P(R+0.6, exact));
+    ctx.strokeStyle = '#0f8f86'; ctx.setLineDash([5,4]); ctx.lineWidth = 1.4; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#0f8f86'; ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('z̄ = h/4 = ' + fmt(exact), P(-R-0.6, exact)[0], py[1]-6);
+    ctx.fillStyle='#1b1830'; ctx.font='11px sans-serif';
+    ctx.fillText('밑면 z=0', P(R+0.3,0)[0], P(R+0.3,0)[1]+4);
+    ctx.fillText('꼭짓점 z=h', P(0,H)[0]+6, P(0,H)[1]-4);
+  }
+  coneN.addEventListener('input', drawCone);
+  window.addEventListener('resize', drawCone);
+  drawCone();
+</script>
+</body>
+</html>

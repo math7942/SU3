@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8차시 · 건축공학 : 내진 설계와 비틀림 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab current" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅓 Part D · 1 / 3차시</span>
+    <h1>건축공학 — 내진 설계와 비틀림</h1>
+    <p class="sub">질량중심(CM)과 강성중심(CR)이 어긋나면 건물은 지진에 '비틀리며' 무너집니다. 2차시의 모멘트 개념이 내진설계의 안전기준으로 다시 등장합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>질량중심(CM)과 강성중심(CR)의 의미 차이를 설명할 수 있다.</li>
+        <li>편심거리 e와 비틀림모멘트 $M_t=V\times e$의 관계를 계산할 수 있다.</li>
+        <li>2차시에서 배운 '모멘트 = 힘 × 거리' 개념이 건축 내진설계의 안전기준으로 재등장함을 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>건물이 지진에 '흔들리며 무너지는' 두 가지 방식(수평 이동 vs 비틀림) 영상·사진 관찰</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>질량중심(CM)과 강성중심(CR) — 개념과 계산</td><td class="time">20분</td></tr>
+        <tr><td>활동2</td><td>편심거리별 비틀림모멘트 계산 및 내진기준 이해</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>2차시 모멘트 개념과의 연결 정리</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>건물은 지진에 왜 두 가지 방식으로 흔들릴까?</h2>
+    <p class="lead">지진이 건물을 흔드는 방식은 크게 두 가지입니다 — 건물 전체가 옆으로 밀리는 '수평 이동'과, 건물이 팽이처럼 돌아가는 '비틀림(회전)'입니다. 왜 비틀림이 생기는지, 오늘 두 가지 '중심'을 통해 알아봅니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 20분</span>
+    <h2>질량중심(CM)과 강성중심(CR)</h2>
+    <p class="lead"><strong>질량중심(CM, Center of Mass)</strong> : 건물 전체 질량의 무게중심입니다. 지진이 일어나면 건물의 각 부분(바닥, 기둥, 벽, 가구…)이 자신의 질량에 비례한 관성력을 받는데, 이 모든 힘의 합력은 바로 이 CM에 작용한다고 볼 수 있습니다. — 즉 2차시에서 배운 $\bar x=\sum m_ix_i/\sum m_i$ 공식을 건물의 각 층·부재에 그대로 적용한 것이 CM입니다.</p>
+    <p><strong>강성중심(CR, Center of Rigidity)</strong> : 기둥·전단벽처럼 건물이 수평힘에 저항하는 '뻣뻣함(강성)'이 모여 있는 중심입니다. 무게 대신 '강성(뻣뻣한 정도)'을 가중치로 사용한 가중평균 위치라는 점에서, CM과 수학적으로 똑같은 구조의 또 다른 '중심'입니다.</p>
+
+    <p>(1) 어떤 건물의 평면에서 질량중심이 CM(11, 4.2), 강성중심이 CR(7.5, 4.2)로 계산되었다 (단위 : m). 편심거리 e를 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$e=|CM-CR|=|11-7.5|=3.5$ (m) (y좌표가 같으므로 x좌표 차이만 계산)</p></div>
+    </div>
+    <p>(2) 이 건물에 지진에 의한 밑면전단력 V=850 kN이 작용한다면, 비틀림모멘트 $M_t$는 얼마인가?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$M_t = V\times e = 850\times3.5 = 2975$ (kN·m)</p></div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">건물 평면도 — 전단벽(강성) 배치를 옮기며 CM·CR의 어긋남과 비틀림모멘트를 확인해 보세요</div>
+      <canvas id="planCanvas"></canvas>
+      <div class="control-row">
+        <label for="crSlider">강성중심 CR의 x좌표 (m)</label>
+        <input type="range" id="crSlider" min="1" max="21" step="0.5" value="7.5">
+        <span class="val" id="crVal">7.5</span>
+      </div>
+      <div class="control-row">
+        <label for="vSlider">밑면전단력 V (kN)</label>
+        <input type="range" id="vSlider" min="300" max="1200" step="10" value="850">
+        <span class="val" id="vVal">850</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">편심거리 e</div><div class="v" id="eVal">–</div></div>
+        <div class="cell"><div class="k">비틀림모멘트 Mₜ</div><div class="v" id="mtVal">–</div></div>
+        <div class="cell"><div class="k">5% 허용기준</div><div class="v" id="limitState">–</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 왜 CM과 CR이 다를까?</button>
+      <div class="reveal-content tip hidden">
+        <p>전단벽(내력벽)을 건물 한쪽에 몰아서 배치하면(그림처럼 왼쪽에 편중) 그쪽으로 강성이 쏠려 CR이 이동합니다. 반면 CM은 질량(무게)의 분포에만 좌우되므로 벽 배치와 무관하게 거의 평면 중앙 부근에 있습니다.</p>
+        <p>지진 관성력은 반드시 CM에 작용하는데, 이에 저항하는 힘은 CR을 중심으로 발생합니다. 두 중심이 다르면 '힘의 작용점'과 '저항의 중심'이 어긋나 건물 전체가 팽이처럼 비틀리며 회전하려는 모멘트가 생깁니다 — 이것이 바로 지진 시 건물이 비틀려 파괴되는 주된 이유 중 하나입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>편심거리별 비틀림모멘트와 내진기준</h2>
+    <p class="lead">같은 건물에 같은 지진력 V=850 kN이 작용한다고 할 때, 편심거리 e를 바꾸어가며 비틀림모멘트 $M_t$를 계산해 표를 완성하시오. (위 시뮬레이터에서 V를 850으로 두고 CR을 옮기며 직접 확인해도 좋습니다.)</p>
+    <table class="data">
+      <tr><th>e (m)</th><td>0.5</td><td>1.0</td><td>1.5</td><td>2.0</td><td>2.5</td><td>3.0</td><td>3.5</td></tr>
+      <tr><th>Mₜ (kN·m)</th><td>?</td><td>?</td><td>?</td><td>?</td><td>?</td><td>?</td><td>?</td></tr>
+    </table>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>e=0.5→425, e=1.0→850, e=1.5→1275, e=2.0→1700, e=2.5→2125, e=3.0→2550, e=3.5→2975 (모두 $M_t=850\times e$, 단위 kN·m)</p>
+        <p>→ e와 $M_t$는 정비례 관계이다. 편심거리를 절반으로 줄이면 비틀림모멘트도 정확히 절반이 된다.</p>
+      </div>
+    </div>
+
+    <p>(토론) 실제 건축 구조기준에서는 '우발편심'까지 포함해 편심을 건물 평면 치수의 5% 이내로 엄격히 제한합니다. 왜 편심을 완전히 0으로 만들기보다 '5% 이내'라는 허용범위를 두었을지 이야기해 봅시다.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>실제 건물은 시공오차, 가구·사람의 위치 변화, 재료 강성의 미세한 불균일 등으로 CM과 CR을 완벽히 일치(e=0)시키는 것이 현실적으로 불가능하다.</p>
+        <p>따라서 '편심을 아예 없앤다'는 이상적 목표 대신, 비틀림모멘트가 구조적으로 충분히 안전하게 저항될 수 있는 한계치(5%)를 정해 그 안에서 관리하는 것이 공학적으로 더 현실적인 접근이다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>2차시 모멘트 개념과의 연결</h2>
+    <p>2차시 : 여러 질점의 무게중심 = $\sum m_ix_i/\sum m_i$</p>
+    <p>8차시 : 건물의 질량중심(CM)도 똑같은 가중평균 공식으로 구해지는 '무게중심'이다. 다만 그 짝이 되는 강성중심(CR)이 따로 존재하고, 두 중심의 어긋남(e)이 비틀림모멘트 $M_t=V\times e$를 만들어낸다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>다음 시간에는 배가 파도에 기울었다가 다시 똑바로 서는 원리를, 무게중심 G·부심 B·메타센터 M의 관계로 알아봅니다.</p>
+    <div class="next">다음 차시 : 9차시 — 조선공학 : 선박의 복원성 (메타센터)</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="7-cone.html">← 7차시 — 삼중적분 : 원뿔과 차원별 비교</a>
+    <a href="9-metacenter.html">9차시 — 조선공학 : 선박의 복원성 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const planCanvas = document.getElementById('planCanvas');
+  const crSlider = document.getElementById('crSlider'), vSlider = document.getElementById('vSlider');
+  const crVal = document.getElementById('crVal'), vVal = document.getElementById('vVal');
+  const eVal = document.getElementById('eVal'), mtVal = document.getElementById('mtVal'), limitState = document.getElementById('limitState');
+
+  const PLAN_W = 22, PLAN_D = 8.4, CM = [11, 4.2];
+  const LIMIT = 0.05 * PLAN_W; // 5% 허용기준
+
+  const planXmin=-1, planXmax=23, planYmin=-2, planYmax=10.4;
+  function planMap(x,y,w,h){
+    const sx=(w-30)/(planXmax-planXmin), sy=(h-30)/(planYmax-planYmin), s=Math.min(sx,sy);
+    const ox=15-planXmin*s, oy=h-15+planYmin*s;
+    return [ox+x*s, oy-y*s];
+  }
+
+  function drawPlan(){
+    const { ctx, w, h } = fitCanvas(planCanvas, 260);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => planMap(x,y,w,h);
+    const crX = parseFloat(crSlider.value), V = parseFloat(vSlider.value);
+    crVal.textContent = fmt(crX,1); vVal.textContent = V;
+
+    // 건물 평면(사각형)
+    ctx.beginPath(); ctx.rect(...P(0,PLAN_D), P(PLAN_W,0)[0]-P(0,PLAN_D)[0], P(0,0)[1]-P(0,PLAN_D)[1]);
+    ctx.fillStyle = 'rgba(15,143,134,0.06)'; ctx.fill();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    // 전단벽 표시(강성이 쏠린 쪽) — CR 위치 근방에 두꺼운 벽 심볼
+    ctx.fillStyle = '#94A3B8';
+    ctx.fillRect(P(crX-0.3, PLAN_D)[0], P(crX-0.3, PLAN_D)[1], P(crX+0.3,0)[0]-P(crX-0.3,PLAN_D)[0], P(0,0)[1]-P(0,PLAN_D)[1]);
+
+    // CM, CR 점
+    const pCM = P(...CM), pCR = P(crX, CM[1]);
+    ctx.beginPath(); ctx.arc(...pCM, 6, 0, 7); ctx.fillStyle = '#2a6fbe'; ctx.fill();
+    ctx.fillStyle = '#2a6fbe'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('CM', pCM[0]-10, pCM[1]-10);
+    ctx.beginPath(); ctx.arc(...pCR, 6, 0, 7); ctx.fillStyle = '#c2601f'; ctx.fill();
+    ctx.fillStyle = '#c2601f'; ctx.fillText('CR', pCR[0]-10, pCR[1]+22);
+
+    // e 표시선
+    ctx.beginPath(); ctx.moveTo(...pCM); ctx.lineTo(...pCR);
+    ctx.strokeStyle = '#b03b62'; ctx.setLineDash([4,3]); ctx.lineWidth = 1.6; ctx.stroke(); ctx.setLineDash([]);
+
+    const e = Math.abs(CM[0]-crX);
+    const Mt = V*e;
+    eVal.textContent = fmt(e,1) + ' m';
+    mtVal.textContent = fmt(Mt,0) + ' kN·m';
+    const within = e <= LIMIT;
+    limitState.textContent = within ? `이내 (허용 ${fmt(LIMIT,1)}m)` : `초과! (허용 ${fmt(LIMIT,1)}m)`;
+    limitState.style.color = within ? '#1e6b3c' : '#b03b62';
+  }
+  crSlider.addEventListener('input', drawPlan);
+  vSlider.addEventListener('input', drawPlan);
+  window.addEventListener('resize', drawPlan);
+  drawPlan();
+</script>
+</body>
+</html>
