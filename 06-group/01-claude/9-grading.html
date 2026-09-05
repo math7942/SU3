@@ -43,6 +43,23 @@
         <p>"다음은 채점 기준이야: [7단계에서 만든 루브릭 붙여넣기]. 첨부한 학생 답안 이미지를 이 기준으로 채점해줘. 학생별로 몇 점인지, 어느 단계에서 감점됐는지 근거와 함께 표로 정리해줘."</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>채점 요청 프롬프트 만들어보기</h4>
+        <p class="practice-desc">7단계에서 만든 채점 기준을 붙여넣으면, 이미지 채점 요청 프롬프트가 완성됩니다.</p>
+
+        <div class="field">
+          <label for="p9-rubric">채점 기준 (7단계에서 만든 루브릭)</label>
+          <textarea id="p9-rubric" placeholder="예: 개념 적용 2점, 계산 과정 2점, 결론 명시 1점..."></textarea>
+        </div>
+
+        <div class="result-box" id="p9-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p9-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://claude.ai" target="_blank" rel="noopener">claude.ai에서 써보기 ↗</a>
+        </div>
+      </div>
+
       <h2>3. 결과를 검증하기</h2>
       <p>4단계에서 배운 대로, 채점 결과도 그대로 믿지 말고 확인하는 과정이 필요합니다. 특히 손글씨 인식은 실수가 있을 수 있습니다.</p>
       <ul>
@@ -77,5 +94,48 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p9-result');
+  function update() {
+    var rubric = document.getElementById('p9-rubric').value.trim() || '[7단계에서 만든 루브릭 붙여넣기]';
+    out.textContent =
+      '다음은 채점 기준이야: ' + rubric + '. 첨부한 학생 답안 이미지를 이 기준으로 채점해줘. ' +
+      '학생별로 몇 점인지, 어느 단계에서 감점됐는지 근거와 함께 표로 정리해줘.';
+  }
+  var ta = document.getElementById('p9-rubric');
+  if (ta) ta.addEventListener('input', update);
+  update();
+
+  var copyBtn = document.getElementById('p9-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta2 = document.createElement('textarea');
+    ta2.value = text;
+    ta2.style.position = 'fixed';
+    ta2.style.opacity = '0';
+    document.body.appendChild(ta2);
+    ta2.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta2);
+    done();
+  }
+})();
+</script>
 </body>
 </html>

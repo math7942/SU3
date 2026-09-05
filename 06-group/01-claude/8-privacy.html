@@ -58,6 +58,22 @@
         <p>장애, 가정환경, 상담 내용처럼 민감한 정보는 이름을 가려도 문맥만으로 특정 학생이 드러날 수 있습니다. 이런 내용은 텍스트로도 입력하지 않는 것이 안전합니다. 확신이 없다면 업로드하지 말고, 학교의 개인정보 처리 지침을 먼저 확인하세요.</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>업로드 전 마지막 점검</h4>
+        <p class="practice-desc">아래 항목을 실제로 확인했을 때만 체크하세요. 모두 체크되면 업로드해도 좋다는 표시가 나타납니다.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p8-check"> 학생 이름을 "학생 A"처럼 임의 표기로 바꿨다.</label>
+          <label><input type="checkbox" class="p8-check"> 학번·생년월일을 지우거나 가렸다.</label>
+          <label><input type="checkbox" class="p8-check"> 얼굴이 나온 부분은 잘라내고 답안 부분만 남겼다.</label>
+          <label><input type="checkbox" class="p8-check"> 학교명·반처럼 특정 가능한 정보를 뺐다.</label>
+          <label><input type="checkbox" class="p8-check"> 장애·가정환경·상담 내용 등 민감한 정보는 아예 넣지 않았다.</label>
+        </div>
+
+        <div class="status-box" id="p8-status">아직 체크되지 않은 항목이 있습니다.</div>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -73,5 +89,22 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p8-check'));
+  var status = document.getElementById('p8-status');
+  function update() {
+    var all = boxes.every(function (b) { return b.checked; });
+    if (all) {
+      status.textContent = '모든 항목을 확인했습니다. 업로드해도 좋습니다.';
+      status.className = 'status-box ok';
+    } else {
+      status.textContent = '아직 체크되지 않은 항목이 있습니다.';
+      status.className = 'status-box';
+    }
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>

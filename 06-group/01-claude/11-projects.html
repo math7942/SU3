@@ -40,6 +40,33 @@
         <p>"너는 고등학교 1학년 수학 교사를 돕는 조수야. 우리 학교는 지필 70%, 수행 30%로 평가해. 학생들에게 보여줄 자료는 항상 정중하고 친근한 말투로 써줘."</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>프로젝트 지침 만들어보기</h4>
+        <p class="practice-desc">우리 학급 정보를 넣으면 프로젝트에 바로 붙여넣을 지침 문구가 완성됩니다.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p11-grade">학년·과목</label>
+            <input type="text" id="p11-grade" placeholder="예: 고등학교 1학년 수학">
+          </div>
+          <div class="field">
+            <label for="p11-ratio">지필:수행 비율</label>
+            <input type="text" id="p11-ratio" placeholder="예: 70:30">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p11-tone">자료 작성 말투</label>
+          <input type="text" id="p11-tone" placeholder="예: 정중하고 친근한 말투">
+        </div>
+
+        <div class="result-box" id="p11-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p11-copy">지침 복사하기</button>
+          <a class="btn secondary" href="https://claude.ai" target="_blank" rel="noopener">claude.ai에서 써보기 ↗</a>
+        </div>
+      </div>
+
       <h2>4. 프로젝트에 자료 올려두기</h2>
       <p>성취기준 문서, 채점 기준표, 이전 시험지처럼 자주 참고하는 파일을 프로젝트에 등록해두면, 매번 붙여넣지 않아도 그 프로젝트의 모든 대화에서 참조할 수 있습니다.</p>
 
@@ -77,5 +104,56 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p11-result');
+  function update() {
+    var grade = document.getElementById('p11-grade').value.trim() || '[학년·과목]';
+    var ratio = document.getElementById('p11-ratio').value.trim() || '[지필:수행 비율]';
+    var tone = document.getElementById('p11-tone').value.trim() || '[자료 작성 말투]';
+    var parts = ratio.split(':');
+    var ratioText = parts.length === 2
+      ? '지필 ' + parts[0].trim() + '%, 수행 ' + parts[1].trim() + '%'
+      : ratio;
+    out.textContent =
+      '너는 ' + grade + ' 교사를 돕는 조수야. 우리 학교는 ' + ratioText + '로 평가해. ' +
+      '학생들에게 보여줄 자료는 항상 ' + tone + '로 써줘.';
+  }
+  ['p11-grade', 'p11-ratio', 'p11-tone'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p11-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
