@@ -9,24 +9,82 @@
 <body class="g5">
 <div class="page">
 
-  <header class="group-head">
-    <a class="back" href="../index.html">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      전체 분류
-    </a>
-    <span class="badge" aria-hidden="true">✨</span>
-    <h1>수수</h1>
-    <p>무엇을 담을지 정하면 목록을 채울 수 있습니다.</p>
-  </header>
+  <div class="gate" id="gate">
+    <span class="badge" aria-hidden="true">🔒</span>
+    <h1>비밀번호가 필요합니다</h1>
+    <p>이 분류는 비밀번호를 아는 사람만 볼 수 있습니다.</p>
+    <form class="gate-form" id="gate-form">
+      <input type="password" id="gate-input" placeholder="비밀번호" autocomplete="off" required>
+      <button type="submit">입장</button>
+    </form>
+    <p class="gate-error" id="gate-error" hidden>비밀번호가 올바르지 않습니다.</p>
+  </div>
 
-  <main>
+  <div id="content" hidden>
+    <header class="group-head">
+      <a class="back" href="../index.html">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        전체 분류
+      </a>
+      <span class="badge" aria-hidden="true">✨</span>
+      <h1>수수</h1>
+      <p>무엇을 담을지 정하면 목록을 채울 수 있습니다.</p>
+    </header>
+
+    <main>
 <!-- 도구를 추가하려면 아래 목록에 <a class="tool"> 한 덩어리를 복사해 붙여 넣으세요. -->
-    <div class="blank">
-      <h3>아직 등록된 도구가 없습니다</h3>
-      <p>HTML 파일을 <code>05-susu/</code> 폴더에 넣고, 이 페이지의 <code>&lt;div class="tools"&gt;</code> 안에 링크 한 줄을 추가하면 목록에 나타납니다.</p>
-    </div>
-  </main>
+      <div class="blank">
+        <h3>아직 등록된 도구가 없습니다</h3>
+        <p>HTML 파일을 <code>05-susu/</code> 폴더에 넣고, 이 페이지의 <code>&lt;div class="tools"&gt;</code> 안에 링크 한 줄을 추가하면 목록에 나타납니다.</p>
+      </div>
+    </main>
+  </div>
 
 </div>
+
+<script>
+(function () {
+  var HASH = '8c954cd9b6c8f8180a05f1de66ee555f0c44b4c6738120785d827521bb8d54df';
+  var STORE_KEY = 'su3-gate-05-susu';
+  var gate = document.getElementById('gate');
+  var content = document.getElementById('content');
+  var form = document.getElementById('gate-form');
+  var input = document.getElementById('gate-input');
+  var error = document.getElementById('gate-error');
+
+  function sha256Hex(text) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) {
+      return Array.from(new Uint8Array(buf)).map(function (b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+    });
+  }
+
+  function unlock() {
+    gate.hidden = true;
+    content.hidden = false;
+  }
+
+  if (sessionStorage.getItem(STORE_KEY) === '1') {
+    unlock();
+    return;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    sha256Hex(input.value).then(function (hash) {
+      if (hash === HASH) {
+        sessionStorage.setItem(STORE_KEY, '1');
+        unlock();
+      } else {
+        error.hidden = false;
+        input.value = '';
+        input.focus();
+      }
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
