@@ -63,6 +63,21 @@
         <li>마무리할 때 — 10단계로 피드백을 쓰고, 반복되는 부분은 템플릿과 스크립트로 남겨둡니다.</li>
       </ul>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>내 학기 루틴 체크리스트</h4>
+        <p class="practice-desc">실제로 준비했거나 시도한 항목을 체크해보세요.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p14-check"> 학기 시작 — 프로젝트를 만들고 성취기준·채점 기준을 등록했다.</label>
+          <label><input type="checkbox" class="p14-check"> 자료를 만들 때 — 템플릿으로 요청하고, 반드시 검증했다.</label>
+          <label><input type="checkbox" class="p14-check"> 채점할 때 — 자료를 안전하게 다루고, 채점 결과를 확인했다.</label>
+          <label><input type="checkbox" class="p14-check"> 마무리할 때 — 피드백을 쓰고, 반복되는 부분을 템플릿·스크립트로 남겼다.</label>
+        </div>
+
+        <div class="status-box" id="p14-status">0 / 4 완료</div>
+      </div>
+
       <div class="callout tip">
         <h4>여기까지 오셨다면</h4>
         <p>이제 클로드를 수업과 평가 업무에 자신 있게 쓸 수 있는 단계입니다. 처음 만든 프롬프트와 템플릿을 계속 다듬어가며 나만의 방식으로 발전시켜보세요.</p>
@@ -83,5 +98,17 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p14-check'));
+  var status = document.getElementById('p14-status');
+  function update() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>

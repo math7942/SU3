@@ -48,6 +48,24 @@
         <p>"우리 반 32명의 수학 점수야: [점수 목록]. 코드를 실행해서 평균, 표준편차, 최고점, 최저점을 정확히 계산하고 히스토그램도 그려줘."</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>평균·표준편차 계산기</h4>
+        <p class="practice-desc">쉼표로 구분한 점수를 넣으면, 코드 실행이 실제로 어떤 결과를 돌려주는지 이 페이지에서 바로 계산해 보여줍니다.</p>
+
+        <div class="field">
+          <label for="p13-scores">학생 점수 (쉼표로 구분)</label>
+          <textarea id="p13-scores">78, 85, 92, 60, 74, 88, 95, 67, 73, 81</textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" type="button" id="p13-calc">계산하기</button>
+        </div>
+
+        <div class="result-box" id="p13-result"></div>
+        <div id="p13-hist" style="display:flex; align-items:flex-end; gap:5px; height:130px; margin-top:16px;"></div>
+      </div>
+
       <h2>4. 결과 확인하기</h2>
       <p>코드 자체를 이해하지 못해도 괜찮지만, 나온 결과가 상식적인지는 확인하세요. 예를 들어 평균이 점수 범위 안에 들어오는지 정도는 눈으로 바로 확인할 수 있습니다. 궁금한 부분은 "이 코드에서 이 부분이 왜 이렇게 되어 있는지 설명해줘"라고 물어볼 수 있습니다.</p>
 
@@ -77,5 +95,77 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p13-result');
+  var hist = document.getElementById('p13-hist');
+
+  function calc() {
+    var raw = document.getElementById('p13-scores').value;
+    var scores = raw.split(',')
+      .map(function (s) { return parseFloat(s.trim()); })
+      .filter(function (n) { return !isNaN(n); });
+
+    if (scores.length === 0) {
+      out.textContent = '숫자를 쉼표로 구분해 입력하세요.';
+      hist.innerHTML = '';
+      return;
+    }
+
+    var n = scores.length;
+    var sum = scores.reduce(function (a, b) { return a + b; }, 0);
+    var mean = sum / n;
+    var variance = scores.reduce(function (a, x) { return a + Math.pow(x - mean, 2); }, 0) / n;
+    var stdev = Math.sqrt(variance);
+    var min = Math.min.apply(null, scores);
+    var max = Math.max.apply(null, scores);
+
+    function r(v) { return Math.round(v * 100) / 100; }
+
+    out.textContent =
+      '학생 수 n = ' + n + '\n' +
+      '평균 = ' + r(mean) + '\n' +
+      '표준편차 = ' + r(stdev) + ' (모집단 기준)\n' +
+      '최고점 = ' + max + ', 최저점 = ' + min;
+
+    var buckets = new Array(10).fill(0);
+    scores.forEach(function (s) {
+      var idx = Math.min(9, Math.max(0, Math.floor(s / 10)));
+      buckets[idx]++;
+    });
+    var maxCount = Math.max.apply(null, buckets) || 1;
+
+    hist.innerHTML = '';
+    buckets.forEach(function (count, i) {
+      var col = document.createElement('div');
+      col.style.display = 'flex';
+      col.style.flexDirection = 'column';
+      col.style.alignItems = 'center';
+      col.style.flex = '1';
+
+      var bar = document.createElement('div');
+      bar.style.width = '100%';
+      bar.style.borderRadius = '4px 4px 0 0';
+      bar.style.background = 'var(--accent)';
+      bar.style.height = Math.round(count / maxCount * 100) + 'px';
+      bar.title = (i * 10) + '~' + (i * 10 + 9) + '점: ' + count + '명';
+
+      var label = document.createElement('span');
+      label.style.fontSize = '0.62rem';
+      label.style.color = 'var(--muted)';
+      label.style.marginTop = '4px';
+      label.textContent = i * 10;
+
+      col.appendChild(bar);
+      col.appendChild(label);
+      hist.appendChild(col);
+    });
+  }
+
+  var btn = document.getElementById('p13-calc');
+  if (btn) btn.addEventListener('click', calc);
+  calc();
+})();
+</script>
 </body>
 </html>
