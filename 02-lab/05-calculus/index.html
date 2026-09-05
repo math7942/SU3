@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>미적분 · 수학실험 · 수수의 수학</title>
 <link rel="stylesheet" href="../../assets/site.css">
+<style>
+  /* 15차시까지 한 화면에 들어오도록 3열 격자로 촘촘하게 배치 (이 페이지에만 적용) */
+  .tools { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .tools .tool { flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px 18px; }
+  .tools .tool .mark { width: 30px; height: 30px; font-size: 0.82rem; }
+  .tools .tool .body { width: 100%; }
+  .tools .tool h3 { font-size: 0.92rem; line-height: 1.3; }
+  .tools .tool p { font-size: 0.8rem; }
+  .tools .tool .go { align-self: flex-end; font-size: 0.8rem; }
+  @media (max-width: 900px) { .tools { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .tools { grid-template-columns: 1fr; } .tools .tool { flex-direction: row; align-items: center; } }
+</style>
 </head>
 <body class="g2">
 <div class="page">
