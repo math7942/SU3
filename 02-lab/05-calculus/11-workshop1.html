@@ -298,8 +298,8 @@
       ctx.fillStyle = 'rgba(176,59,98,0.5)'; ctx.fill(); ctx.stroke();
     }
 
-    const ybar = (A1*c1 + A2*c2) / (A1+A2);
     const totalA = A1+A2+A3;
+    const ybar = (A1*c1 + A2*c2 + A3*c3y) / totalA;
     const xbar = (A1*6 + A2*6 + A3*c3x) / totalA;
 
     houseYbar.textContent = fmt(ybar,2) + ' cm';
