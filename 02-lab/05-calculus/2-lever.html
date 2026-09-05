@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2차시 · 무게중심을 계산하기 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .ptable { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin-top: 10px; }
+  .ptable th, .ptable td { border: 1px solid var(--line); padding: 6px; text-align: center; }
+  .ptable th { background: var(--accent-soft); color: var(--accent-dark); }
+  .ptable input { width: 64px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; text-align: center; }
+  .toggle-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.86rem; margin: 8px 0; }
+  .toggle-row label { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab current" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅐 Part A · 2 / 3차시</span>
+    <h1>무게중심을 계산하기</h1>
+    <p class="sub">이산에서 대수로 — 지렛대 원리를 공식화하고, 점·선·면의 무게중심이 다를 수 있음을 좌표로 확인한 뒤, 좌표평면 위 무게중심 공식을 일반화합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>지렛대 원리(m₁d₁=m₂d₂)를 이용해 평형점(무게중심)을 계산할 수 있다.</li>
+        <li>모멘트의 개념을 이해하고, n개의 질점에 대한 무게중심 공식을 세울 수 있다.</li>
+        <li>점의 무게중심·선의 무게중심·면의 무게중심이 서로 다를 수 있음을 좌표 계산으로 확인할 수 있다.</li>
+        <li>좌표평면 위 삼각형의 무게중심 공식을 유도하고, n개 질점으로 일반화할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>활동1</td><td>지렛대 원리 공식화 및 시소 문제 계산</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>1차원 무게중심 실험 (균형점 계산)</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>다각형 무게중심의 세 관점 : 점 · 선 · 면</td><td class="time">15분</td></tr>
+        <tr><td>활동4</td><td>2차원 무게중심 공식 유도 및 일반화</td><td class="time">10분</td></tr>
+        <tr><td>정리</td><td>공식 정리 및 차시 예고</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>지렛대 원리</h2>
+    <p class="lead">막대의 양 끝에 질량이 각각 $m_1, m_2$인 물체가 있고, 받침대로부터 각각 거리 $d_1, d_2$만큼 떨어져 있을 때, $m_1 d_1 = m_2 d_2$가 성립하면 그 막대는 균형(평형)을 이룬다.</p>
+
+    <div class="widget">
+      <div class="widget-title">슬라이더로 값을 바꾸며 평형을 만들어 보세요</div>
+      <canvas id="seesawCanvas"></canvas>
+      <div class="control-row">
+        <label for="m1Slider">왼쪽 질량 m₁ (kg)</label>
+        <input type="range" id="m1Slider" min="0" max="100" step="1" value="40">
+        <span class="val" id="m1Val">40</span>
+      </div>
+      <div class="control-row">
+        <label for="d1Slider">왼쪽 거리 d₁ (m)</label>
+        <input type="range" id="d1Slider" min="0.1" max="2.5" step="0.05" value="0.1">
+        <span class="val" id="d1Val">0.10</span>
+      </div>
+      <div class="control-row">
+        <label for="m2Slider">오른쪽 질량 m₂ (kg)</label>
+        <input type="range" id="m2Slider" min="0" max="100" step="1" value="80">
+        <span class="val" id="m2Val">80</span>
+      </div>
+      <div class="control-row">
+        <label for="d2Slider">오른쪽 거리 d₂ (m)</label>
+        <input type="range" id="d2Slider" min="0.1" max="2.5" step="0.05" value="0.5">
+        <span class="val" id="d2Val">0.50</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">m₁d₁</div><div class="v" id="mo1">–</div></div>
+        <div class="cell"><div class="k">m₂d₂</div><div class="v" id="mo2">–</div></div>
+        <div class="cell"><div class="k">상태</div><div class="v" id="state">–</div></div>
+      </div>
+      <div class="preset-row">
+        <button class="btn" onclick="loadPreset(1)">문제(1) 불러오기 — d₁을 조절해 x 찾기</button>
+        <button class="btn" onclick="loadPreset(2)">문제(2) 불러오기 — m₂를 조절해 m 찾기</button>
+      </div>
+    </div>
+
+    <p><strong>(1)</strong> 1차시의 시소 문제 : 40kg 학생이 받침점에서 x m, 80kg 학생이 0.5m 떨어져 평형을 이룰 때, x를 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$40 \cdot x = 80 \cdot 0.5 \implies 40x = 40 \implies x = 1\text{(m)}$</p>
+      </div>
+    </div>
+
+    <p><strong>(2)</strong> 받침점 오른쪽 0.5m 지점에 어떤 학생이 앉아 있고, 왼쪽 1m 지점에 20kg인 학생이 앉아 평형을 이루었다. 오른쪽 학생의 몸무게 m을 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$20 \times 1 = m \times 0.5 \implies m = 40\text{(kg)}$</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 유의사항 (원자료 수정) 보기</button>
+      <div class="reveal-content tip hidden">
+        <p>원자료의 두 번째 시소 그림은 세 사람의 몸무게·거리 정보가 명확히 표기되지 않아 그대로 사용하면 혼란이 생길 수 있다. 위와 같이 두 물체(사람)만 등장하는 형태로 단순화하였다. 실제 수업에서는 학생 실측 몸무게로 바꾸어 제시하면 몰입도를 높일 수 있다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>1차원 무게중심 실험</h2>
+    <p class="lead">여러 개의 추가 하나의 막대(수직선)에 매달려 있을 때, 균형이 잡히는 지점(무게중심) $\bar{x}$는 다음과 같이 구한다.</p>
+    <div class="qbox">$\displaystyle \bar{x} = \frac{m_1x_1+m_2x_2+\cdots+m_nx_n}{m_1+m_2+\cdots+m_n} = \frac{\sum m_ix_i}{\sum m_i}$</div>
+
+    <div class="widget">
+      <div class="widget-title">추의 위치(눈금)와 개수를 바꾸며 균형점을 확인해 보세요</div>
+      <canvas id="lineCanvas"></canvas>
+      <div id="weightControls"></div>
+      <div class="readout">
+        <div class="cell"><div class="k">Σmᵢxᵢ</div><div class="v" id="sumMX">–</div></div>
+        <div class="cell"><div class="k">Σmᵢ</div><div class="v" id="sumM">–</div></div>
+        <div class="cell"><div class="k">균형점 x̄</div><div class="v" id="xbar">–</div></div>
+      </div>
+      <div class="preset-row">
+        <button class="btn" onclick="loadLinePreset(1)">문제(1) 불러오기</button>
+        <button class="btn" onclick="loadLinePreset(2)">문제(2) 불러오기</button>
+      </div>
+    </div>
+
+    <p><strong>(1)</strong> 눈금 6에 추 1개, 눈금 12에 추 2개가 있다. 어느 위치(눈금)에서 균형을 이룰까?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$\bar{x} = (1\times6+2\times12)/(1+2) = 30/3 = 10$</p></div>
+    </div>
+
+    <p><strong>(2)</strong> 눈금 2에 추 1개, 눈금 6에 추 2개, 눈금 10에 추 3개가 있다. 어느 위치에서 균형을 이룰까?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔧 분석에서 발견한 문제점 → 수정</button>
+      <div class="reveal-content tip hidden"><p>원자료는 본문에 '눈금 12'로 적혀 있으나 삽화에는 '10'으로 그려져 있어 서로 달랐다. 본 자료는 삽화 기준(10)으로 통일하였다.</p></div>
+    </div>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$\bar{x} = (1\times2+2\times6+3\times10)/(1+2+3) = (2+12+30)/6 = 44/6 = 22/3 \approx 7.33$</p></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>다각형 무게중심의 세 관점 — 점 · 선 · 면</h2>
+    <p class="lead">같은 도형이라도 '무엇의 무게중심'을 구하느냐에 따라 결과가 달라질 수 있다. 좌표평면 위의 네 점 O(0,0), A(3,0), B(3,1), C(0,2)로 확인해 보자.</p>
+
+    <div class="widget">
+      <div class="widget-title">보기를 켜고 끄며 두 무게중심을 비교해 보세요</div>
+      <canvas id="quadCanvas"></canvas>
+      <div class="toggle-row">
+        <label><input type="checkbox" id="showSplit" checked> 대각선 OB로 분할 보기</label>
+        <label><input type="checkbox" id="showPointG" checked> 점의 무게중심 (꼭짓점 평균)</label>
+        <label><input type="checkbox" id="showAreaG" checked> 면의 무게중심 (넓이 가중평균)</label>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">점의 무게중심</div><div class="v" id="pointG">–</div></div>
+        <div class="cell"><div class="k">면의 무게중심</div><div class="v" id="areaG">–</div></div>
+      </div>
+    </div>
+
+    <p><strong>(1)</strong> [점의 무게중심] 네 점 O, A, B, C의 무게중심(단순 좌표 평균)을 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$\left(\dfrac{0+3+3+0}{4}, \dfrac{0+0+1+2}{4}\right) = (1.5,\ 0.75)$</p></div>
+    </div>
+
+    <p><strong>(2)</strong> [면의 무게중심] O→A→B→C 순서로 이은 사각형(넓이를 가진 도형)의 무게중심을 구하시오. (힌트 : 대각선 OB로 나누어 두 삼각형 OAB, OBC의 넓이와 무게중심을 각각 구한 뒤, 공리6을 이용해 넓이로 가중평균한다.)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>△OAB : O(0,0), A(3,0), B(3,1) → 넓이 = 1.5, 무게중심 = ((0+3+3)/3, (0+0+1)/3) = (2, 1/3)</p>
+        <p>△OBC : O(0,0), B(3,1), C(0,2) → 넓이 = 3, 무게중심 = ((0+3+0)/3, (0+1+2)/3) = (1, 1)</p>
+        <p>전체 넓이 = 1.5+3 = 4.5. 전체 무게중심 x좌표 = (1.5×2+3×1)/4.5 = 6/4.5 = 4/3, y좌표 = (1.5×1/3+3×1)/4.5 = 3.5/4.5 = 7/9</p>
+        <p>⇒ 면의 무게중심 = (4/3, 7/9) ≈ (1.33, 0.78)</p>
+      </div>
+    </div>
+
+    <p><strong>(3)</strong> 두 결과, (1.5, 0.75)와 (4/3, 7/9)를 비교해 보자. 일치하는가?</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>일치하지 않는다! '꼭짓점들의 단순 평균(점의 무게중심)'과 '도형 내부를 꽉 채운 무게중심(면의 무게중심)'은 일반적으로 다르다.</p>
+        <p>두 값이 일치하려면 도형이 평행사변형처럼 특별한 대칭을 가져야 한다. (참고 : 선의 무게중심 — 둘레(변)에만 무게가 있다고 볼 때의 무게중심 — 도 위 두 값과 또 다르게 계산된다. 시간이 남으면 심화로 다뤄볼 수 있다.)</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 4 · 10분</span>
+    <h2>2차원 무게중심 공식의 일반화</h2>
+    <p class="lead">세 점 $A(x_1,y_1), B(x_2,y_2), C(x_3,y_3)$을 꼭짓점으로 하는 삼각형의 무게중심 G의 좌표를 구하시오. (힌트 : x좌표와 y좌표에 각각 1차원 무게중심 공식을 적용한다. 세 꼭짓점의 '무게'는 모두 같다고 생각하자.)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$G\left(\dfrac{x_1+x_2+x_3}{3}, \dfrac{y_1+y_2+y_3}{3}\right)$</p></div>
+    </div>
+
+    <p>일반화 : n개의 무게 $m_1,\dots,m_n$을 가진 질점들이 좌표평면 위의 점 $(x_1,y_1),\dots,(x_n,y_n)$에 놓여 있다고 하자. x축, y축에 대한 전체 모멘트 $M_x, M_y$와 무게중심의 좌표 $(\bar x,\bar y)$를 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$M_x = \sum m_iy_i$ (x축에 대한 모멘트이므로 각 점의 y좌표를 사용), $M_y = \sum m_ix_i$ (y축에 대한 모멘트이므로 각 점의 x좌표를 사용)</p>
+        <p>$\bar{x} = M_y/\sum m_i,\quad \bar{y}=M_x/\sum m_i$</p>
+      </div>
+    </div>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 유의사항 보기</button>
+      <div class="reveal-content tip hidden"><p>$M_x$와 $M_y$의 아래첨자와 실제로 사용하는 좌표(y와 x)가 서로 바뀌어 있어 학생들이 혼동하기 쉬운 부분이다. 'x축에 대한 모멘트는 x축으로부터 떨어진 정도, 즉 y값을 쓴다'는 점을 강조해서 설명할 것.</p></div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">질점 계산기 — 좌표와 질량을 입력하면 무게중심을 바로 계산합니다</div>
+      <table class="ptable" id="pointTable">
+        <thead><tr><th>#</th><th>x</th><th>y</th><th>질량 m</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="preset-row">
+        <button class="btn" onclick="addPointRow()">+ 질점 추가</button>
+        <button class="btn" onclick="loadPointPreset()">△ABC 예시 불러오기</button>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">Σm</div><div class="v" id="pSumM">–</div></div>
+        <div class="cell"><div class="k">Mₓ (=Σmy)</div><div class="v" id="pMx">–</div></div>
+        <div class="cell"><div class="k">Mᵧ (=Σmx)</div><div class="v" id="pMy">–</div></div>
+        <div class="cell"><div class="k">무게중심 (x̄, ȳ)</div><div class="v" id="pG">–</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>오늘 배운 세 가지 공식을 표로 정리해 봅시다</h2>
+    <table class="data">
+      <tr><th>대상</th><th>공식</th></tr>
+      <tr><td>1차원 질점</td><td>$\bar x = \sum m_ix_i / \sum m_i$</td></tr>
+      <tr><td>2차원 질점(다각형 꼭짓점)</td><td>$\bar x = M_y/\sum m_i,\ \bar y = M_x/\sum m_i$</td></tr>
+      <tr><td>도형의 넓이로 가중평균</td><td>여러 조각의 넓이를 '질량'처럼 사용해 가중평균</td></tr>
+    </table>
+    <p>지금까지는 '점(질점)'의 무게중심을 계산했습니다. 만약 무게중심을 구하려는 대상이 매끈한 '곡선으로 둘러싸인 도형'이라면 어떻게 해야 할까요? 다음 시간에는 무한히 잘게 쪼개는 아이디어로 이 문제에 도전합니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 무게중심을 좌표와 공식으로 계산하는 방법을 배웠습니다. 다음 시간에는 곡선으로 둘러싸인 도형의 무게중심을 리만합으로 근사하며, 정적분의 아이디어를 예고합니다.</p>
+    <div class="next">다음 차시 : 3차시 — 무한히 쌓고, 무한히 쪼개기 (극한과 무게중심)</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="1-intuition.html">← 1차시 — 무게중심이란 무엇인가?</a>
+    <a href="3-limit.html">3차시 — 무한히 쌓고, 무한히 쪼개기 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  // 활동1 — 지렛대 시소
+  const seesawCanvas = document.getElementById('seesawCanvas');
+  const m1Slider = document.getElementById('m1Slider'), d1Slider = document.getElementById('d1Slider');
+  const m2Slider = document.getElementById('m2Slider'), d2Slider = document.getElementById('d2Slider');
+  const m1Val = document.getElementById('m1Val'), d1Val = document.getElementById('d1Val');
+  const m2Val = document.getElementById('m2Val'), d2Val = document.getElementById('d2Val');
+  const mo1 = document.getElementById('mo1'), mo2 = document.getElementById('mo2'), state = document.getElementById('state');
+
+  function drawSeesaw() {
+    const { ctx, w, h } = fitCanvas(seesawCanvas, 260);
+    ctx.clearRect(0, 0, w, h);
+    const m1 = +m1Slider.value, d1 = +d1Slider.value, m2 = +m2Slider.value, d2 = +d2Slider.value;
+    m1Val.textContent = m1; d1Val.textContent = fmt(d1); m2Val.textContent = m2; d2Val.textContent = fmt(d2);
+    const t1 = m1 * d1, t2 = m2 * d2;
+    mo1.textContent = fmt(t1, 1); mo2.textContent = fmt(t2, 1);
+    const diff = t1 - t2;
+    state.textContent = Math.abs(diff) < 0.6 ? '평형 ✓' : (diff > 0 ? '왼쪽으로 기움' : '오른쪽으로 기움');
+
+    const cx = w / 2, cy = h - 70;
+    const angle = Math.max(-16, Math.min(16, diff * 1.1)) * Math.PI / 180;
+    const beamLen = Math.min(w * 0.42, 260);
+
+    ctx.beginPath(); ctx.moveTo(cx - 22, cy + 60); ctx.lineTo(cx + 22, cy + 60); ctx.lineTo(cx, cy + 14); ctx.closePath();
+    ctx.fillStyle = '#3d5c58'; ctx.fill();
+
+    const lx = cx - Math.cos(angle) * beamLen, ly = cy + 14 - Math.sin(angle) * beamLen;
+    const rx = cx + Math.cos(angle) * beamLen, ry = cy + 14 + Math.sin(angle) * beamLen;
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke();
+
+    const maxD = 2.5;
+    const posOnBeam = (d, side) => {
+      const t = (d / maxD) * side;
+      return [cx + Math.cos(angle) * beamLen * t, cy + 14 + Math.sin(angle) * beamLen * t];
+    };
+    const [wx1, wy1] = posOnBeam(d1, -1);
+    const [wx2, wy2] = posOnBeam(d2, 1);
+    const r1 = 10 + Math.sqrt(Math.max(m1,1)) * 1.5;
+    const r2 = 10 + Math.sqrt(Math.max(m2,1)) * 1.5;
+
+    ctx.beginPath(); ctx.arc(wx1, wy1 - r1, r1, 0, 7); ctx.fillStyle = '#2a6fbe'; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.fillText(m1 + 'kg', wx1, wy1 - r1 + 4);
+    ctx.beginPath(); ctx.arc(wx2, wy2 - r2, r2, 0, 7); ctx.fillStyle = '#c2601f'; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillText(m2 + 'kg', wx2, wy2 - r2 + 4);
+    ctx.textAlign = 'left';
+  }
+  [m1Slider, d1Slider, m2Slider, d2Slider].forEach(el => el.addEventListener('input', drawSeesaw));
+  window.addEventListener('resize', drawSeesaw);
+  function loadPreset(n) {
+    if (n === 1) { m1Slider.value = 40; d1Slider.value = 0.1; m2Slider.value = 80; d2Slider.value = 0.5; }
+    if (n === 2) { m1Slider.value = 20; d1Slider.value = 1; m2Slider.value = 10; d2Slider.value = 0.5; }
+    drawSeesaw();
+  }
+  drawSeesaw();
+
+  // 활동2 — 1차원 무게중심
+  const lineCanvas = document.getElementById('lineCanvas');
+  const weightControls = document.getElementById('weightControls');
+  const sumMX = document.getElementById('sumMX'), sumM = document.getElementById('sumM'), xbar = document.getElementById('xbar');
+  let weights = [ {m:1,x:6}, {m:2,x:12}, {m:0,x:8} ];
+
+  function buildWeightControls() {
+    weightControls.innerHTML = weights.map((wt, i) => `
+      <div class="control-row">
+        <label>추 ${i+1} 질량</label>
+        <input type="range" min="0" max="5" step="1" value="${wt.m}" oninput="weights[${i}].m=+this.value; drawLine();">
+        <span class="val">${wt.m}</span>
+        <label style="min-width:70px;">위치</label>
+        <input type="range" min="0" max="14" step="0.5" value="${wt.x}" oninput="weights[${i}].x=+this.value; drawLine();">
+        <span class="val">${wt.x}</span>
+      </div>`).join('');
+  }
+  function drawLine() {
+    buildWeightControls();
+    const { ctx, w, h } = fitCanvas(lineCanvas, 170);
+    ctx.clearRect(0, 0, w, h);
+    const margin = 24, axisY = h - 60;
+    const scale = (w - margin * 2) / 14;
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(margin, axisY); ctx.lineTo(w - margin, axisY); ctx.stroke();
+    for (let i = 0; i <= 14; i += 2) {
+      const x = margin + i * scale;
+      ctx.beginPath(); ctx.moveTo(x, axisY - 4); ctx.lineTo(x, axisY + 4); ctx.stroke();
+      ctx.fillStyle = '#6b8985'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(i, x, axisY + 16);
+    }
+    let sM = 0, sMX = 0;
+    weights.forEach(wt => { sM += wt.m; sMX += wt.m * wt.x; });
+    const xb = sM > 0 ? sMX / sM : 0;
+    sumM.textContent = fmt(sM, 0); sumMX.textContent = fmt(sMX, 1); xbar.textContent = sM > 0 ? fmt(xb) : '–';
+
+    weights.forEach(wt => {
+      if (wt.m <= 0) return;
+      const x = margin + wt.x * scale;
+      const r = 8 + wt.m * 3;
+      ctx.beginPath(); ctx.arc(x, axisY - r - 4, r, 0, 7); ctx.fillStyle = 'rgba(42,111,190,0.75)'; ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(wt.m, x, axisY - r);
+    });
+
+    if (sM > 0) {
+      const gx = margin + xb * scale;
+      ctx.beginPath(); ctx.moveTo(gx, axisY); ctx.lineTo(gx - 8, axisY + 14); ctx.lineTo(gx + 8, axisY + 14); ctx.closePath();
+      ctx.fillStyle = '#c2601f'; ctx.fill();
+      ctx.fillStyle = '#c2601f'; ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('x̄=' + fmt(xb), gx, axisY + 30);
+    }
+    ctx.textAlign = 'left';
+  }
+  function loadLinePreset(n) {
+    if (n === 1) weights = [{m:1,x:6},{m:2,x:12},{m:0,x:8}];
+    if (n === 2) weights = [{m:1,x:2},{m:2,x:6},{m:3,x:10}];
+    drawLine();
+  }
+  window.addEventListener('resize', drawLine);
+  drawLine();
+
+  // 활동3 — 점/면 무게중심
+  const quadCanvas = document.getElementById('quadCanvas');
+  const showSplit = document.getElementById('showSplit'), showPointG = document.getElementById('showPointG'), showAreaG = document.getElementById('showAreaG');
+  const pointGout = document.getElementById('pointG'), areaGout = document.getElementById('areaG');
+  const O=[0,0], Aq=[3,0], Bq=[3,1], Cq=[0,2];
+
+  function qMap(x, y, w, h) {
+    const xmin=-1, xmax=4, ymin=-1, ymax=3;
+    const sx=(w-40)/(xmax-xmin), sy=(h-40)/(ymax-ymin), s=Math.min(sx,sy);
+    const ox=20-xmin*s, oy=h-20+ymin*s;
+    return [ox+x*s, oy-y*s];
+  }
+  function triCentroid(p1,p2,p3){ return [(p1[0]+p2[0]+p3[0])/3, (p1[1]+p2[1]+p3[1])/3]; }
+  function triArea(p1,p2,p3){ return Math.abs((p2[0]-p1[0])*(p3[1]-p1[1])-(p3[0]-p1[0])*(p2[1]-p1[1]))/2; }
+
+  function drawQuad() {
+    const { ctx, w, h } = fitCanvas(quadCanvas, 300);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => qMap(x,y,w,h);
+    const pO=P(...O), pA=P(...Aq), pB=P(...Bq), pC=P(...Cq);
+
+    ctx.beginPath(); ctx.moveTo(...pO); ctx.lineTo(...pA); ctx.lineTo(...pB); ctx.lineTo(...pC); ctx.closePath();
+    ctx.fillStyle = 'rgba(15,143,134,0.15)'; ctx.fill();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    if (showSplit.checked) {
+      ctx.beginPath(); ctx.moveTo(...pO); ctx.lineTo(...pB);
+      ctx.strokeStyle = '#c2601f'; ctx.lineWidth = 1.4; ctx.setLineDash([5,3]); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    ['O(0,0)','A(3,0)','B(3,1)','C(0,2)'].forEach((label,i) => {
+      const p=[pO,pA,pB,pC][i];
+      ctx.fillStyle='#1b1830'; ctx.font='11px sans-serif';
+      ctx.fillText(label, p[0]+6, p[1]-6);
+      ctx.beginPath(); ctx.arc(...p, 3, 0, 7); ctx.fill();
+    });
+
+    const areaOAB = triArea(O,Aq,Bq), areaOBC = triArea(O,Bq,Cq);
+    const cOAB = triCentroid(O,Aq,Bq), cOBC = triCentroid(O,Bq,Cq);
+    const totalArea = areaOAB + areaOBC;
+    const areaGx = (areaOAB*cOAB[0] + areaOBC*cOBC[0]) / totalArea;
+    const areaGy = (areaOAB*cOAB[1] + areaOBC*cOBC[1]) / totalArea;
+    const pointGx = (O[0]+Aq[0]+Bq[0]+Cq[0])/4, pointGy = (O[1]+Aq[1]+Bq[1]+Cq[1])/4;
+
+    pointGout.textContent = `(${fmt(pointGx)}, ${fmt(pointGy)})`;
+    areaGout.textContent = `(${fmt(areaGx)}, ${fmt(areaGy)})`;
+
+    if (showPointG.checked) {
+      const p = P(pointGx, pointGy);
+      ctx.beginPath(); ctx.arc(...p, 5, 0, 7); ctx.fillStyle = '#2a6fbe'; ctx.fill();
+      ctx.fillStyle = '#2a6fbe'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('점 평균', p[0]+8, p[1]+4);
+    }
+    if (showAreaG.checked) {
+      const p = P(areaGx, areaGy);
+      ctx.beginPath(); ctx.arc(...p, 5, 0, 7); ctx.fillStyle = '#c2601f'; ctx.fill();
+      ctx.fillStyle = '#c2601f'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('면 무게중심', p[0]+8, p[1]-10);
+    }
+  }
+  [showSplit, showPointG, showAreaG].forEach(el => el.addEventListener('change', drawQuad));
+  window.addEventListener('resize', drawQuad);
+  drawQuad();
+
+  // 활동4 — n개 질점 계산기
+  let pointRows = [ {x:0,y:6,m:1}, {x:-2,y:0,m:1}, {x:2,y:0,m:1} ];
+  function renderPointTable() {
+    const tbody = document.querySelector('#pointTable tbody');
+    tbody.innerHTML = pointRows.map((r,i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td><input type="number" value="${r.x}" step="0.5" oninput="pointRows[${i}].x=+this.value; calcPoints();"></td>
+        <td><input type="number" value="${r.y}" step="0.5" oninput="pointRows[${i}].y=+this.value; calcPoints();"></td>
+        <td><input type="number" value="${r.m}" min="0" step="0.5" oninput="pointRows[${i}].m=+this.value; calcPoints();"></td>
+      </tr>`).join('');
+  }
+  function calcPoints() {
+    let sm=0, mx=0, my=0;
+    pointRows.forEach(r => { sm += r.m; mx += r.m*r.y; my += r.m*r.x; });
+    document.getElementById('pSumM').textContent = fmt(sm,1);
+    document.getElementById('pMx').textContent = fmt(mx,1);
+    document.getElementById('pMy').textContent = fmt(my,1);
+    document.getElementById('pG').textContent = sm>0 ? `(${fmt(my/sm)}, ${fmt(mx/sm)})` : '–';
+  }
+  function addPointRow() { if (pointRows.length < 6) { pointRows.push({x:0,y:0,m:1}); renderPointTable(); calcPoints(); } }
+  function loadPointPreset() { pointRows = [ {x:0,y:6,m:1}, {x:-2,y:0,m:1}, {x:2,y:0,m:1} ]; renderPointTable(); calcPoints(); }
+  renderPointTable(); calcPoints();
+</script>
+</body>
+</html>
