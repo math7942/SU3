@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>15차시 · 정적분으로 완성하는 무게중심 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+      <a class="session-tab" href="10-flight.html">10차시</a>
+      <a class="session-tab" href="11-workshop1.html">11차시</a>
+      <a class="session-tab" href="12-workshop2.html">12차시</a>
+      <a class="session-tab" href="13-workbench.html">13차시</a>
+      <a class="session-tab" href="14-showcase.html">14차시</a>
+      <a class="session-tab current" href="15-pappus.html">15차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅖 Part G · 심화반 압축 특강</span>
+    <h1>정적분으로 완성하는 무게중심</h1>
+    <p class="sub">반원, 두 번째 방법과 실전의 한계 — 단일 정적분·파푸스 정리로 두 가지 방법을 더 익히고, 오버행 실험의 이론과 실전 사이의 간극을 보정율로 메웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>밀도가 균일한 반원판의 무게중심을, 이중적분이 아닌 단일 정적분(밀도 가중)으로 직접 유도할 수 있다.</li>
+        <li>균일한 도형의 무게중심 좌표가 밀도값 자체와 무관한 이유를 모멘트·질량 식의 구조로 설명할 수 있다.</li>
+        <li>파푸스(Pappus)의 정리를 이용해 반원의 무게중심을 회전체 부피로부터 빠르게 검산할 수 있다.</li>
+        <li>리만합 근사·이중적분·단일적분·파푸스 정리, 네 가지 방법이 모두 같은 값에 도달함을 확인하고, 정적분이 '방법에 관계없이 성립하는 정확한 값'임을 이해한다.</li>
+        <li>오버행 실험의 이론값과 실측값이 어긋나는 이유를 파악하고, 실전 보정율을 반영해 필요한 블록 개수를 다시 계산할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>도입</td><td>되짚어보기 — 3차시 근삿값과 6차시 정확값</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>단일 정적분으로 반원의 무게중심 구하기</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>파푸스 정리로 검산하기</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>오버행 실험, 이론과 실전의 차이 — 보정율</td><td class="time">15분</td></tr>
+        <tr><td>정리</td><td>15차시 전체 정리 및 압축 특강 안내</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>되짚어보기</h2>
+    <p class="lead">3차시에서는 반지름 6인 반원 $y=\sqrt{36-x^2}$을 폭 1인 직사각형 12조각으로 근사하여 ȳ≈2.536을 얻었고, 6차시에서는 극좌표 이중적분으로 정확한 값 $4R/(3\pi)$(R=6일 때 $8/\pi\approx2.546$)를 얻었습니다.</p>
+    <table class="data">
+      <tr><td>3차시 (리만합 근사, 조각 12개)</td><td>ȳ ≈ 2.536</td></tr>
+      <tr><td>6차시 (극좌표 이중적분, 정확값)</td><td>ȳ = 4R/(3π) ≈ 2.546</td></tr>
+    </table>
+    <p>이 두 값이 왜 이렇게 가까운지는 이미 배운 대로입니다 — 리만합은 조각 수를 늘릴수록(n→∞) 정적분값에 가까워지기 때문입니다. 오늘은 이중적분(면 전체를 각도·반지름으로 쪼갬) 대신, 여러분이 3차시부터 이미 다뤄온 '세로로 얇게 썬 직사각형 조각'의 아이디어를 그대로 살려 단일 정적분만으로 같은 값을 얻는 방법을 배웁니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>단일 정적분으로 반원의 무게중심 구하기</h2>
+    <p class="lead">[문제] 좌표평면에서 반지름의 길이가 r인 반원 $y=f(x)=\sqrt{r^2-x^2}$ $(-r\le x\le r)$에서, 밀도가 3으로 균일한 반원판의 모멘트와 무게중심을 구하여라.</p>
+    <p>3차시에서 폭 $\Delta x$인 직사각형 조각 하나의 '자기 무게중심 높이'는 $\tfrac12 f(\bar x_i)$였습니다(직사각형은 절반 높이가 중심). 이 조각의 무게(질량)에 조각의 무게중심 높이를 곱해 모두 더한 것이 모멘트였습니다. 이제 $\Delta x\to0$인 극한을 취해 합(Σ)을 적분(∫)으로 바꾸고, 밀도 ρ=3을 곱해 봅시다.</p>
+    <div class="qbox">x축에 대한 반원의 모멘트 $\displaystyle M_x = 3\int_{-r}^{r} \tfrac12\{f(x)\}^2\,dx$</div>
+
+    <p>(1) $f(x)=\sqrt{r^2-x^2}$이므로 $\{f(x)\}^2=r^2-x^2$이다. 그리고 $r^2-x^2$은 짝함수(우함수)이므로 $-r$부터 $r$까지의 적분은 0부터 r까지 적분의 2배이다. 이를 이용해 $M_x$의 식을 0부터 r까지의 적분으로 바꾸어 써 보자.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>$M_x=3\displaystyle\int_{-r}^r \tfrac12(r^2-x^2)dx = 3\times2\times\displaystyle\int_0^r \tfrac12(r^2-x^2)dx = 3\displaystyle\int_0^r(r^2-x^2)dx$</p></div>
+    </div>
+    <p>(2) $\displaystyle\int_0^r(r^2-x^2)dx$를 직접 계산하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$\displaystyle\int_0^r(r^2-x^2)dx=\left[r^2x-\tfrac13x^3\right]_0^r=(r^3-\tfrac13r^3)-0=\tfrac23r^3$</p>
+        <p>따라서 $M_x = 3\times\tfrac23r^3 = 2r^3$</p>
+      </div>
+    </div>
+    <p>(3) 반원의 넓이 $S=\tfrac12\pi r^2$이므로, 밀도 3인 반원판의 질량 m을 구하고, 이를 이용해 무게중심 $(\bar x,\bar y)$를 구하시오. ($\bar x$는 대칭성으로 바로 판단할 수 있다.)</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>$m=3S=\tfrac32\pi r^2$. y축 대칭(공리5)이므로 $\bar x=0$. $\bar y=M_x/m=2r^3/(\tfrac32\pi r^2)=4r/(3\pi)$</p>
+        <p>질량중심의 좌표는 $(0, 4r/(3\pi))$이다.</p>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">밀도 ρ와 반지름 r을 바꾸며, 무게중심이 밀도와 무관함을 직접 확인해 보세요</div>
+      <canvas id="densityCanvas"></canvas>
+      <div class="control-row">
+        <label for="rSlider">반지름 r</label>
+        <input type="range" id="rSlider" min="3" max="15" step="0.5" value="6">
+        <span class="val" id="rVal">6.0</span>
+      </div>
+      <div class="control-row">
+        <label for="rhoSlider">밀도 ρ</label>
+        <input type="range" id="rhoSlider" min="1" max="10" step="0.5" value="3">
+        <span class="val" id="rhoVal">3.0</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">모멘트 Mₓ=ρ·(2/3)r³</div><div class="v" id="momentVal">–</div></div>
+        <div class="cell"><div class="k">질량 m=ρS</div><div class="v" id="massVal">–</div></div>
+        <div class="cell"><div class="k">ȳ=Mₓ/m</div><div class="v" id="ybarDensity">–</div></div>
+      </div>
+      <p style="font-size:0.84rem; color:var(--ink-soft); margin-top:8px;">ρ 슬라이더를 아무리 움직여도 ȳ는 변하지 않습니다 — 분자·분모의 ρ가 약분되기 때문입니다.</p>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 밀도값 3은 왜 결과에 영향을 주지 않을까?</button>
+      <div class="reveal-content tip hidden">
+        <p>밀도를 3이 아니라 임의의 상수 ρ로 두어도 결과는 똑같습니다. $M_x=\rho\int_{-r}^r\tfrac12\{f(x)\}^2dx$, $m=\rho S$이므로 $\bar y=M_x/m$을 계산하면 분자·분모의 ρ가 약분되어 사라지기 때문입니다.</p>
+        <p>즉 '균일한 밀도를 가진 도형의 무게중심'은 그 밀도가 얼마이든 항상 도형의 모양(기하학적 형태)만으로 결정됩니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 네 가지 방법, 하나의 값</button>
+      <div class="reveal-content tip hidden">
+        <p>3차시(리만합, ȳ≈2.536) · 6차시(극좌표 이중적분, $\bar y=4R/3\pi\approx2.546$) · 오늘 활동1(단일 정적분, $\bar y=4r/3\pi$)은 서로 완전히 다른 계산 과정을 거쳤지만 모두 같은 값에 도달합니다.</p>
+        <p>이것이 정적분의 힘입니다 — '조각을 어떻게 잘랐는가(직사각형인지 부채꼴인지)'나 '몇 조각으로 나누었는가'와 무관하게, 극한을 제대로 취하기만 하면 항상 같은 정확한 값에 도달합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>파푸스(Pappus)의 정리로 검산하기</h2>
+    <p class="lead">적분 없이도 반원의 무게중심을 빠르게 검산하는 방법이 있습니다. 반원(넓이 A)을 자신의 지름(대칭축)을 축으로 한 바퀴 완전히 회전시키면 구(공)가 만들어집니다.</p>
+    <div class="qbox">
+      <strong>파푸스(Pappus)의 정리 (회전체의 부피)</strong><br>
+      평면도형(넓이 A)을 그 도형과 만나지 않는 직선을 축으로 한 바퀴 회전시켜 만든 회전체의 부피 V는,<br>
+      $$V = A\times(\text{무게중심이 그리는 원의 둘레}) = A\times2\pi\bar y$$
+      ($\bar y$ = 회전축으로부터 도형의 무게중심까지의 거리)
+    </div>
+    <p>반지름 r인 반원을 지름(축)을 중심으로 한 바퀴 돌리면 반지름 r인 구가 만들어집니다. 구의 부피 공식과 반원의 넓이 공식을 이용해, 위 정리의 식에 대입하고 $\bar y$에 대해 풀어 보시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>구의 부피 $\tfrac43\pi r^3$ = 반원의 넓이 $\tfrac12\pi r^2 \times 2\pi\bar y$</p>
+        <p>$\bar y = \tfrac43\pi r^3 \div (\tfrac12\pi r^2\times2\pi) = \tfrac43\pi r^3\div(\pi r^2\cdot\pi) \implies \bar y = 4r/(3\pi)$</p>
+        <p>활동1에서 정적분으로 얻은 값과 정확히 일치한다!</p>
+      </div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">반지름 r을 바꾸며, 파푸스 정리로 구한 ȳ가 정적분으로 구한 값과 항상 일치하는지 확인해 보세요</div>
+      <canvas id="pappusCanvas"></canvas>
+      <div class="control-row">
+        <label for="rSlider2">반지름 r</label>
+        <input type="range" id="rSlider2" min="3" max="15" step="0.5" value="6">
+        <span class="val" id="rVal2">6.0</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">구의 부피 (4/3)πr³</div><div class="v" id="sphereVol">–</div></div>
+        <div class="cell"><div class="k">반원 넓이 (1/2)πr²</div><div class="v" id="semiArea">–</div></div>
+        <div class="cell"><div class="k">파푸스로 구한 ȳ</div><div class="v" id="pappusYbar">–</div></div>
+        <div class="cell"><div class="k">정적분으로 구한 ȳ (4r/3π)</div><div class="v" id="integralYbar">–</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 두 방법의 역할 차이</button>
+      <div class="reveal-content tip hidden"><p>활동1(정적분)은 무게중심을 '처음부터' 구하는 방법이고, 활동2(파푸스 정리)는 이미 알려진 부피·넓이 공식을 거꾸로 이용해 무게중심을 빠르게 '검산'하는 방법입니다. 파푸스 정리 자체도 사실은 이중적분(원통좌표)으로 증명되는 정리이므로, 결국 모든 방법의 뿌리는 적분입니다.</p></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>오버행 실험, 이론과 실전은 왜 다를까? — 실전 보정율</h2>
+    <p class="lead">오버행 실험(3차시·12차시)에서 우리는 이론적으로 $O_n=(L/2)(1+\tfrac12+\cdots+\tfrac1n)$를 유도했고, $O_n\ge L$을 만족하는 최소 블록 개수를 계산했습니다(L=30cm 실험에서는 n=4). 그런데 실제로 나무블록을 손으로 밀어 쌓아 보면, 이론값만큼 정확히 밀어내기가 매우 어렵습니다. 왜 그럴까요?</p>
+    <textarea class="think" placeholder="생각나는 이유를 자유롭게 적어보세요"></textarea>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>블록의 실제 두께·표면이 완벽한 직육면체가 아니어서 무게중심이 기하학적 중점과 정확히 일치하지 않을 수 있다.</p>
+        <p>손으로 미는 정밀도에는 한계가 있어, 계산된 위치(mm 단위)에 정확히 맞추기 어렵다.</p>
+        <p>블록 표면의 마찰·미세한 기울어짐·진동 등으로 인해 이론적 한계보다 조금 못 미치는 지점에서 이미 불안정해진다.</p>
+      </div>
+    </div>
+
+    <p>실제 현장에서는 이런 오차를 감안해 이론값에 '보정율'을 곱한 값을 실전 목표로 삼는 경우가 많습니다. 보정 오버행 = 이론 오버행 × (1 − 보정율).</p>
+
+    <div class="widget">
+      <div class="widget-title">보정율을 바꾸며, 실제로 필요한 블록 개수가 몇 개로 늘어나는지 확인해 보세요</div>
+      <canvas id="corrCanvas"></canvas>
+      <div class="control-row">
+        <label for="corrSlider">보정율 (%)</label>
+        <input type="range" id="corrSlider" min="0" max="20" step="1" value="7">
+        <span class="val" id="corrVal">7%</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">필요 조건 Hₙ ≥</div><div class="v" id="corrThreshold">–</div></div>
+        <div class="cell"><div class="k">보정 전 최소 개수</div><div class="v" id="corrBefore">–</div></div>
+        <div class="cell"><div class="k">보정 후 최소 개수</div><div class="v" id="corrAfter">–</div></div>
+      </div>
+    </div>
+
+    <p>(1) 보정율 7%를 반영하면, 조건 $O_n\ge L$, 즉 $\tfrac12H_n\ge1$이었던 것을 보정 후 조건으로 다시 쓰시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden"><p>보정 후 실제로 얻는 오버행은 이론값의 0.93배이므로, 조건은 $0.93\times(L/2)H_n\ge L$, 즉 $H_n\ge2/0.93\approx2.1505$이다.</p></div>
+    </div>
+    <p>(2) $H_3\approx1.833$, $H_4\approx2.083$, $H_5\approx2.283$을 이용해, 보정율 7%를 반영했을 때 최소 몇 개의 블록이 필요한지 구하시오.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 교사용 정답 / 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>필요 조건 : $H_n\ge2.1505$. $H_4\approx2.083<2.1505$ → 이론상으로는 충분했던 4개가, 실전 보정을 반영하면 아직 부족하다. $H_5\approx2.283\ge2.1505$ → 5개면 충분하다.</p>
+        <p><strong>결론</strong> : 이론상 최소 4개였던 것이, 7%의 현실적 오차를 반영하면 실제로는 최소 5개가 필요해진다.</p>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 중요한 수학적 사실 — 보정을 해도 결론의 구조는 바뀌지 않는다</button>
+      <div class="reveal-content tip hidden">
+        <p>보정율을 곱해도 급수는 여전히 (상수)×조화급수 형태이므로 n→∞일 때 여전히 발산합니다. 즉 '이론적으로는 블록을 충분히 많이 쌓으면 오버행을 얼마든지 길게 만들 수 있다'는 3차시의 결론 자체는 실전 보정을 반영해도 변하지 않습니다.</p>
+        <p>다만 특정한 목표를 달성하는 데 필요한 '개수'는 이상적인 이론값보다 항상 더 많아집니다. 이것이 순수수학(정확한 극한값)과 실전 공학(안전율·보정계수를 더한 설계값)의 전형적인 관계입니다 — Part D(8~10차시)에서 배우는 건축·조선·항공 공학의 '안전율' 개념과 정확히 같은 논리 구조입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>15차시 및 압축 특강 전체 되돌아보기</h2>
+    <table class="data">
+      <tr><th>방법</th><th>아이디어</th><th>결과</th></tr>
+      <tr><td>방법1 (3차시)</td><td>리만합 근사 — 조각을 유한하게 나눠 어림잡기</td><td>ȳ ≈ 2.536</td></tr>
+      <tr><td>방법2 (6차시)</td><td>극좌표 이중적분 — 부채꼴 조각의 극한</td><td>ȳ = 4R/(3π)</td></tr>
+      <tr><td>방법3 (15차시 활동1)</td><td>단일 정적분(밀도 가중) — 직사각형 조각의 극한</td><td>ȳ = 4r/(3π)</td></tr>
+      <tr><td>방법4 (15차시 활동2)</td><td>파푸스 정리 — 회전체 부피로 거꾸로 검산</td><td>ȳ = 4r/(3π)</td></tr>
+      <tr><td>+ 실전 보정 (활동3)</td><td>오버행 실험의 이론값에 보정율을 곱해 실제 설계값 산출</td><td>4개 → 5개</td></tr>
+    </table>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 압축 3차시 특강과의 대응 — 별도 학생 활동지 안내</button>
+      <div class="reveal-content tip hidden">
+        <p>수학 우수 학급을 위한 「압축 3차시 특강」은 이 15차시 통합본의 내용을 재구성한 것이며, 학생 배부용 활동지 3부가 별도 문서로 제공됩니다.</p>
+        <p><strong>압축 1차시</strong>(정의와 공리) — 이 자료 1차시 전체를 그대로 사용.</p>
+        <p><strong>압축 2차시</strong>(오버행 실험) — 이 자료 3차시·12차시의 오버행 내용을 30cm 나무블록 손실험 중심으로 재구성하고, 15차시 활동3의 실전 보정율(7%) 내용을 새로 추가.</p>
+        <p><strong>압축 3차시</strong>(반원의 무게중심) — 이 자료 3차시 활동2(리만합 근사)로 시작해, 15차시 활동1(단일 정적분)·활동2(파푸스 정리)로 마무리.</p>
+      </div>
+    </div>
+
+    <p>15차시(그리고 압축 3차시 특강) 전체를 관통한 한 문장을 완성해 봅시다 : 무게중심은 결국 _____________________________ 이다.</p>
+    <textarea class="think" placeholder="자신만의 문장을 완성해 보세요"></textarea>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 마무리 — 무게중심·넓이·부피를 한 문장으로</button>
+      <div class="reveal-content ok hidden">
+        <p>“선을 무수히 쌓으면 넓이가 되고, 넓이를 무수히 쌓으면 부피가 된다 — 그리고 그렇게 쌓인 것 전체를 하나의 점으로 요약한 것이 무게중심이다. 이 모든 '쌓기'의 이름이 바로 적분이다.”</p>
+        <p>이 한 문장 안에 15차시에서 다룬 것이 모두 들어 있습니다 — 3차시의 리만합(직사각형을 '쌓아' 넓이를 근사), 6차시의 이중적분(부채꼴을 '쌓아' 넓이를, 나아가 부피를), 15차시 활동1의 단일 정적분(직사각형을 '쌓아' 모멘트를), 활동2의 파푸스 정리(넓이를 '쌓아' 부피를 얻고 거꾸로 무게중심을 검산). 무게중심·넓이·부피는 서로 다른 세 가지 결과가 아니라, '무수히 잘게 나누고 다시 더한다'는 하나의 방법이 만들어내는 세 가지 얼굴이었던 것입니다.</p>
+        <p>다음 단원(미적분Ⅱ)에서 정식으로 배우게 될 정적분 $\int f(x)dx$의 기호 자체가, 오늘까지 여러분이 손으로 직접 채워온 Σ(시그마) 표들의 극한이라는 것을 꼭 기억합시다.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <h2>「무게중심 대탐구」 15차시를 마치며</h2>
+    <p>Part A(직관과 공리)에서 시작해 Part G(심화 특강)까지, 무게중심 하나를 실험·공리·좌표·적분·공학 응용·손 실험·발표로 완주했습니다. 수고하셨습니다!</p>
+  </div>
+
+  <div class="foot-nav">
+    <a href="14-showcase.html">← 14차시 — 종합 발표회와 총정리</a>
+    <a href="index.html">미적분 실험실 목록으로 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  // 활동1 — 밀도 무관성
+  const densityCanvas = document.getElementById('densityCanvas');
+  const rSlider = document.getElementById('rSlider'), rhoSlider = document.getElementById('rhoSlider');
+  const rVal = document.getElementById('rVal'), rhoVal = document.getElementById('rhoVal');
+  const momentVal = document.getElementById('momentVal'), massVal = document.getElementById('massVal'), ybarDensity = document.getElementById('ybarDensity');
+
+  const dXmin=-16, dXmax=16, dYmin=-1.5, dYmax=17;
+  function dMap(x,y,w,h){
+    const sx=(w-30)/(dXmax-dXmin), sy=(h-30)/(dYmax-dYmin), s=Math.min(sx,sy);
+    const ox=w/2, oy=h-15;
+    return [ox+x*s, oy-y*s];
+  }
+  function drawDensity(){
+    const { ctx, w, h } = fitCanvas(densityCanvas, 260);
+    ctx.clearRect(0,0,w,h);
+    const P = (x,y) => dMap(x,y,w,h);
+    const r = parseFloat(rSlider.value), rho = parseFloat(rhoSlider.value);
+    rVal.textContent = fmt(r,1); rhoVal.textContent = fmt(rho,1);
+
+    ctx.beginPath();
+    for (let i=0;i<=100;i++){ const th=Math.PI*(i/100); const p=P(r*Math.cos(th), r*Math.sin(th)); if(i===0)ctx.moveTo(...p); else ctx.lineTo(...p); }
+    ctx.lineTo(...P(-r,0)); ctx.closePath();
+    ctx.fillStyle = 'rgba(91,75,214,0.15)'; ctx.fill();
+    ctx.strokeStyle = '#1b1830'; ctx.lineWidth = 1.6; ctx.stroke();
+
+    const Mx = rho*(2/3)*r*r*r;
+    const S = 0.5*Math.PI*r*r;
+    const m = rho*S;
+    const ybar = Mx/m;
+    momentVal.textContent = fmt(Mx,1);
+    massVal.textContent = fmt(m,1);
+    ybarDensity.textContent = fmt(ybar,3);
+
+    const py = P(0,ybar);
+    ctx.beginPath(); ctx.moveTo(P(-r,ybar)[0], py[1]); ctx.lineTo(P(r,ybar)[0], py[1]);
+    ctx.strokeStyle = '#0f8f86'; ctx.setLineDash([4,3]); ctx.lineWidth=1.4; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#0f8f86'; ctx.font='bold 11px sans-serif'; ctx.fillText('ȳ='+fmt(ybar,3), py[0]+r*2+6, py[1]+4);
+  }
+  rSlider.addEventListener('input', drawDensity);
+  rhoSlider.addEventListener('input', drawDensity);
+  window.addEventListener('resize', drawDensity);
+  drawDensity();
+
+  // 활동2 — 파푸스
+  const pappusCanvas = document.getElementById('pappusCanvas');
+  const rSlider2 = document.getElementById('rSlider2'), rVal2 = document.getElementById('rVal2');
+  const sphereVol = document.getElementById('sphereVol'), semiArea = document.getElementById('semiArea');
+  const pappusYbar = document.getElementById('pappusYbar'), integralYbar = document.getElementById('integralYbar');
+
+  function drawPappus(){
+    const { ctx, w, h } = fitCanvas(pappusCanvas, 260);
+    ctx.clearRect(0,0,w,h);
+    const r = parseFloat(rSlider2.value);
+    rVal2.textContent = fmt(r,1);
+
+    // 반원(좌측)과 구(우측, 원으로 표현)를 나란히 보여주는 개념도.
+    // r에 따라 도형 크기가 달라지므로, 두 도형이 항상 들어오도록 도메인을 r에 맞춰 정한다.
+    const leftCenter = -r*1.4, rightCenter = r*1.45;
+    const pXmin = leftCenter-r-1, pXmax = rightCenter+r+1, pYmin = -r-2, pYmax = r+2;
+    const P = (x,y) => {
+      const sx=(w-30)/(pXmax-pXmin), sy=(h-30)/(pYmax-pYmin), s=Math.min(sx,sy);
+      const ox=15-pXmin*s, oy=h-15+pYmin*s;
+      return [ox+x*s, oy-y*s];
+    };
+
+    // 반원 (좌측)
+    ctx.beginPath();
+    for (let i=0;i<=100;i++){ const th=Math.PI*(i/100); const p=P(leftCenter+r*Math.cos(th), r*Math.sin(th)); if(i===0)ctx.moveTo(...p); else ctx.lineTo(...p); }
+    ctx.lineTo(...P(leftCenter-r,0)); ctx.closePath();
+    ctx.fillStyle='rgba(91,75,214,0.18)'; ctx.fill(); ctx.strokeStyle='#1b1830'; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.fillStyle='#1b1830'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('반원 (넓이 A)', P(leftCenter,0)[0], P(leftCenter,-r)[1]+16);
+
+    // 화살표
+    ctx.beginPath(); ctx.moveTo(...P(leftCenter+r+1,0)); ctx.lineTo(...P(rightCenter-r-1,0));
+    ctx.strokeStyle='#c2601f'; ctx.lineWidth=1.6; ctx.stroke();
+    ctx.fillStyle='#c2601f'; ctx.font='10px sans-serif'; ctx.fillText('지름 축으로 회전', P((leftCenter+rightCenter)/2,0)[0], P(0,0)[1]-10);
+
+    // 구 (우측, 원으로 표현)
+    const rPix = P(rightCenter+r,0)[0]-P(rightCenter,0)[0];
+    ctx.beginPath(); ctx.arc(...P(rightCenter,0), Math.abs(rPix), 0, 7);
+    ctx.fillStyle='rgba(194,96,31,0.18)'; ctx.fill(); ctx.strokeStyle='#1b1830'; ctx.lineWidth=1.4; ctx.stroke();
+    ctx.fillText('구 (부피 V)', P(rightCenter,0)[0], P(rightCenter,-r)[1]+16);
+    ctx.textAlign='left';
+
+    const V = (4/3)*Math.PI*r*r*r;
+    const A = 0.5*Math.PI*r*r;
+    const ybarPappus = V/(2*Math.PI*A);
+    const ybarIntegral = 4*r/(3*Math.PI);
+    sphereVol.textContent = fmt(V,1);
+    semiArea.textContent = fmt(A,1);
+    pappusYbar.textContent = fmt(ybarPappus,4);
+    integralYbar.textContent = fmt(ybarIntegral,4);
+  }
+  rSlider2.addEventListener('input', drawPappus);
+  window.addEventListener('resize', drawPappus);
+  drawPappus();
+
+  // 활동3 — 오버행 보정
+  const corrCanvas = document.getElementById('corrCanvas');
+  const corrSlider = document.getElementById('corrSlider'), corrVal = document.getElementById('corrVal');
+  const corrThreshold = document.getElementById('corrThreshold'), corrBefore = document.getElementById('corrBefore'), corrAfter = document.getElementById('corrAfter');
+  function harmonicSum(n){ let s=0; for(let i=1;i<=n;i++) s+=1/i; return s; }
+
+  function drawCorr(){
+    const { ctx, w, h } = fitCanvas(corrCanvas, 240);
+    ctx.clearRect(0,0,w,h);
+    const corr = +corrSlider.value;
+    corrVal.textContent = corr + '%';
+    const threshold = 2/(1-corr/100);
+    corrThreshold.textContent = fmt(threshold,4);
+
+    let nBefore=0, H=0; while (H<2){ nBefore++; H+=1/nBefore; }
+    let nAfter=0; H=0; while (H<threshold && nAfter<1000){ nAfter++; H+=1/nAfter; }
+    corrBefore.textContent = nBefore + '개';
+    corrAfter.textContent = nAfter + '개';
+
+    // 막대 그래프로 n=1..8의 Hn과 threshold 표시
+    const maxN = Math.max(8, nAfter+2);
+    const marginL=40, marginB=24, plotW=w-marginL-20, plotH=h-marginB-16;
+    const maxH = Math.max(3, harmonicSum(maxN)+0.3);
+    const barW = plotW/maxN;
+    for (let n=1;n<=maxN;n++){
+      const Hn = harmonicSum(n);
+      const barH = (Hn/maxH)*plotH;
+      const x = marginL + (n-1)*barW + barW*0.15;
+      const y = h-marginB-barH;
+      ctx.fillStyle = Hn >= threshold ? 'rgba(15,143,134,0.75)' : 'rgba(148,163,184,0.6)';
+      ctx.fillRect(x, y, barW*0.7, barH);
+      ctx.fillStyle = '#1b1830'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+      ctx.fillText(n, x+barW*0.35, h-marginB+12);
+    }
+    ctx.textAlign='left';
+    // threshold 선
+    const ty = h-marginB-(threshold/maxH)*plotH;
+    ctx.beginPath(); ctx.moveTo(marginL, ty); ctx.lineTo(w-20, ty);
+    ctx.strokeStyle = '#c2601f'; ctx.setLineDash([5,4]); ctx.lineWidth=1.4; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#c2601f'; ctx.font='bold 10px sans-serif'; ctx.fillText('필요 조건 Hₙ≥'+fmt(threshold,3), marginL, ty-6);
+  }
+  corrSlider.addEventListener('input', drawCorr);
+  window.addEventListener('resize', drawCorr);
+  drawCorr();
+</script>
+</body>
+</html>

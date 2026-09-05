@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14차시 · 종합 발표회와 총정리 · 무게중심 대탐구</title>
+<link rel="stylesheet" href="assets/gravity.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .checklist { display: grid; gap: 8px; font-size: 0.92rem; }
+  .checklist label { display: flex; align-items: flex-start; gap: 8px; }
+  table.data td.hidden-cell { color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      무게중심 대탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-intuition.html">1차시</a>
+      <a class="session-tab" href="2-lever.html">2차시</a>
+      <a class="session-tab" href="3-limit.html">3차시</a>
+      <a class="session-tab" href="4-envelope.html">4차시</a>
+      <a class="session-tab" href="5-deltoid.html">5차시</a>
+      <a class="session-tab" href="6-integral.html">6차시</a>
+      <a class="session-tab" href="7-cone.html">7차시</a>
+      <a class="session-tab" href="8-torsion.html">8차시</a>
+      <a class="session-tab" href="9-metacenter.html">9차시</a>
+      <a class="session-tab" href="10-flight.html">10차시</a>
+      <a class="session-tab" href="11-workshop1.html">11차시</a>
+      <a class="session-tab" href="12-workshop2.html">12차시</a>
+      <a class="session-tab" href="13-workbench.html">13차시</a>
+      <a class="session-tab current" href="14-showcase.html">14차시</a>
+      <a class="session-tab" href="15-pappus.html">15차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">🅕 Part F · 2 / 2차시</span>
+    <h1>종합 발표회와 총정리</h1>
+    <p class="sub">14차시에 걸쳐 탐구한 무게중심을 하나의 흐름으로 요약하고, 자유탐구 결과를 발표하며 이해를 심화합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>14차시에 걸쳐 탐구한 무게중심의 정의·공식·적분·공학 응용·실험을 하나의 흐름으로 요약해 설명할 수 있다.</li>
+        <li>자유탐구(12차시) 결과를 발표하고, 상호 피드백을 통해 이해를 심화한다.</li>
+        <li>'무게중심 = 가중평균 위치 = 모멘트의 균형점'이라는 하나의 주제가 14차시 전체를 관통함을 스스로 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><td>발표</td><td>모둠별 자유탐구 결과 발표 (모둠당 3~4분)</td><td class="time">25분</td></tr>
+        <tr><td>활동</td><td>전체 총정리 — 14차시 지도 그리기</td><td class="time">15분</td></tr>
+        <tr><td>정리</td><td>최종 소감 작성 및 상호 평가</td><td class="time">10분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">발표 · 25분</span>
+    <h2>모둠별 자유탐구 결과 발표</h2>
+    <p class="lead">12차시에 설계한 자유탐구 주제를 모둠별로 발표합니다. 발표에는 다음 세 가지가 포함되어야 합니다.</p>
+    <div class="qbox checklist">
+      <label><input type="checkbox"> (1) 어떤 차시의 개념을 활용했는가</label>
+      <label><input type="checkbox"> (2) 실제 계산 또는 실험 과정</label>
+      <label><input type="checkbox"> (3) 결과와 의미</label>
+    </div>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 동료평가 기준 보기</button>
+      <div class="reveal-content tip hidden"><p>다른 모둠의 발표를 들으며, 그 탐구가 1~13차시의 어떤 개념과 연결되는지 한 가지 이상 메모해 봅시다.</p></div>
+    </div>
+    <textarea class="think" placeholder="다른 모둠 발표를 들으며 연결되는 개념을 메모해 보세요"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 · 15분</span>
+    <h2>14차시 지도 그리기</h2>
+    <p class="lead">아래는 우리가 14차시 동안 탐구한 전체 흐름입니다. 각 Part를 관통하는 하나의 질문을 빈칸에 채워 봅시다 — 정답을 다 채웠으면 버튼을 눌러 확인해 보세요.</p>
+
+    <div class="widget">
+      <table class="data" id="mapTable">
+        <tr><th>Part</th><th>차시</th><th>핵심 내용</th><th>무게중심을 바라보는 방식</th></tr>
+        <tr><td>A. 직관과 공리</td><td>1~3차시</td><td>실험·공리·좌표공식·리만합</td><td class="answer-cell">?</td></tr>
+        <tr><td>B. 기하와 델토이드</td><td>4~5차시</td><td>판별식으로 증명한 넓이 이등분선의 포락선</td><td class="answer-cell">?</td></tr>
+        <tr><td>C. 적분과 차원확장</td><td>6~7차시</td><td>선적분·이중적분·삼중적분</td><td class="answer-cell">?</td></tr>
+        <tr><td>D. 현대 공학 응용</td><td>8~10차시</td><td>건축·조선·항공의 안정성</td><td class="answer-cell">?</td></tr>
+        <tr><td>E. 손 실험실</td><td>11~12차시</td><td>팽이·집모양·텐세그리티</td><td class="answer-cell">?</td></tr>
+        <tr><td>F. 종합 정리</td><td>13~14차시</td><td>계산기·평가·발표</td><td class="answer-cell">?</td></tr>
+      </table>
+      <div class="control-row">
+        <button class="btn solid" onclick="revealMap()">정답 채우기</button>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">💡 하나로 잇는 질문 보기</button>
+      <div class="reveal-content ok hidden">
+        <p>「무게중심이란 무엇인가?」라는 1차시의 첫 질문에, 이제는 이렇게 답할 수 있습니다 —</p>
+        <p>무게중심이란, 대상(질점들·도형·건물·배·비행기)의 '무게(또는 그에 대응하는 양)'를 가중치로 삼아 위치를 평균 낸 점이며, 동시에 그 대상에 작용하는 모든 모멘트($m\times d$)가 정확히 균형을 이루는 단 하나의 점입니다.</p>
+        <p>이 하나의 정의가 질점의 평균(2차시)에서, 무한히 쪼갠 도형의 적분(6~7차시)으로, 그리고 건물·배·비행기의 안전 기준(8~10차시)으로 형태를 바꾸어 가며 반복해서 나타났습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 10분</span>
+    <h2>최종 소감</h2>
+    <p>1차시 도입에서 썼던 '나만의 무게중심 정의'를 마지막으로 다시 꺼내어, 14차시를 모두 마친 지금 최종적으로 완성해 봅시다.</p>
+    <textarea class="think" placeholder="최종 완성된 무게중심 정의를 적어 보세요"></textarea>
+    <p>14차시 중 가장 인상 깊었던 차시와 그 이유를 적어 봅시다.</p>
+    <textarea class="think" placeholder="가장 인상 깊었던 차시와 이유를 적어 보세요"></textarea>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>수학 성적이 우수한 반을 위한 「압축 3차시 특강」의 마지막 시간이 정규 15차시로 이어집니다. 반원의 무게중심을 단일 정적분으로 직접 구하는 두 번째 방법과, 오버행 실험의 이론값·실측값 차이를 보정하는 실전 이야기를 다룹니다.</p>
+    <div class="next">다음 차시 : 15차시 — 정적분으로 완성하는 무게중심</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="13-workbench.html">← 13차시 — 무게중심 계산기 워크벤치와 형성평가</a>
+    <a href="15-pappus.html">15차시 — 정적분으로 완성하는 무게중심 →</a>
+  </div>
+</div>
+
+<script src="assets/gravity.js"></script>
+<script>
+  const mapAnswers = [
+    '여러 점(질점)의 가중평균',
+    '무게중심 ≠ 넓이 이등분점',
+    '무한히 잘게 쪼갠 것의 가중평균',
+    "두 종류의 '중심'의 어긋남이 만드는 모멘트",
+    '계산값을 몸으로 확인',
+    '모든 것을 하나로 잇기',
+  ];
+  function revealMap() {
+    document.querySelectorAll('#mapTable .answer-cell').forEach((cell, i) => {
+      cell.textContent = mapAnswers[i];
+      cell.style.color = 'var(--accent-dark)';
+      cell.style.fontWeight = '700';
+    });
+  }
+</script>
+</body>
+</html>
