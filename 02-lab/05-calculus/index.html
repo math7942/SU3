@@ -5,29 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>미적분 · 수학실험 · 수수의 수학</title>
 <link rel="stylesheet" href="../../assets/site.css">
-<style>
-  /* 헤더를 좁혀 아이콘을 제목 옆에 붙이고, 15차시가 한 화면에 들어오도록 함 (이 페이지에만 적용) */
-  .group-head {
-    display: flex; flex-wrap: wrap; align-items: center;
-    row-gap: 4px; column-gap: 12px;
-    padding: 20px 0 22px;
-  }
-  .group-head .back { flex: 1 0 100%; margin-bottom: 6px; }
-  .group-head .badge { width: 38px; height: 38px; margin-bottom: 0; font-size: 1.15rem; border-radius: 11px; }
-  .group-head h1 { font-size: clamp(1.3rem, 3.2vw, 1.7rem); }
-  .group-head p { flex: 1 0 100%; margin-top: 0; font-size: 0.86rem; }
-
-  /* 15차시까지 한 화면에 들어오도록 3열 격자로 촘촘하게 배치 (이 페이지에만 적용) */
-  .tools { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .tools .tool { flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px 18px; }
-  .tools .tool .mark { width: 30px; height: 30px; font-size: 0.82rem; }
-  .tools .tool .body { width: 100%; }
-  .tools .tool h3 { font-size: 0.92rem; line-height: 1.3; }
-  .tools .tool p { font-size: 0.8rem; }
-  .tools .tool .go { align-self: flex-end; font-size: 0.8rem; }
-  @media (max-width: 900px) { .tools { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px) { .tools { grid-template-columns: 1fr; } .tools .tool { flex-direction: row; align-items: center; } }
-</style>
 </head>
 <body class="g2">
 <div class="page">
@@ -39,132 +16,32 @@
     </a>
     <span class="badge" aria-hidden="true">♾️</span>
     <h1>미적분</h1>
-    <p>미적분 수업에서 쓰는 실험 도구입니다.</p>
+    <p>미적분 수업에서 쓰는 자료 모음입니다.</p>
   </header>
 
   <main>
-<!-- 도구를 추가하려면 아래 목록에 <a class="tool"> 한 덩어리를 복사해 붙여 넣으세요. -->
-    <div class="tools">
-      <a class="tool" href="1-intuition.html">
-        <span class="mark" aria-hidden="true">1</span>
-        <span class="body">
-          <h3>무게중심 대탐구 1차시 — 무게중심이란 무엇인가?</h3>
-          <p>실생활 사례와 시소·도형 실험으로 무게중심을 직관과 공리로 이해합니다.</p>
-        </span>
-        <span class="go">열기</span>
+<!-- 자료를 추가하려면 폴더를 만들고 아래 목록에 <a class="subcard"> 한 덩어리를 붙여 넣으세요. -->
+    <div class="subgroups">
+      <a class="subcard filled" href="01-gravity/index.html">
+        <span class="icon" aria-hidden="true">⚖️</span>
+        <h3>자료1 · 무게중심 대탐구</h3>
+        <span class="count">도구 15개</span>
       </a>
-      <a class="tool" href="2-lever.html">
-        <span class="mark" aria-hidden="true">2</span>
-        <span class="body">
-          <h3>무게중심 대탐구 2차시 — 무게중심을 계산하기</h3>
-          <p>지렛대 원리와 모멘트로 무게중심을 좌표와 공식으로 계산합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="3-limit.html">
-        <span class="mark" aria-hidden="true">3</span>
-        <span class="body">
-          <h3>무게중심 대탐구 3차시 — 무한히 쌓고, 무한히 쪼개기</h3>
-          <p>블록 쌓기와 리만합 근사로 극한과 정적분의 아이디어를 예고합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="4-envelope.html">
-        <span class="mark" aria-hidden="true">4</span>
-        <span class="body">
-          <h3>무게중심 대탐구 4차시 — 넓이 이등분선의 가족과 포락선</h3>
-          <p>닮음·넓이비·판별식만으로 넓이 이등분선의 포락선을 직접 증명합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="5-deltoid.html">
-        <span class="mark" aria-hidden="true">5</span>
-        <span class="body">
-          <h3>무게중심 대탐구 5차시 — 델토이드의 완성과 탐구 학습지</h3>
-          <p>세 꼭짓점에 대한 포락선을 모두 구해 델토이드형 곡선을 완성합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="6-integral.html">
-        <span class="mark" aria-hidden="true">6</span>
-        <span class="body">
-          <h3>무게중심 대탐구 6차시 — 선적분과 이중적분</h3>
-          <p>3차시의 리만합 근사를 정적분·이중적분으로 정확히 계산합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="7-cone.html">
-        <span class="mark" aria-hidden="true">7</span>
-        <span class="body">
-          <h3>무게중심 대탐구 7차시 — 삼중적분과 차원 비교</h3>
-          <p>원뿔의 무게중심을 구하고 1D·2D·3D 결과를 비교합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="8-torsion.html">
-        <span class="mark" aria-hidden="true">8</span>
-        <span class="body">
-          <h3>무게중심 대탐구 8차시 — 건축공학 : 내진 비틀림</h3>
-          <p>질량중심 CM과 강성중심 CR의 어긋남이 만드는 비틀림모멘트를 계산합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="9-metacenter.html">
-        <span class="mark" aria-hidden="true">9</span>
-        <span class="body">
-          <h3>무게중심 대탐구 9차시 — 조선공학 : 선박 복원성</h3>
-          <p>무게중심 G·부심 B·메타센터 M으로 배의 복원정 GZ를 계산합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="10-flight.html">
-        <span class="mark" aria-hidden="true">10</span>
-        <span class="body">
-          <h3>무게중심 대탐구 10차시 — 항공우주공학 : 비행 안정성</h3>
-          <p>CG와 CP의 어긋남(정적 마진)으로 비행기의 피치 안정성을 판정합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="11-workshop1.html">
-        <span class="mark" aria-hidden="true">11</span>
-        <span class="body">
-          <h3>무게중심 대탐구 11차시 — 실험실 Ⅰ : 팽이와 집 모양</h3>
-          <p>반원판 팽이와 집 모양 복합다각형으로 무게중심 공식을 손으로 검증합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="12-workshop2.html">
-        <span class="mark" aria-hidden="true">12</span>
-        <span class="body">
-          <h3>무게중심 대탐구 12차시 — 실험실 Ⅱ : 텐세그리티</h3>
-          <p>물병-젓가락 텐세그리티로 오버행 원리를 실전 검증하고 자유탐구를 설계합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="13-workbench.html">
-        <span class="mark" aria-hidden="true">13</span>
-        <span class="body">
-          <h3>무게중심 대탐구 13차시 — 계산기 워크벤치와 형성평가</h3>
-          <p>질점 무게중심 계산기와 개념 점검 퀴즈로 전체 내용을 정리합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="14-showcase.html">
-        <span class="mark" aria-hidden="true">14</span>
-        <span class="body">
-          <h3>무게중심 대탐구 14차시 — 종합 발표회와 총정리</h3>
-          <p>자유탐구 발표와 14차시 지도 그리기로 전체 흐름을 하나로 잇습니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
-      <a class="tool" href="15-pappus.html">
-        <span class="mark" aria-hidden="true">15</span>
-        <span class="body">
-          <h3>무게중심 대탐구 15차시 — 정적분으로 완성하는 무게중심</h3>
-          <p>단일 정적분·파푸스 정리로 반원 무게중심을 재확인하고 오버행 보정율을 계산합니다.</p>
-        </span>
-        <span class="go">열기</span>
-      </a>
+      <div class="subcard vacant">
+        <span class="icon" aria-hidden="true">📦</span>
+        <h3>자료2</h3>
+        <span class="count">준비 중</span>
+      </div>
+      <div class="subcard vacant">
+        <span class="icon" aria-hidden="true">📦</span>
+        <h3>자료3</h3>
+        <span class="count">준비 중</span>
+      </div>
+      <div class="subcard vacant">
+        <span class="icon" aria-hidden="true">📦</span>
+        <h3>자료4</h3>
+        <span class="count">준비 중</span>
+      </div>
     </div>
   </main>
 
