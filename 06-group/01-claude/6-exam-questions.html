@@ -52,6 +52,48 @@
         <p>"고1 수학 이차함수 단원 중간고사 문제를 만들어줘. 객관식 5개, 서술형 2개, 난이도는 하 2개·중 3개·상 2개로 섞어줘. 각 문제에 배점과 정답, 난이도를 표로 정리해줘."</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>난이도 배분 계산기</h4>
+        <p class="practice-desc">문항 수를 넣으면 객관식·서술형 합계와 난이도 합계가 맞는지 확인하고, 요청 프롬프트를 만들어줍니다.</p>
+
+        <div class="field">
+          <label for="p6-unit">단원</label>
+          <input type="text" id="p6-unit" placeholder="예: 고1 수학 이차함수 단원 중간고사">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p6-mc">객관식 개수</label>
+            <input type="number" id="p6-mc" min="0" value="5">
+          </div>
+          <div class="field">
+            <label for="p6-essay">서술형 개수</label>
+            <input type="number" id="p6-essay" min="0" value="2">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p6-low">하 (개)</label>
+            <input type="number" id="p6-low" min="0" value="2">
+          </div>
+          <div class="field">
+            <label for="p6-mid">중 (개)</label>
+            <input type="number" id="p6-mid" min="0" value="3">
+          </div>
+          <div class="field">
+            <label for="p6-high">상 (개)</label>
+            <input type="number" id="p6-high" min="0" value="2">
+          </div>
+        </div>
+
+        <p class="count-hint" id="p6-hint"></p>
+        <div class="result-box" id="p6-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p6-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://claude.ai" target="_blank" rel="noopener">claude.ai에서 써보기 ↗</a>
+        </div>
+      </div>
+
       <h2>3. 기출문제를 변형하기</h2>
       <p>기존 문제와 같은 구조를 유지하면서 숫자나 상황만 바꿔 새로운 문제를 만들 수 있습니다.</p>
 
@@ -87,5 +129,65 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var ids = ['p6-unit', 'p6-mc', 'p6-essay', 'p6-low', 'p6-mid', 'p6-high'];
+  var out = document.getElementById('p6-result');
+  var hint = document.getElementById('p6-hint');
+  function num(id) { var n = parseInt(document.getElementById(id).value, 10); return isNaN(n) ? 0 : n; }
+  function update() {
+    var unit = document.getElementById('p6-unit').value.trim() || '[단원]';
+    var mc = num('p6-mc'), essay = num('p6-essay');
+    var low = num('p6-low'), mid = num('p6-mid'), high = num('p6-high');
+    var totalItems = mc + essay;
+    var totalDiff = low + mid + high;
+    if (totalItems !== totalDiff) {
+      hint.textContent = '문항 수 합계(' + totalItems + ')와 난이도 합계(' + totalDiff + ')가 다릅니다. 맞춰보세요.';
+      hint.className = 'count-hint over';
+    } else {
+      hint.textContent = '문항 수와 난이도 합계가 일치합니다 (총 ' + totalItems + '문항).';
+      hint.className = 'count-hint';
+    }
+    out.textContent =
+      unit + ' 문제를 만들어줘. 객관식 ' + mc + '개, 서술형 ' + essay + '개, ' +
+      '난이도는 하 ' + low + '개·중 ' + mid + '개·상 ' + high + '개로 섞어줘. ' +
+      '각 문제에 배점과 정답, 난이도를 표로 정리해줘.';
+  }
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p6-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>

@@ -25,10 +25,14 @@
       <h2>1. 가입하기</h2>
       <p>클로드는 앱 설치 없이 브라우저에서 바로 쓸 수 있습니다. 학교 컴퓨터든 개인 노트북이든 순서는 같습니다.</p>
       <ol>
-        <li>브라우저에서 <strong>claude.ai</strong>에 접속합니다.</li>
+        <li>브라우저에서 <strong><a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a></strong>에 접속합니다.</li>
         <li>"Sign up"(가입하기)을 눌러 구글 계정 또는 이메일로 가입합니다.</li>
         <li>이메일로 온 인증 코드를 입력하면 바로 대화 화면으로 이동합니다.</li>
       </ol>
+
+      <div class="btn-row">
+        <a class="btn" href="https://claude.ai" target="_blank" rel="noopener">claude.ai 열기 ↗</a>
+      </div>
 
       <div class="callout tip">
         <h4>요금제는 나중에 정해도 됩니다</h4>
@@ -66,6 +70,22 @@
         <p>이 가이드의 나머지 단계도 모두 Sonnet 기준으로 설명합니다. 4단계에서 배울 "검증하기"가 꼭 필요한 순간에만 Opus로 바꿔보세요.</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>어떤 모델을 써야 할까?</h4>
+        <p class="practice-desc">지금 하려는 업무를 골라보면 추천 모델과 이유를 알려드립니다.</p>
+        <div class="field">
+          <label for="model-task">지금 하려는 업무</label>
+          <select id="model-task">
+            <option value="">선택하세요</option>
+            <option value="simple">학부모 안내문 문구를 짧게 다듬기</option>
+            <option value="daily">평가계획서·시험문제·피드백처럼 매일 하는 업무</option>
+            <option value="hard">어려운 문제 풀이 검증, 까다로운 서술형 채점 기준 만들기</option>
+          </select>
+        </div>
+        <div class="result-box" id="model-result"></div>
+      </div>
+
       <h2>4. 첫 대화 나눠보기</h2>
       <p>지금 새 대화를 열고 아래 문장을 그대로 입력해보세요.</p>
 
@@ -101,5 +121,21 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var data = {
+    simple: "Haiku — 가장 빠르고 가벼운 모델이라 짧고 간단한 작업에 적합합니다.",
+    daily: "Sonnet — 속도와 성능의 균형이 잡힌 기본 모델로, 대부분의 일상 업무에 알맞습니다.",
+    hard: "Opus — 가장 깊이 생각하는 모델이라 신중한 검증이 필요한 업무에 적합합니다."
+  };
+  var sel = document.getElementById('model-task');
+  var out = document.getElementById('model-result');
+  if (sel) {
+    sel.addEventListener('change', function () {
+      out.textContent = data[sel.value] || '';
+    });
+  }
+})();
+</script>
 </body>
 </html>

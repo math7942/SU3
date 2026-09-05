@@ -45,6 +45,42 @@
         [여기에 성취기준 원문을 붙여넣으세요]"</p>
       </div>
 
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>평가계획서 프롬프트 만들어보기</h4>
+        <p class="practice-desc">우리 학교 조건을 넣으면 바로 쓸 수 있는 프롬프트가 완성됩니다. 성취기준 원문은 직접 붙여넣어야 합니다.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p5-grade">학년·과목</label>
+            <input type="text" id="p5-grade" placeholder="예: 중학교 2학년 수학">
+          </div>
+          <div class="field">
+            <label for="p5-term">학기</label>
+            <select id="p5-term">
+              <option value="1학기">1학기</option>
+              <option value="2학기" selected>2학기</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p5-paper">지필평가 비율 (%)</label>
+            <input type="number" id="p5-paper" min="0" max="100" value="70">
+          </div>
+          <div class="field">
+            <label for="p5-type">수행평가 형태</label>
+            <input type="text" id="p5-type" placeholder="예: 서술형 수행과제">
+          </div>
+        </div>
+
+        <div class="result-box" id="p5-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p5-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://claude.ai" target="_blank" rel="noopener">claude.ai에서 써보기 ↗</a>
+        </div>
+      </div>
+
       <h2>3. 수업 지도안(진도표) 만들기</h2>
       <p>평가계획서가 나오면, 같은 대화에서 이어서 진도표도 요청할 수 있습니다.</p>
 
@@ -80,5 +116,58 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var ids = ['p5-grade', 'p5-term', 'p5-paper', 'p5-type'];
+  var out = document.getElementById('p5-result');
+  function update() {
+    var grade = document.getElementById('p5-grade').value.trim() || '[학년·과목]';
+    var term = document.getElementById('p5-term').value;
+    var paperRaw = parseFloat(document.getElementById('p5-paper').value);
+    var paper = isNaN(paperRaw) ? 70 : Math.max(0, Math.min(100, paperRaw));
+    var perf = 100 - paper;
+    var type = document.getElementById('p5-type').value.trim() || '[수행평가 형태]';
+    out.textContent =
+      '나는 ' + grade + ' 교사야. ' + term + ' 평가계획서 초안을 만들어줘. ' +
+      '지필평가 ' + paper + '%, 수행평가 ' + perf + '%로 구성하고, 수행평가는 ' + type + '로 설계해줘. ' +
+      '평가 요소·배점·시기를 표로 정리해줘.\n\n[여기에 성취기준 원문을 붙여넣으세요]';
+  }
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p5-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>

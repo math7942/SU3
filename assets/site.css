@@ -361,6 +361,125 @@ body {
 .compare-table th { background: var(--accent-soft); color: var(--ink); font-weight: 700; }
 .compare-table td { color: var(--ink-soft); }
 
+/* 실습 위젯 ------------------------------------------------------ */
+.practice {
+  margin: 22px 0;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+
+.practice > .practice-label {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.practice h4 { margin: 0 0 4px; font-size: 0.98rem; font-weight: 700; }
+.practice .practice-desc { margin: 0 0 16px; color: var(--muted); font-size: 0.85rem; }
+
+.field { margin-bottom: 12px; }
+.field label { display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); }
+
+.field input[type="text"],
+.field input[type="number"],
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.field textarea { resize: vertical; min-height: 64px; }
+.field input:focus,
+.field select:focus,
+.field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+
+.result-box {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-size: 0.88rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.result-box:empty::before { content: "값을 입력하면 여기에 결과가 나타납니다."; color: var(--muted); }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn:hover { opacity: 0.88; }
+
+.btn.secondary { background: var(--accent-soft); color: var(--accent); }
+
+.check-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 16px; }
+
+.check-list label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.check-list input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--accent); flex: none; }
+
+.status-box {
+  margin-top: 4px;
+  padding: 12px 16px;
+  border-radius: 11px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  background: #eeebf7;
+  color: var(--muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.status-box.ok { background: #e4f3e0; color: #2f7a1f; }
+
+.count-hint { margin-top: 6px; font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+.count-hint.over { color: #b23b3b; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.slider-row label { flex: none; width: 64px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.slider-row input[type="range"] { flex: 1 1 auto; accent-color: var(--accent); }
+.slider-row .slider-val { flex: none; width: 42px; text-align: right; font-weight: 700; color: var(--accent); font-size: 0.9rem; }
+
 /* 비밀번호 게이트 ------------------------------------------------ */
 .gate {
   max-width: 360px;
