@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3단계 · 템플릿·브랜드 키트로 빠르게 시작하기 · Canva · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Canva
+    </a>
+    <span class="badge" aria-hidden="true">🗂️</span>
+    <h1>3단계 · 템플릿·브랜드 키트로 빠르게 시작하기</h1>
+    <p>빈 화면에서 시작하지 않고, 템플릿과 브랜드 키트로 완성도 높은 디자인을 빠르게 만듭니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 템플릿으로 시작하기</h2>
+      <p>화면 위 검색창에 만들고 싶은 자료와 키워드를 함께 입력하면 관련 템플릿이 바로 나옵니다. 예: "수학 학습지", "카드뉴스 인포그래픽". 마음에 드는 템플릿을 고르면 글자와 이미지만 바꿔서 바로 쓸 수 있습니다.</p>
+
+      <h2>2. 브랜드 키트 설정하기</h2>
+      <p>왼쪽 사이드바의 <strong>브랜드 키트</strong>에 학교 로고, 대표 색상, 자주 쓰는 폰트를 한 번 등록해두면, 이후 만드는 모든 디자인에 같은 스타일을 한 번에 적용할 수 있습니다. 학년별·과목별로 색상을 다르게 등록해두면 자료를 한눈에 구분하기도 좋습니다.</p>
+
+      <div class="callout tip">
+        <h4>Education 계정은 무료로 다 씁니다</h4>
+        <p>2단계에서 확인한 것처럼, Canva for Education 계정이면 프리미엄 템플릿과 소재를 요금 걱정 없이 전부 쓸 수 있습니다.</p>
+      </div>
+
+      <h2>3. 검색어 만들어보기</h2>
+      <p>자료 종류와 학년·주제를 정하면 검색창에 바로 붙여넣을 검색어를 만들어줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>템플릿 검색어 만들기</h4>
+        <p class="practice-desc">만들고 싶은 자료와 학년·주제를 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p3-type">만들고 싶은 자료</label>
+          <select id="p3-type">
+            <option value="학습지">학습지</option>
+            <option value="카드뉴스">카드뉴스</option>
+            <option value="프레젠테이션">프레젠테이션</option>
+            <option value="포스터">포스터</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p3-topic">학년·주제</label>
+          <input type="text" id="p3-topic" placeholder="예: 중1 수학 이차방정식">
+        </div>
+
+        <div class="result-box" id="p3-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p3-copy">검색어 복사하기</button>
+          <a class="btn secondary" href="https://www.canva.com" target="_blank" rel="noopener">canva.com에서 검색해보기 ↗</a>
+        </div>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="2-signup.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 가입과 화면 익히기
+      </a>
+      <a class="back" href="4-magic-write.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · Magic Write로 문구 초안 쓰기
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p3-result');
+  function update() {
+    var type = document.getElementById('p3-type').value;
+    var topic = document.getElementById('p3-topic').value.trim() || '[학년·주제]';
+    out.textContent = topic + ' ' + type;
+  }
+  ['p3-type', 'p3-topic'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p3-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
+</body>
+</html>

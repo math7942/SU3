@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4단계 · Magic Write로 문구 초안 쓰기 · Canva · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Canva
+    </a>
+    <span class="badge" aria-hidden="true">✍️</span>
+    <h1>4단계 · Magic Write로 문구 초안 쓰기</h1>
+    <p>디자인 안에서 바로 카피·설명 문구의 초안을 받아 다듬는 법입니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. Magic Write란</h2>
+      <p>Magic Write는 디자인 안 텍스트 상자에서 곧바로 실행하는 AI 글쓰기 도구입니다. 원하는 내용을 설명하면 초안 문장을 여러 개 만들어주고, 마음에 드는 것을 골라 이어서 다듬을 수 있습니다.</p>
+
+      <h2>2. 사용하는 법</h2>
+      <ol>
+        <li>텍스트 상자를 클릭한 뒤 왼쪽 사이드바의 "앱"에서 Magic Write를 엽니다.</li>
+        <li>원하는 내용을 문장으로 설명합니다.</li>
+        <li>나온 초안 중 하나를 고르거나, "다시 쓰기"로 다른 버전을 받아봅니다.</li>
+      </ol>
+
+      <div class="callout tip">
+        <h4>요청 예시</h4>
+        <p>"중학교 1학년 학부모 대상으로, 2학기 수학 수행평가 일정을 안내하는 가정통신문 문구를 정중한 말투로 써줘."</p>
+      </div>
+
+      <h2>3. 요청 문구 만들어보기</h2>
+      <p>문서 종류와 학년·주제, 말투를 정하면 Magic Write에 그대로 입력할 요청 문구가 완성됩니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>Magic Write 요청 문구 만들기</h4>
+        <p class="practice-desc">만들려는 문서와 세부 내용을 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p4-doc">문서 종류</label>
+          <select id="p4-doc">
+            <option value="가정통신문 문구">가정통신문 문구</option>
+            <option value="카드뉴스 문구">카드뉴스 문구</option>
+            <option value="학습지 안내 문구">학습지 안내 문구</option>
+            <option value="발표 슬라이드 제목·요약">발표 슬라이드 제목·요약</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p4-topic">학년·주제</label>
+          <input type="text" id="p4-topic" placeholder="예: 중1 2학기 수행평가 일정 안내">
+        </div>
+        <div class="field">
+          <label for="p4-tone">말투</label>
+          <select id="p4-tone">
+            <option value="정중하고 간결한">정중하고 간결한</option>
+            <option value="친근하고 편안한">친근하고 편안한</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p4-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p4-copy">요청 문구 복사하기</button>
+        </div>
+      </div>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>자동 생성 문구도 검토가 필요합니다</h4>
+        <p>Magic Write가 만든 문구에는 날짜나 사실 관계가 틀린 내용이 섞여 있을 수 있습니다. 학생이나 학부모에게 배포하기 전에 반드시 교사가 직접 읽고 정확한지 확인하세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="3-templates.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 템플릿·브랜드 키트로 빠르게 시작하기
+      </a>
+      <a class="back" href="5-magic-design.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · Magic Design·Magic Media로 이미지 만들기
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p4-result');
+  var docParticle = {
+    '가정통신문 문구': '를',
+    '카드뉴스 문구': '를',
+    '학습지 안내 문구': '를',
+    '발표 슬라이드 제목·요약': '을'
+  };
+  function update() {
+    var doc = document.getElementById('p4-doc').value;
+    var particle = docParticle[doc] || '를';
+    var topic = document.getElementById('p4-topic').value.trim() || '[학년·주제]';
+    var tone = document.getElementById('p4-tone').value;
+    out.textContent =
+      topic + ' 내용으로 ' + doc + particle + ' 써줘. ' + tone + ' 말투로 써줘.';
+  }
+  ['p4-doc', 'p4-topic', 'p4-tone'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p4-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
+</body>
+</html>
