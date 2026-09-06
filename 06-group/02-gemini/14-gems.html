@@ -20,9 +20,65 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Gem이란</h2>
+      <p>Gem은 미리 지침을 설정해둔 나만의 전용 챗봇입니다. 매번 배경 설명을 반복하지 않아도, 그 Gem을 열면 항상 같은 역할과 말투로 답해줍니다. 3단계에서 만든 프롬프트 템플릿을 아예 별도의 챗봇으로 고정해두고, 사이드바에서 바로 불러 쓸 수 있다고 생각하면 됩니다.</p>
+
+      <h2>2. Gem 만들기</h2>
+      <ol>
+        <li>사이드바의 "Gem 관리자"로 들어갑니다.</li>
+        <li>"새로 만들기"를 눌러 이름을 짓습니다. 예: "우리 반 채점 도우미"</li>
+        <li>지침 칸에 역할과 반복 업무 규칙을 적어둡니다.</li>
+      </ol>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>Gem 지침 만들어보기</h4>
+        <p class="practice-desc">Gem 이름과 역할을 넣으면 지침 문구가 완성됩니다.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p14-name">Gem 이름</label>
+            <input type="text" id="p14-name" placeholder="예: 우리 반 채점 도우미">
+          </div>
+          <div class="field">
+            <label for="p14-grade">학년·과목</label>
+            <input type="text" id="p14-grade" placeholder="예: 중학교 2학년 수학">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p14-task">주로 맡길 업무</label>
+          <input type="text" id="p14-task" placeholder="예: 서술형 답안 채점과 근거 설명">
+        </div>
+        <div class="field">
+          <label for="p14-tone">말투</label>
+          <select id="p14-tone">
+            <option value="정중하고 꼼꼼한">정중하고 꼼꼼한</option>
+            <option value="간결하고 명확한">간결하고 명확한</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p14-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p14-copy">지침 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>3. 활용 아이디어</h2>
+      <ul>
+        <li><strong>채점 전담 Gem</strong> — 8단계 루브릭을 지침에 넣어두고 채점만 전담시킵니다.</li>
+        <li><strong>시험문제 출제 전담 Gem</strong> — 난이도 기준과 문제 형식을 지침에 고정해둡니다.</li>
+        <li><strong>학부모 안내문 전담 Gem</strong> — 학교의 공식 말투와 서식을 지침에 저장해둡니다.</li>
+      </ul>
+
+      <h2>4. 주의할 점</h2>
+      <div class="callout warn">
+        <h4>Gem에도 민감정보는 넣지 마세요</h4>
+        <p>Gem의 지침이나 대화에도 9단계에서 배운 개인정보 원칙이 그대로 적용됩니다. 여러 학급을 담당한다면, 학급이나 업무별로 Gem을 나누어 관리하는 것이 안전합니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +94,54 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p14-result');
+  function update() {
+    var name = document.getElementById('p14-name').value.trim() || '[Gem 이름]';
+    var grade = document.getElementById('p14-grade').value.trim() || '[학년·과목]';
+    var task = document.getElementById('p14-task').value.trim() || '[주로 맡길 업무]';
+    var tone = document.getElementById('p14-tone').value;
+    out.textContent =
+      '너는 "' + name + '"라는 이름의 조수야. ' + grade + ' 교사를 도와줘. ' +
+      '너의 주요 업무는 ' + task + '이야. 항상 ' + tone + ' 말투로 답해줘.';
+  }
+  ['p14-name', 'p14-grade', 'p14-task', 'p14-tone'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p14-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>

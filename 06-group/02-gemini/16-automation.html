@@ -20,9 +20,59 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 반복되는 업무 찾아보기</h2>
+      <p>지금까지 배운 것 중에서, 학기마다 혹은 매달 똑같이 되풀이하는 업무를 떠올려보세요. 평가계획서 작성, 시험문제 만들기, 채점, 학부모 안내, 과제 배포처럼 이름만 대상만 바뀌고 방식은 똑같은 일이 대부분입니다.</p>
+
+      <h2>2. Gem에 템플릿 저장하기</h2>
+      <p>3단계에서 만든 프롬프트 템플릿과 반복 업무 규칙을 14단계에서 만든 Gem의 지침에 저장해두면, 매번 새로 설명할 필요 없이 바로 불러 쓸 수 있습니다.</p>
+
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>업무</th><th>저장 위치</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>평가계획서 (5단계)</td><td>학기 시작마다 쓰는 Docs 템플릿</td></tr>
+            <tr><td>시험문제·채점 기준 (8단계)</td><td>채점 전담 Gem 지침</td></tr>
+            <tr><td>학부모 안내 메일 (11단계)</td><td>안내문 전담 Gem 지침</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. Apps Script로 한 단계 더 자동화하기</h2>
+      <p>정말 반복적인 시트 작업은 제미나이에게 구글 Apps Script 코드를 요청해서, 버튼 하나로 실행되는 자동화까지 만들 수 있습니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"이 시트에서 학생 이름을 학생1, 학생2…로 자동으로 바꿔주는 Apps Script 코드를 만들어줘. 어떻게 설치하고 실행하는지도 설명해줘."</p>
+      </div>
+
+      <h2>4. 내 학기 루틴 체크리스트</h2>
+      <p>이 가이드에서 배운 흐름을 학기 루틴으로 굳혀보세요. 실제로 준비했거나 시도한 항목을 체크해보세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>내 학기 루틴 체크리스트</h4>
+        <p class="practice-desc">체크할 때마다 진행률이 업데이트됩니다.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p16-check"> 학기 시작 — Gem을 만들고 반복 업무 지침을 등록했다.</label>
+          <label><input type="checkbox" class="p16-check"> 자료를 만들 때 — @Docs·@Sheets·@Slides로 요청하고, 반드시 검증했다.</label>
+          <label><input type="checkbox" class="p16-check"> 채점할 때 — 자료를 안전하게 다루고, 이미지 채점 결과를 확인했다.</label>
+          <label><input type="checkbox" class="p16-check"> 소통할 때 — Gmail·Calendar·Classroom으로 안내와 피드백을 정리했다.</label>
+          <label><input type="checkbox" class="p16-check"> 마무리할 때 — 반복되는 부분을 Gem과 템플릿으로 남겨뒀다.</label>
+        </div>
+
+        <div class="status-box" id="p16-status">0 / 5 완료</div>
+      </div>
+
+      <div class="callout tip">
+        <h4>여기까지 오셨다면</h4>
+        <p>이제 제미나이와 구글 생태계를 수업과 평가 업무에 자신 있게 엮어 쓸 수 있는 단계입니다. 처음 만든 Gem과 템플릿을 계속 다듬어가며 나만의 방식으로 발전시켜보세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +88,17 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p16-check'));
+  var status = document.getElementById('p16-status');
+  function update() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>

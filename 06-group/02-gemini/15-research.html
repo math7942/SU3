@@ -20,9 +20,48 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Deep Research란</h2>
+      <p>Deep Research는 웹을 여러 단계에 걸쳐 스스로 탐색하며 자료를 모아, 출처가 달린 종합 보고서로 정리해주는 기능입니다. 최신 교육 트렌드나 한 개념을 다양한 방식으로 설명하는 자료를 모을 때 유용합니다.</p>
+
+      <h2>2. 요청해보기</h2>
+      <p>조사할 주제와 보고서를 쓰는 목적을 함께 알려주면 훨씬 쓸모 있는 결과를 받습니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>리서치 요청 프롬프트 만들어보기</h4>
+        <p class="practice-desc">조사 주제와 목적을 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p15-topic">조사 주제</label>
+          <input type="text" id="p15-topic" placeholder="예: 이차함수를 실생활과 연결해 가르치는 방법">
+        </div>
+        <div class="field">
+          <label for="p15-purpose">목적</label>
+          <select id="p15-purpose">
+            <option value="수업 아이디어를 얻기 위한 참고 자료">수업 아이디어를 얻기 위한 참고 자료</option>
+            <option value="학부모 연수 자료">학부모 연수 자료</option>
+            <option value="동료 교사와 공유할 발표 자료">동료 교사와 공유할 발표 자료</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p15-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p15-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>3. 확장 프로그램(Extensions) 연결하기</h2>
+      <p>설정에서 확장 프로그램을 켜두면, 제미나이가 Gmail·유튜브·지도 같은 다른 구글 서비스의 정보를 대화 중에 직접 가져올 수 있습니다. 예를 들어 "유튜브에서 이 개념을 설명하는 영상을 찾아줘"처럼 요청할 수 있습니다.</p>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>보고서도 검증이 필요합니다</h4>
+        <p>Deep Research가 출처를 달아준다고 해서 내용이 항상 정확한 것은 아닙니다. 4단계에서 배운 대로, 수업에 쓰기 전 핵심 주장은 실제 출처 링크를 열어 원문과 대조해보세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +77,52 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p15-result');
+  function update() {
+    var topic = document.getElementById('p15-topic').value.trim() || '[조사 주제]';
+    var purpose = document.getElementById('p15-purpose').value;
+    out.textContent =
+      'Deep Research로 "' + topic + '"에 대해 깊이 조사해줘. ' +
+      '이 자료는 ' + purpose + '로 쓸 거야. 출처를 함께 표시하고, 핵심 내용을 요약해서 보고서로 정리해줘.';
+  }
+  ['p15-topic', 'p15-purpose'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p15-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
