@@ -96,13 +96,15 @@
 <script>
 (function () {
   var out = document.getElementById('p7-result');
+  var audienceParticle = { '학생': '이', '학부모': '가', '동료 교사': '가' };
   function update() {
     var topic = document.getElementById('p7-topic').value.trim() || '[단원·주제]';
     var countRaw = parseInt(document.getElementById('p7-count').value, 10);
     var count = isNaN(countRaw) || countRaw <= 0 ? 8 : countRaw;
     var audience = document.getElementById('p7-audience').value;
+    var particle = audienceParticle[audience] || '이';
     out.textContent =
-      topic + ' 수업용 슬라이드를 만들어줘. ' + audience + '이 보는 자료야. ' +
+      topic + ' 수업용 슬라이드를 만들어줘. ' + audience + particle + ' 보는 자료야. ' +
       '총 ' + count + '장으로, 개념 설명·예제 풀이·형성평가 문제 순서로 균형 있게 구성해줘.';
   }
   ['p7-topic', 'p7-count', 'p7-audience'].forEach(function (id) {
