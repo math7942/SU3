@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7-3단계 · 최종 검토 · 수학교사 1년 살이 · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g4">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      세특 작성
+    </a>
+    <span class="badge" aria-hidden="true">🔍</span>
+    <h1>7-3단계 · 최종 검토</h1>
+    <p>과장·상투적 표현을 걷어내고, 글자수와 나이스 기재요령 위반 여부까지 점검한 최종본을 만듭니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 검토 요청하기</h2>
+      <p>7-2에서 만든 초안을 그대로 다시 붙여넣고, 검토를 요청하세요. 같은 대화에서 이어 요청하면 앞서 나온 초안을 다시 설명할 필요가 없습니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"방금 쓴 세특 초안을 검토해줘. (1) 과장되거나 상투적인 표현이 있는지 (2) 사실과 다르게 해석될 만한 문장이 있는지 (3) 다른 학생 세특과 비슷한 문장이 있는지 확인하고, 문제가 있으면 대안 문장도 함께 제시해줘."</p>
+      </div>
+
+      <h2>2. Claude·Gemini·ChatGPT 중 무엇을 쓸까</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead><tr><th>도구</th><th>기능</th><th>이 단계에서 활용법</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Claude</strong></td><td>Projects(맥락 유지)</td><td>세특 전체를 다시 검토하며 민감한 학생 정보를 신중히 다루고, 규정 위반 소지를 짚어냅니다.</td></tr>
+            <tr><td>Gemini</td><td>일반 대화</td><td>준수한 수준의 점검입니다.</td></tr>
+            <tr><td>ChatGPT</td><td>일반 대화</td><td>준수한 수준의 점검입니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. 글자수 확인하기</h2>
+      <p>나이스 입력 전, 완성된 문장을 아래에 붙여넣어 글자수를 바로 확인하세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>세특 글자수 확인기</h4>
+        <p class="practice-desc">완성된 세특 문장을 붙여넣으면 공백 포함/제외 글자수를 바로 보여줍니다.</p>
+
+        <div class="field">
+          <label for="p73-text">세특 문장</label>
+          <textarea id="p73-text" rows="6" placeholder="완성된 세특 문장을 여기에 붙여넣으세요"></textarea>
+        </div>
+        <div class="field">
+          <label for="p73-limit">글자수 제한 (공백 포함)</label>
+          <input type="number" id="p73-limit" min="1" value="1500">
+        </div>
+
+        <div class="result-box" id="p73-result"></div>
+      </div>
+
+      <h2>4. 나이스에 입력하기 전 마지막 체크리스트</h2>
+      <ul>
+        <li>학생 이름이나 다른 학생과 관련된 개인정보가 섞여 있지 않은지 확인합니다.</li>
+        <li>단정적인 수상·순위 표현처럼 나이스 기재요령에서 금지하는 문구가 없는지 확인합니다.</li>
+        <li>같은 학급 안에서 문장 구조가 지나치게 반복되지 않는지 훑어봅니다.</li>
+        <li>글자수 제한을 넘지 않는지 위 도구로 다시 확인합니다.</li>
+      </ul>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:flex-start; text-align:left;">
+      <a class="back" href="02-draft.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 세특 초안 생성
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var textEl = document.getElementById('p73-text');
+  var limitEl = document.getElementById('p73-limit');
+  var out = document.getElementById('p73-result');
+
+  function update() {
+    var text = textEl.value;
+    var withSpaces = text.length;
+    var withoutSpaces = text.replace(/\s/g, '').length;
+    var limit = parseInt(limitEl.value, 10) || 0;
+    var over = limit > 0 && withSpaces > limit;
+    out.textContent =
+      '공백 포함 ' + withSpaces + '자 · 공백 제외 ' + withoutSpaces + '자' +
+      (limit > 0 ? '\n제한 ' + limit + '자 중 ' + (over ? (withSpaces - limit) + '자 초과' : (limit - withSpaces) + '자 남음') : '');
+    out.style.color = over ? 'var(--accent)' : '';
+  }
+  textEl.addEventListener('input', update);
+  limitEl.addEventListener('input', update);
+  update();
+})();
+</script>
+</body>
+</html>
