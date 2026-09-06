@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>16단계 · 한글(HWP) 문서 업로드해 다루기 · Gemini · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Gemini
+    </a>
+    <span class="badge" aria-hidden="true">📄</span>
+    <h1>16단계 · 한글(HWP) 문서 업로드해 다루기</h1>
+    <p>학교 문서 대부분이 한글(HWP·HWPX) 파일이라는 점에 맞춰, 제미나이에 파일을 올려 내용을 읽고 정리하는 법입니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 제미나이는 한글 파일을 바로 읽습니다</h2>
+      <p>제미나이는 .hwp·.hwpx 파일을 첨부하면 별도 설정 없이 바로 내용을 읽습니다. 한글 프로그램이 설치되어 있지 않은 컴퓨터에서도, 채팅창에 파일을 끌어다 놓기만 하면 됩니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"첨부한 가정통신문 파일의 내용을 한눈에 알아보게 요약해줘. 날짜와 준비물처럼 학부모가 놓치기 쉬운 부분은 따로 정리해줘."</p>
+      </div>
+
+      <h2>2. 무엇에 활용할 수 있나</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>하고 싶은 일</th><th>요청하는 법</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>긴 공문·안내문 요약</td><td>"핵심만 3줄로 요약해줘"처럼 요청합니다.</td></tr>
+            <tr><td>표 안의 데이터 정리</td><td>"이 표의 학생별 점수만 뽑아서 다시 표로 만들어줘"처럼 요청합니다.</td></tr>
+            <tr><td>오탈자·형식 점검</td><td>"맞춤법과 띄어쓰기가 어색한 부분이 있는지 확인해줘"처럼 요청합니다.</td></tr>
+            <tr><td>다른 대상에 맞게 다시 쓰기</td><td>"같은 내용을 학부모가 이해하기 쉬운 말로 다시 써줘"처럼 요청합니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. 요청 프롬프트 만들어보기</h2>
+      <p>어떤 작업인지와 파일 정보를 정해서 요청하면 훨씬 정확한 결과를 받습니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>HWP 문서 요청 프롬프트 만들기</h4>
+        <p class="practice-desc">하려는 작업과 파일 정보를 넣으면 요청 프롬프트가 완성됩니다.</p>
+
+        <div class="field">
+          <label for="p16a-task">하려는 작업</label>
+          <select id="p16a-task">
+            <option value="summarize">긴 내용을 핵심만 요약하기</option>
+            <option value="table">표 안의 데이터를 뽑아서 정리하기</option>
+            <option value="check">오탈자·어색한 문구 점검하기</option>
+            <option value="rewrite">다른 대상에 맞게 다시 쓰기</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p16a-filetype">파일 형식</label>
+          <select id="p16a-filetype">
+            <option value="hwpx">.hwpx (최신 한글 파일)</option>
+            <option value="hwp">.hwp (예전 한글 파일)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p16a-doc">문서 설명</label>
+          <input type="text" id="p16a-doc" placeholder="예: 2학기 학부모 가정통신문">
+        </div>
+        <div class="field">
+          <label for="p16a-detail">세부 요청</label>
+          <textarea id="p16a-detail" placeholder="예: 날짜·준비물처럼 놓치기 쉬운 부분은 따로 정리해줘"></textarea>
+        </div>
+
+        <div class="result-box" id="p16a-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p16a-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>4. 학교 계정에서 첨부가 안 보인다면</h2>
+      <div class="callout warn">
+        <h4>워크스페이스 관리자 설정을 확인하세요</h4>
+        <p>학교나 교육청에서 관리하는 구글 워크스페이스 계정은 관리자가 파일 업로드 기능을 막아뒀을 수 있습니다. 파일 첨부 버튼이 보이지 않는다면 관리자에게 Gemini 파일 업로드 기능 사용 가능 여부를 먼저 문의하세요.</p>
+      </div>
+
+      <h2>5. 결과를 원본 문서에 반영하기</h2>
+      <p>제미나이는 문서를 읽고 채팅창에 답을 텍스트로 보여줄 뿐, .hwp·.hwpx 파일 자체를 직접 고쳐서 돌려주지는 않습니다. 내용을 수정해야 한다면, 나온 답을 한글 프로그램에서 원본 파일에 직접 옮겨 적거나, 완전히 새 문서로 만들 거라면 5단계에서 배운 대로 Docs로 내보낸 뒤 필요하면 한글 파일로 다시 저장하세요.</p>
+
+      <h2>6. 확인할 점</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>사용 전후 점검 체크리스트</h4>
+        <p class="practice-desc">실제로 확인했거나 준비한 항목을 체크해보세요.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p16b-check"> 학교 계정에서 파일 첨부가 되는지 확인했다.</label>
+          <label><input type="checkbox" class="p16b-check"> 원본 파일을 다른 이름으로 미리 복사해두었다.</label>
+          <label><input type="checkbox" class="p16b-check"> 학생 개인정보가 담긴 파일이라면 9단계 원칙에 따라 먼저 확인했다.</label>
+          <label><input type="checkbox" class="p16b-check"> 제미나이가 준 내용을 원본 문서에 옮긴 뒤 다시 한 번 확인했다.</label>
+        </div>
+
+        <div class="status-box" id="p16b-status">0 / 4 완료</div>
+      </div>
+
+      <div class="callout warn">
+        <h4>옮겨 적은 내용도 검증은 그대로</h4>
+        <p>제미나이가 요약하거나 정리한 내용도 4단계에서 배운 대로, 숫자나 날짜 같은 핵심 정보는 원본과 직접 대조해 확인한 뒤에 배포하세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="15-research.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · Deep Research·확장 프로그램 활용하기
+      </a>
+      <a class="back" href="17-automation.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 반복 업무 자동화로 마무리
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p16a-result');
+  var taskPhrase = {
+    summarize: '긴 내용을 핵심만 요약해줘',
+    table: '표 안의 데이터를 뽑아서 다시 표로 정리해줘',
+    check: '맞춤법·띄어쓰기 등 어색한 문구가 있는지 점검해줘',
+    rewrite: '같은 내용을 다른 대상이 이해하기 쉬운 말로 다시 써줘'
+  };
+  var fileLabel = { hwpx: '.hwpx', hwp: '.hwp' };
+
+  function update() {
+    var task = document.getElementById('p16a-task').value;
+    var filetype = document.getElementById('p16a-filetype').value;
+    var doc = document.getElementById('p16a-doc').value.trim() || '[문서 설명]';
+    var detail = document.getElementById('p16a-detail').value.trim() || '[세부 요청]';
+
+    out.textContent =
+      '첨부한 "' + doc + '" (' + fileLabel[filetype] + ' 파일)에서 ' + taskPhrase[task] + '.\n' +
+      '세부 요청: ' + detail;
+  }
+  ['p16a-task', 'p16a-filetype', 'p16a-doc', 'p16a-detail'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p16a-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p16b-check'));
+  var status = document.getElementById('p16b-status');
+  function updateStatus() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', updateStatus); });
+})();
+</script>
+</body>
+</html>
