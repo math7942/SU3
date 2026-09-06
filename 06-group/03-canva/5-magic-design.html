@@ -16,13 +16,69 @@
     </a>
     <span class="badge" aria-hidden="true">🪄</span>
     <h1>5단계 · Magic Design·Magic Media로 이미지 만들기</h1>
-    <p>글이나 이미지 설명만으로 디자인 초안과 그림을 만듭니다.</p>
+    <p>글이나 이미지 설명만으로 디자인 레이아웃과 그림을 자동으로 만듭니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Magic Design이란</h2>
+      <p>Magic Design은 원하는 내용을 글로 설명하거나 사진 한 장을 올리면, 어울리는 레이아웃 여러 개를 한 번에 만들어주는 기능입니다. 홈 화면의 "Magic Design" 버튼을 눌러 바로 시작할 수 있습니다.</p>
+
+      <div class="callout tip">
+        <h4>요청 예시</h4>
+        <p>"중2 수학 함수 단원 복습용 카드뉴스, 5장 분량, 차분한 파란 계열 색상"</p>
+      </div>
+
+      <h2>2. Magic Media란</h2>
+      <p>Magic Media는 원하는 그림을 문장으로 설명하면 그 자리에서 이미지를 만들어주는 기능입니다. 디자인 안에서 요소를 추가할 때 "Magic Media"를 선택하고 설명을 입력하면 됩니다.</p>
+
+      <div class="callout warn">
+        <h4>수학 그림에는 신중하게 쓰세요</h4>
+        <p>Magic Media는 그림 느낌의 삽화에는 좋지만, 그래프나 도형처럼 <strong>정확한 수치·각도가 중요한 그림</strong>은 잘못 그릴 때가 많습니다. 정확성이 필요한 도형·그래프는 Magic Media 대신 캔바의 도형·선 요소를 직접 배치해서 만드세요.</p>
+      </div>
+
+      <h2>3. 이미지 생성 요청 만들어보기</h2>
+      <p>어떤 그림인지, 어디에 쓸 것인지 정하면 Magic Media에 입력할 요청 문구를 만들어줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>Magic Media 요청 문구 만들기</h4>
+        <p class="practice-desc">원하는 그림과 쓰임새를 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p5-subject">그림 내용</label>
+          <input type="text" id="p5-subject" placeholder="예: 칠판 앞에서 수학 문제를 푸는 학생 캐릭터">
+        </div>
+        <div class="field">
+          <label for="p5-use">쓰임새</label>
+          <select id="p5-use">
+            <option value="worksheet">학습지 상단 삽화</option>
+            <option value="card">카드뉴스 배경 이미지</option>
+            <option value="slide">발표 슬라이드 표지 이미지</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p5-style">스타일</label>
+          <select id="p5-style">
+            <option value="따뜻한 손그림 느낌">따뜻한 손그림 느낌</option>
+            <option value="깔끔한 플랫 일러스트">깔끔한 플랫 일러스트</option>
+            <option value="차분한 파스텔 톤">차분한 파스텔 톤</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p5-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p5-copy">요청 문구 복사하기</button>
+        </div>
+      </div>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>저작권 표기 없이 바로 쓸 수 있는지 확인하세요</h4>
+        <p>AI로 생성한 이미지도 학교 안내 자료나 인쇄물에 쓰기 전에, 초상권처럼 보이는 얼굴이나 부적절한 요소가 섞여 있지 않은지 한 번 더 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +94,62 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p5-result');
+  var useLabel = {
+    worksheet: '학습지 상단 삽화로 쓸 거야',
+    card: '카드뉴스 배경 이미지로 쓸 거야',
+    slide: '발표 슬라이드 표지 이미지로 쓸 거야'
+  };
+  var styleParticle = {
+    '따뜻한 손그림 느낌': '으로',
+    '깔끔한 플랫 일러스트': '로',
+    '차분한 파스텔 톤': '으로'
+  };
+  function update() {
+    var subject = document.getElementById('p5-subject').value.trim() || '[그림 내용]';
+    var use = document.getElementById('p5-use').value;
+    var style = document.getElementById('p5-style').value;
+    var particle = styleParticle[style] || '으로';
+    out.textContent = subject + '. ' + style + particle + ' 그려줘. ' + useLabel[use] + '.';
+  }
+  ['p5-subject', 'p5-use', 'p5-style'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p5-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>

@@ -16,13 +16,59 @@
     </a>
     <span class="badge" aria-hidden="true">📄</span>
     <h1>6단계 · 수학 학습지·프린트물 디자인하기</h1>
-    <p>표·도형을 배치해 수학 학습지와 프린트물을 만듭니다.</p>
+    <p>표·도형·텍스트 상자를 배치해 학습지를 만들고, 인쇄용으로 내보내는 법입니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 학습지 레이아웃 기본기</h2>
+      <ul>
+        <li><strong>표(Table)</strong> — 문항 번호와 답을 나란히 배치할 때 씁니다.</li>
+        <li><strong>도형·선</strong> — 문항 사이 구분선, 정답을 적을 빈칸 테두리를 만듭니다.</li>
+        <li><strong>텍스트 상자</strong> — 문제 문구와 보기를 넣습니다. 상자 크기를 넉넉히 잡아야 학생이 풀이를 쓸 공간이 생깁니다.</li>
+      </ul>
+
+      <div class="callout tip">
+        <h4>템플릿에서 시작하세요</h4>
+        <p>3단계에서 배운 대로 "수학 학습지" 검색어로 템플릿을 먼저 찾아보면, 빈 화면보다 훨씬 빠르게 레이아웃을 잡을 수 있습니다.</p>
+      </div>
+
+      <h2>2. 인쇄용으로 내보내기</h2>
+      <p>화면 오른쪽 위 다운로드 버튼에서 PDF(인쇄용)를 선택하면 여러 페이지짜리 학습지도 한 번에 내려받을 수 있습니다. 학교 프린터로 바로 인쇄하거나, Canva Print로 실물 인쇄를 주문할 수도 있습니다.</p>
+
+      <h2>3. 레이아웃 추천받기</h2>
+      <p>문제 유형과 문항 수를 넣으면 몇 단 레이아웃이 적당한지, 페이지가 몇 장 정도 필요한지 계산해줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>학습지 레이아웃 계산기</h4>
+        <p class="practice-desc">문제 유형과 문항 수를 넣어보세요.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p6-type">문제 유형</label>
+            <select id="p6-type">
+              <option value="mc">객관식</option>
+              <option value="essay">서술형(풀이 공간 필요)</option>
+              <option value="mixed">혼합</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="p6-count">문항 수</label>
+            <input type="number" id="p6-count" min="1" value="10">
+          </div>
+        </div>
+
+        <div class="result-box" id="p6-result"></div>
+      </div>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>인쇄 전에 꼭 미리보기 하세요</h4>
+        <p>화면에서는 괜찮아 보여도 인쇄하면 여백이 잘리거나 이미지가 흐릿하게 나올 수 있습니다. 다운로드 전 미리보기로 페이지 나눔과 여백을 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +84,32 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p6-result');
+  var settings = {
+    mc: { perPage: 20, colThreshold: 12, note: '보기까지 짧게 들어가는 유형이라 여러 단으로 나눠도 읽기 편합니다.' },
+    essay: { perPage: 4, colThreshold: 999, note: '풀이 과정을 쓸 공간이 필요해서 1단 레이아웃을 권장합니다.' },
+    mixed: { perPage: 10, colThreshold: 16, note: '문항 성격이 섞여 있으니 서술형 문항 아래에는 넉넉한 빈 칸을 남기세요.' }
+  };
+  function update() {
+    var type = document.getElementById('p6-type').value;
+    var countRaw = parseInt(document.getElementById('p6-count').value, 10);
+    var count = isNaN(countRaw) || countRaw <= 0 ? 1 : countRaw;
+    var s = settings[type];
+    var columns = count > s.colThreshold ? 2 : 1;
+    var pages = Math.max(1, Math.ceil(count / s.perPage));
+    out.textContent =
+      '문항 ' + count + '개 기준 — ' + columns + '단 레이아웃, 약 ' + pages + '페이지 분량을 추천합니다.\n' +
+      s.note;
+  }
+  ['p6-type', 'p6-count'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+})();
+</script>
 </body>
 </html>
