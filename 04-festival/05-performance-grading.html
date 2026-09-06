@@ -5,6 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>5단계 · 수행평가 채점 및 피드백 · 수학교사 1년 살이 · 수수의 수학</title>
 <link rel="stylesheet" href="../assets/site.css">
+<style>
+  .feedback-preview { display: none; margin-top: 16px; }
+  .fb-card {
+    background: #fff; color: #1b1830; border: 1px solid var(--line); border-radius: 10px;
+    padding: 26px 28px; margin-bottom: 16px;
+  }
+  .fb-card h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .fb-card .fb-sub { color: #777; font-size: 0.8rem; margin: 0 0 14px; }
+  .fb-card .fb-body { white-space: pre-wrap; line-height: 1.7; }
+  @page { size: A4 portrait; margin: 16mm; }
+  @media print {
+    body * { visibility: hidden; }
+    #p5-sheet, #p5-sheet * { visibility: visible; }
+    #p5-sheet { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+    .fb-card { border: none; padding: 0 0 20px; page-break-after: always; }
+    .fb-card:last-child { page-break-after: auto; }
+  }
+</style>
 </head>
 <body class="g4">
 <div class="page">
@@ -20,9 +38,54 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>아직 준비 중입니다</h3>
-      <p>Gemini·ChatGPT로 서술형 답안 이미지를 채점하는 가이드와, 1단계 루브릭을 기준으로 학생별 피드백을 인쇄용으로 출력하는 기능을 다음 업데이트에서 채울 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 답안 이미지로 채점 요청하기</h2>
+      <p>1단계에서 만든 루브릭과 학생 답안 사진을 함께 올리고, 루브릭 기준으로 채점을 요청하세요.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"올린 사진은 학생 답안이야. 아래 루브릭 기준으로 채점해줘. 어느 단계에 해당하는지와 그 이유를 답안의 내용을 근거로 설명해줘. [루브릭 붙여넣기]"</p>
+      </div>
+
+      <div class="callout warn">
+        <h4>업로드 전에 개인정보를 확인하세요</h4>
+        <p>답안에 학생 이름·학번이 그대로 보인다면 가리거나 잘라내고 올리세요. 채점 결과와 학생을 연결하는 건 교사가 따로 관리하는 명단으로 하는 것이 안전합니다.</p>
+      </div>
+
+      <h2>2. Claude·Gemini·ChatGPT 중 무엇을 쓸까</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead><tr><th>도구</th><th>기능</th><th>이 단계에서 활용법</th></tr></thead>
+          <tbody>
+            <tr><td>Claude</td><td>Vision(이미지 인식)</td><td>개별 답안 판독은 좋으나 여러 장을 한 번에 처리하는 흐름이 약합니다.</td></tr>
+            <tr><td><strong>Gemini</strong></td><td>Vision + Sheets 연동</td><td>손글씨 인식 정확도가 높고 결과를 Sheets로 모아 학급 전체를 한 번에 관리하기 쉽습니다.</td></tr>
+            <tr><td><strong>ChatGPT</strong></td><td>Vision + Advanced Data Analysis</td><td>이미지 인식과 코드 실행을 함께 써서 여러 장의 답안을 한 번에 정리합니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. 학생별 피드백 인쇄하기</h2>
+      <p>AI가 만들어준 채점 결과와 코멘트를 학생별로 붙여넣으면, 한 명당 한 장씩 나뉜 인쇄용 피드백지를 만듭니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>학생별 피드백지 만들기</h4>
+        <p class="practice-desc">학생 이름과 피드백 내용을 입력하고 "미리보기 만들기"를 누르세요.</p>
+
+        <div id="p5-students"></div>
+        <div class="btn-row">
+          <button class="btn secondary" type="button" id="p5-add-student">+ 학생 추가</button>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn" type="button" id="p5-preview">미리보기 만들기</button>
+          <button class="btn secondary" type="button" id="p5-print">인쇄하기</button>
+        </div>
+
+        <div class="feedback-preview" id="p5-sheet"></div>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +101,58 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var studentsEl = document.getElementById('p5-students');
+
+  function addStudent() {
+    var row = document.createElement('div');
+    row.className = 'field-row p5-student';
+    row.innerHTML =
+      '<div class="field"><label>학생 이름</label><input type="text" class="p5-name" placeholder="예: 김OO"></div>' +
+      '<div class="field"><label>피드백 내용</label><textarea class="p5-fb" rows="2" placeholder="채점 결과와 코멘트를 붙여넣으세요"></textarea></div>';
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn secondary';
+    delBtn.textContent = '삭제';
+    delBtn.style.alignSelf = 'end';
+    delBtn.addEventListener('click', function () { row.remove(); });
+    row.appendChild(delBtn);
+    studentsEl.appendChild(row);
+  }
+  addStudent();
+  addStudent();
+
+  document.getElementById('p5-add-student').addEventListener('click', addStudent);
+
+  function buildPreview() {
+    var sheet = document.getElementById('p5-sheet');
+    sheet.innerHTML = '';
+    var rows = document.querySelectorAll('.p5-student');
+    var built = 0;
+    rows.forEach(function (row) {
+      var name = row.querySelector('.p5-name').value.trim();
+      var fb = row.querySelector('.p5-fb').value.trim();
+      if (!name && !fb) return;
+      var card = document.createElement('div');
+      card.className = 'fb-card';
+      card.innerHTML =
+        '<h3>' + (name || '(이름 미입력)') + ' 학생 피드백</h3>' +
+        '<p class="fb-sub">수행평가 채점 결과</p>' +
+        '<div class="fb-body"></div>';
+      card.querySelector('.fb-body').textContent = fb;
+      sheet.appendChild(card);
+      built++;
+    });
+    sheet.style.display = built ? 'block' : 'none';
+    return built;
+  }
+
+  document.getElementById('p5-preview').addEventListener('click', buildPreview);
+  document.getElementById('p5-print').addEventListener('click', function () {
+    if (buildPreview() > 0) window.print();
+  });
+})();
+</script>
 </body>
 </html>
