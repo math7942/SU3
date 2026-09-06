@@ -16,13 +16,48 @@
     </a>
     <span class="badge" aria-hidden="true">📊</span>
     <h1>8단계 · 카드뉴스·인포그래픽으로 개념 설명하기</h1>
-    <p>Magic Charts로 데이터를 바로 인포그래픽으로 바꿉니다.</p>
+    <p>여러 장짜리 카드뉴스로 개념을 설명하고, Magic Charts로 데이터를 바로 인포그래픽으로 바꿉니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 카드뉴스란</h2>
+      <p>카드뉴스는 정사각형 슬라이드 여러 장을 순서대로 넘겨보며 하나의 이야기를 전달하는 형식입니다. 개념 하나를 "질문 → 설명 → 예시 → 정리"처럼 몇 장으로 나눠 설명하면 학생이 훨씬 편하게 읽습니다. 학급 게시판이나 안내용 SNS 계정에 올리기도 좋습니다.</p>
+
+      <h2>2. Magic Charts로 인포그래픽 만들기</h2>
+      <p>왼쪽 사이드바의 "앱"에서 Magic Charts를 열고 표 데이터를 입력하거나 붙여넣으면, 막대·꺾은선·원형 그래프 중 어울리는 형태로 자동 디자인해줍니다. 성적 분포, 단원별 정답률 같은 데이터를 시각 자료로 바꿀 때 유용합니다.</p>
+
+      <h2>3. 데이터로 막대그래프 미리 만들어보기</h2>
+      <p>"항목:값" 형태로 데이터를 넣으면 이 페이지에서 바로 막대그래프를 그려주고, Magic Charts에 입력할 요청 문구도 함께 만들어줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>막대그래프 미리 보기</h4>
+        <p class="practice-desc">"항목:값"을 쉼표로 구분해 입력하세요.</p>
+
+        <div class="field">
+          <label for="p8-data">데이터</label>
+          <textarea id="p8-data">1학기:78, 2학기:85, 3학기:91</textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" type="button" id="p8-calc">그래프 그리기</button>
+        </div>
+
+        <div id="p8-chart" style="display:flex; align-items:flex-end; gap:14px; height:150px; margin-top:16px;"></div>
+        <div class="result-box" id="p8-result" style="margin-top:14px;"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p8-copy">Magic Charts 요청 문구 복사하기</button>
+        </div>
+      </div>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>데이터와 색상 대비를 확인하세요</h4>
+        <p>자동으로 만든 그래프도 숫자가 원본 데이터와 정확히 일치하는지 확인하세요. 색으로만 항목을 구분하면 색약인 학생은 읽기 어려울 수 있으니, 막대나 조각 위에 숫자를 직접 표시해두는 것이 좋습니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +73,103 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var chart = document.getElementById('p8-chart');
+  var out = document.getElementById('p8-result');
+
+  function parse(raw) {
+    return raw.split(',')
+      .map(function (pair) {
+        var parts = pair.split(':');
+        if (parts.length < 2) return null;
+        var label = parts[0].trim();
+        var value = parseFloat(parts[1]);
+        if (!label || isNaN(value)) return null;
+        return { label: label, value: value };
+      })
+      .filter(function (item) { return item !== null; });
+  }
+
+  function draw() {
+    var raw = document.getElementById('p8-data').value;
+    var items = parse(raw);
+    chart.innerHTML = '';
+
+    if (items.length === 0) {
+      out.textContent = '"항목:값" 형태로, 쉼표로 구분해 입력하세요.';
+      return;
+    }
+
+    var maxValue = Math.max.apply(null, items.map(function (i) { return i.value; })) || 1;
+
+    items.forEach(function (item) {
+      var col = document.createElement('div');
+      col.style.display = 'flex';
+      col.style.flexDirection = 'column';
+      col.style.alignItems = 'center';
+      col.style.flex = '1';
+
+      var valueLabel = document.createElement('span');
+      valueLabel.style.fontSize = '0.72rem';
+      valueLabel.style.marginBottom = '4px';
+      valueLabel.textContent = item.value;
+
+      var bar = document.createElement('div');
+      bar.style.width = '100%';
+      bar.style.borderRadius = '4px 4px 0 0';
+      bar.style.background = 'var(--accent)';
+      bar.style.height = Math.round(item.value / maxValue * 110) + 'px';
+
+      var nameLabel = document.createElement('span');
+      nameLabel.style.fontSize = '0.72rem';
+      nameLabel.style.color = 'var(--muted)';
+      nameLabel.style.marginTop = '4px';
+      nameLabel.textContent = item.label;
+
+      col.appendChild(valueLabel);
+      col.appendChild(bar);
+      col.appendChild(nameLabel);
+      chart.appendChild(col);
+    });
+
+    var listText = items.map(function (i) { return i.label + ' ' + i.value; }).join(', ');
+    out.textContent = '"다음 데이터를 막대그래프 인포그래픽으로 만들어줘: ' + listText + '"';
+  }
+
+  var btn = document.getElementById('p8-calc');
+  if (btn) btn.addEventListener('click', draw);
+  draw();
+
+  var copyBtn = document.getElementById('p8-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
