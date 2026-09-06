@@ -20,9 +20,46 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. NotebookLM이란</h2>
+      <p>NotebookLM은 구글의 별도 서비스로, 내가 올린 자료(원문)만 근거로 답합니다. 일반 채팅과 달리 출처를 정확히 표시해주기 때문에, 교과서나 수업 자료를 근거로 삼아야 할 때 특히 믿을 만합니다.</p>
+
+      <div class="btn-row">
+        <a class="btn" href="https://notebooklm.google.com" target="_blank" rel="noopener">notebooklm.google.com 열기 ↗</a>
+      </div>
+
+      <h2>2. 노트북 만들고 소스 올리기</h2>
+      <p>새 노트북을 만들고, PDF·구글 문서·웹사이트 링크·유튜브 링크 등을 소스로 추가합니다. 교과서 단원, 기출문제 모음, 참고 자료를 함께 올려두면 그 자료 전체를 근거로 답을 받을 수 있습니다.</p>
+
+      <h2>3. 학습 노트 자동 생성</h2>
+      <p>소스를 올리면 NotebookLM이 자동으로 요약, 예상 질문(FAQ), 핵심 타임라인을 만들어줍니다. 학생에게 나눠줄 핵심 정리 노트로 바로 활용할 수 있습니다.</p>
+
+      <h2>4. 오디오 요약(팟캐스트) 만들기</h2>
+      <p>"Audio Overview" 기능을 쓰면 올린 자료를 두 진행자가 대화하듯 설명하는 오디오로 바꿔줍니다. 등하교 시간에 듣는 복습 자료로 활용할 수 있습니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>언제 NotebookLM을 쓰면 좋을까?</h4>
+        <p class="practice-desc">상황을 골라보면 활용 아이디어를 보여드립니다.</p>
+        <div class="field">
+          <label for="p13-scenario">지금 상황</label>
+          <select id="p13-scenario">
+            <option value="">선택하세요</option>
+            <option value="textbook">교과서·단원 자료를 학생용 요약 노트로 만들고 싶다</option>
+            <option value="exam">여러 해 기출문제를 모아 유형을 정리하고 싶다</option>
+            <option value="audio">복습용으로 들을 수 있는 오디오 자료를 만들고 싶다</option>
+          </select>
+        </div>
+        <div class="result-box" id="p13-result"></div>
+      </div>
+
+      <h2>5. 주의할 점</h2>
+      <div class="callout warn">
+        <h4>소스에도 개인정보가 없는지 확인하세요</h4>
+        <p>학생 답안이나 명단처럼 개인정보가 담긴 파일을 소스로 올리기 전에, 9단계 "학생 자료 안전하게 다루기"의 체크리스트를 먼저 적용하세요. NotebookLM도 올린 자료를 서버로 전송한다는 점은 같습니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +75,21 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var data = {
+    textbook: "교과서 PDF를 소스로 올리고 '노트 개요' 기능으로 단원 요약과 핵심 질문을 자동으로 만들어보세요.",
+    exam: "여러 해의 기출문제 PDF를 함께 올리고 '자주 나오는 유형을 정리해줘'라고 물어보면 출처와 함께 정리해줍니다.",
+    audio: "소스를 올린 뒤 Audio Overview를 눌러보세요. 두 진행자가 대화하듯 설명하는 오디오 파일이 만들어집니다."
+  };
+  var sel = document.getElementById('p13-scenario');
+  var out = document.getElementById('p13-result');
+  if (sel) {
+    sel.addEventListener('change', function () {
+      out.textContent = data[sel.value] || '';
+    });
+  }
+})();
+</script>
 </body>
 </html>
