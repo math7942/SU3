@@ -20,9 +20,63 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 왜 조심해야 하는가</h2>
+      <p>제미나이는 구글 드라이브 파일을 직접 불러올 수 있다는 점이 편리하지만, 그만큼 무심코 공유 범위가 넓은 파일을 대화에 연결할 위험도 있습니다. 학생 이름, 학번, 얼굴이 담긴 자료를 다루기 전 한 번 더 확인하는 습관을 들이세요.</p>
+
+      <h2>2. 업로드 전 익명화 체크리스트</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>정보 종류</th><th>위험</th><th>처리 방법</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>이름</td><td>개인 식별</td><td>"학생 A", "학생 B"처럼 임의 표기로 대체</td></tr>
+            <tr><td>학번·생년월일</td><td>개인 식별</td><td>삭제하거나 뒷자리만 남기고 가리기</td></tr>
+            <tr><td>얼굴 사진</td><td>민감한 개인 식별</td><td>답안이 적힌 부분만 잘라서 업로드</td></tr>
+            <tr><td>학교명·반</td><td>간접 식별</td><td>되도록 생략하거나 일반적인 표현으로 대체</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. 구글 계정 공유 설정 확인하기</h2>
+      <p>@Docs·@Sheets로 파일을 불러오기 전에, 그 파일의 공유 설정도 함께 확인하세요.</p>
+      <ul>
+        <li>구글 드라이브에서 파일 공유 설정이 "링크가 있는 모든 사용자"로 되어 있지 않은지 확인합니다. 학생 정보가 담긴 파일은 특정 사용자에게만 공유되어야 합니다.</li>
+        <li>학교 워크스페이스 계정이라면, 관리자가 정한 데이터 사용 정책을 먼저 확인하세요. 학교마다 제미나이가 파일 내용을 학습에 활용하는지 여부의 설정이 다를 수 있습니다.</li>
+        <li>개인 지메일 계정과 학교 계정을 혼용하지 말고, 학생 자료는 학교 계정에서만 다루는 것이 안전합니다.</li>
+      </ul>
+
+      <h2>4. 실제로 가리는 법</h2>
+      <ul>
+        <li><strong>사진</strong> — 휴대폰 사진 편집이나 그림판으로 이름 칸을 자르거나 검게 칠한 뒤 업로드합니다.</li>
+        <li><strong>시트·문서</strong> — 찾아바꾸기 기능으로 이름 목록을 "학생1, 학생2…"처럼 일괄 치환합니다.</li>
+        <li><strong>여러 장을 한 번에 올릴 때</strong> — 정말 필요한 분량만 올리고, 채점이 끝나면 대화에서 파일을 지워도 됩니다.</li>
+      </ul>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>업로드 전 마지막 점검</h4>
+        <p class="practice-desc">아래 항목을 실제로 확인했을 때만 체크하세요. 모두 체크되면 업로드해도 좋다는 표시가 나타납니다.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p9-check"> 학생 이름을 "학생 A"처럼 임의 표기로 바꿨다.</label>
+          <label><input type="checkbox" class="p9-check"> 학번·생년월일을 지우거나 가렸다.</label>
+          <label><input type="checkbox" class="p9-check"> 얼굴이 나온 부분은 잘라내고 답안 부분만 남겼다.</label>
+          <label><input type="checkbox" class="p9-check"> 불러올 파일의 구글 드라이브 공유 설정을 확인했다.</label>
+          <label><input type="checkbox" class="p9-check"> 장애·가정환경·상담 내용 등 민감한 정보는 아예 넣지 않았다.</label>
+        </div>
+
+        <div class="status-box" id="p9-status">아직 체크되지 않은 항목이 있습니다.</div>
+      </div>
+
+      <h2>5. 그래도 지켜야 할 원칙</h2>
+      <div class="callout warn">
+        <h4>민감한 정보는 아예 넣지 마세요</h4>
+        <p>장애, 가정환경, 상담 내용처럼 민감한 정보는 이름을 가려도 문맥만으로 특정 학생이 드러날 수 있습니다. 이런 내용은 텍스트로도 입력하지 않는 것이 안전합니다. 확신이 없다면 업로드하지 말고, 학교의 개인정보 처리 지침을 먼저 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +92,22 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p9-check'));
+  var status = document.getElementById('p9-status');
+  function update() {
+    var all = boxes.every(function (b) { return b.checked; });
+    if (all) {
+      status.textContent = '모든 항목을 확인했습니다. 업로드해도 좋습니다.';
+      status.className = 'status-box ok';
+    } else {
+      status.textContent = '아직 체크되지 않은 항목이 있습니다.';
+      status.className = 'status-box';
+    }
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>

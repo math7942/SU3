@@ -20,9 +20,60 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <div class="callout warn">
+        <h4>먼저 9단계부터 확인하세요</h4>
+        <p>학생 답안을 업로드하기 전, 9단계 "학생 자료 안전하게 다루기"의 익명화 체크리스트를 먼저 적용했는지 확인하세요.</p>
+      </div>
+
+      <h2>1. 사진·파일 올리는 법</h2>
+      <p>입력창의 클립 아이콘으로 사진이나 PDF를 첨부합니다. 여러 장을 한 번에 올릴 수 있습니다.</p>
+      <ul>
+        <li>그림자 없이, 정면에서, 최대한 밝고 선명하게 찍습니다.</li>
+        <li>여러 장이면 학생 순서대로 올리고, 몇 번째가 누구인지 프롬프트에 함께 적어줍니다.</li>
+        <li>사진이 흐리거나 잘려 보이면 다시 찍어 올리는 편이 결과가 훨씬 정확합니다.</li>
+      </ul>
+
+      <h2>2. 채점 요청하기</h2>
+      <p>8단계에서 만든 채점 기준표를 함께 넣어 요청하면, 기준에 맞춰 근거와 함께 채점해줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>채점 요청 프롬프트 만들어보기</h4>
+        <p class="practice-desc">8단계에서 만든 채점 기준을 붙여넣으면, 이미지 채점 요청 프롬프트가 완성됩니다.</p>
+
+        <div class="field">
+          <label for="p10-rubric">채점 기준 (8단계에서 만든 루브릭)</label>
+          <textarea id="p10-rubric" placeholder="예: 개념 적용 2점, 계산 과정 2점, 결론 명시 1점..."></textarea>
+        </div>
+
+        <div class="result-box" id="p10-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p10-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>3. 결과를 검증하기</h2>
+      <p>4단계에서 배운 대로, 채점 결과도 그대로 믿지 말고 확인하는 과정이 필요합니다. 특히 손글씨 인식은 실수가 있을 수 있습니다.</p>
+      <ul>
+        <li>감점된 이유가 실제 답안 내용과 일치하는지 원본과 대조합니다.</li>
+        <li>애매하면 "이 부분 손글씨를 어떻게 읽었는지 말해줘"라고 되물어 확인합니다.</li>
+        <li>숫자나 기호(예: 0과 O, 1과 l)를 잘못 읽었을 가능성을 특히 의심해봅니다.</li>
+      </ul>
+
+      <div class="callout warn">
+        <h4>점수를 그대로 성적에 반영하지 마세요</h4>
+        <p>제미나이의 채점은 참고용 초안입니다. 특히 감점 폭이 큰 답안은 반드시 직접 다시 확인한 뒤 최종 점수를 확정하세요.</p>
+      </div>
+
+      <h2>4. 여러 명을 채점할 때 팁</h2>
+      <ul>
+        <li>한 번에 너무 많은 학생을 올리면 정확도가 떨어질 수 있으니, 5~10명 단위로 나눠 요청하세요.</li>
+        <li>"결과를 학생 번호, 점수, 감점 이유 순서로 표에 정리해줘"처럼 형식을 지정하면 정리하기 편합니다. 결과를 6단계에서 배운 대로 시트로 내보내면 성적 처리와 바로 이어집니다.</li>
+      </ul>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +89,48 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p10-result');
+  function update() {
+    var rubric = document.getElementById('p10-rubric').value.trim() || '[8단계에서 만든 루브릭 붙여넣기]';
+    out.textContent =
+      '다음은 채점 기준이야: ' + rubric + '. 첨부한 학생 답안 이미지를 이 기준으로 채점해줘. ' +
+      '학생별로 몇 점인지, 어느 단계에서 감점됐는지 근거와 함께 표로 정리해줘.';
+  }
+  var ta = document.getElementById('p10-rubric');
+  if (ta) ta.addEventListener('input', update);
+  update();
+
+  var copyBtn = document.getElementById('p10-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta2 = document.createElement('textarea');
+    ta2.value = text;
+    ta2.style.position = 'fixed';
+    ta2.style.opacity = '0';
+    document.body.appendChild(ta2);
+    ta2.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta2);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
