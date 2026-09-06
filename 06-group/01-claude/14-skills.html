@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14단계 · Skills로 한글(HWP) 문서 다루기 · Claude · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Claude
+    </a>
+    <span class="badge" aria-hidden="true">📄</span>
+    <h1>14단계 · Skills로 한글(HWP) 문서 다루기</h1>
+    <p>학교 문서 대부분이 한글(HWP·HWPX) 파일이라는 점에 맞춰, 클로드에 스킬을 켜서 HWP 문서를 읽고 채우고 고치는 법입니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. Skills(스킬)이란</h2>
+      <p>Skills는 클로드에 추가로 켤 수 있는 전문 기능 꾸러미입니다. 11단계에서 배운 Projects가 "지침과 자료를 모아두는 공간"이라면, Skills는 "클로드가 원래 못 하던 특정 작업을 할 수 있게 해주는 도구"에 가깝습니다. 한 번 켜두면 그 뒤로는 대화창에서 그냥 요청하기만 하면 됩니다.</p>
+
+      <h2>2. 왜 한글(HWP) 스킬이 필요한가</h2>
+      <p>학교에서 주고받는 공문, 가정통신문, 평가계획서, 각종 서식은 대부분 <strong>.hwp</strong> 또는 <strong>.hwpx</strong> 파일입니다. 이 형식은 워드(.docx)와 달라서, 스킬이 없으면 클로드가 파일을 열어도 내용을 제대로 읽지 못하거나 표·서식이 깨질 수 있습니다. <strong>hwp-hwpx</strong> 같은 스킬을 켜두면, 한글 프로그램이 설치되어 있지 않은 컴퓨터에서도 클로드가 파일 내용을 정확히 읽고, 필요하면 직접 수정까지 해서 돌려줍니다.</p>
+
+      <h2>3. 무엇까지 할 수 있나</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>파일 형식</th><th>읽기</th><th>편집 · 양식 채우기</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>.hwpx <span style="color:var(--muted); font-weight:400;">(2014년 이후, 최신 형식)</span></td>
+              <td>✅ 표·문단 포함 전체 지원</td>
+              <td>✅ 찾아 바꾸기, 여러 문단 채우기, 표 값 수정까지 지원</td>
+            </tr>
+            <tr>
+              <td>.hwp <span style="color:var(--muted); font-weight:400;">(예전 형식)</span></td>
+              <td>✅ 텍스트 추출 가능</td>
+              <td>△ 직접 편집은 제한적 — 보통 .hwpx로 저장해 다시 요청하면 편집까지 가능합니다</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout tip">
+        <h4>모르면 일단 물어보세요</h4>
+        <p>파일을 첨부하고 "이 파일이 어떤 형식인지, 편집까지 가능한지 확인해줘"라고 먼저 물어보면 클로드가 스킬로 파일을 열어본 뒤 가능한 작업을 알려줍니다.</p>
+      </div>
+
+      <h2>4. 스킬 켜는 법</h2>
+      <ol>
+        <li>클로드 화면 오른쪽 위 설정(또는 기능) 메뉴에서 "Skills"로 들어갑니다.</li>
+        <li>목록에서 <strong>hwp-hwpx</strong>를 찾아 토글을 켭니다.</li>
+        <li>이후 새로 시작하는 대화부터 .hwp·.hwpx 파일을 첨부하면 자동으로 이 스킬을 써서 내용을 읽습니다.</li>
+      </ol>
+
+      <div class="callout warn">
+        <h4>학교 계정이라면 먼저 확인하세요</h4>
+        <p>학교나 교육청에서 관리하는 워크스페이스 계정은 관리자가 스킬 사용을 막아뒀을 수 있습니다. 목록에 hwp-hwpx가 보이지 않는다면 관리자에게 스킬 사용 가능 여부를 먼저 문의하세요.</p>
+      </div>
+
+      <h2>5. 요청 프롬프트 만들어보기</h2>
+      <p>어떤 작업인지, 파일 형식은 무엇인지 정해서 요청하면 훨씬 정확하게 처리됩니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>HWP 문서 작업 요청 프롬프트 만들기</h4>
+        <p class="practice-desc">하려는 작업과 파일 정보를 넣으면 요청 프롬프트가 완성됩니다.</p>
+
+        <div class="field">
+          <label for="p14a-task">하려는 작업</label>
+          <select id="p14a-task">
+            <option value="extract">내용·표를 그대로 추출해서 정리하기</option>
+            <option value="fill">정해진 양식의 빈칸 채우기</option>
+            <option value="replace">문서 안의 특정 문구 찾아 한 번에 바꾸기</option>
+            <option value="table">표 안의 값 채우거나 수정하기</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p14a-filetype">파일 형식</label>
+          <select id="p14a-filetype">
+            <option value="hwpx">.hwpx (최신 한글 파일)</option>
+            <option value="hwp">.hwp (예전 한글 파일)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p14a-doc">문서 설명</label>
+          <input type="text" id="p14a-doc" placeholder="예: 2학기 학부모 가정통신문 양식">
+        </div>
+        <div class="field">
+          <label for="p14a-detail">세부 내용</label>
+          <textarea id="p14a-detail" placeholder="예: 날짜는 10월 15일, 담당 교사 이름은 [이름]으로 채워줘"></textarea>
+        </div>
+
+        <div class="result-box" id="p14a-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p14a-copy">프롬프트 복사하기</button>
+        </div>
+      </div>
+
+      <h2>6. 확인할 점</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>사용 전후 점검 체크리스트</h4>
+        <p class="practice-desc">실제로 확인했거나 준비한 항목을 체크해보세요.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p14b-check"> hwp-hwpx 스킬이 켜져 있는지 확인했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 원본 파일을 다른 이름으로 미리 복사해두었다.</label>
+          <label><input type="checkbox" class="p14b-check"> 학생 개인정보가 담긴 파일이라면 8단계 원칙에 따라 먼저 확인했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 결과 파일을 열어 서식·표가 깨지지 않았는지 확인했다.</label>
+        </div>
+
+        <div class="status-box" id="p14b-status">0 / 4 완료</div>
+      </div>
+
+      <div class="callout warn">
+        <h4>수정된 파일도 검증은 그대로</h4>
+        <p>스킬이 표와 서식을 그대로 옮겨준다고 해도, 4단계에서 배운 대로 숫자나 문구가 정확히 바뀌었는지 열어서 직접 확인한 뒤에 배포하세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="13-code.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 코드 사용법
+      </a>
+      <a class="back" href="15-automation.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 반복 업무 자동화로 마무리
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p14a-result');
+  var taskPhrase = {
+    extract: '내용과 표를 그대로 추출해서 정리해줘',
+    fill: '양식의 빈칸을 채워줘',
+    replace: '문서 안의 특정 문구를 찾아 한 번에 바꿔줘',
+    table: '표 안의 값을 채우거나 수정해줘'
+  };
+  var fileLabel = { hwpx: '.hwpx', hwp: '.hwp' };
+
+  function update() {
+    var task = document.getElementById('p14a-task').value;
+    var filetype = document.getElementById('p14a-filetype').value;
+    var doc = document.getElementById('p14a-doc').value.trim() || '[문서 설명]';
+    var detail = document.getElementById('p14a-detail').value.trim() || '[세부 내용]';
+
+    out.textContent =
+      '첨부한 "' + doc + '" (' + fileLabel[filetype] + ' 파일)에서 ' + taskPhrase[task] + '.\n' +
+      '세부 내용: ' + detail + '\n' +
+      '원본 서식과 표 구조는 최대한 그대로 유지해줘.';
+  }
+  ['p14a-task', 'p14a-filetype', 'p14a-doc', 'p14a-detail'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p14a-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p14b-check'));
+  var status = document.getElementById('p14b-status');
+  function updateStatus() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', updateStatus); });
+})();
+</script>
+</body>
+</html>
