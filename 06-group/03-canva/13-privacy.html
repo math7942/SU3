@@ -16,13 +16,48 @@
     </a>
     <span class="badge" aria-hidden="true">🔒</span>
     <h1>13단계 · 저작권·공유 설정과 학생 개인정보 안전하게 다루기</h1>
-    <p>소재 저작권과 공유 범위, 학생 개인정보를 점검합니다.</p>
+    <p>소재 저작권, 공유 링크 범위, 학생 개인정보까지 배포 전에 점검할 것들입니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 소재 저작권 확인하기</h2>
+      <p>2단계에서 확인한 대로 Canva for Education 계정은 프리미엄 소재를 자유롭게 쓸 수 있지만, 이는 <strong>캔바 안에서 디자인을 만들 때</strong>의 이용 범위입니다. 완성한 디자인을 학교 밖에서 판매하거나 상업적으로 배포할 계획이라면, 사용한 소재의 라이선스 조건을 따로 확인해야 합니다. 수업·학급 안내 목적이라면 대부분 문제없이 쓸 수 있습니다.</p>
+
+      <h2>2. 공유 링크 범위 설정하기</h2>
+      <p>공유 버튼을 누르면 "볼 수만 있음", "댓글 가능", "편집 가능" 중에서 권한을 고를 수 있습니다. 필요한 권한만 정확히 골라야 학생이 실수로 원본을 고치는 일을 막을 수 있습니다. "링크가 있는 모든 사용자"로 설정하면 그 링크를 아는 누구나 들어올 수 있으니, 학급처럼 제한된 대상에게만 공유할 때는 10단계에서 배운 Canva Class 초대 기능을 우선 사용하세요.</p>
+
+      <h2>3. 학생 개인정보 다루기</h2>
+      <p>학생 얼굴 사진이나 실명이 들어간 디자인은 공개 링크로 공유하지 마세요. 학부모 동의 여부를 확인한 자료만 사용하고, 동의하지 않은 학생은 이니셜이나 이름 대신 "학생1" 같은 식으로 표시하세요. 결과물을 다운로드해서 여기저기 옮기기보다, 캔바 안에서 권한을 정확히 설정한 링크로만 공유하면 나중에 접근을 막기도 훨씬 쉽습니다.</p>
+
+      <div class="callout warn">
+        <h4>무료 이미지에도 사람 얼굴이 있을 수 있습니다</h4>
+        <p>Magic Media로 만든 이미지나 무료 소재 중에도 실존 인물처럼 보이는 얼굴이 나올 수 있습니다. 안내 자료에 쓰기 전에 한 번 더 확인하세요.</p>
+      </div>
+
+      <h2>4. 공유 전 점검 체크리스트</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>배포 전 점검 체크리스트</h4>
+        <p class="practice-desc">실제로 확인한 항목을 체크해보세요.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p13-check"> 공유 링크의 권한(보기·댓글·편집)이 의도한 대로 설정돼 있다.</label>
+          <label><input type="checkbox" class="p13-check"> 학생 얼굴 사진·실명이 들어간 자료는 공개 링크로 공유하지 않았다.</label>
+          <label><input type="checkbox" class="p13-check"> 학부모 동의가 필요한 사진·이름은 동의 여부를 확인했다.</label>
+          <label><input type="checkbox" class="p13-check"> 학교 밖 상업적 용도가 아닌지, 필요하면 소재 라이선스를 확인했다.</label>
+        </div>
+
+        <div class="status-box" id="p13-status">0 / 4 완료</div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>학기가 끝나면 정리하세요</h4>
+        <p>10단계에서 만든 학급과 공유 링크는 학기가 끝나면 삭제하거나 새로 발급하세요. 오래된 링크가 계속 살아있으면 이미 반이 바뀐 학생이나 관계없는 사람이 계속 접근할 수 있습니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +73,17 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p13-check'));
+  var status = document.getElementById('p13-status');
+  function update() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>

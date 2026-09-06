@@ -16,13 +16,69 @@
     </a>
     <span class="badge" aria-hidden="true">🔁</span>
     <h1>14단계 · 반복 업무 자동화로 마무리</h1>
-    <p>Bulk Create로 이름표·성적표 같은 자료를 한 번에 만듭니다.</p>
+    <p>Bulk Create로 이름표·성적표 같은 자료를 한 번에 만들고, 지금까지 배운 흐름을 루틴으로 굳힙니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 반복되는 업무 찾아보기</h2>
+      <p>이름표, 상장, 성적표처럼 <strong>디자인은 같고 이름·점수 같은 값만 바뀌는 자료</strong>는 한 명씩 만들 필요가 없습니다. 학생 수만큼 반복해서 만들던 작업이 있다면 Bulk Create(대량 만들기)로 한 번에 끝낼 수 있습니다.</p>
+
+      <h2>2. Bulk Create로 한 번에 만들기</h2>
+      <p>왼쪽 사이드바의 "앱"에서 Bulk Create를 열고, 학생 이름·점수 같은 데이터가 담긴 표(CSV)를 업로드합니다. "자동으로 필드 연결"을 누르면 표의 각 열을 디자인 안의 이름·점수 칸에 알아서 이어주고, 직접 끌어서 연결할 수도 있습니다. 표의 행 하나가 곧 디자인 한 장이 되어, 학생 수만큼 자동으로 복사·완성됩니다.</p>
+
+      <div class="callout tip">
+        <h4>이렇게 활용해보세요</h4>
+        <p>학급 이름표, 시상식 상장, 학생별 성적 리포트처럼 "양식은 같고 값만 바뀌는" 자료에 특히 유용합니다.</p>
+      </div>
+
+      <h2>3. 몇 장이 만들어지는지 미리 확인하기</h2>
+      <p>표 데이터를 넣으면 몇 장의 디자인이 만들어질지 미리 계산해줍니다. 첫 줄이 "이름,점수"처럼 항목 이름이면 자동으로 제외하고 셉니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>Bulk Create 생성 수 미리보기</h4>
+        <p class="practice-desc">한 줄에 한 명씩, 쉼표로 구분한 데이터를 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p14-data">데이터 (CSV)</label>
+          <textarea id="p14-data" rows="5">이름,점수
+홍길동,88
+김민준,92
+이서연,95</textarea>
+        </div>
+
+        <div class="result-box" id="p14-result"></div>
+      </div>
+
+      <h2>4. 템플릿·브랜드 키트로 루틴 굳히기</h2>
+      <p>3단계에서 설정한 브랜드 키트와 자주 쓰는 템플릿을 "즐겨찾기"에 모아두면, 학기마다 같은 양식을 새로 찾을 필요 없이 바로 열어 값만 바꿔 씁니다.</p>
+
+      <h2>5. 내 학기 루틴 체크리스트</h2>
+      <p>이 가이드에서 배운 흐름을 학기 루틴으로 굳혀보세요. 실제로 준비했거나 시도한 항목을 체크해보세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>내 학기 루틴 체크리스트</h4>
+        <p class="practice-desc">체크할 때마다 진행률이 업데이트됩니다.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p14b-check"> 학기 시작 — 브랜드 키트를 설정하고 자주 쓸 템플릿을 정리했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 자료를 만들 때 — Magic Write·Magic Design으로 초안을 받고 직접 검토했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 학생과 함께할 때 — Canva Class로 학급을 만들고 과제·모둠 활동을 진행했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 배포할 때 — 공유 범위와 학생 개인정보를 확인한 뒤 Classroom으로 배포했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 마무리할 때 — 반복되는 자료는 Bulk Create와 템플릿으로 남겨뒀다.</label>
+        </div>
+
+        <div class="status-box" id="p14b-status">0 / 5 완료</div>
+      </div>
+
+      <div class="callout tip">
+        <h4>여기까지 오셨다면</h4>
+        <p>이제 캔바를 수업 자료 제작부터 학생과의 협업, 다른 AI 도구 연동까지 자신 있게 쓸 수 있는 단계입니다. 처음 만든 템플릿과 학급을 계속 다듬어가며 나만의 방식으로 발전시켜보세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +94,44 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p14-result');
+
+  function looksLikeHeader(line) {
+    return !/\d/.test(line);
+  }
+
+  function update() {
+    var raw = document.getElementById('p14-data').value;
+    var lines = raw.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+
+    if (lines.length === 0) {
+      out.textContent = '데이터를 한 줄에 한 명씩 입력하세요.';
+      return;
+    }
+
+    var dataLines = lines.slice();
+    if (dataLines.length > 1 && looksLikeHeader(dataLines[0])) {
+      dataLines = dataLines.slice(1);
+    }
+
+    out.textContent = '이 데이터로 총 ' + dataLines.length + '장의 디자인이 자동으로 만들어집니다.';
+  }
+
+  var textarea = document.getElementById('p14-data');
+  if (textarea) textarea.addEventListener('input', update);
+  update();
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p14b-check'));
+  var status = document.getElementById('p14b-status');
+  function updateStatus() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', updateStatus); });
+})();
+</script>
 </body>
 </html>
