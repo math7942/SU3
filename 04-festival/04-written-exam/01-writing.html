@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4-1단계 · 문항 출제 · 수학교사 1년 살이 · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g4">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      지필평가 출제
+    </a>
+    <span class="badge" aria-hidden="true">✏️</span>
+    <h1>4-1단계 · 문항 출제</h1>
+    <p>수식·그래프가 정확하고 보기 좋게 표현되는 것이 중요한 단계입니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 문항 요청하기</h2>
+      <p>성취기준, 난이도, 문항 유형을 함께 알려주고, 그래프나 그림이 필요하면 미리 말해두세요.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"고1 수학, 성취기준 [10수학01-01] 다항식의 사칙연산을 평가하는 선택형 문항 3개를 만들어줘. 난이도는 상 1개, 중 2개로 하고, 각 문항의 정답과 오답 선택지를 만든 이유도 함께 써줘."</p>
+      </div>
+
+      <p>그래프나 함수식이 들어가는 문항은 "이 함수의 그래프를 실제 좌표로 정확하게 그려서 이미지로 보여줘"처럼 그래프 생성을 명시적으로 요청하세요.</p>
+
+      <h2>2. Claude·Gemini·ChatGPT 중 무엇을 쓸까</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead><tr><th>도구</th><th>기능</th><th>이 단계에서 활용법</th></tr></thead>
+          <tbody>
+            <tr><td>Claude</td><td>일반 대화 · LaTeX 표기</td><td>문항 초안과 해설은 탄탄하게 쓰지만 그래프 이미지를 직접 그려내는 데는 약합니다.</td></tr>
+            <tr><td>Gemini</td><td>일반 대화</td><td>준수한 수준이지만 수식 표기가 가끔 깨집니다.</td></tr>
+            <tr><td><strong>ChatGPT</strong></td><td>Advanced Data Analysis</td><td>코드 실행으로 함수 그래프를 정확한 좌표로 그리고, LaTeX 수식 렌더링도 가장 안정적입니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>문항 출제 프롬프트 만들기</h4>
+        <p class="practice-desc">성취기준·난이도·문항 유형·그래프 필요 여부를 넣으면 바로 붙여넣을 프롬프트가 완성됩니다.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p41-standard">성취기준</label>
+            <input type="text" id="p41-standard" placeholder="예: [10수학01-01] 다항식의 사칙연산">
+          </div>
+          <div class="field">
+            <label for="p41-count">문항 수</label>
+            <input type="number" id="p41-count" min="1" value="3">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p41-type">문항 유형</label>
+            <select id="p41-type">
+              <option value="선택형">선택형</option>
+              <option value="서술형">서술형</option>
+              <option value="단답형">단답형</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="p41-level">난이도</label>
+            <select id="p41-level">
+              <option value="상 위주">상 위주</option>
+              <option value="중 위주" selected>중 위주</option>
+              <option value="하 위주">하 위주</option>
+              <option value="상·중·하 골고루">상·중·하 골고루</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label><input type="checkbox" id="p41-graph"> 그래프·그림이 필요합니다</label>
+        </div>
+
+        <div class="result-box" id="p41-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p41-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://chatgpt.com" target="_blank" rel="noopener">chatgpt.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <h4>답을 그대로 믿지 마세요</h4>
+        <p>AI가 만든 문항도 계산 오류나 정답이 두 개 이상 나오는 경우가 있습니다. 4-2단계에서 반드시 검토를 거친 뒤 출제하세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="../03-lesson-material.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 수업자료 제작
+      </a>
+      <a class="back" href="02-review.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 문항 검토 · 문항정보표
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p41-result');
+  function update() {
+    var standard = document.getElementById('p41-standard').value.trim() || '[성취기준]';
+    var count = document.getElementById('p41-count').value || '3';
+    var type = document.getElementById('p41-type').value;
+    var level = document.getElementById('p41-level').value;
+    var graph = document.getElementById('p41-graph').checked;
+    var text = '성취기준 ' + standard + '을 평가하는 ' + type + ' 문항 ' + count + '개를 만들어줘. ' +
+      '난이도는 ' + level + '로 해줘. 각 문항의 정답과, ' +
+      (type === '선택형' ? '오답 선택지를 만든 이유도 ' : '채점 시 확인할 핵심 포인트도 ') + '함께 써줘.';
+    if (graph) text += ' 그래프나 그림이 필요한 문항은 실제 좌표로 정확하게 그려서 이미지로 보여줘.';
+    out.textContent = text;
+  }
+  ['p41-standard', 'p41-count', 'p41-type', 'p41-level', 'p41-graph'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p41-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
+</body>
+</html>
