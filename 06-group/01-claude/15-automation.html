@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>14단계 · 반복 업무 자동화로 마무리 · Claude · 수수의 수학</title>
+<title>15단계 · 반복 업무 자동화로 마무리 · Claude · 수수의 수학</title>
 <link rel="stylesheet" href="../../assets/site.css">
 </head>
 <body class="g6">
@@ -15,7 +15,7 @@
       Claude
     </a>
     <span class="badge" aria-hidden="true">🔁</span>
-    <h1>14단계 · 반복 업무 자동화로 마무리</h1>
+    <h1>15단계 · 반복 업무 자동화로 마무리</h1>
     <p>성적 처리, 시험범위 수합 같은 반복 업무를 프롬프트 템플릿이나 스크립트로 굳혀 매번 재사용합니다.</p>
   </header>
 
@@ -69,13 +69,13 @@
         <p class="practice-desc">실제로 준비했거나 시도한 항목을 체크해보세요.</p>
 
         <div class="check-list">
-          <label><input type="checkbox" class="p14-check"> 학기 시작 — 프로젝트를 만들고 성취기준·채점 기준을 등록했다.</label>
-          <label><input type="checkbox" class="p14-check"> 자료를 만들 때 — 템플릿으로 요청하고, 반드시 검증했다.</label>
-          <label><input type="checkbox" class="p14-check"> 채점할 때 — 자료를 안전하게 다루고, 채점 결과를 확인했다.</label>
-          <label><input type="checkbox" class="p14-check"> 마무리할 때 — 피드백을 쓰고, 반복되는 부분을 템플릿·스크립트로 남겼다.</label>
+          <label><input type="checkbox" class="p15-check"> 학기 시작 — 프로젝트를 만들고 성취기준·채점 기준을 등록했다.</label>
+          <label><input type="checkbox" class="p15-check"> 자료를 만들 때 — 템플릿으로 요청하고, 반드시 검증했다.</label>
+          <label><input type="checkbox" class="p15-check"> 채점할 때 — 자료를 안전하게 다루고, 채점 결과를 확인했다.</label>
+          <label><input type="checkbox" class="p15-check"> 마무리할 때 — 피드백을 쓰고, 반복되는 부분을 템플릿·스크립트로 남겼다.</label>
         </div>
 
-        <div class="status-box" id="p14-status">0 / 4 완료</div>
+        <div class="status-box" id="p15-status">0 / 4 완료</div>
       </div>
 
       <div class="callout tip">
@@ -86,9 +86,9 @@
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
-      <a class="back" href="13-code.html" style="margin:0;">
+      <a class="back" href="14-skills.html" style="margin:0;">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        이전 단계 · 코드 사용법
+        이전 단계 · Skills로 한글(HWP) 문서 다루기
       </a>
       <a class="back" href="index.html" style="margin:0; flex-direction:row-reverse;">
         전체 단계 목록으로
@@ -100,8 +100,8 @@
 </div>
 <script>
 (function () {
-  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p14-check'));
-  var status = document.getElementById('p14-status');
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p15-check'));
+  var status = document.getElementById('p15-status');
   function update() {
     var checked = boxes.filter(function (b) { return b.checked; }).length;
     status.textContent = checked + ' / ' + boxes.length + ' 완료';
