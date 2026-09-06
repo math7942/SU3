@@ -5,6 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>3단계 · 수업자료 제작 · 수학교사 1년 살이 · 수수의 수학</title>
 <link rel="stylesheet" href="../assets/site.css">
+<style>
+  .worksheet-preview {
+    display: none;
+    margin-top: 16px;
+    background: #fff;
+    color: #1b1830;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 28px 30px;
+  }
+  .worksheet-preview h2 { font-size: 1.15rem; margin: 0 0 6px; }
+  .worksheet-preview .ws-note { color: #555; font-size: 0.85rem; margin: 0 0 18px; }
+  .worksheet-preview ol { padding-left: 1.4em; margin: 0; }
+  .worksheet-preview li { margin-bottom: 16px; white-space: pre-wrap; }
+  @page { size: A4 portrait; margin: 16mm; }
+  @media print {
+    body * { visibility: hidden; }
+    #p3-sheet, #p3-sheet * { visibility: visible; }
+    #p3-sheet {
+      display: block !important;
+      position: absolute; top: 0; left: 0; width: 100%;
+      border: none; padding: 0;
+    }
+  }
+</style>
 </head>
 <body class="g4">
 <div class="page">
@@ -20,9 +45,75 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>아직 준비 중입니다</h3>
-      <p>Claude로 학생 중심 활동자료를 설계하는 가이드와, 완성된 자료를 이 사이트에 웹페이지로 게시하고 인쇄용 학습지로 내려받는 기능을 다음 업데이트에서 채울 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 학생 중심 활동 설계하기</h2>
+      <p>2단계까지 정한 평가계획서 내용을 붙여넣고, 도입-활동-정리 흐름으로 요청하면 그대로 쓸 수 있는 활동 설계안이 나옵니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"고1 수학, [10수학01-01] 다항식의 사칙연산 단원의 학생 중심 활동자료를 만들어줘. 4인 모둠 활동이고, 도입(5분)-활동(30분)-정리(10분) 흐름으로 짜줘. 활동은 직접 조작하거나 서로 설명하는 형태였으면 좋겠어."</p>
+      </div>
+
+      <h2>2. Claude·Gemini·ChatGPT 중 무엇을 쓸까</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead><tr><th>도구</th><th>기능</th><th>이 단계에서 활용법</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Claude</strong></td><td>Artifacts</td><td>활동 흐름을 설계하면서 바로 동작하는 학생용 웹페이지(활동지·인터랙티브 자료)까지 만들어 그대로 게시할 수 있습니다.</td></tr>
+            <tr><td>Gemini</td><td>Slides 사이드바</td><td>Slides 문서 안에서 바로 활동 슬라이드를 만들고 다듬습니다.</td></tr>
+            <tr><td>ChatGPT</td><td>이미지 생성</td><td>활동지에 들어갈 도형·그래프 삽화를 만드는 보조 용도로 유용합니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. 완성된 자료를 이 사이트에 올리기</h2>
+      <p>Claude에게 "Artifacts로 바로 실행되는 활동 웹페이지를 만들어줘"라고 요청하면 학생이 브라우저에서 바로 쓸 수 있는 결과물을 받습니다. 이 결과를 실제로 이 사이트에 올리려면, 그 코드를 가지고 Claude Code(사이트를 관리하는 세션)에게 "이 활동자료를 04-festival 폴더에 올려줘"라고 요청하세요 — 지금 이 페이지들도 같은 방식으로 만들어졌습니다.</p>
+
+      <div class="callout tip">
+        <h4>요청 예시</h4>
+        <p>"방금 만든 활동 웹페이지를 수수의 수학 사이트 04-festival 폴더에 올려줘. 파일 이름은 [단원명-활동]으로 하고, 3단계 페이지 목록에도 링크를 추가해줘."</p>
+      </div>
+
+      <h2>4. 학습지 만들어 인쇄하기</h2>
+      <p>모둠 활동과 별도로 개인이 풀 학습지가 필요하면, 아래에서 문항을 입력해 바로 인쇄할 수 있는 학습지를 만드세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>학습지 만들기</h4>
+        <p class="practice-desc">제목과 안내문, 문항을 입력하면 인쇄용 미리보기가 만들어집니다.</p>
+
+        <div class="field">
+          <label for="p3-title">학습지 제목</label>
+          <input type="text" id="p3-title" placeholder="예: 다항식의 사칙연산 활동지">
+        </div>
+        <div class="field">
+          <label for="p3-note">안내문 (선택)</label>
+          <input type="text" id="p3-note" placeholder="예: 모둠원과 상의하며 풀어보세요.">
+        </div>
+
+        <div id="p3-items"></div>
+        <div class="btn-row">
+          <button class="btn secondary" type="button" id="p3-add-item">+ 문항 추가</button>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn" type="button" id="p3-preview">미리보기 만들기</button>
+          <button class="btn secondary" type="button" id="p3-print">인쇄하기</button>
+        </div>
+
+        <div class="worksheet-preview" id="p3-sheet">
+          <h2 id="p3-sheet-title"></h2>
+          <p class="ws-note" id="p3-sheet-note"></p>
+          <ol id="p3-sheet-list"></ol>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <h4>인쇄가 안 될 때</h4>
+        <p>먼저 "미리보기 만들기"를 눌러 학습지 내용이 보이는지 확인한 뒤 "인쇄하기"를 누르세요. 브라우저 인쇄 대화상자에서 "배경 그래픽" 옵션을 켜면 화면과 같은 모습으로 인쇄됩니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +129,50 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var itemsEl = document.getElementById('p3-items');
+  var itemCount = 0;
+
+  function addItem(value) {
+    itemCount++;
+    var row = document.createElement('div');
+    row.className = 'field p3-item';
+    row.innerHTML = '<label>문항 ' + itemCount + '</label><textarea class="p3-item-text" rows="2" placeholder="문항 내용을 입력하세요"></textarea>';
+    if (value) row.querySelector('textarea').value = value;
+    itemsEl.appendChild(row);
+  }
+  addItem('');
+  addItem('');
+
+  document.getElementById('p3-add-item').addEventListener('click', function () { addItem(''); });
+
+  function buildPreview() {
+    var title = document.getElementById('p3-title').value.trim() || '학습지';
+    var note = document.getElementById('p3-note').value.trim();
+    document.getElementById('p3-sheet-title').textContent = title;
+    document.getElementById('p3-sheet-note').textContent = note;
+    document.getElementById('p3-sheet-note').style.display = note ? '' : 'none';
+
+    var list = document.getElementById('p3-sheet-list');
+    list.innerHTML = '';
+    document.querySelectorAll('.p3-item-text').forEach(function (ta) {
+      var text = ta.value.trim();
+      if (!text) return;
+      var li = document.createElement('li');
+      li.textContent = text;
+      list.appendChild(li);
+    });
+
+    document.getElementById('p3-sheet').style.display = 'block';
+  }
+
+  document.getElementById('p3-preview').addEventListener('click', buildPreview);
+  document.getElementById('p3-print').addEventListener('click', function () {
+    buildPreview();
+    window.print();
+  });
+})();
+</script>
 </body>
 </html>
