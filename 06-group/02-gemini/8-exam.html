@@ -20,9 +20,102 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 요청하기 전에 정할 것</h2>
+      <ul>
+        <li><strong>범위</strong> — 어느 단원, 어느 진도까지인지.</li>
+        <li><strong>문항 유형</strong> — 객관식·단답형·서술형 중 무엇을, 몇 개씩.</li>
+        <li><strong>난이도 분포</strong> — 상·중·하를 각각 몇 문항씩 섞을지.</li>
+        <li><strong>배점</strong> — 문항별 배점과 전체 총점.</li>
+      </ul>
+
+      <h2>2. 난이도 배분 계산기</h2>
+      <p>"쉬운 문제", "어려운 문제"라고만 말하면 기준이 애매합니다. 문항 수를 먼저 정리하고 요청하세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>난이도 배분 계산기</h4>
+        <p class="practice-desc">문항 수를 넣으면 객관식·서술형 합계와 난이도 합계가 맞는지 확인하고, 요청 프롬프트를 만들어줍니다.</p>
+
+        <div class="field">
+          <label for="p8a-unit">단원</label>
+          <input type="text" id="p8a-unit" placeholder="예: 고1 수학 이차함수 단원 중간고사">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p8a-mc">객관식 개수</label>
+            <input type="number" id="p8a-mc" min="0" value="5">
+          </div>
+          <div class="field">
+            <label for="p8a-essay">서술형 개수</label>
+            <input type="number" id="p8a-essay" min="0" value="2">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p8a-low">하 (개)</label>
+            <input type="number" id="p8a-low" min="0" value="2">
+          </div>
+          <div class="field">
+            <label for="p8a-mid">중 (개)</label>
+            <input type="number" id="p8a-mid" min="0" value="3">
+          </div>
+          <div class="field">
+            <label for="p8a-high">상 (개)</label>
+            <input type="number" id="p8a-high" min="0" value="2">
+          </div>
+        </div>
+
+        <p class="count-hint" id="p8a-hint"></p>
+        <div class="result-box" id="p8a-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p8a-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>3. 서술형 문항과 채점 기준 만들기</h2>
+      <p>서술형은 풀이 과정을 평가하는 문항이므로, 요청할 때부터 이 점을 분명히 밝혀야 합니다. 채점 기준도 단계를 나눠 배점하면 부분 점수를 주기 쉽습니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"고2 수학Ⅰ 지수함수 단원, 서술형 문항 1개를 만들어줘. 배점은 5점이고, 풀이 과정을 반드시 쓰도록 문제에 안내해줘. 이어서 배점 5점을 단계별로 나눈 채점 기준표도 만들어줘."</p>
+      </div>
+
+      <h2>4. 배점 자동 분배기</h2>
+      <p>문항 총점을 넣으면 개념 적용·계산 과정·결론 명시 비율(2:2:1)로 배점을 나누고, 요청 프롬프트까지 만들어줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>배점 자동 분배기</h4>
+        <p class="practice-desc">문항 총점을 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p8b-total">문항 총 배점</label>
+          <input type="number" id="p8b-total" min="1" value="5">
+        </div>
+
+        <div class="result-box" id="p8b-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p8b-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>5. 기출문제를 변형할 때</h2>
+      <div class="callout warn">
+        <h4>기출문제를 그대로 배포하지 마세요</h4>
+        <p>모의고사·기출문제는 저작권이 있는 경우가 많습니다. "아래 문제와 같은 유형·난이도로 숫자와 소재만 바꾼 문제를 만들어줘"처럼 구조만 참고해 새 문제로 다시 만들어 쓰세요.</p>
+      </div>
+
+      <h2>6. 만든 문제 점검하기</h2>
+      <ul>
+        <li>4단계에서 배운 대로, 모든 문제를 직접 풀어보고 정답을 확인합니다.</li>
+        <li>문항별 배점을 더해 전체 총점과 맞는지 확인합니다.</li>
+        <li>단계별 배점을 더하면 문항 전체 배점과 정확히 맞는지 확인합니다.</li>
+      </ul>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +131,86 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var ids = ['p8a-unit', 'p8a-mc', 'p8a-essay', 'p8a-low', 'p8a-mid', 'p8a-high'];
+  var out = document.getElementById('p8a-result');
+  var hint = document.getElementById('p8a-hint');
+  function num(id) { var n = parseInt(document.getElementById(id).value, 10); return isNaN(n) ? 0 : n; }
+  function update() {
+    var unit = document.getElementById('p8a-unit').value.trim() || '[단원]';
+    var mc = num('p8a-mc'), essay = num('p8a-essay');
+    var low = num('p8a-low'), mid = num('p8a-mid'), high = num('p8a-high');
+    var totalItems = mc + essay;
+    var totalDiff = low + mid + high;
+    if (totalItems !== totalDiff) {
+      hint.textContent = '문항 수 합계(' + totalItems + ')와 난이도 합계(' + totalDiff + ')가 다릅니다. 맞춰보세요.';
+      hint.className = 'count-hint over';
+    } else {
+      hint.textContent = '문항 수와 난이도 합계가 일치합니다 (총 ' + totalItems + '문항).';
+      hint.className = 'count-hint';
+    }
+    out.textContent =
+      unit + ' 문제를 만들어줘. 객관식 ' + mc + '개, 서술형 ' + essay + '개, ' +
+      '난이도는 하 ' + low + '개·중 ' + mid + '개·상 ' + high + '개로 섞어줘. ' +
+      '각 문제에 배점과 정답, 난이도를 표로 정리해줘.';
+  }
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+  });
+  update();
+
+  function wireCopy(btnId, outEl) {
+    var copyBtn = document.getElementById(btnId);
+    if (!copyBtn) return;
+    copyBtn.addEventListener('click', function () {
+      var text = outEl.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+
+  wireCopy('p8a-copy', out);
+
+  var out2 = document.getElementById('p8b-result');
+  function round5(n) { return Math.round(n * 2) / 2; }
+  function update2() {
+    var totalRaw = parseFloat(document.getElementById('p8b-total').value);
+    var total = isNaN(totalRaw) || totalRaw <= 0 ? 5 : totalRaw;
+    var concept = round5(total * 2 / 5);
+    var calc = round5(total * 2 / 5);
+    var conclusion = round5(total - concept - calc);
+    out2.textContent =
+      '단계별 배점 제안 — 개념 적용 ' + concept + '점 · 계산 과정 ' + calc + '점 · 결론 명시 ' + conclusion + '점\n\n' +
+      '"방금 만든 문항의 채점 기준표를 만들어줘. 배점 ' + total + '점을 개념 적용 ' + concept + '점, 계산 과정 ' + calc + '점, 결론 명시 ' + conclusion + '점으로 나누고, 각 단계에서 부분 점수를 주는 기준을 구체적으로 써줘."';
+  }
+  var input2 = document.getElementById('p8b-total');
+  if (input2) input2.addEventListener('input', update2);
+  update2();
+
+  wireCopy('p8b-copy', out2);
+})();
+</script>
 </body>
 </html>

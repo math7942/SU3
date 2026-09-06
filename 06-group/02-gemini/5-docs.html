@@ -20,9 +20,69 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. @Docs로 기존 문서 불러오기</h2>
+      <p>입력창에 "@"을 입력하면 내 구글 드라이브의 문서 목록이 뜹니다. 원하는 문서를 선택하면 그 내용이 대화 안으로 들어와, 제미나이가 문서 내용을 참고해서 답합니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"@지난 학기 평가계획서.docx 이 문서를 참고해서, 이번 학기 성취기준에 맞게 단원과 배점만 새로 짜줘. 나머지 형식은 그대로 유지해줘."</p>
+      </div>
+
+      <h2>2. 새 문서 초안 만들기</h2>
+      <p>제미나이 답변 오른쪽 위의 "Docs로 내보내기" 버튼을 누르면, 대화 내용이 곧바로 새 구글 문서로 만들어집니다. 표나 목록도 서식이 그대로 옮겨집니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>평가계획서 프롬프트 만들어보기</h4>
+        <p class="practice-desc">우리 학교 조건을 넣으면 바로 쓸 수 있는 프롬프트가 완성됩니다. 성취기준 원문은 직접 붙여넣어야 합니다.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p5-grade">학년·과목</label>
+            <input type="text" id="p5-grade" placeholder="예: 중학교 2학년 수학">
+          </div>
+          <div class="field">
+            <label for="p5-term">학기</label>
+            <select id="p5-term">
+              <option value="1학기">1학기</option>
+              <option value="2학기" selected>2학기</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p5-paper">지필평가 비율 (%)</label>
+            <input type="number" id="p5-paper" min="0" max="100" value="70">
+          </div>
+          <div class="field">
+            <label for="p5-type">수행평가 형태</label>
+            <input type="text" id="p5-type" placeholder="예: 서술형 수행과제">
+          </div>
+        </div>
+
+        <div class="result-box" id="p5-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p5-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>3. 기존 문서 다듬기</h2>
+      <p>@Docs로 불러온 문서에 이어서 "이 부분만 고쳐줘"처럼 요청하면, 문서 전체를 다시 쓰지 않고 필요한 부분만 수정한 결과를 받을 수 있습니다.</p>
+      <ul>
+        <li>"3번 단원의 배점만 5점씩 늘려줘"</li>
+        <li>"평가 요소 설명을 학부모도 이해하기 쉬운 문장으로 바꿔줘"</li>
+        <li>"이 문서를 표 형식으로 다시 정리해줘"</li>
+      </ul>
+
+      <h2>4. 주의할 점</h2>
+      <div class="callout warn">
+        <h4>원본을 먼저 확인하세요</h4>
+        <p>제미나이가 만든 초안을 원본 문서에 바로 덮어쓰기 전에, 구글 문서의 "버전 기록" 기능으로 이전 내용을 복원할 수 있는지 확인해두세요. 그리고 4단계에서 배운 대로, 배점 합계나 성취기준 코드가 원문과 일치하는지 반드시 검증하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +98,58 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var ids = ['p5-grade', 'p5-term', 'p5-paper', 'p5-type'];
+  var out = document.getElementById('p5-result');
+  function update() {
+    var grade = document.getElementById('p5-grade').value.trim() || '[학년·과목]';
+    var term = document.getElementById('p5-term').value;
+    var paperRaw = parseFloat(document.getElementById('p5-paper').value);
+    var paper = isNaN(paperRaw) ? 70 : Math.max(0, Math.min(100, paperRaw));
+    var perf = 100 - paper;
+    var type = document.getElementById('p5-type').value.trim() || '[수행평가 형태]';
+    out.textContent =
+      '나는 ' + grade + ' 교사야. ' + term + ' 평가계획서 초안을 만들어줘. ' +
+      '지필평가 ' + paper + '%, 수행평가 ' + perf + '%로 구성하고, 수행평가는 ' + type + '로 설계해줘. ' +
+      '평가 요소·배점·시기를 표로 정리해줘.\n\n[여기에 성취기준 원문을 붙여넣으세요]';
+  }
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p5-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
