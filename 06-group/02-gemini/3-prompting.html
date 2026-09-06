@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3단계 · 질문을 잘하는 법 · Gemini · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Gemini
+    </a>
+    <span class="badge" aria-hidden="true">✍️</span>
+    <h1>3단계 · 질문을 잘하는 법</h1>
+    <p>학년·단원·목적·형식을 넣어 구체적으로 요청하는 프롬프트 기초입니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 좋은 질문의 네 가지 재료</h2>
+      <p>제미나이는 물어본 만큼만 알고 답합니다. 아래 네 가지를 채워 물으면 처음부터 쓸 만한 답이 나옵니다.</p>
+      <ul>
+        <li><strong>역할</strong> — 제미나이가 어떤 입장에서 답하면 좋을지. 예: "고등학교 수학 교사를 돕는 조수로서 답해줘"</li>
+        <li><strong>맥락</strong> — 학년, 과목, 단원, 학생 수준 같은 배경 정보. 예: "고1 수학, 이차함수 단원, 중하위권 학생 대상"</li>
+        <li><strong>목적</strong> — 결과를 어디에 쓸 건지. 예: "수행평가 채점 기준으로 쓸 거야"</li>
+        <li><strong>형식</strong> — 결과를 어떤 모양으로 받고 싶은지. 예: "표로 정리해줘", "5문항만", "학생이 읽기 쉬운 문장으로"</li>
+      </ul>
+
+      <h2>2. 막연한 질문과 구체적인 질문 비교</h2>
+      <p>같은 업무라도 네 가지 재료를 채우면 결과가 크게 달라집니다.</p>
+
+      <h3>시험문제를 만들 때</h3>
+      <div class="callout warn">
+        <h4>이렇게 묻지 마세요</h4>
+        <p>"이차함수 문제 좀 만들어줘."</p>
+      </div>
+      <div class="callout tip">
+        <h4>이렇게 물어보세요</h4>
+        <p>"고1 수학 이차함수 단원, 중간고사 수준으로 서술형 문제 3개를 만들어줘. 각 문제는 배점과 함께 표로 정리해줘."</p>
+      </div>
+
+      <h3>학생 피드백을 쓸 때</h3>
+      <div class="callout warn">
+        <h4>이렇게 묻지 마세요</h4>
+        <p>"피드백 문구 써줘."</p>
+      </div>
+      <div class="callout tip">
+        <h4>이렇게 물어보세요</h4>
+        <p>"이 학생은 계산 실수는 적지만 풀이 과정을 생략하는 편이야. 생기부에 쓸 수 있는 격려하는 어조의 피드백을 3문장으로 써줘."</p>
+      </div>
+
+      <h2>3. 나만의 프롬프트 템플릿</h2>
+      <p>매번 새로 고민하지 않도록, 아래 틀에 괄호만 채워서 써보세요.</p>
+
+      <div class="callout">
+        <h4>기본 템플릿</h4>
+        <p>"나는 [학년·과목]을 가르치는 수학 교사야. [단원·주제]에 대해 [목적]을 위한 [결과물]을 만들어줘. [형식 조건]. [추가로 신경 쓸 점]."</p>
+      </div>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>내 프롬프트 만들어보기</h4>
+        <p class="practice-desc">빈칸을 채우면 바로 복사해서 쓸 수 있는 프롬프트가 완성됩니다.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p3-grade">학년·과목</label>
+            <input type="text" id="p3-grade" placeholder="예: 중학교 2학년 수학">
+          </div>
+          <div class="field">
+            <label for="p3-topic">단원·주제</label>
+            <input type="text" id="p3-topic" placeholder="예: 연립방정식 단원">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="p3-purpose">목적</label>
+            <input type="text" id="p3-purpose" placeholder="예: 형성평가">
+          </div>
+          <div class="field">
+            <label for="p3-output">결과물</label>
+            <input type="text" id="p3-output" placeholder="예: 단답형 문제 5개">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p3-format">형식 조건</label>
+          <input type="text" id="p3-format" placeholder="예: 문제와 정답을 표로 정리해줘">
+        </div>
+
+        <div class="result-box" id="p3-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p3-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>4. 답을 다듬어가기</h2>
+      <p>처음 받은 답은 완성본이 아니라 초안입니다. 같은 대화에서 이어서 요청하며 다듬으세요.</p>
+      <ul>
+        <li>"난이도를 조금 낮춰줘" — 문제나 설명이 너무 어려울 때</li>
+        <li>"표로 바꿔줘" / "번호를 매겨줘" — 형식을 바꾸고 싶을 때</li>
+        <li>"이 부분만 다시 써줘" — 전체가 아니라 일부만 고치고 싶을 때</li>
+        <li>"학생이 읽는다는 걸 생각해서 더 친절한 말투로 바꿔줘" — 톤을 바꾸고 싶을 때</li>
+      </ul>
+
+      <div class="callout warn">
+        <h4>자주 하는 실수</h4>
+        <p>한 프롬프트에 시험문제·채점기준·피드백을 한꺼번에 요청하면 각 항목이 부실해지기 쉽습니다. 한 번에 한 가지씩, 배경 정보와 형식을 함께 요청하세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="2-signup.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 가입과 화면 익히기
+      </a>
+      <a class="back" href="4-verify.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 답을 검증하는 법
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var ids = ['p3-grade', 'p3-topic', 'p3-purpose', 'p3-output', 'p3-format'];
+  var out = document.getElementById('p3-result');
+  function update() {
+    var v = {};
+    ids.forEach(function (id) { v[id] = document.getElementById(id).value.trim(); });
+    out.textContent =
+      '나는 ' + (v['p3-grade'] || '[학년·과목]') + '을 가르치는 수학 교사야. ' +
+      (v['p3-topic'] || '[단원·주제]') + '에 대해 ' +
+      (v['p3-purpose'] || '[목적]') + '을 위한 ' +
+      (v['p3-output'] || '[결과물]') + '을 만들어줘. ' +
+      (v['p3-format'] || '[형식 조건]') + '.';
+  }
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p3-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
+</body>
+</html>

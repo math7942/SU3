@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2단계 · 가입과 화면 익히기 · Gemini · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Gemini
+    </a>
+    <span class="badge" aria-hidden="true">🔑</span>
+    <h1>2단계 · 가입과 화면 익히기</h1>
+    <p>구글 계정으로 시작하기, 화면 구성, Flash/Pro 모델 차이를 알아봅니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 시작하기</h2>
+      <p>제미나이는 구글 계정만 있으면 별도 가입 없이 바로 쓸 수 있습니다.</p>
+      <ol>
+        <li>브라우저에서 <strong><a href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com</a></strong>에 접속합니다.</li>
+        <li>개인 구글 계정 또는 학교 구글 워크스페이스 계정으로 로그인합니다.</li>
+        <li>로그인하면 바로 대화 화면으로 이동합니다.</li>
+      </ol>
+
+      <div class="btn-row">
+        <a class="btn" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com 열기 ↗</a>
+      </div>
+
+      <div class="callout warn">
+        <h4>학교 계정은 관리자 설정을 확인하세요</h4>
+        <p>학교 구글 워크스페이스 계정으로 로그인이 안 되거나 기능이 제한된다면, 학교 관리자가 제미나이 사용을 아직 켜두지 않았을 수 있습니다. 이런 경우 개인 지메일 계정으로도 무료로 이용할 수 있습니다.</p>
+      </div>
+
+      <h2>2. 화면 구성 익히기</h2>
+      <p>가입하면 보이는 화면은 크게 다섯 부분으로 나눌 수 있습니다.</p>
+      <ul>
+        <li><strong>새 대화</strong> — 화면 왼쪽 위 버튼입니다. 학급이나 단원이 바뀌면 새 대화로 시작하는 것이 정리하기 편합니다.</li>
+        <li><strong>기록(사이드바)</strong> — 지금까지 나눈 대화가 자동으로 저장됩니다. 목록에서 눌러 언제든 이어서 쓸 수 있습니다.</li>
+        <li><strong>메시지 입력창</strong> — 질문을 적고 Enter로 보냅니다. 줄만 바꾸고 싶을 땐 Shift+Enter를 씁니다.</li>
+        <li><strong>파일·이미지 첨부(클립 아이콘)</strong> — 시험지 사진, PDF 등을 함께 올릴 수 있습니다. 자세한 활용법은 10단계에서 다룹니다.</li>
+        <li><strong>도구·모델 선택</strong> — 입력창 근처에서 어떤 모델로 답을 받을지, 이미지 생성 같은 도구를 쓸지 고를 수 있습니다.</li>
+      </ul>
+
+      <h2>3. 모델 고르기 — Flash · Pro</h2>
+      <p>제미나이에는 성격이 다른 두 모델이 있습니다. 업무의 무게에 따라 골라 쓰면 됩니다.</p>
+
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>모델</th><th>특징</th><th>수학교사에게 맞는 상황</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Flash</td><td>빠르고 가벼움 (기본값)</td><td>평가계획서, 시험문제, 안내문 작성 등 대부분의 일상 업무</td></tr>
+            <tr><td>Pro</td><td>가장 깊이 생각함</td><td>어려운 문제 풀이 검증, 긴 자료 분석처럼 신중해야 하는 업무</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>어떤 모델을 써야 할까?</h4>
+        <p class="practice-desc">지금 하려는 업무를 골라보면 추천 모델과 이유를 알려드립니다.</p>
+        <div class="field">
+          <label for="model-task">지금 하려는 업무</label>
+          <select id="model-task">
+            <option value="">선택하세요</option>
+            <option value="daily">평가계획서·시험문제·안내문처럼 매일 하는 업무</option>
+            <option value="hard">어려운 문제 풀이 검증, 긴 보고서·자료 분석</option>
+          </select>
+        </div>
+        <div class="result-box" id="model-result"></div>
+      </div>
+
+      <h2>4. 첫 대화 나눠보기</h2>
+      <p>지금 새 대화를 열고 아래 문장을 그대로 입력해보세요.</p>
+
+      <div class="callout">
+        <h4>연습 프롬프트</h4>
+        <p>"안녕, 나는 고등학교 2학년 수학Ⅰ을 가르치는 교사야. 앞으로 평가계획서, 시험문제, 학생 피드백 작성을 도와달라고 할 거야. 먼저 간단히 인사하고, 네가 나를 어떻게 도울 수 있는지 3가지만 알려줘."</p>
+      </div>
+
+      <div class="callout tip">
+        <h4>제미나이만의 특징 — @로 구글 앱 불러오기</h4>
+        <p>입력창에 "@"을 입력하면 구글 문서, 시트, 드라이브의 파일을 대화 안으로 바로 불러올 수 있습니다. 이 기능은 5~7단계(Docs·Sheets·Slides 연동)에서 본격적으로 사용합니다.</p>
+      </div>
+
+      <div class="callout warn">
+        <h4>아직 학생 자료는 올리지 마세요</h4>
+        <p>학생 이름이나 답안 사진을 업로드하기 전에 꼭 9단계 "학생 자료 안전하게 다루기"를 먼저 읽어주세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="1-map.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 기능 지도
+      </a>
+      <a class="back" href="3-prompting.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 질문을 잘하는 법
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var data = {
+    daily: "Flash — 빠르고 가벼운 기본 모델로, 대부분의 일상 업무에 알맞습니다.",
+    hard: "Pro — 가장 깊이 생각하는 모델이라 신중한 검증이나 긴 자료 분석이 필요한 업무에 적합합니다."
+  };
+  var sel = document.getElementById('model-task');
+  var out = document.getElementById('model-result');
+  if (sel) {
+    sel.addEventListener('change', function () {
+      out.textContent = data[sel.value] || '';
+    });
+  }
+})();
+</script>
+</body>
+</html>
