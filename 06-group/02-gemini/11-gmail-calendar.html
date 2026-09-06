@@ -20,9 +20,61 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Gmail에서 제미나이 쓰기</h2>
+      <p>Gmail 화면 오른쪽의 제미나이 아이콘을 누르면 옆에 대화 패널이 열립니다. "이메일 작성 도와줘"라고 요청하면 초안을 바로 메일 본문에 넣어줍니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"2학기 중간고사 시험범위를 안내하는 학부모 대상 이메일 초안을 써줘. 정중하고 간결한 톤으로, 인사말과 마무리 인사를 포함해줘."</p>
+      </div>
+
+      <h2>2. 학부모 안내 메일 프롬프트 만들어보기</h2>
+      <p>안내 목적과 핵심 내용, 마감일을 넣으면 요청 프롬프트가 완성됩니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>안내 메일 프롬프트 만들어보기</h4>
+        <p class="practice-desc">개인정보(학부모 이름, 연락처 등)는 넣지 말고 안내 내용만 입력하세요.</p>
+
+        <div class="field">
+          <label for="p11a-purpose">안내 목적</label>
+          <input type="text" id="p11a-purpose" placeholder="예: 2학기 중간고사 시험범위 안내">
+        </div>
+        <div class="field">
+          <label for="p11a-detail">핵심 내용</label>
+          <textarea id="p11a-detail" placeholder="예: 시험 범위는 1~3단원, 시험일은 10월 15일"></textarea>
+        </div>
+        <div class="field">
+          <label for="p11a-tone">톤</label>
+          <select id="p11a-tone">
+            <option value="정중하고 간결한">정중하고 간결한</option>
+            <option value="친근하고 편안한">친근하고 편안한</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p11a-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p11a-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://gemini.google.com" target="_blank" rel="noopener">gemini.google.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <h2>3. Calendar에 일정 자동 등록하기</h2>
+      <p>제미나이에게 일정을 말로 알려주면 구글 캘린더에 바로 등록해달라고 요청할 수 있습니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"다음 일정을 캘린더에 등록해줘. 시험범위 발표 10월 1일, 수행평가 마감 10월 20일, 중간고사 10월 25일부터 27일까지."</p>
+      </div>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>발송 전에 꼭 검토하세요</h4>
+        <p>학부모 이름, 전화번호, 이메일 같은 개인정보는 프롬프트에 직접 넣지 마세요. 초안이 나오면 오탈자와 날짜가 정확한지 확인한 뒤 직접 발송 버튼을 눌러야 합니다. 제미나이가 자동으로 메일을 보내지는 않습니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +90,54 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p11a-result');
+  function update() {
+    var purpose = document.getElementById('p11a-purpose').value.trim() || '[안내 목적]';
+    var detail = document.getElementById('p11a-detail').value.trim() || '[핵심 내용]';
+    var tone = document.getElementById('p11a-tone').value;
+    out.textContent =
+      purpose + '을 안내하는 학부모 대상 이메일 초안을 써줘. ' +
+      '핵심 내용은 다음과 같아: ' + detail + '. ' +
+      tone + ' 톤으로, 인사말과 마무리 인사를 포함해줘.';
+  }
+  ['p11a-purpose', 'p11a-detail', 'p11a-tone'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p11a-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
