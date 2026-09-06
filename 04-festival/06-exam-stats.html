@@ -20,9 +20,65 @@
   </header>
 
   <main>
-    <div class="blank">
-      <h3>아직 준비 중입니다</h3>
-      <p>나이스에서 받은 정오표·문항분석표를 ChatGPT의 Advanced Data Analysis 같은 기능에 올려 평균·표준편차·변별도·성취도(A~E) 분포를 계산하고 해설을 받는 가이드를 다음 업데이트에서 채울 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 업로드 전에 개인정보를 반드시 지우세요</h2>
+      <p>나이스에서 받은 정오표·문항분석표에는 학생 이름·번호가 들어 있는 경우가 많습니다. 엑셀에서 이름·번호 열을 삭제하거나 가린 뒤 올리세요. 통계 계산에는 점수와 정오 여부만 있으면 되고, 개인정보는 필요하지 않습니다.</p>
+
+      <div class="callout warn">
+        <h4>파일을 열어 눈으로 한 번 더 확인하세요</h4>
+        <p>AI에게 "개인정보는 빼고 알려줘"라고 요청하는 것만으로는 충분하지 않습니다. 업로드하기 전에 엑셀을 직접 열어 이름·번호 열이 실제로 지워졌는지 확인하세요.</p>
+      </div>
+
+      <h2>2. 통계 분석 요청하기</h2>
+      <p>개인정보를 지운 파일을 올리고, 필요한 통계 항목을 구체적으로 요청하세요. 코드를 실제로 실행해 계산하는 기능(ChatGPT의 Advanced Data Analysis 등)을 쓰면 암산이 아니라 정확한 계산 결과를 받을 수 있습니다.</p>
+
+      <div class="callout tip">
+        <h4>프롬프트 예시</h4>
+        <p>"올린 파일은 이번 지필평가 정오표야. 이 파일로 평균, 표준편차, 문항별 변별도, 성취도(A~E) 분포비율을 코드를 실행해서 정확히 계산해줘. 그리고 이번 시험이 전반적으로 어땠는지, 다음 시험에서 신경 쓸 점이 있는지도 알려줘."</p>
+      </div>
+
+      <h2>3. Claude·Gemini·ChatGPT 중 무엇을 쓸까</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead><tr><th>도구</th><th>기능</th><th>이 단계에서 활용법</th></tr></thead>
+          <tbody>
+            <tr><td>Claude</td><td>분석 도구(코드 실행)</td><td>업로드한 엑셀을 코드로 직접 계산해 통계표를 만들고, 결과를 과장 없이 신중하게 해설합니다.</td></tr>
+            <tr><td>Gemini</td><td>Sheets 확장 프로그램</td><td>Sheets에 업로드해 수식으로 계산하거나 Gemini의 코드 실행 기능으로 처리합니다.</td></tr>
+            <tr><td><strong>ChatGPT</strong></td><td>Advanced Data Analysis</td><td>엑셀 업로드 후 실제 파이썬 코드를 실행해 평균·표준편차·변별도 등을 정확히 계산하고 그래프까지 그려줍니다 — 이 용도로 가장 널리 검증된 기능입니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>통계 분석 요청 프롬프트 만들기</h4>
+        <p class="practice-desc">필요한 통계 항목을 고르면 파일과 함께 붙여넣을 프롬프트가 완성됩니다.</p>
+
+        <div class="field">
+          <label for="p6-exam">시험 이름</label>
+          <input type="text" id="p6-exam" placeholder="예: 2학기 중간고사 수학Ⅰ">
+        </div>
+        <div class="field">
+          <label>필요한 통계 항목</label>
+          <label style="display:block; font-weight:400; margin-bottom:4px;"><input type="checkbox" class="p6-item" value="평균·표준편차" checked> 평균·표준편차</label>
+          <label style="display:block; font-weight:400; margin-bottom:4px;"><input type="checkbox" class="p6-item" value="문항별 변별도" checked> 문항별 변별도</label>
+          <label style="display:block; font-weight:400; margin-bottom:4px;"><input type="checkbox" class="p6-item" value="성취도(A~E) 분포비율" checked> 성취도(A~E) 분포비율</label>
+          <label style="display:block; font-weight:400;"><input type="checkbox" class="p6-item" value="난이도별 정답률"> 난이도별 정답률</label>
+        </div>
+
+        <div class="result-box" id="p6-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p6-copy">프롬프트 복사하기</button>
+          <a class="btn secondary" href="https://chatgpt.com" target="_blank" rel="noopener">chatgpt.com에서 써보기 ↗</a>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <h4>신뢰도·타당도는 조건부입니다</h4>
+        <p>신뢰도(문항내적일관성)·타당도는 문항별 개별 응답 자료가 있어야 계산할 수 있습니다. 정답률표·도수분포표만으로는 계산되지 않을 수 있으니, 나이스에서 문항별 응답 자료까지 받아왔는지 먼저 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +94,52 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p6-result');
+  function update() {
+    var exam = document.getElementById('p6-exam').value.trim() || '[시험 이름]';
+    var items = [];
+    document.querySelectorAll('.p6-item:checked').forEach(function (el) { items.push(el.value); });
+    if (!items.length) items.push('평균·표준편차');
+    out.textContent =
+      '올린 파일은 ' + exam + ' 정오표야. 이 파일로 다음을 코드를 실행해서 정확히 계산해줘: ' +
+      items.join(', ') + '. 그리고 이번 시험이 전반적으로 어땠는지, ' +
+      '다음 시험에서 신경 쓸 점이 있는지도 알려줘.';
+  }
+  document.getElementById('p6-exam').addEventListener('input', update);
+  document.querySelectorAll('.p6-item').forEach(function (el) { el.addEventListener('change', update); });
+  update();
+
+  var copyBtn = document.getElementById('p6-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
