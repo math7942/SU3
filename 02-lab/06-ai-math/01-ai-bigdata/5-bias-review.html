@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5차시 · 데이터 편향과 단원 정리 · 인공지능과 빅데이터</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<style>
+  .quiz-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; font-size: 0.9rem; }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.correct { background: var(--ok-bg); border-color: var(--ok-line); font-weight: 700; }
+  .quiz-opt.wrong { background: #fbe9ee; border-color: #e8b4c4; }
+  .case-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 10px 0; }
+  .case-card h4 { margin: 0 0 8px; font-size: 0.98rem; color: var(--accent-dark); }
+  .case-card .tag { display: inline-block; font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
+  .unit-recap { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 10px 0; }
+  .recap-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 0.84rem; }
+  .recap-card .num { font-weight: 900; color: var(--accent-dark); font-size: 0.78rem; }
+  .recap-card h5 { margin: 4px 0 6px; font-size: 0.92rem; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 빅데이터
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-what-is-ai.html">1차시</a>
+      <a class="session-tab" href="2-perceptron.html">2차시</a>
+      <a class="session-tab" href="3-logic-gates.html">3차시</a>
+      <a class="session-tab" href="4-bigdata.html">4차시</a>
+      <a class="session-tab current" href="5-bias-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅰ단원 · 5 / 5차시</span>
+    <h1>데이터 편향과 단원 정리</h1>
+    <p class="sub">인공지능의 판단이 한쪽으로 치우치는 데이터 편향성 문제를 사례로 살펴보고, Ⅰ단원에서 배운 내용을 문제 풀이로 정리합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>데이터 편향성의 의미를 알고 실제 사례를 설명할 수 있다.</li>
+        <li>데이터 편향을 최소화하기 위해 노력해야 하는 이유를 말할 수 있다.</li>
+        <li>Ⅰ단원에서 배운 인공지능·퍼셉트론·빅데이터 개념을 종합적으로 적용할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>인공지능의 판단은 항상 공정할까?</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>데이터 편향성 사례 살펴보기</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>Ⅰ단원 정리 퀴즈</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>Ⅰ단원 되돌아보기</td><td class="time">10분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>인공지능의 판단은 항상 공정할까?</h2>
+    <p class="lead">빅데이터를 효과적으로 분석하고 처리하면 미래를 예측하고 의사를 결정하는 데 도움이 됩니다. 하지만 인공지능이 예측·추론한 값을 신뢰하려면 인공지능이 학습한 <strong>원본 데이터의 양과 질</strong>이 매우 중요합니다.</p>
+    <div class="qbox"><strong>데이터 편향성</strong> : 인공지능이 인간의 주관적인 판단이 들어간 입력 데이터를 학습하여 판단 결과가 한쪽으로 치우치거나 왜곡되는 것.</div>
+    <textarea class="think" placeholder="주변에서 데이터의 편향성에 따라 인공지능의 추론이 왜곡된 예를 찾아 적어 보세요"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>데이터 편향성 사례 살펴보기</h2>
+    <p class="lead">데이터는 인공지능이 학습하는 수단이자 도구이기 때문에, 원본 데이터에 존재하는 편향이나 불균형은 인공지능에서도 그대로 나타납니다.</p>
+
+    <div class="case-card">
+      <span class="tag">사례 1 · 불균형적인 데이터를 학습한 경우</span>
+      <h4>하얀 백조만 학습한 인공지능</h4>
+      <p style="font-size:0.86rem;">인공지능에게 백조를 학습시키면서 하얀 백조 이미지만 제공했다면, 인공지능은 검은 백조를 백조로 인식하지 못하는 편향성을 보일 것입니다. 실제로 서양권에서 개발한 얼굴 인식 시스템은 백인 남성을 가장 잘 인식한다고 알려져 있습니다.</p>
+    </div>
+
+    <div class="case-card">
+      <span class="tag">사례 2 · 사회적 차별을 학습한 경우</span>
+      <h4>여성 지원자를 차별한 AI 채용 시스템</h4>
+      <p style="font-size:0.86rem;">2018년 한 다국적 기업이 10년간의 데이터를 바탕으로 지원자의 이력서를 검토하는 인공지능 채용 시스템을 도입했는데, 여성보다 남성 지원자를 선호한다는 것이 발견되었습니다. 이 기업은 개발직군이 전체 직원의 70% 이상이었고 그중 남성이 훨씬 많아, 성과 높은 직원의 데이터를 학습한 인공지능이 '여성'이라는 단어가 포함된 이력서에 감점을 준 것입니다. 이후 특정 용어에 중립적으로 평가하도록 개선했지만 같은 문제가 반복되지 않으리라는 확신을 주지 못해, 결국 이 시스템은 폐기되었습니다.</p>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 데이터 편향을 줄이려면?</button>
+      <div class="reveal-content tip hidden">
+        <p>빅데이터가 완벽하고 정교하며 다양성을 공정하게 담고 있기는 매우 어렵습니다. 원본 데이터의 편향이 인공지능의 판단이나 예측에도 편향을 일으킬 수 있음을 인식하고, 데이터를 정제하여 데이터 편향성을 최소화하려는 노력이 항상 필요합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>Ⅰ단원 정리 퀴즈</h2>
+    <p class="lead">지금까지 배운 인공지능, 퍼셉트론, 빅데이터 개념을 문제로 정리해 봅시다.</p>
+    <div class="widget">
+      <div class="widget-title">단원 마무리 문제</div>
+      <div id="quizWrap"></div>
+      <div class="readout">
+        <div class="cell"><div class="k">맞힌 개수</div><div class="v" id="quizScore">0 / 5</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 10분</span>
+    <h2>Ⅰ단원 되돌아보기</h2>
+    <p class="lead">Ⅰ단원 '인공지능과 빅데이터'에서 다룬 5개 차시의 핵심 내용을 정리하면 다음과 같습니다.</p>
+    <div class="unit-recap">
+      <div class="recap-card"><div class="num">1차시</div><h5>인공지능이란?</h5>데이터·모델·학습, 지도·비지도·강화학습, AI⊃ML⊃DL</div>
+      <div class="recap-card"><div class="num">2차시</div><h5>퍼셉트론</h5>가중치·임곗값·활성화함수로 출력 $y$ 계산하기</div>
+      <div class="recap-card"><div class="num">3차시</div><h5>논리 연산</h5>OR·AND 구현, XOR의 한계와 다층 퍼셉트론</div>
+      <div class="recap-card"><div class="num">4차시</div><h5>빅데이터</h5>정형·비정형 데이터, 5V, 사회 문제 해결 사례, 알고리즘</div>
+      <div class="recap-card"><div class="num">5차시</div><h5>데이터 편향</h5>편향성의 의미와 사례, 편향을 줄이려는 노력</div>
+    </div>
+    <div class="qbox">다음 Ⅱ단원 '자료의 표현'에서는 이미지와 데이터를 벡터와 행렬로 표현하는 방법을 배웁니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>Ⅰ단원을 마치며</h2>
+    <p>인공지능의 개념과 학습 방법, 퍼셉트론의 계산 원리, 빅데이터의 특징과 활용 사례, 데이터 편향 문제까지 살펴보았습니다. 수고 많았습니다!</p>
+    <div class="next">Ⅰ단원 완료 — Ⅱ단원 '자료의 표현'으로 이동하려면 목록으로 돌아가세요.</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="4-bigdata.html">← 4차시 — 빅데이터와 인공지능</a>
+    <a href="index.html">Ⅰ단원 목록으로 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const quizItems = [
+    { text: '다음 중 인공지능(AI), 기계학습(ML), 딥러닝(DL)의 포함 관계로 옳은 것은?',
+      opts: ['AI ⊃ ML ⊃ DL', 'ML ⊃ AI ⊃ DL', 'AI ⊃ DL ⊃ ML'], answer: 'AI ⊃ ML ⊃ DL' },
+    { text: '다음 중 데이터의 성격이 나머지 셋과 다른 하나는?',
+      opts: ['소셜 미디어 대화', '뉴스 기사', '거주 지역', '보고서(문서)'], answer: '거주 지역' },
+    { text: '지도학습에 해당하는 설명은?',
+      opts: ['입력값과 결괏값(정답)을 함께 주고 학습시키는 방법', '결괏값 없이 입력값만으로 스스로 학습시키는 방법', '보상에 따라 행동이 점점 강화되도록 학습시키는 방법'],
+      answer: '입력값과 결괏값(정답)을 함께 주고 학습시키는 방법' },
+    { text: '비지도학습에 해당하는 설명은?',
+      opts: ['입력값과 결괏값(정답)을 함께 주고 학습시키는 방법', '결괏값 없이 입력값만으로 스스로 학습시키는 방법', '보상에 따라 행동이 점점 강화되도록 학습시키는 방법'],
+      answer: '결괏값 없이 입력값만으로 스스로 학습시키는 방법' },
+    { text: '강화학습에 해당하는 설명은?',
+      opts: ['입력값과 결괏값(정답)을 함께 주고 학습시키는 방법', '결괏값 없이 입력값만으로 스스로 학습시키는 방법', '보상에 따라 행동이 점점 강화되도록 학습시키는 방법'],
+      answer: '보상에 따라 행동이 점점 강화되도록 학습시키는 방법' },
+  ];
+  let score = 0;
+  const quizWrap = document.getElementById('quizWrap');
+  quizItems.forEach((item, idx) => {
+    const block = document.createElement('div');
+    block.style.marginBottom = '14px';
+    block.innerHTML = `<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Q${idx+1}.</strong> ${item.text}</p>` +
+      item.opts.map(opt => `<button class="quiz-opt" data-opt="${opt}">${opt}</button>`).join('');
+    quizWrap.appendChild(block);
+    const btns = block.querySelectorAll('.quiz-opt');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btns.forEach(b => b.disabled = true);
+        btns.forEach(b => { if (b.dataset.opt === item.answer) b.classList.add('correct'); });
+        if (btn.dataset.opt === item.answer) score++;
+        else btn.classList.add('wrong');
+        document.getElementById('quizScore').textContent = score + ' / ' + quizItems.length;
+      });
+    });
+  });
+</script>
+</body>
+</html>

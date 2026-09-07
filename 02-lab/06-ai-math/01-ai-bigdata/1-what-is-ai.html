@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시 · 인공지능은 무엇이고, 어떻게 학습할까? · 인공지능과 빅데이터</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<style>
+  .quiz-opt {
+    display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 6px 0;
+    border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; font-size: 0.9rem;
+  }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.correct { background: var(--ok-bg); border-color: var(--ok-line); font-weight: 700; }
+  .quiz-opt.wrong { background: #fbe9ee; border-color: #e8b4c4; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 12px 0; }
+  .info-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; font-size: 0.86rem; }
+  .info-card .who { font-weight: 800; color: var(--accent-dark); margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 빅데이터
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab current" href="1-what-is-ai.html">1차시</a>
+      <a class="session-tab" href="2-perceptron.html">2차시</a>
+      <a class="session-tab" href="3-logic-gates.html">3차시</a>
+      <a class="session-tab" href="4-bigdata.html">4차시</a>
+      <a class="session-tab" href="5-bias-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅰ단원 · 1 / 5차시</span>
+    <h1>인공지능은 무엇이고, 어떻게 학습할까?</h1>
+    <p class="sub">인공지능의 의미와 데이터·모델·학습이라는 핵심 요소를 이해하고, 기계학습의 세 가지 방법(지도·비지도·강화학습)을 구분합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>인공지능의 의미와 데이터·모델·학습이라는 핵심 구성 요소를 설명할 수 있다.</li>
+        <li>인공지능에 수학이 어떻게 활용되는지 예시로 설명할 수 있다.</li>
+        <li>기계학습의 세 가지 방법(지도학습·비지도학습·강화학습)을 구분하고 각각의 사례를 분류할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>영화 속 인공지능과 현실 속 인공지능 비교하기</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>인공지능은 무엇일까?</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>인공지능에 수학이 어떻게 활용될까?</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>인공지능은 어떻게 학습할까? — 지도·비지도·강화학습 분류하기</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>인공지능·기계학습·딥러닝의 관계</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>영화 속 인공지능과 현실 속 인공지능</h2>
+    <p class="lead">영화 속에서 인공지능은 다양하게 등장합니다. 우리 일상생활에서도 번역, 사물 및 생체 인식, 제품 설계 등 다양한 영역에서 인공지능 기술이 널리 이용됩니다. 다음은 현실 속에서 실제로 활동하고 있는 인공지능들입니다.</p>
+    <div class="card-grid">
+      <div class="info-card"><div class="who">스팟 (Spot)</div>공사장 등 위험 지대 순찰용이나 기업용 보조 로봇으로 활동하고 있는 사족 보행 인공지능</div>
+      <div class="info-card"><div class="who">아틀라스 (Atlas)</div>실시간 이미지 데이터를 받아 분석해서 반응하는 인공지능</div>
+      <div class="info-card"><div class="who">자비스 (JARVIS, 영화 속)</div>아이언맨의 감성과 습관을 파악하고 학습해서 비서 역할을 하는 인공지능</div>
+    </div>
+    <textarea class="think" placeholder="영화 속 인공지능과 현실 속 인공지능의 차이는 무엇일지 적어 보세요"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>인공지능은 무엇일까?</h2>
+    <p class="lead">인공지능(AI, Artificial Intelligence)은 인식, 학습, 추론, 행동 등과 같은 인간의 지적 능력이나 사고 과정을 컴퓨터가 실행할 수 있도록 구현하는 기술을 의미합니다.</p>
+    <p>인공지능은 <strong>데이터, 모델, 학습</strong>이라는 세 가지 핵심 구성 요소를 통해 스스로 판단하고 논리적인 사고와 행위를 수행합니다.</p>
+    <table class="data">
+      <tr><th>구성 요소</th><th>역할</th></tr>
+      <tr><td>데이터</td><td>인공지능이 학습하고 판단하는 데 필수적인 출발점. 집합·벡터·행렬 등의 개념을 이용해 컴퓨터가 이해하고 처리하기 적합한 형태로 변환한다.</td></tr>
+      <tr><td>모델</td><td>현실 세계의 복잡한 관계를 수학적으로 표현한 것. 데이터를 기반으로 결과를 산출한다.</td></tr>
+      <tr><td>학습</td><td>모델이 데이터를 통해 스스로 규칙을 찾아내고 성능을 개선해 가는 과정.</td></tr>
+    </table>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 존 매카시 — '인공지능의 아버지'</button>
+      <div class="reveal-content tip hidden"><p>미국의 인지심리학자이자 컴퓨터 과학자인 존 매카시(John McCarthy, 1927~2011)는 1955년 인공지능과 관련된 제안서를 발표하며 '인공지능'이라는 용어를 처음 사용했다.</p></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>인공지능에 수학이 어떻게 활용될까?</h2>
+    <p class="lead">일상생활에서 수학적 원리가 인공지능에 어떻게 활용되고 있는지 살펴봅니다.</p>
+    <p><strong>음성 인식</strong> : 우리가 말하고 듣는 모든 소리는 복잡한 형태의 파동으로 이루어져 있으며, 특히 사람의 목소리는 여러 파동이 중첩되어 일정한 주기를 갖는 고유한 파형을 구성합니다. 사람 목소리의 복잡한 파동은 서로 다른 주기를 가진 <strong>삼각함수의 합</strong>으로 표현할 수 있습니다. 인공지능 스피커는 이 원리(자연어 처리)를 이용해 사람의 음성을 인식합니다.</p>
+    <p><strong>이미지 인식</strong> : 인공지능은 스마트폰이나 컴퓨터에 저장된 사진을 검색해 주제별·시간별·장소별로 분류하거나, 유사한 물건·장소를 찾아 줄 수 있습니다. 이미지는 아주 작은 <strong>픽셀</strong>로 이루어져 있고, 각 픽셀은 숫자들로 표현됩니다.</p>
+    <div class="qbox">인공지능, 기계학습, 딥러닝에는 집합, 벡터와 행렬, 확률과 통계, 함수, 미분, 기하 등 우리가 배우는 다양한 수학 개념이 활용됩니다. Ⅱ~Ⅴ단원에서 이 개념들을 하나씩 직접 확인해 볼 것입니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 20분</span>
+    <h2>인공지능은 어떻게 학습할까?</h2>
+    <p class="lead">인공지능을 말할 때 <strong>기계학습</strong>(Machine Learning)이란 용어가 자주 등장합니다. 기계학습은 사람이 학습하듯 컴퓨터가 주어진 자료를 스스로 학습하여 문제를 해결하는 것을 의미합니다. 기계학습은 학습시키는 방법에 따라 지도학습, 비지도학습, 강화 학습으로 분류할 수 있습니다.</p>
+    <table class="data">
+      <tr><th>방법</th><th>정의</th></tr>
+      <tr><td>지도학습<br>(Supervised Learning)</td><td>입력값과 출력값(정답)을 함께 주고 학습시키는 방법. 학습 데이터에 정답을 달아주는 것을 레이블링(Labeling)이라고 한다.</td></tr>
+      <tr><td>비지도학습<br>(Unsupervised Learning)</td><td>정답이 제공되지 않은 데이터를 학습하여 기계가 스스로 새로운 정보(패턴, 군집)를 찾아내는 방법.</td></tr>
+      <tr><td>강화학습<br>(Reinforcement Learning)</td><td>현재 상태에서 어떤 행동을 하는 것이 최적인지, 보상을 통해 점점 강화되도록 학습하는 방법.</td></tr>
+    </table>
+
+    <div class="widget">
+      <div class="widget-title">다음 상황이 어떤 학습 방법에 해당하는지 골라 보세요</div>
+      <div id="quizWrap"></div>
+      <div class="readout">
+        <div class="cell"><div class="k">맞힌 개수</div><div class="v" id="quizScore">0 / 6</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 각 학습 방법의 활용 사례 더 보기</button>
+      <div class="reveal-content tip hidden">
+        <p><strong>지도학습</strong> : 스팸 메일 분류, 질병 유무 판단, 내일 날씨 예측, 음악 일부를 들려주면 제목·가수 식별</p>
+        <p><strong>비지도학습</strong> : 쇼핑몰 구매자별 소비 패턴 파악 후 추천 상품 광고, 구입 정보 기반 회원 그룹별 마케팅, SNS 설문조사 결과로 회원을 성향별 분류</p>
+        <p><strong>강화학습</strong> : 자율 주행 자동차 시뮬레이션, 동작 모방 로봇 제어, 알파고(인공지능 바둑 프로그램), 전략 게임 인공지능</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>인공지능, 기계학습, 딥러닝의 관계</h2>
+    <p>인공지능을 구현하는 방법 중에서 대표적인 기술이 기계학습이고, 딥러닝은 기계학습의 여러 방법 중 하나입니다. 즉 <strong>인공지능 ⊃ 기계학습 ⊃ 딥러닝</strong>의 포함 관계가 성립합니다.</p>
+    <div class="qbox">뉴런을 이용해 정보를 처리하는 인간의 뇌처럼, 인공신경망(퍼셉트론)을 이용해 작동되도록 하는 기계학습 방식을 <strong>딥러닝</strong>이라고 합니다. 다음 시간에는 이 인공신경망의 구조와 계산 방법을 직접 다뤄봅니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 인공지능의 정의와 기계학습의 세 가지 방법을 배웠습니다. 다음 시간에는 뇌의 뉴런을 본뜬 인공신경망과 퍼셉트론의 계산 원리를 직접 계산해 봅니다.</p>
+    <div class="next">다음 차시 : 2차시 — 인공신경망과 퍼셉트론 계산하기</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="index.html">← 인공지능과 빅데이터 목록으로</a>
+    <a href="2-perceptron.html">2차시 — 인공신경망과 퍼셉트론 계산하기 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const quizItems = [
+    { text: '스팸 메일을 스팸/정상으로 분류하도록 레이블이 달린 데이터로 학습시키기', answer: '지도학습' },
+    { text: '사진 속 동물이 개·고양이·토끼 중 무엇인지 분류하도록 학습시키기', answer: '지도학습' },
+    { text: '정답 없이 고객 구매 데이터에서 비슷한 소비 패턴끼리 스스로 묶기', answer: '비지도학습' },
+    { text: '꼬리·귀 모양만 보고 동물을 두 무리로 스스로 나누기', answer: '비지도학습' },
+    { text: '차량이 스스로 주차하도록 시행착오를 거치며 보상을 통해 학습하기', answer: '강화학습' },
+    { text: '게임 캐릭터가 점수(보상)를 최대화하는 방향으로 행동을 학습하기', answer: '강화학습' },
+  ];
+  const options = ['지도학습', '비지도학습', '강화학습'];
+  let score = 0;
+  const quizWrap = document.getElementById('quizWrap');
+  quizItems.forEach((item, idx) => {
+    const block = document.createElement('div');
+    block.style.marginBottom = '14px';
+    block.innerHTML = `<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Q${idx+1}.</strong> ${item.text}</p>` +
+      options.map(opt => `<button class="quiz-opt" data-opt="${opt}">${opt}</button>`).join('');
+    quizWrap.appendChild(block);
+    const btns = block.querySelectorAll('.quiz-opt');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btns.forEach(b => b.disabled = true);
+        btns.forEach(b => { if (b.dataset.opt === item.answer) b.classList.add('correct'); });
+        if (btn.dataset.opt === item.answer) score++;
+        else btn.classList.add('wrong');
+        document.getElementById('quizScore').textContent = score + ' / ' + quizItems.length;
+      });
+    });
+  });
+</script>
+</body>
+</html>
