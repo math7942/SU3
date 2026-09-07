@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3차시 · 퍼셉트론으로 논리 연산 만들기 · 인공지능과 빅데이터</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .gate-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .gate-row button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  table.truth { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 10px 0; }
+  table.truth th, table.truth td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; }
+  table.truth th { background: var(--accent-soft); color: var(--accent-dark); }
+  .status-line { font-weight: 800; font-size: 0.92rem; padding: 8px 12px; border-radius: 8px; margin-top: 8px; }
+  .status-line.pass { background: var(--ok-bg); color: var(--ok-ink); }
+  .status-line.fail { background: #fbe9ee; color: #8a2745; }
+  .step-btns { display: flex; gap: 8px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 빅데이터
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-what-is-ai.html">1차시</a>
+      <a class="session-tab" href="2-perceptron.html">2차시</a>
+      <a class="session-tab current" href="3-logic-gates.html">3차시</a>
+      <a class="session-tab" href="4-bigdata.html">4차시</a>
+      <a class="session-tab" href="5-bias-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅰ단원 · 3 / 5차시</span>
+    <h1>퍼셉트론으로 논리 연산 만들기</h1>
+    <p class="sub">가중치와 임곗값을 조절해 퍼셉트론으로 논리합(OR)·논리곱(AND)을 구현하고, 배타적 논리합(XOR)은 왜 퍼셉트론 하나로는 불가능한지 직접 실험합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>NOT, OR, AND, XOR 논리 연산자의 진리표를 설명할 수 있다.</li>
+        <li>가중치와 임곗값을 조절하여 퍼셉트론으로 OR·AND 연산을 구현할 수 있다.</li>
+        <li>단층 퍼셉트론으로 XOR을 구현할 수 없는 이유와, 다층 퍼셉트론으로 이를 해결하는 방법을 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>명제와 논리 연산자, 진리표</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>퍼셉트론으로 OR·AND 만들기</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>임곗값의 범위 구하기</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>XOR의 한계와 다층 퍼셉트론</td><td class="time">15분</td></tr>
+        <tr><td>정리</td><td>단층·다층 퍼셉트론의 역사</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>명제와 논리 연산자, 진리표</h2>
+    <p class="lead">참 또는 거짓을 명확히 구분할 수 있는 문장이나 식을 <strong>명제</strong>라 하고, 명제의 참·거짓을 <strong>진릿값</strong>이라고 합니다. 참이면 1, 거짓이면 0으로 나타내며, 명제 $p, q$를 결합해 새로운 명제를 만드는 연산자는 다음과 같습니다.</p>
+    <table class="data">
+      <tr><th>연산자</th><th>기호</th><th>뜻</th></tr>
+      <tr><td>NOT (부정)</td><td>$\sim p$</td><td>$p$가 참이면 $\sim p$는 거짓, $p$가 거짓이면 $\sim p$는 참</td></tr>
+      <tr><td>OR (논리합)</td><td>$p \lor q$</td><td>$p, q$ 중 하나라도 참이면 참, 모두 거짓이면 거짓</td></tr>
+      <tr><td>AND (논리곱)</td><td>$p \land q$</td><td>$p, q$가 모두 참이면 참, 하나라도 거짓이면 거짓</td></tr>
+      <tr><td>XOR (배타적 논리합)</td><td>$p \oplus q$</td><td>$p, q$ 중 하나만 참이면 참, 모두 참이거나 모두 거짓이면 거짓</td></tr>
+    </table>
+    <table class="truth">
+      <tr><th>$x_1$</th><th>$x_2$</th><th>NOT $x_1$</th><th>$x_1 \lor x_2$ (OR)</th><th>$x_1 \land x_2$ (AND)</th><th>$x_1 \oplus x_2$ (XOR)</th></tr>
+      <tr><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+      <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+      <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+    </table>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>퍼셉트론으로 OR·AND 만들기</h2>
+    <p class="lead">두 입력값 $x_1, x_2$ ($x_1, x_2 \in \{0, 1\}$)에 가중치 $w_1, w_2$를 곱해 더한 값 $x=x_1w_1+x_2w_2$가 임곗값 $c$ 이상이면 1, 미만이면 0을 출력합니다. 아래에서 가중치와 임곗값을 바꾸며 네 점 $(0,0),(0,1),(1,0),(1,1)$을 올바르게 분류하는 직선을 찾아보세요.</p>
+
+    <div class="widget">
+      <div class="widget-title">퍼셉트론 분류선 탐구</div>
+      <div class="gate-row">
+        <button id="gateOR" class="btn solid active" onclick="setGate('OR')">OR</button>
+        <button id="gateAND" class="btn" onclick="setGate('AND')">AND</button>
+        <button id="gateXOR" class="btn" onclick="setGate('XOR')">XOR</button>
+      </div>
+      <div class="control-row">
+        <label>가중치 $w_1$</label>
+        <input type="range" id="gw1" min="-2" max="3" step="0.5" value="1" oninput="updateGateVal(this,'gw1Val'); drawGate();">
+        <span class="val" id="gw1Val">1</span>
+      </div>
+      <div class="control-row">
+        <label>가중치 $w_2$</label>
+        <input type="range" id="gw2" min="-2" max="3" step="0.5" value="1" oninput="updateGateVal(this,'gw2Val'); drawGate();">
+        <span class="val" id="gw2Val">1</span>
+      </div>
+      <div class="control-row">
+        <label>임곗값 $c$</label>
+        <input type="range" id="gc" min="-2" max="4" step="0.5" value="1" oninput="updateGateVal(this,'gcVal'); drawGate();">
+        <span class="val" id="gcVal">1</span>
+      </div>
+      <canvas id="gateCanvas" height="260"></canvas>
+      <div id="gateStatus" class="status-line pass">4개 점 모두 올바르게 분류</div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 본문 예제 — $w_1=w_2=1$일 때</button>
+      <div class="reveal-content ok hidden">
+        <p>$w_1=w_2=1$이면 $x=x_1+x_2$이므로 $(0,0)\to0,\ (0,1)\to1,\ (1,0)\to1,\ (1,1)\to2$입니다.</p>
+        <p>임곗값 $c=1$인 활성화함수 $f(x)=0\,(x<1),\ 1\,(x\ge1)$을 적용하면 $f(x)=x_1\lor x_2$, 즉 <strong>OR</strong>이 됩니다.</p>
+        <p>임곗값 $c=2$인 활성화함수 $g(x)=0\,(x<2),\ 1\,(x\ge2)$를 적용하면 $g(x)=x_1\land x_2$, 즉 <strong>AND</strong>가 됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>임곗값의 범위 구하기</h2>
+    <p class="lead">가중치가 달라지면 OR·AND를 만드는 임곗값의 범위도 달라집니다. 위 도구에서 $w_1, w_2$ 값을 바꾸어 직접 확인해 보세요.</p>
+    <table class="data">
+      <tr><th>확인하기</th><th>조건</th><th>임곗값 $c$의 범위</th></tr>
+      <tr><td>확인하기 3</td><td>$w_1=3,\ w_2=2$일 때 OR을 만드는 $c$</td><td>위 도구에서 실험해 보기</td></tr>
+      <tr><td>확인하기 4</td><td>$w_1=1,\ w_2=2$일 때 AND를 만드는 $c$</td><td>위 도구에서 실험해 보기</td></tr>
+    </table>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 확인하기 3, 4 풀이 보기</button>
+      <div class="reveal-content ok hidden">
+        <p><strong>확인하기 3</strong> : $w_1=3, w_2=2$이면 $x$값은 $(0,0)\to0,\ (0,1)\to2,\ (1,0)\to3,\ (1,1)\to5$. OR이 되려면 $x=0$일 때만 0이고 나머지는 모두 1이어야 하므로 $0 < c \le 2$.</p>
+        <p><strong>확인하기 4</strong> : $w_1=1, w_2=2$이면 $x$값은 $(0,0)\to0,\ (0,1)\to2,\ (1,0)\to1,\ (1,1)\to3$. AND가 되려면 $x=3$일 때만 1이고 나머지는 모두 0이어야 하므로 $2 < c \le 3$.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>XOR의 한계와 다층 퍼셉트론</h2>
+    <p class="lead">위 도구에서 <strong>XOR</strong>을 선택하고 $w_1, w_2, c$를 아무리 바꾸어도 네 점을 하나의 직선으로 올바르게 분류할 수 없다는 것을 확인해 보세요. $(0,1),(1,0)$은 참이고 $(0,0),(1,1)$은 거짓인데, 이 두 그룹은 대각선 방향으로 엇갈려 있어 직선 하나로 나눌 수 없기 때문입니다.</p>
+    <p>이 문제는 <strong>퍼셉트론 2개를 층으로 연결</strong>하면 해결할 수 있습니다. 입력 $x_1, x_2$로 은닉층의 $z_1, z_2$를 계산하고, $z_1, z_2$로 출력 $y$를 계산하는 방식입니다.</p>
+
+    <div class="widget">
+      <div class="widget-title">다층 퍼셉트론으로 XOR 계산하기</div>
+      <p style="font-size:0.86rem; color:var(--ink-soft); margin-top:0;">가중치 : $w_{11}=5,\ w_{12}=4$ (→ $z_1$), $\ w_{21}=1,\ w_{22}=2$ (→ $z_2$), $\ w_{31}=4,\ w_{32}=-4$ (→ $y$), 활성화함수 $f(x)=0\,(x<3),\ 1\,(x\ge3)$</p>
+      <div class="step-btns">
+        <button class="btn" onclick="setXOR(0,0)">$x_1=0, x_2=0$</button>
+        <button class="btn" onclick="setXOR(0,1)">$x_1=0, x_2=1$</button>
+        <button class="btn" onclick="setXOR(1,0)">$x_1=1, x_2=0$</button>
+        <button class="btn" onclick="setXOR(1,1)">$x_1=1, x_2=1$</button>
+      </div>
+      <canvas id="mlpCanvas" height="260"></canvas>
+      <div class="readout">
+        <div class="cell"><div class="k">$z_1=f(5x_1+4x_2)$</div><div class="v" id="z1Out">0</div></div>
+        <div class="cell"><div class="k">$z_2=f(x_1+2x_2)$</div><div class="v" id="z2Out">0</div></div>
+        <div class="cell"><div class="k">$y=f(4z_1-4z_2)$</div><div class="v" id="yMlpOut">0</div></div>
+      </div>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">네 가지 입력을 모두 눌러 보면 $y$의 값이 $x_1 \oplus x_2$(XOR)와 정확히 일치하는 것을 확인할 수 있습니다. 은닉층 $z_1, z_2$를 두는 것만으로 단층 퍼셉트론의 한계를 넘어설 수 있습니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>단층·다층 퍼셉트론의 역사</h2>
+    <p>1957년 미국의 신경생물학자 <strong>프랭크 로젠블랫</strong>은 단층 퍼셉트론을 제안하여 오늘날 인공신경망 모델의 기초를 마련했습니다. 그러나 1969년 MIT의 <strong>마빈 민스키</strong>와 <strong>시모어 페퍼트</strong>는 저서 『퍼셉트론들』에서 단층 퍼셉트론이 XOR과 같은 문제를 풀 수 없다는 한계를 짚어냈고, 이후 인공신경망 연구는 한동안 정체를 겪었습니다.</p>
+    <div class="qbox">1986년 <strong>제프리 힌턴</strong>, <strong>데이비드 럼멜하트</strong>, <strong>로널드 윌리엄스</strong>가 오류 역전파(Backpropagation) 알고리즘으로 다층 퍼셉트론을 학습시키는 데 성공하면서 XOR 문제를 해결했습니다. 이를 계기로 인공신경망 연구가 다시 활발해졌고, 오늘날의 딥러닝으로 이어졌습니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 퍼셉트론으로 논리 연산을 구현하고, XOR의 한계를 다층 퍼셉트론으로 해결하는 원리를 배웠습니다. 다음 시간에는 인공지능을 뒷받침하는 빅데이터의 특징을 알아봅니다.</p>
+    <div class="next">다음 차시 : 4차시 — 빅데이터와 인공지능</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="2-perceptron.html">← 2차시 — 인공신경망과 퍼셉트론 계산하기</a>
+    <a href="4-bigdata.html">4차시 — 빅데이터와 인공지능 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const gateTruth = {
+    OR:  { '0,0': 0, '0,1': 1, '1,0': 1, '1,1': 1 },
+    AND: { '0,0': 0, '0,1': 0, '1,0': 0, '1,1': 1 },
+    XOR: { '0,0': 0, '0,1': 1, '1,0': 1, '1,1': 0 },
+  };
+  const gatePresets = {
+    OR:  { w1: 1, w2: 1, c: 1 },
+    AND: { w1: 1, w2: 1, c: 2 },
+    XOR: { w1: 1, w2: 1, c: 1 },
+  };
+  let currentGate = 'OR';
+
+  function setGate(g) {
+    currentGate = g;
+    ['OR', 'AND', 'XOR'].forEach(k => document.getElementById('gate' + k).classList.toggle('active', k === g));
+    const p = gatePresets[g];
+    document.getElementById('gw1').value = p.w1;
+    document.getElementById('gw2').value = p.w2;
+    document.getElementById('gc').value = p.c;
+    document.getElementById('gw1Val').textContent = p.w1;
+    document.getElementById('gw2Val').textContent = p.w2;
+    document.getElementById('gcVal').textContent = p.c;
+    drawGate();
+  }
+
+  function updateGateVal(input, spanId) {
+    document.getElementById(spanId).textContent = input.value;
+  }
+
+  function drawGate() {
+    const w1 = parseFloat(document.getElementById('gw1').value);
+    const w2 = parseFloat(document.getElementById('gw2').value);
+    const c = parseFloat(document.getElementById('gc').value);
+    const truth = gateTruth[currentGate];
+
+    const canvas = document.getElementById('gateCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 260);
+    ctx.clearRect(0, 0, cw, ch);
+
+    const pad = 50;
+    const plotW = cw - pad * 2, plotH = ch - pad * 2;
+    const toPx = (x1, x2) => [pad + x1 * plotW, ch - pad - x2 * plotH];
+
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(pad, ch - pad); ctx.lineTo(pad + plotW, ch - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, ch - pad); ctx.lineTo(pad, pad); ctx.stroke();
+    ctx.fillStyle = '#6b7680'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('x1', pad + plotW, ch - pad + 18);
+    ctx.fillText('x2', pad - 22, pad);
+
+    // separating line w1*x1 + w2*x2 = c
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let drew = false;
+    if (Math.abs(w2) > 1e-9) {
+      const y0 = (c - w1 * 0) / w2, y1 = (c - w1 * 1) / w2;
+      const [px0, py0] = toPx(0, y0), [px1, py1] = toPx(1, y1);
+      ctx.moveTo(px0, py0); ctx.lineTo(px1, py1); drew = true;
+    } else if (Math.abs(w1) > 1e-9) {
+      const x0 = c / w1;
+      const [px0, py0] = toPx(x0, 0), [px1, py1] = toPx(x0, 1);
+      ctx.moveTo(px0, py0); ctx.lineTo(px1, py1); drew = true;
+    }
+    if (drew) ctx.stroke();
+
+    let wrongCount = 0;
+    [[0, 0], [0, 1], [1, 0], [1, 1]].forEach(([x1, x2]) => {
+      const key = x1 + ',' + x2;
+      const isTrue = truth[key] === 1;
+      const sum = x1 * w1 + x2 * w2;
+      const predicted = sum >= c ? 1 : 0;
+      if (predicted !== truth[key]) wrongCount++;
+      const [px, py] = toPx(x1, x2);
+      ctx.beginPath(); ctx.arc(px, py, 12, 0, Math.PI * 2);
+      ctx.fillStyle = isTrue ? '#0f8f86' : '#eef2f3';
+      ctx.fill();
+      ctx.strokeStyle = predicted !== truth[key] ? '#c23b5a' : (isTrue ? '#0f8f86' : '#c9d2d6');
+      ctx.lineWidth = predicted !== truth[key] ? 3 : 1.6;
+      ctx.stroke();
+      ctx.fillStyle = isTrue ? '#fff' : '#6b7680';
+      ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(truth[key], px, py);
+      ctx.fillStyle = '#556067'; ctx.font = '10px sans-serif';
+      ctx.fillText('(' + x1 + ',' + x2 + ')', px, py - 20);
+    });
+
+    const statusEl = document.getElementById('gateStatus');
+    if (wrongCount === 0) {
+      statusEl.className = 'status-line pass';
+      statusEl.textContent = '4개 점 모두 올바르게 분류';
+    } else {
+      statusEl.className = 'status-line fail';
+      statusEl.textContent = wrongCount + '개 점이 잘못 분류됨 — 직선을 다시 조절해 보세요';
+    }
+  }
+
+  function actF(x) { return x >= 3 ? 1 : 0; }
+  function setXOR(x1, x2) {
+    const z1 = actF(5 * x1 + 4 * x2);
+    const z2 = actF(x1 + 2 * x2);
+    const y = actF(4 * z1 - 4 * z2);
+    document.getElementById('z1Out').textContent = z1;
+    document.getElementById('z2Out').textContent = z2;
+    document.getElementById('yMlpOut').textContent = y;
+    drawMLP(x1, x2, z1, z2, y);
+  }
+
+  function drawMLP(x1, x2, z1, z2, y) {
+    const canvas = document.getElementById('mlpCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 260);
+    ctx.clearRect(0, 0, cw, ch);
+
+    const inX = 60, hidX = cw * 0.5, outX = cw - 60;
+    const inYs = [ch * 0.3, ch * 0.7];
+    const hidYs = [ch * 0.3, ch * 0.7];
+    const outY = ch * 0.5;
+
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1.2;
+    inYs.forEach(iy => hidYs.forEach(hy => { ctx.beginPath(); ctx.moveTo(inX, iy); ctx.lineTo(hidX, hy); ctx.stroke(); }));
+    hidYs.forEach(hy => { ctx.beginPath(); ctx.moveTo(hidX, hy); ctx.lineTo(outX, outY); ctx.stroke(); });
+
+    const drawNode = (x, y, label, active) => {
+      ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = active ? '#0f8f86' : '#eef2f3'; ctx.fill();
+      ctx.strokeStyle = active ? '#0f8f86' : '#c9d2d6'; ctx.lineWidth = 1.8; ctx.stroke();
+      ctx.fillStyle = active ? '#fff' : '#6b7680'; ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y);
+    };
+    drawNode(inX, inYs[0], 'x1=' + x1, x1 === 1);
+    drawNode(inX, inYs[1], 'x2=' + x2, x2 === 1);
+    drawNode(hidX, hidYs[0], 'z1=' + z1, z1 === 1);
+    drawNode(hidX, hidYs[1], 'z2=' + z2, z2 === 1);
+    drawNode(outX, outY, 'y=' + y, y === 1);
+
+    ctx.fillStyle = '#6b7680'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('입력층', inX, 16);
+    ctx.fillText('은닉층', hidX, 16);
+    ctx.fillText('출력층', outX, 16);
+  }
+
+  setGate('OR');
+  setXOR(0, 0);
+  window.addEventListener('resize', () => { drawGate(); setXOR(0, 0); });
+</script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4차시 · 빅데이터와 인공지능 · 인공지능과 빅데이터</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<style>
+  .quiz-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; font-size: 0.9rem; }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.correct { background: var(--ok-bg); border-color: var(--ok-line); font-weight: 700; }
+  .quiz-opt.wrong { background: #fbe9ee; border-color: #e8b4c4; }
+  .v-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+  .v-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: center; }
+  .v-card .letter { font-size: 1.3rem; font-weight: 900; color: var(--accent-dark); }
+  .v-card .name { font-weight: 700; font-size: 0.86rem; margin: 4px 0; }
+  .v-card .desc { font-size: 0.78rem; color: var(--ink-soft); }
+  .unit-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 0.9rem; }
+  .case-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 10px 0; }
+  .case-card h4 { margin: 0 0 8px; font-size: 0.98rem; color: var(--accent-dark); }
+  .case-card .tag { display: inline-block; font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
+  .step-list { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 빅데이터
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-what-is-ai.html">1차시</a>
+      <a class="session-tab" href="2-perceptron.html">2차시</a>
+      <a class="session-tab" href="3-logic-gates.html">3차시</a>
+      <a class="session-tab current" href="4-bigdata.html">4차시</a>
+      <a class="session-tab" href="5-bias-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅰ단원 · 4 / 5차시</span>
+    <h1>빅데이터와 인공지능</h1>
+    <p class="sub">데이터의 형태와 빅데이터의 특징(5V)을 알아보고, 빅데이터와 인공지능이 실제 사회 문제를 해결한 사례와 알고리즘·순서도의 개념을 살펴봅니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>정형 데이터와 비정형 데이터를 구분하고 예시를 분류할 수 있다.</li>
+        <li>빅데이터의 특징인 5V(규모·속도·다양성·정확성·가치)를 설명할 수 있다.</li>
+        <li>빅데이터와 인공지능을 활용해 사회 문제를 해결한 사례를 찾고, 알고리즘을 순서도로 표현할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>인공지능으로 행성까지 발견하다 — Kepler-90i</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>정형 데이터와 비정형 데이터</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>빅데이터의 특징 — 5V</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>빅데이터와 인공지능으로 사회 문제 해결하기</td><td class="time">10분</td></tr>
+        <tr><td>활동4</td><td>알고리즘과 순서도</td><td class="time">10분</td></tr>
+        <tr><td>정리</td><td>빅데이터와 인공지능의 관계</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>인공지능으로 행성까지 발견하다 — Kepler-90i</h2>
+    <p class="lead">2017년 12월 NASA와 구글은 케플러 우주 망원경이 관측한 빅데이터를 인공지능(딥러닝)에게 분석하도록 하여, 약 4년 동안 관측한 3만 5,000여 개의 방대한 감광 신호 중 진짜와 가짜를 구별하게 했습니다. 그 결과 항성 'Kepler-90' 주변에서 태양계 밖 새로운 행성 'Kepler-90i'를 발견했습니다.</p>
+    <div class="qbox">이처럼 인공지능과 빅데이터를 활용하면 데이터가 쌓여 있는 다양한 영역에서 새로운 발견이 이루어질 수 있습니다.</div>
+    <textarea class="think" placeholder="빅데이터와 인공지능이 없었다면 이 발견은 가능했을지 생각해 보세요"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>정형 데이터와 비정형 데이터</h2>
+    <p class="lead">관찰이나 측정으로 얻게 되는 가공되지 않은 정보를 <strong>데이터(data)</strong>라고 합니다. 데이터는 형태에 따라 정형 데이터와 비정형 데이터로 분류합니다.</p>
+    <table class="data">
+      <tr><th>구분</th><th>정의</th><th>예시</th></tr>
+      <tr><td>정형 데이터<br>(structured data)</td><td>정해진 형식에 맞추어 정리한 자료. 컴퓨터가 인식·처리하기 수월하다.</td><td>이름, 나이, 키, 성별과 같이 표로 정리된 자료</td></tr>
+      <tr><td>비정형 데이터<br>(unstructured data)</td><td>일정한 형식에 따라 정리되지 않은 자료. 컴퓨터가 인식하려면 정형 데이터로 가공해야 한다.</td><td>이미지, 동영상, 음성, 뉴스 기사, SNS 글, 상품평 등</td></tr>
+    </table>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">정형 데이터 중 키·몸무게처럼 연속된 값을 갖는 자료는 <strong>연속형 데이터</strong>, 성별·혈액형처럼 범주로 정리된 자료는 <strong>범주형 데이터</strong>라고 합니다. 비정형 데이터는 전체 데이터의 약 80% 이상을 차지합니다.</p>
+
+    <div class="widget">
+      <div class="widget-title">확인하기 1 — 정형 데이터일까, 비정형 데이터일까?</div>
+      <div id="quizWrap1"></div>
+      <div class="readout">
+        <div class="cell"><div class="k">맞힌 개수</div><div class="v" id="quizScore1">0 / 4</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>빅데이터의 특징 — 5V</h2>
+    <p class="lead"><strong>빅데이터(Big Data)</strong>는 컴퓨터 및 장치를 통해 생성되거나 저장된 정보를 의미합니다. 빅데이터 시대에는 빠르게 생성되는 다양한 형태의 데이터를 관리·분석·활용하여 가치를 찾아내는 것이 중요합니다. 빅데이터의 특징은 다음 5가지(5V)로 정리할 수 있습니다.</p>
+    <div class="v-grid">
+      <div class="v-card"><div class="letter">V</div><div class="name">규모 (Volume)</div><div class="desc">데이터의 양이 폭발적으로 증가</div></div>
+      <div class="v-card"><div class="letter">V</div><div class="name">속도 (Velocity)</div><div class="desc">데이터가 빠른 속도로 생성·변화</div></div>
+      <div class="v-card"><div class="letter">V</div><div class="name">다양성 (Variety)</div><div class="desc">정형·비정형 등 형식이 다양함</div></div>
+      <div class="v-card"><div class="letter">V</div><div class="name">정확성 (Veracity)</div><div class="desc">데이터의 신뢰성과 품질</div></div>
+      <div class="v-card"><div class="letter">V</div><div class="name">가치 (Value)</div><div class="desc">데이터에서 유용한 가치를 이끌어냄</div></div>
+    </div>
+
+    <div class="widget">
+      <div class="widget-title">데이터 측정 단위 알아보기</div>
+      <div class="control-row">
+        <label>단위 크기 $10^n$</label>
+        <input type="range" id="unitExp" min="3" max="24" step="3" value="3" oninput="updateUnit()">
+        <span class="val" id="unitExpVal">10³</span>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">단위</div><div class="v" id="unitName">킬로바이트 (KB)</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 10분</span>
+    <h2>빅데이터와 인공지능으로 사회 문제 해결하기</h2>
+    <p class="lead">빅데이터를 활용하면 인공지능 학습이 이루어지고, 학습된 결과를 바탕으로 의사 결정이 이루어집니다. 인공지능과 빅데이터는 서로의 성능과 활용성을 높이는 <strong>상호 보완 관계</strong>에 있습니다. 다음은 빅데이터와 인공지능을 활용해 사회 문제를 해결한 실제 사례입니다.</p>
+
+    <div class="case-card">
+      <span class="tag">사례 1</span>
+      <h4>공공 데이터 기반 장애인 콜택시 배차 알고리즘 개선</h4>
+      <p style="font-size:0.86rem;"><strong>문제 상황</strong> — 기존 배차 알고리즘으로 공차 시간이 불필요하게 발생해 장애인 콜택시 대기 시간(평균 60분 이상)이 일반 택시 호출(평균 4분 미만)보다 훨씬 길었습니다.</p>
+      <p style="font-size:0.86rem;"><strong>기술 개발</strong> — 인공지능 기법인 '합성곱 신경망(CNN)'을 적용해 배차 알고리즘의 가중치를 수정하고, 시간대별 수요 예측 가중치 15%를 추가했습니다.</p>
+      <p style="font-size:0.86rem;"><strong>기대 효과</strong> — 이동 시간이 감소해 장애인 이동권을 실현했고, 추가 비용 없이 서비스 품질을 높였습니다.</p>
+    </div>
+
+    <div class="case-card">
+      <span class="tag">사례 2</span>
+      <h4>빅데이터 기반 맞춤형 복지 정책으로 사각지대 해소</h4>
+      <p style="font-size:0.86rem;"><strong>문제 상황</strong> — 지자체 실정을 반영한 현실적이고 효과적인 복지 시스템 개발이 필요했습니다.</p>
+      <p style="font-size:0.86rem;"><strong>기술 개발</strong> — 공공·민간 복지 지원 내역(각 61,000건·63,000건)과 인구 현황 등을 분석해 'GBM 알고리즘' 기반 예측 모델로 복지 기관 접근성이 취약한 지역을 도출했습니다.</p>
+      <p style="font-size:0.86rem;"><strong>기대 효과</strong> — 위기 가정을 선제적으로 지원하고, 복지 기관 접근성과 이용 편의성을 높였습니다.</p>
+    </div>
+
+    <div class="case-card">
+      <span class="tag">사례 3</span>
+      <h4>빅데이터 분석으로 해양 안전 세이프존 확대</h4>
+      <p style="font-size:0.86rem;"><strong>문제 상황</strong> — 2018~2020년 연안 사고 사망률이 같은 기간 교통사고 사망률의 10배에 달했지만, 광활한 해양 지역 특성상 체계적인 데이터 기반이 부족했습니다.</p>
+      <p style="font-size:0.86rem;"><strong>기술 개발</strong> — 해양 안전사고·순찰 활동·유동 인구·기상 데이터를 수집·정제하고, 중첩 분석과 '다중 회귀분석'으로 안전지수를 도출했습니다.</p>
+      <p style="font-size:0.86rem;"><strong>기대 효과</strong> — 최근 5년 대비 연안 사고 25%, 사망자 수 29%가 감소했습니다.</p>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 4 · 10분</span>
+    <h2>알고리즘과 순서도</h2>
+    <p class="lead">빅데이터를 처리하는 과정도, 인공지능이 계산하는 과정도 결국 정해진 절차인 <strong>알고리즘</strong>을 따릅니다. 알고리즘의 흐름을 도형과 화살표로 나타낸 것을 <strong>순서도</strong>라고 합니다. 일차방정식 $ax-b=0$의 해를 구하는 순서도를 직접 실행해 봅시다.</p>
+
+    <div class="widget">
+      <div class="widget-title">순서도 실행기 — $ax-b=0$의 해 구하기</div>
+      <div class="control-row">
+        <label>$a$ 값</label>
+        <input type="range" id="fcA" min="-3" max="3" step="1" value="2" oninput="updateFcVal(this,'fcAVal'); resetFlow();">
+        <span class="val" id="fcAVal">2</span>
+      </div>
+      <div class="control-row">
+        <label>$b$ 값</label>
+        <input type="range" id="fcB" min="-6" max="6" step="1" value="4" oninput="updateFcVal(this,'fcBVal'); resetFlow();">
+        <span class="val" id="fcBVal">4</span>
+      </div>
+      <canvas id="flowCanvas" height="320"></canvas>
+      <div class="step-list">
+        <button class="btn solid" onclick="stepFlow()">다음 단계 ▶</button>
+        <button class="btn" onclick="resetFlow()">처음부터</button>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">현재 단계</div><div class="v" id="flowStepLabel">시작</div></div>
+        <div class="cell"><div class="k">결과</div><div class="v" id="flowResult">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>빅데이터와 인공지능의 관계</h2>
+    <p>빅데이터는 인공지능 학습의 가장 중요한 재료이며, 인공지능은 빅데이터를 분석해 그 활용성을 높입니다. 두 기술은 서로의 성능을 끌어올리는 <strong>상호 보완 관계</strong>입니다.</p>
+    <div class="qbox">빅데이터는 '21세기의 원유'라고 불립니다. 원유가 정제 과정을 거쳐 다양하게 쓰이듯, 빅데이터도 알고리즘을 통한 분석과 가공을 거쳐야 비로소 가치를 만들어 냅니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 데이터의 형태, 빅데이터의 특징(5V), 사회 문제 해결 사례와 알고리즘·순서도의 개념을 배웠습니다. 다음 시간에는 데이터 편향 문제를 살펴보고 Ⅰ단원 전체를 정리합니다.</p>
+    <div class="next">다음 차시 : 5차시 — 데이터 편향과 단원 정리</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="3-logic-gates.html">← 3차시 — 퍼셉트론으로 논리 연산 만들기</a>
+    <a href="5-bias-review.html">5차시 — 데이터 편향과 단원 정리 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  // 활동1 quiz
+  const quizItems1 = [
+    { text: '인터넷 이미지나 SNS에 대한 사용자 의견', answer: '비정형' },
+    { text: '우리 학교 학생들의 체격 검사 결과(키, 몸무게 표)', answer: '정형' },
+    { text: '사람들의 혈액형', answer: '정형' },
+    { text: 'SNS(사회 관계망 서비스)에 작성한 글', answer: '비정형' },
+  ];
+  const options1 = ['정형', '비정형'];
+  let score1 = 0;
+  const quizWrap1 = document.getElementById('quizWrap1');
+  quizItems1.forEach((item, idx) => {
+    const block = document.createElement('div');
+    block.style.marginBottom = '14px';
+    block.innerHTML = `<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Q${idx+1}.</strong> ${item.text}</p>` +
+      options1.map(opt => `<button class="quiz-opt" data-opt="${opt}">${opt}</button>`).join('');
+    quizWrap1.appendChild(block);
+    const btns = block.querySelectorAll('.quiz-opt');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btns.forEach(b => b.disabled = true);
+        btns.forEach(b => { if (b.dataset.opt === item.answer) b.classList.add('correct'); });
+        if (btn.dataset.opt === item.answer) score1++;
+        else btn.classList.add('wrong');
+        document.getElementById('quizScore1').textContent = score1 + ' / ' + quizItems1.length;
+      });
+    });
+  });
+
+  // 활동2 unit converter
+  const unitNames = {
+    3: '킬로바이트 (KB)', 6: '메가바이트 (MB)', 9: '기가바이트 (GB)', 12: '테라바이트 (TB)',
+    15: '페타바이트 (PB)', 18: '엑사바이트 (EB)', 21: '제타바이트 (ZB)', 24: '요타바이트 (YB)'
+  };
+  const superscripts = { 3: '³', 6: '⁶', 9: '⁹', 12: '¹²', 15: '¹⁵', 18: '¹⁸', 21: '²¹', 24: '²⁴' };
+  function updateUnit() {
+    const exp = parseInt(document.getElementById('unitExp').value);
+    document.getElementById('unitExpVal').textContent = '10' + superscripts[exp];
+    document.getElementById('unitName').textContent = unitNames[exp];
+  }
+  updateUnit();
+
+  // 활동4 flowchart
+  function updateFcVal(input, spanId) { document.getElementById(spanId).textContent = input.value; }
+
+  const flowNodes = [
+    { id: 'start', label: '시작', x: 0.5, y: 0.06, shape: 'oval' },
+    { id: 'input', label: 'a, b 입력', x: 0.5, y: 0.18, shape: 'parallelogram' },
+    { id: 'decide', label: 'a = 0?', x: 0.5, y: 0.32, shape: 'diamond' },
+    { id: 'nosol', label: '해가 없거나\n무수히 많음', x: 0.78, y: 0.32, shape: 'rect' },
+    { id: 'calc', label: 'x ← b / a', x: 0.5, y: 0.5, shape: 'rect' },
+    { id: 'output', label: 'x 출력', x: 0.5, y: 0.66, shape: 'parallelogram' },
+    { id: 'end', label: '끝', x: 0.5, y: 0.8, shape: 'oval' },
+  ];
+
+  let flowStep = 0;
+  let flowPath = [];
+
+  function computeFlowPath() {
+    const a = parseFloat(document.getElementById('fcA').value);
+    const b = parseFloat(document.getElementById('fcB').value);
+    if (a === 0) {
+      return { path: ['start', 'input', 'decide', 'nosol', 'end'], result: b === 0 ? '해가 무수히 많음 (0=0)' : '해가 없음' };
+    }
+    const x = b / a;
+    return { path: ['start', 'input', 'decide', 'calc', 'output', 'end'], result: 'x = ' + fmt(x, 2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1') };
+  }
+
+  function resetFlow() {
+    const r = computeFlowPath();
+    flowPath = r.path;
+    flowStep = 0;
+    document.getElementById('flowStepLabel').textContent = '시작';
+    document.getElementById('flowResult').textContent = '—';
+    drawFlow();
+  }
+
+  function stepFlow() {
+    if (flowStep < flowPath.length - 1) flowStep++;
+    const currentId = flowPath[flowStep];
+    const node = flowNodes.find(n => n.id === currentId);
+    document.getElementById('flowStepLabel').textContent = node.label.replace('\n', ' ');
+    if (currentId === 'end') {
+      document.getElementById('flowResult').textContent = computeFlowPath().result;
+    }
+    drawFlow();
+  }
+
+  function drawFlow() {
+    const canvas = document.getElementById('flowCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 320);
+    ctx.clearRect(0, 0, cw, ch);
+
+    const activeId = flowPath[flowStep];
+    const activeIdx = flowPath.indexOf(activeId);
+
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1.6;
+    for (let i = 0; i < flowPath.length - 1; i++) {
+      const n1 = flowNodes.find(n => n.id === flowPath[i]);
+      const n2 = flowNodes.find(n => n.id === flowPath[i + 1]);
+      ctx.beginPath(); ctx.moveTo(n1.x * cw, n1.y * ch); ctx.lineTo(n2.x * cw, n2.y * ch); ctx.stroke();
+    }
+    // branch line decide -> nosol (only drawn if that's part of current path)
+    if (flowPath.includes('nosol')) {
+      const dNode = flowNodes.find(n => n.id === 'decide');
+      const nNode = flowNodes.find(n => n.id === 'nosol');
+      ctx.beginPath(); ctx.moveTo(dNode.x * cw, dNode.y * ch); ctx.lineTo(nNode.x * cw, nNode.y * ch); ctx.stroke();
+    }
+
+    flowNodes.forEach(node => {
+      if (node.id === 'nosol' && !flowPath.includes('nosol')) return;
+      if (node.id === 'calc' && !flowPath.includes('calc')) return;
+      if (node.id === 'output' && !flowPath.includes('output')) return;
+      const px = node.x * cw, py = node.y * ch;
+      const isActive = node.id === activeId;
+      const isPast = flowPath.indexOf(node.id) <= activeIdx && flowPath.indexOf(node.id) !== -1;
+      ctx.fillStyle = isActive ? '#0f8f86' : (isPast ? '#cfeae7' : '#fff');
+      ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 1.6;
+
+      const w = node.shape === 'diamond' ? 90 : 110, h = 34;
+      if (node.shape === 'oval') {
+        ctx.beginPath(); ctx.ellipse(px, py, w / 2, h / 2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      } else if (node.shape === 'diamond') {
+        ctx.beginPath();
+        ctx.moveTo(px, py - h); ctx.lineTo(px + w / 2, py); ctx.lineTo(px, py + h); ctx.lineTo(px - w / 2, py); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else if (node.shape === 'parallelogram') {
+        ctx.beginPath();
+        ctx.moveTo(px - w / 2 + 12, py - h / 2); ctx.lineTo(px + w / 2, py - h / 2);
+        ctx.lineTo(px + w / 2 - 12, py + h / 2); ctx.lineTo(px - w / 2, py + h / 2); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.rect(px - w / 2, py - h / 2, w, h); ctx.fill(); ctx.stroke();
+      }
+
+      ctx.fillStyle = isActive ? '#fff' : '#124b46';
+      ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      node.label.split('\n').forEach((line, li, arr) => {
+        const dy = (li - (arr.length - 1) / 2) * 12;
+        ctx.fillText(line, px, py + dy);
+      });
+    });
+
+    ctx.fillStyle = '#6b7680'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    if (flowPath.includes('nosol')) ctx.fillText('아니요', flowNodes.find(n=>n.id==='decide').x*cw + 20, flowNodes.find(n=>n.id==='decide').y*ch - 6);
+    if (flowPath.includes('calc')) ctx.fillText('예', flowNodes.find(n=>n.id==='decide').x*cw + 6, flowNodes.find(n=>n.id==='decide').y*ch + 26);
+  }
+
+  resetFlow();
+  window.addEventListener('resize', drawFlow);
+</script>
+</body>
+</html>
