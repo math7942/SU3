@@ -104,16 +104,6 @@
   .summary .text { flex: 1 1 auto; min-width: 0; }
   .summary .text h2 { margin: 0 0 3px; font-size: 1.02rem; font-weight: 700; }
   .summary .text p { margin: 0; color: var(--muted); font-size: 0.86rem; }
-  .summary .sheet-link {
-    flex: none;
-    color: var(--accent);
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-  .summary .sheet-link:hover { text-decoration: underline; }
-
   /* 표 툴바 */
   .table-toolbar {
     display: flex;
@@ -398,7 +388,6 @@
       <p>3학년 22개 과목 중 시험범위가 하나 이상 등록된 과목 수입니다.</p>
     </div>
     <span class="lock-pill" id="lockPill" hidden></span>
-    <a class="sheet-link" id="sheetLink" href="#" target="_blank" rel="noopener">평가계용 · 원본 시트 열기</a>
   </div>
 
   <div id="lockedBanner" class="locked-banner">
@@ -471,8 +460,6 @@
   let editing = null; // { subject, index } | null — index === entries.length 이면 '새로 추가' 중
   let saving = false;
   let locked = false; // 평가계가 잠그면 true — 서버(Apps Script)도 별도로 잠금을 검사한다
-
-  document.getElementById("sheetLink").href = CONFIG.SHEET_VIEW_URL;
 
   function escapeHtml(str) {
     return String(str)
