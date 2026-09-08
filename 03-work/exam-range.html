@@ -150,6 +150,46 @@
   .print-btn:hover { opacity: 0.92; }
   .toolbar-actions { display: flex; align-items: center; gap: 8px; }
 
+  .lock-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .lock-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .lock-pill {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: var(--good-soft);
+    color: var(--good);
+  }
+  .lock-pill.locked { background: #fdeaea; color: #b3261e; }
+
+  .locked-banner {
+    display: none;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border: 1px solid #f0c8c8;
+    border-radius: 14px;
+    background: #fdeaea;
+    color: #8a2323;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .locked-banner.show { display: block; }
+
   .print-header, .print-footer { display: none; }
 
   .table-wrap {
@@ -291,7 +331,7 @@
   @page { size: A4 portrait; margin: 9mm 11mm; }
   @media print {
     body { background: #fff; padding: 0; }
-    .back, header.hero, .summary, .setup-banner, .table-toolbar,
+    .back, header.hero, .summary, .setup-banner, .table-toolbar, .locked-banner,
     .edit-link, .add-link, .delete-link { display: none !important; }
     .print-header, .print-footer { display: block; }
     .print-header {
@@ -357,13 +397,19 @@
       <h2 id="progressLabel">제출 현황 확인 중…</h2>
       <p>3학년 22개 과목 중 시험범위가 하나 이상 등록된 과목 수입니다.</p>
     </div>
+    <span class="lock-pill" id="lockPill" hidden></span>
     <a class="sheet-link" id="sheetLink" href="#" target="_blank" rel="noopener">평가계용 · 원본 시트 열기</a>
+  </div>
+
+  <div id="lockedBanner" class="locked-banner">
+    🔒 제출이 마감되어 더 이상 입력·수정·삭제를 할 수 없습니다. 지금 표는 그대로 볼 수 있습니다.
   </div>
 
   <div class="table-toolbar">
     <span class="updated" id="updatedAt">불러오는 중…</span>
     <div class="toolbar-actions">
       <button class="refresh-btn" id="refreshBtn" type="button">↻ 새로고침</button>
+      <button class="lock-btn" id="lockBtn" type="button" title="평가계 전용 — 비밀번호가 필요합니다">🔒 잠금/열기 (평가계용)</button>
       <button class="print-btn" id="printBtn" type="button" title="인쇄 대화상자에서 세로/가로 방향과 배율(%)을 고를 수 있어요">🖨 출력 (학생 배부용)</button>
     </div>
   </div>
@@ -424,6 +470,7 @@
   let submissions = {}; // subject -> [{ id, teacher, rangeText, updatedAt }, ...] (담당교사별로 각각)
   let editing = null; // { subject, index } | null — index === entries.length 이면 '새로 추가' 중
   let saving = false;
+  let locked = false; // 평가계가 잠그면 true — 서버(Apps Script)도 별도로 잠금을 검사한다
 
   document.getElementById("sheetLink").href = CONFIG.SHEET_VIEW_URL;
 
@@ -522,7 +569,9 @@
               <td class="range-cell">
                 <div class="range-display">
                   <span class="txt"><span class="pill wait">미제출</span></span>
-                  <span class="btns"><button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="0">입력</button></span>
+                  <span class="btns">${
+                    locked ? "" : `<button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="0">입력</button>`
+                  }</span>
                 </div>
               </td>`;
           } else if (item.type === "view") {
@@ -535,13 +584,15 @@
               <td class="range-cell">
                 <div class="range-display">
                   <span class="txt">${escapeHtml(item.entry.rangeText)}</span>
-                  <span class="btns">
+                  <span class="btns">${
+                    locked ? "" : `
                     <span class="row-btns">
                       <button class="edit-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index}">수정</button>
                       <button class="delete-link" type="button" data-action="delete" data-subject="${escapeAttr(r.subject)}" data-index="${item.index}">삭제</button>
                     </span>
                     ${isLast && !alreadyAdding ? `<button class="add-link" type="button" data-action="edit" data-subject="${escapeAttr(r.subject)}" data-index="${item.index + 1}">+ 담당교사 추가</button>` : ""}
-                  </span>
+                    `
+                  }</span>
                 </div>
               </td>`;
           } else if (item.type === "edit") {
@@ -564,6 +615,13 @@
     document.getElementById("progressPct").textContent = pct + "%";
     document.getElementById("progressRing").style.setProperty("--pct", pct);
     document.getElementById("progressLabel").textContent = `제출 완료 ${doneCount} / ${total}과목`;
+
+    const lockPill = document.getElementById("lockPill");
+    lockPill.hidden = false;
+    lockPill.className = locked ? "lock-pill locked" : "lock-pill";
+    lockPill.textContent = locked ? "🔒 입력 마감" : "🔓 입력 중";
+    document.getElementById("lockedBanner").classList.toggle("show", locked);
+    document.getElementById("lockBtn").textContent = locked ? "🔓 열기 (평가계용)" : "🔒 잠금 (평가계용)";
 
     if (editing) {
       const input = document.getElementById("editTeacherInput");
@@ -589,6 +647,7 @@
         if (!submissions[r.subject]) submissions[r.subject] = [];
         submissions[r.subject].push({ id: r.id, teacher: r.teacher, rangeText: r.range_text, updatedAt: r.updated_at });
       });
+      locked = !!data.locked;
       document.getElementById("updatedAt").textContent = "마지막 확인: " + new Date().toLocaleTimeString("ko-KR");
     } catch (err) {
       document.getElementById("updatedAt").textContent = "불러오기 실패 — 새로고침을 눌러 다시 시도해 주세요.";
@@ -597,6 +656,30 @@
   }
 
   document.getElementById("refreshBtn").addEventListener("click", loadSubmissions);
+
+  document.getElementById("lockBtn").addEventListener("click", async () => {
+    if (!CONFIG.APPS_SCRIPT_URL) { alert("저장소가 연결되지 않았습니다."); return; }
+    const wantLocked = !locked;
+    const password = prompt(wantLocked
+      ? "제출을 마감(잠금)하려면 평가계 비밀번호를 입력하세요."
+      : "다시 입력을 여시려면 평가계 비밀번호를 입력하세요.");
+    if (password === null) return; // 취소
+    try {
+      const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "setLock", password, locked: wantLocked })
+      });
+      const data = await res.json();
+      if (!data.ok) { alert(data.error || "비밀번호가 올바르지 않습니다."); return; }
+      locked = wantLocked;
+      if (editing) editing = null;
+      renderTable();
+      alert(wantLocked ? "제출을 마감했습니다." : "다시 입력을 열었습니다.");
+    } catch (err) {
+      alert("네트워크 오류로 상태를 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+  });
 
   document.getElementById("printBtn").addEventListener("click", () => {
     if (editing) { editing = null; renderTable(); }
@@ -610,6 +693,8 @@
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
     const action = btn.dataset.action;
+
+    if (locked && action !== "cancel") { alert("제출이 마감되어 더 이상 입력·수정·삭제할 수 없습니다."); return; }
 
     if (action === "edit") {
       editing = { subject: btn.dataset.subject, index: Number(btn.dataset.index) };

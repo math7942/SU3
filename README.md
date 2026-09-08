@@ -63,9 +63,12 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
    Apps Script가 자동으로 채웁니다. 직접 값을 넣지 않아도 됩니다).
 3. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기존 코드를 전부 지우고 아래 코드를
    붙여넣습니다. (한 과목에 담당교사가 이미 있는 행이 있으면 새 담당교사는 새 행을 추가하고,
-   `id`가 있는 요청은 그 행만 찾아 수정합니다.)
+   `id`가 있는 요청은 그 행만 찾아 수정합니다. 맨 위 `ADMIN_PASSWORD`는 평가계님만 아는 값으로
+   반드시 바꿔주세요 — 이 비밀번호로 표를 잠그고 여는 것을 통제합니다.)
 
    ```js
+   var ADMIN_PASSWORD = "여기에_비밀번호를_정하세요"; // 반드시 바꾸세요
+
    function doGet(e) {
      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
      var data = sheet.getDataRange().getValues();
@@ -86,12 +89,32 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
          updated_at: row[col.updated_at]
        };
      });
-     return ContentService.createTextOutput(JSON.stringify({ rows: rows }))
+     var locked = PropertiesService.getScriptProperties().getProperty("locked") === "true";
+     return ContentService.createTextOutput(JSON.stringify({ rows: rows, locked: locked }))
        .setMimeType(ContentService.MimeType.JSON);
    }
 
    function doPost(e) {
      var payload = JSON.parse(e.postData.contents);
+
+     // 잠금/해제는 비밀번호가 맞으면 잠긴 상태에서도 항상 처리한다(그래야 다시 열 수 있음)
+     if (payload.action === "setLock") {
+       if (payload.password !== ADMIN_PASSWORD) {
+         return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "비밀번호가 올바르지 않습니다" }))
+           .setMimeType(ContentService.MimeType.JSON);
+       }
+       PropertiesService.getScriptProperties().setProperty("locked", payload.locked ? "true" : "false");
+       return ContentService.createTextOutput(JSON.stringify({ ok: true, locked: !!payload.locked }))
+         .setMimeType(ContentService.MimeType.JSON);
+     }
+
+     // 잠겨 있으면 그 외의 모든 쓰기(입력/수정/삭제)를 거부한다
+     var isLocked = PropertiesService.getScriptProperties().getProperty("locked") === "true";
+     if (isLocked) {
+       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: "제출이 마감되었습니다" }))
+         .setMimeType(ContentService.MimeType.JSON);
+     }
+
      var subject = payload.subject;
      var teacher = payload.teacher || "";
      var rangeText = payload.rangeText || "";
@@ -174,6 +197,10 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 
 이미 배포해 두었다면: **배포 → 배포 관리 → 연필(수정) 아이콘 → 버전: 새 버전 → 배포**로
 코드만 새로 반영하면 됩니다 (URL은 그대로 유지).
+
+페이지의 **🔒 잠금/열기 (평가계용)** 버튼을 누르면 위에서 정한 `ADMIN_PASSWORD`를 물어봅니다.
+잠그면 학생·선생님 화면에서는 표를 계속 볼 수 있지만, 입력·수정·삭제는 (버튼이 아예 안 보이고)
+서버(Apps Script)에서도 거부됩니다. 비밀번호는 선생님들께 알리지 말고 평가계님만 아셔야 합니다.
 
 이후 시트 내용을 바꾸려면(과목 추가·삭제, 오타 수정) 시트를 직접 편집해도 되고, 코드를 수정한 뒤
 **배포 → 배포 관리 → 수정 → 새 버전**으로 다시 배포하면 됩니다(웹앱 URL은 그대로 유지됩니다).
