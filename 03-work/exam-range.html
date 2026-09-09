@@ -339,6 +339,11 @@
     .table-wrap { border: none; border-radius: 0; }
     table.range { min-width: 0; width: 100%; font-size: 8pt; table-layout: fixed; }
     table.range th, table.range td { padding: 5px 10px; line-height: 1.4; }
+    /* 흐리게 보이던 옅은 회보라 글자(--ink-soft)를 인쇄에서는 진하게 */
+    table.range td.period-cell,
+    table.range td.teacher-cell { color: #000; font-weight: 700; }
+    table.range td.subject-cell { color: #000; }
+    table.range td.range-cell { color: #000; font-weight: 500; }
     .col-period { width: 60px; }
     .col-subject { width: 96px; }
     .col-teacher { width: 120px; }
