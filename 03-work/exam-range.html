@@ -180,7 +180,7 @@
   }
   .locked-banner.show { display: block; }
 
-  .print-header, .print-footer { display: none; }
+  .print-header { display: none; }
 
   .table-wrap {
     overflow-x: auto;
@@ -323,18 +323,13 @@
     body { background: #fff; padding: 0; }
     .back, header.hero, .summary, .setup-banner, .table-toolbar, .locked-banner,
     .edit-link, .add-link, .delete-link { display: none !important; }
-    .print-header, .print-footer { display: block; }
+    .print-header { display: block; }
     .print-header {
       margin: 0 0 8px;
       font-size: 16pt;
       font-weight: 800;
       letter-spacing: -0.02em;
       text-align: center;
-    }
-    .print-footer {
-      margin-top: 6px;
-      color: #555;
-      font-size: 7.5pt;
     }
     .table-wrap { border: none; border-radius: 0; }
     table.range { min-width: 0; width: 100%; font-size: 8pt; table-layout: fixed; }
@@ -343,7 +338,7 @@
     table.range td.period-cell,
     table.range td.teacher-cell { color: #000; font-weight: 700; }
     table.range td.subject-cell { color: #000; }
-    table.range td.range-cell { color: #000; font-weight: 500; }
+    table.range td.range-cell { color: #000; font-weight: 700; }
     .col-period { width: 60px; }
     .col-subject { width: 96px; }
     .col-teacher { width: 120px; }
@@ -422,7 +417,6 @@
       <tbody id="rangeBody"></tbody>
     </table>
   </div>
-  <p class="print-footer" id="printFooter"></p>
 
 </div>
 
@@ -675,8 +669,6 @@
 
   document.getElementById("printBtn").addEventListener("click", () => {
     if (editing) { editing = null; renderTable(); }
-    document.getElementById("printFooter").textContent =
-      "출력일: " + new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
     window.print();
   });
 
