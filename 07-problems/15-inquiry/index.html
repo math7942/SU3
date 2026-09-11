@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수학과제 탐구 · 수학문제 · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<link rel="stylesheet" href="../assets/problems.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="g7">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="../index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      수학문제
+    </a>
+    <span class="badge" aria-hidden="true">🔎</span>
+    <h1>수학과제 탐구</h1>
+    <p>주제 선정, 탐구 실행, 결과 정리. 주제를 고르면 문제가 새로 만들어집니다. 답을 넣고 채점한 뒤 해설로 확인하세요.</p>
+  </header>
+
+  <main>
+<!-- 주제와 문제는 data.js 에 들어 있습니다. 주제를 더하려면 data.js 의 areas 목록에 topic 한 덩어리를 붙여 넣으세요. -->
+    <div id="app"></div>
+    <noscript>
+      <div class="notice">이 페이지는 브라우저에서 문제를 만들어 보여 줍니다. 자바스크립트를 켜 주세요.</div>
+    </noscript>
+
+    <p class="foot-note">SU3 · 문제 생성과 채점은 모두 브라우저 안에서 이루어지고, 푼 기록은 이 기기에만 저장됩니다.</p>
+  </main>
+
+</div>
+
+<script src="../assets/problems.js"></script>
+<script src="data.js"></script>
+</body>
+</html>
