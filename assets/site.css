@@ -21,6 +21,7 @@
 .g4 { --accent: #b03b62; --accent-soft: #fce8ef; }
 .g5 { --accent: #2a6fbe; --accent-soft: #e4eefb; }
 .g6 { --accent: #4a7c2f; --accent-soft: #e9f4e2; }
+.g7 { --accent: #8a5a12; --accent-soft: #fbf0dc; }
 
 * { box-sizing: border-box; }
 
