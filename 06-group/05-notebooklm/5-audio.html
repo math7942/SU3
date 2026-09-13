@@ -16,13 +16,57 @@
     </a>
     <span class="badge" aria-hidden="true">🎧</span>
     <h1>5단계 · Audio Overview로 팟캐스트 학습자료 만들기</h1>
-    <p>두 AI 진행자가 대화하듯 설명하는 오디오 자료를 만듭니다.</p>
+    <p>소스 내용을 두 진행자가 대화하듯 설명하는 오디오 자료로 바꿔줍니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Audio Overview란</h2>
+      <p>Studio에서 "Audio Overview"를 누르면, 올려둔 소스를 바탕으로 두 AI 진행자가 대화를 나누며 설명하는 10~20분짜리 팟캐스트를 만들어줍니다. 글로 읽기보다 듣는 것이 편한 학생이나, 이동 중에 복습하고 싶은 학생에게 유용합니다.</p>
+
+      <h2>2. 형식 고르기</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>형식</th><th>특징</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Deep Dive</td><td>기본 형식으로, 주제를 깊이 있게 대화 형태로 풀어줍니다.</td></tr>
+            <tr><td>The Brief</td><td>짧게 핵심만 요약해서 들려줍니다.</td></tr>
+            <tr><td>The Critique</td><td>내용을 비판적으로 검토하는 관점에서 대화합니다.</td></tr>
+            <tr><td>The Debate</td><td>찬반이 갈리는 주제를 토론 형식으로 다룹니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. 언어 설정하기</h2>
+      <p>생성 전 언어를 선택할 수 있고, 80개가 넘는 언어를 지원합니다. 한국어를 선택하면 두 진행자가 자연스러운 한국어로 대화합니다.</p>
+
+      <h2>4. 상황에 맞는 형식 추천받기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>Audio Overview 형식 추천받기</h4>
+        <p class="practice-desc">지금 상황과 가장 가까운 것을 골라보세요.</p>
+
+        <div class="field">
+          <label for="p5-situation">지금 상황</label>
+          <select id="p5-situation">
+            <option value="commute">등하교 시간에 편하게 복습할 자료가 필요해요</option>
+            <option value="quick">시간이 없어서 핵심만 짧게 듣고 싶어요</option>
+            <option value="debate">찬반이 갈리는 주제를 다각도로 다루고 싶어요</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p5-result"></div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>배포 전에 직접 들어보세요</h4>
+        <p>대화체로 설명하다 보면 사소한 표현 오류나 어색한 강조가 섞일 수 있습니다. 학생에게 배포하기 전에 교사가 먼저 끝까지 들어보고 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +82,22 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p5-result');
+  var data = {
+    commute: 'Deep Dive를 추천합니다. 이동 중에 편하게 들으며 깊이 있는 설명을 따라갈 수 있습니다.',
+    quick: 'The Brief를 추천합니다. 짧은 시간 안에 핵심만 압축해서 들을 수 있습니다.',
+    debate: 'The Debate를 추천합니다. 찬반 입장을 번갈아 들려주므로 다양한 관점을 살펴보기 좋습니다.'
+  };
+  function update() {
+    var situation = document.getElementById('p5-situation').value;
+    out.textContent = data[situation];
+  }
+  var select = document.getElementById('p5-situation');
+  if (select) select.addEventListener('change', update);
+  update();
+})();
+</script>
 </body>
 </html>
