@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5차시 · 코사인 유사도와 단원 정리 · 텍스트 데이터 처리</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-size: 0.82rem; cursor: pointer; }
+  .chip.pos { border-color: #7fc8a9; }
+  .chip.neg { border-color: #e8b4c4; }
+  .chip.on.pos { background: #0f8f86; color: #fff; }
+  .chip.on.neg { background: #c23b5a; color: #fff; }
+  .result-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .result-cell { flex: 1 1 140px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; }
+  .result-cell .k { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
+  .result-cell .v { font-size: 1.05rem; font-weight: 800; color: var(--accent-dark); margin-top: 4px; }
+  .cls-badge { display: inline-block; padding: 4px 14px; border-radius: 999px; font-weight: 800; font-size: 0.9rem; margin-top: 8px; }
+  .cls-badge.긍정 { background: var(--ok-bg); color: var(--ok-ink); }
+  .cls-badge.중립 { background: #eef2f3; color: #556067; }
+  .cls-badge.부정 { background: #fbe9ee; color: #8a2745; }
+  .quiz-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; font-size: 0.9rem; }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.correct { background: var(--ok-bg); border-color: var(--ok-line); font-weight: 700; }
+  .quiz-opt.wrong { background: #fbe9ee; border-color: #e8b4c4; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      텍스트 데이터 처리
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-set-representation.html">1차시</a>
+      <a class="session-tab" href="2-vector-representation.html">2차시</a>
+      <a class="session-tab" href="3-tfidf.html">3차시</a>
+      <a class="session-tab" href="4-jaccard-euclidean.html">4차시</a>
+      <a class="session-tab current" href="5-cosine-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅱ단원 · 5 / 5차시</span>
+    <h1>코사인 유사도와 단원 정리</h1>
+    <p class="sub">벡터의 방향을 이용하는 코사인 유사도를 배우고, 유클리드 유사도와 비교한 뒤 Ⅱ단원 전체를 정리합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>두 벡터가 이루는 각을 이용해 코사인 유사도를 구할 수 있다.</li>
+        <li>유클리드 유사도와 코사인 유사도의 차이와 각각의 장단점을 설명할 수 있다.</li>
+        <li>Ⅱ단원에서 배운 텍스트 데이터 표현·분석 방법을 종합적으로 적용할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>코사인 유사도란?</td><td class="time">10분</td></tr>
+        <tr><td>활동1</td><td>코사인 유사도로 리뷰 감성 분석하기</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>유클리드 유사도 vs 코사인 유사도</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>Ⅱ단원 정리 퀴즈</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 10분</span>
+    <h2>코사인 유사도란?</h2>
+    <p class="lead">두 텍스트 데이터를 나타내는 벡터의 <strong>방향</strong>이 비슷한 정도를 <strong>코사인 유사도</strong>라고 합니다. 두 벡터 $\vec a=(a_1,\cdots,a_n), \vec b=(b_1,\cdots,b_n)$이 이루는 각의 크기를 $x°$라 할 때,</p>
+    <p style="text-align:center; font-size:1.05rem;">$C(\vec a,\vec b)=\cos x°=\dfrac{a_1b_1+a_2b_2+\cdots+a_nb_n}{\sqrt{a_1^2+\cdots+a_n^2}\sqrt{b_1^2+\cdots+b_n^2}}$</p>
+    <p>코사인 유사도 값이 1에 가까울수록 두 벡터의 각이 0°에 가까워 유사하고, 0에 가까울수록 각이 90°에 가까워 유사하지 않다고 판단합니다. 예를 들어 벡터 $\vec a=(1,0)$과 세 벡터 $\vec b=(3,0), \vec c=(3,2), \vec d=(0,2)$가 이루는 각과 코사인 유사도는 다음과 같습니다.</p>
+    <table class="data">
+      <tr><th>벡터</th><th>두 벡터 사이의 각</th><th>코사인 유사도</th></tr>
+      <tr><td>$\vec a$와 $\vec b$</td><td>0°</td><td>1</td></tr>
+      <tr><td>$\vec a$와 $\vec c$</td><td>약 33.7°</td><td>$\dfrac{3\sqrt{13}}{13}\approx0.83$</td></tr>
+      <tr><td>$\vec a$와 $\vec d$</td><td>90°</td><td>0</td></tr>
+    </table>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>코사인 유사도로 리뷰 감성 분석하기</h2>
+    <p class="lead">4차시와 같은 데이터 — 긍정 단어 $\vec p=(1,1,1,1,0,0,0,0)$, 부정 단어 $\vec n=(0,0,0,0,1,1,1,1)$, $U=\{$청결하다, 빠르다, 맛있다, 많다, 불편하다, 별로다, 불친절, 최악$\}$ — 로 리뷰 X의 코사인 유사도를 분석해 봅시다.</p>
+    <div class="widget">
+      <div class="widget-title">코사인 유사도 계산기 — U에서 리뷰 X의 단어를 선택하세요</div>
+      <div class="preset-row">
+        <button class="btn solid" onclick="loadCosPreset('X')">리뷰 X 불러오기</button>
+        <button class="btn" onclick="loadCosPreset('clear')">초기화</button>
+      </div>
+      <div class="chip-row" id="cosU"></div>
+      <div class="result-row">
+        <div class="result-cell"><div class="k">C(p, x)</div><div class="v" id="cpxOut">0</div></div>
+        <div class="result-cell"><div class="k">C(n, x)</div><div class="v" id="cnxOut">0</div></div>
+      </div>
+      <div id="cosCls" class="cls-badge">-</div>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">$C(\vec p,\vec x)=\dfrac{2}{\sqrt4\sqrt5}\approx0.45$, $C(\vec n,\vec x)=\dfrac{3}{\sqrt4\sqrt5}\approx0.67$이므로 $\vec x$는 $\vec p$보다 $\vec n$과 이루는 각이 더 작습니다. 따라서 리뷰 X는 <strong>부정</strong> 리뷰로 분류합니다. (4차시의 유클리드 유사도 결과와 같습니다.)</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>유클리드 유사도 vs 코사인 유사도</h2>
+    <p class="lead">우유와 주스에 대한 선호 정도를 (우유 선호도, 주스 선호도)의 벡터로 나타냈다고 합시다. '나'는 우유보다 주스를 더 좋아하고, '민서'는 나와 벡터의 <strong>크기(거리)</strong>는 비슷하지만 반대로 우유를 더 좋아하며, '민준'은 나와 <strong>같은 방향</strong>(우유보다 주스를 더 좋아하는 비율이 같음)이지만 훨씬 강하게 좋아합니다.</p>
+    <div class="widget">
+      <div class="widget-title">우유·주스 선호도 벡터 비교</div>
+      <canvas id="prefCanvas" height="260"></canvas>
+      <table class="data">
+        <tr><th>비교</th><th>유클리드 거리</th><th>코사인 유사도</th></tr>
+        <tr><td>나 — 민서</td><td id="dNaMinseo"></td><td id="cNaMinseo"></td></tr>
+        <tr><td>나 — 민준</td><td id="dNaMinjun"></td><td id="cNaMinjun"></td></tr>
+      </table>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">거리 기준(유클리드 유사도)으로는 나와 <strong>민서</strong>가 더 비슷하다고 판단하지만, 방향 기준(코사인 유사도)으로는 나와 <strong>민준</strong>이 더 비슷하다고 판단합니다. 실제로 나와 민준은 정도의 차이는 있지만 우유보다 주스를 더 좋아하는 경향이 같으므로, 이 경우 코사인 유사도의 판단이 더 합리적입니다.</p>
+    <table class="data">
+      <tr><th></th><th>유클리드 유사도</th><th>코사인 유사도</th></tr>
+      <tr><td>장점</td><td>거리로 직관적 해석 가능, 벡터 크기가 중요할 때 유용</td><td>벡터의 차원이 늘어도 성능이 크게 저하되지 않음</td></tr>
+      <tr><td>단점</td><td>차원이 커지면 신뢰성이 떨어지고, 방향이 비슷해도 멀면 유사하지 않다고 판단</td><td>벡터의 크기 정보를 고려하지 않음, 직관적 해석이 어려움</td></tr>
+    </table>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>Ⅱ단원 정리 퀴즈</h2>
+    <div class="widget">
+      <div class="widget-title">단원 마무리 문제</div>
+      <div id="quizWrap"></div>
+      <div class="readout">
+        <div class="cell"><div class="k">맞힌 개수</div><div class="v" id="quizScore">0 / 5</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <h2>Ⅱ단원을 마치며</h2>
+    <p>텍스트 데이터를 집합·벡터로 표현하는 방법, TF-IDF로 중요한 단어를 찾는 방법, 자카드·유클리드·코사인 유사도로 텍스트의 감성을 분석하는 방법까지 살펴보았습니다. 수고 많았습니다!</p>
+    <div class="next">Ⅱ단원 완료 — 목록으로 돌아가 다른 단원을 이어서 학습해 보세요.</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="4-jaccard-euclidean.html">← 4차시 — 자카드 유사도와 유클리드 유사도</a>
+    <a href="index.html">텍스트 데이터 처리 목록으로 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const U_words = ['청결하다', '빠르다', '맛있다', '많다', '불편하다', '별로다', '불친절', '최악'];
+  const p_vec = [1, 1, 1, 1, 0, 0, 0, 0];
+  const n_vec = [0, 0, 0, 0, 1, 1, 1, 1];
+  const cosPresets = { X: ['청결하다', '빠르다', '불편하다', '별로다', '불친절'], clear: [] };
+  let cosSelected = new Set(cosPresets.X);
+
+  const cosUEl = document.getElementById('cosU');
+  U_words.forEach((w, idx) => {
+    const c = document.createElement('span');
+    c.className = 'chip ' + (p_vec[idx] ? 'pos' : 'neg');
+    c.textContent = w;
+    c.onclick = () => { toggleCosWord(w, c); };
+    cosUEl.appendChild(c);
+  });
+
+  function toggleCosWord(w, el) {
+    if (cosSelected.has(w)) { cosSelected.delete(w); el.classList.remove('on'); }
+    else { cosSelected.add(w); el.classList.add('on'); }
+    calcCos();
+  }
+
+  function loadCosPreset(key) {
+    cosSelected = new Set(cosPresets[key]);
+    document.querySelectorAll('#cosU .chip').forEach(c => c.classList.toggle('on', cosSelected.has(c.textContent)));
+    calcCos();
+  }
+
+  function dot(a, b) { let s = 0; for (let i = 0; i < a.length; i++) s += a[i] * b[i]; return s; }
+  function norm(a) { return Math.sqrt(dot(a, a)); }
+  function cosine(a, b) { const na = norm(a), nb = norm(b); return (na === 0 || nb === 0) ? 0 : dot(a, b) / (na * nb); }
+
+  function calcCos() {
+    const x_vec = U_words.map(w => cosSelected.has(w) ? 1 : 0);
+    const cpx = cosine(p_vec, x_vec);
+    const cnx = cosine(n_vec, x_vec);
+    document.getElementById('cpxOut').textContent = cpx.toFixed(3);
+    document.getElementById('cnxOut').textContent = cnx.toFixed(3);
+    const badge = document.getElementById('cosCls');
+    let cls;
+    if (Math.abs(cpx - cnx) < 1e-9) cls = '중립'; else cls = cpx > cnx ? '긍정' : '부정';
+    badge.textContent = cls + ' 리뷰';
+    badge.className = 'cls-badge ' + cls;
+  }
+
+  loadCosPreset('X');
+
+  // 유클리드 vs 코사인 비교 (설명을 위한 예시 좌표)
+  const na = [2, 3], minseo = [3, 2], minjun = [4, 6];
+  function drawPref() {
+    const canvas = document.getElementById('prefCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 260);
+    ctx.clearRect(0, 0, cw, ch);
+    const pad = 40, scale = 28;
+    const originX = pad, originY = ch - pad;
+    const toPx = (pt) => [originX + pt[0] * scale, originY - pt[1] * scale];
+
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(cw - 20, originY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(originX, 20); ctx.stroke();
+    ctx.fillStyle = '#6b7680'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('우유 선호도', cw / 2, ch - 8);
+    ctx.save(); ctx.translate(14, ch / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('주스 선호도', 0, 0); ctx.restore();
+
+    const pts = [{ p: na, label: '나', color: '#0f8f86' }, { p: minseo, label: '민서', color: '#c23b5a' }, { p: minjun, label: '민준', color: '#8a6dd6' }];
+    pts.forEach(({ p, label, color }) => {
+      const [px, py] = toPx(p);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(originX, originY); ctx.lineTo(px, py); ctx.stroke();
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+      ctx.fillStyle = color; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(label, px + 6, py - 6);
+    });
+  }
+  function euclidDist(a, b) { return Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2); }
+  drawPref();
+  document.getElementById('dNaMinseo').textContent = euclidDist(na, minseo).toFixed(2);
+  document.getElementById('dNaMinjun').textContent = euclidDist(na, minjun).toFixed(2);
+  document.getElementById('cNaMinseo').textContent = cosine(na, minseo).toFixed(3);
+  document.getElementById('cNaMinjun').textContent = cosine(na, minjun).toFixed(3);
+  window.addEventListener('resize', drawPref);
+
+  const quizItems = [
+    { text: '두 텍스트 데이터를 나타내는 벡터의 방향이 비슷한 정도를 나타내는 유사도는?',
+      opts: ['자카드 유사도', '유클리드 유사도', '코사인 유사도'], answer: '코사인 유사도' },
+    { text: '값이 0에 가까울수록 두 텍스트 데이터가 유사하다고 판단하는 유사도는?',
+      opts: ['자카드 유사도', '유클리드 유사도', '코사인 유사도'], answer: '유클리드 유사도' },
+    { text: "문장 A: 나는 빨간 딸기를 좋아한다. 문장 B: 나는 빨간 체리를 좋아한다. 문장 C: 나는 빨간 딸기를 좋아하고, 빨간 체리도 좋아한다. 세 문장의 단어(나, 빨간, 딸기, 체리, 좋다)로 이루어진 전체집합 U의 원소 개수는?",
+      opts: ['4개', '5개', '6개'], answer: '5개' },
+    { text: 'TF-IDF = TF × IDF에서 IDF(역문서 빈도수)는 상대도수 DF/n의 무엇인가?',
+      opts: ['역수', '제곱', '로그값'], answer: '역수' },
+    { text: '자카드 유사도 J(A,B)를 구하는 식으로 옳은 것은?',
+      opts: ['n(A∩B) / n(A∪B)', 'n(A∪B) / n(A∩B)', 'n(A) + n(B)'], answer: 'n(A∩B) / n(A∪B)' },
+  ];
+  let score = 0;
+  const quizWrap = document.getElementById('quizWrap');
+  quizItems.forEach((item, idx) => {
+    const block = document.createElement('div');
+    block.style.marginBottom = '14px';
+    block.innerHTML = `<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Q${idx+1}.</strong> ${item.text}</p>` +
+      item.opts.map(opt => `<button class="quiz-opt" data-opt="${opt}">${opt}</button>`).join('');
+    quizWrap.appendChild(block);
+    const btns = block.querySelectorAll('.quiz-opt');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btns.forEach(b => b.disabled = true);
+        btns.forEach(b => { if (b.dataset.opt === item.answer) b.classList.add('correct'); });
+        if (btn.dataset.opt === item.answer) score++;
+        else btn.classList.add('wrong');
+        document.getElementById('quizScore').textContent = score + ' / ' + quizItems.length;
+      });
+    });
+  });
+</script>
+</body>
+</html>

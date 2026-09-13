@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3차시 · TF-IDF로 중요한 단어 찾기 · 텍스트 데이터 처리</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  table.tfidf { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 8px 0; }
+  table.tfidf th, table.tfidf td { border: 1px solid var(--line); padding: 5px 4px; text-align: center; white-space: nowrap; }
+  table.tfidf th { background: var(--accent-soft); color: var(--accent-dark); }
+  table.tfidf td.hi { background: var(--ok-bg); font-weight: 800; color: var(--ok-ink); }
+  .tfidf-scroll { overflow-x: auto; }
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .step-label { font-size: 0.8rem; color: var(--muted); font-weight: 700; margin: 12px 0 4px; }
+  .conclude-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; font-size: 0.88rem; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      텍스트 데이터 처리
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-set-representation.html">1차시</a>
+      <a class="session-tab" href="2-vector-representation.html">2차시</a>
+      <a class="session-tab current" href="3-tfidf.html">3차시</a>
+      <a class="session-tab" href="4-jaccard-euclidean.html">4차시</a>
+      <a class="session-tab" href="5-cosine-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅱ단원 · 3 / 5차시</span>
+    <h1>TF-IDF로 중요한 단어 찾기</h1>
+    <p class="sub">빈도수가 높지 않아도 문맥상 중요한 단어를 찾아내는 방법, TF-IDF를 계산해 봅니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>빈도수 벡터만으로 중요한 단어를 찾기 어려운 경우를 설명할 수 있다.</li>
+        <li>단어 빈도수(TF), 문서 빈도수(DF), 역문서 빈도수(IDF)를 구할 수 있다.</li>
+        <li>TF-IDF를 계산하여 문맥상 중요한 단어를 추출할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>빈도수 벡터의 한계</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>TF, DF, IDF 구하기</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>TF-IDF 계산하고 중요 단어 찾기</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>다른 문서로 TF-IDF 확인하기</td><td class="time">10분</td></tr>
+        <tr><td>정리</td><td>TF-IDF 기준값과 로그를 이용한 IDF</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>빈도수 벡터의 한계</h2>
+    <p class="lead">"그 드라마를 보는 시간은 정말 지루했어요."와 "그 드라마를 보는 시간은 정말 낭비였어요."를 비교해 봅시다. '그', '정말'과 같은 불용어가 각 2번씩, '드라마', '보는', '시간'처럼 의미 파악에 중요하지 않은 단어도 2번씩 등장했지만, 정작 드라마 평가에 해당하는 <strong>'지루', '낭비'</strong>는 1번씩만 등장했습니다.</p>
+    <div class="qbox">단순히 빈도수만으로는 텍스트 데이터의 의미를 정확히 파악하기 어렵습니다. 많이 등장하지는 않지만 의미 파악에 중요한 역할을 하는 단어를 찾는 방법이 필요합니다.</div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>TF, DF, IDF 구하기</h2>
+    <p class="lead">어느 치킨집 배달 애플리케이션 후기 A, B, C를 살펴봅시다.</p>
+    <table class="data">
+      <tr><th></th><th>후기</th></tr>
+      <tr><td>A</td><td>배달도 정말 빨랐고 양은 저한테 살짝 많은 편이었어요. 개인적으로 여기는 프라이드치킨을 추천합니다.</td></tr>
+      <tr><td>B</td><td>배달 빠르고요. 프라이드치킨이 맛있어서 추천합니다.</td></tr>
+      <tr><td>C</td><td>누가 프라이드치킨 먹고 싶다고 할 때마다 추천하는데 양도 많고 맛있습니다.</td></tr>
+    </table>
+    <p>불용어를 제거하면 $A=\{$프라이드치킨, 추천, 배달, 빠르다, 양, 많다$\}$, $B=\{$프라이드치킨, 추천, 배달, 빠르다, 맛있다$\}$, $C=\{$프라이드치킨, 추천, 양, 많다, 맛있다$\}$이고 $U=\{$프라이드치킨, 추천, 배달, 빠르다, 양, 많다, 맛있다$\}$(7개)입니다.</p>
+    <p style="font-size:0.86rem; color:var(--ink-soft);"><strong>TF</strong>(단어 빈도수, Term Frequency)는 단어가 문서에 등장하는 횟수, <strong>DF</strong>(문서 빈도수, Document Frequency)는 단어가 등장하는 문서의 개수, <strong>IDF</strong>(역문서 빈도수, Inverse Document Frequency)는 상대도수 $\dfrac{\text{DF}}{n}$($n$은 전체 문서 개수)의 역수, 즉 $\text{IDF}=\dfrac{n}{\text{DF}}$입니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>TF-IDF 계산하고 중요 단어 찾기</h2>
+    <p class="lead"><strong>TF-IDF = TF × IDF</strong>입니다. 이 값이 클수록 그 문서에서만 도드라지게 등장하는(중요도가 높은) 단어이고, 값이 작을수록 여러 문서에 고르게 등장해 중요도가 낮은 단어입니다.</p>
+    <div class="widget">
+      <div class="widget-title">TF-IDF 계산기</div>
+      <div class="preset-row">
+        <button class="btn solid" onclick="loadPreset('chicken')">치킨 배달 후기</button>
+        <button class="btn" onclick="loadPreset('weather')">확인하기 1 · 날씨</button>
+        <button class="btn" onclick="loadPreset('mining')">함께하기 1 · 텍스트 마이닝</button>
+      </div>
+      <div class="step-label">① 단어 빈도수 (TF)</div>
+      <div class="tfidf-scroll"><table class="tfidf" id="tfTable"></table></div>
+      <div class="step-label">② 문서 빈도수(DF)와 상대도수 DF/n</div>
+      <div class="tfidf-scroll"><table class="tfidf" id="dfTable"></table></div>
+      <div class="step-label">③ 역문서 빈도수(IDF = n/DF)</div>
+      <div class="tfidf-scroll"><table class="tfidf" id="idfTable"></table></div>
+      <div class="step-label">④ TF-IDF = TF × IDF (문서별 최댓값 강조)</div>
+      <div class="tfidf-scroll"><table class="tfidf" id="tfidfTable"></table></div>
+      <div class="conclude-box" id="concludeBox"></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 10분</span>
+    <h2>다른 문서로 TF-IDF 확인하기</h2>
+    <p class="lead">위 계산기에서 <strong>확인하기 1 · 날씨</strong>와 <strong>함께하기 1 · 텍스트 마이닝</strong> 버튼을 눌러 다른 문서에서도 TF-IDF로 중요 단어를 찾을 수 있는지 확인해 보세요. 각 문서에서 중요도가 높은 단어가 무엇인지 계산기의 ④ 표에서 초록색으로 표시됩니다.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 정답 확인하기</button>
+      <div class="reveal-content ok hidden">
+        <p><strong>날씨</strong> — A: 내일(2점), B: 화창·날씨·예상(1.5점), C: 햇볕·따뜻하다(3점)</p>
+        <p><strong>텍스트 마이닝</strong> — A: 마이닝(2), 비정형(3) / B: 추출, 통계, 패턴, 추세(모두 3) / C: 개념, 특성, 관계, 예측(모두 3)</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>TF-IDF 기준값과 로그를 이용한 IDF</h2>
+    <p>TF-IDF가 크다·작다의 절대적인 기준값은 없습니다. 분석 목적에 따라 문서 내에서 상대적인 기준값을 설정해야 합니다.</p>
+    <div class="qbox">인공지능이 다루는 전체 문서의 개수 $n$이 매우 클 때는 $\text{IDF}=\dfrac{n}{\text{DF}}$의 값이 지나치게 커질 수 있습니다. 이런 경우 로그를 이용해 $\text{IDF}=\log\dfrac{n}{\text{DF}}$로 계산하면 값을 간결하게 나타낼 수 있습니다. (예: $n=10^{20}, \text{DF}=10^5$이면 $\dfrac{n}{\text{DF}}=10^{15}$이지만 $\log\dfrac{n}{\text{DF}}=15$)</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 TF-IDF로 문맥상 중요한 단어를 찾는 방법을 배웠습니다. 다음 시간에는 두 텍스트 데이터가 얼마나 비슷한지를 나타내는 유사도(자카드 유사도, 유클리드 유사도)를 배웁니다.</p>
+    <div class="next">다음 차시 : 4차시 — 자카드 유사도와 유클리드 유사도</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="2-vector-representation.html">← 2차시 — 텍스트 데이터를 벡터로 표현하기</a>
+    <a href="4-jaccard-euclidean.html">4차시 — 자카드 유사도와 유클리드 유사도 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const presets = {
+    chicken: {
+      words: ['프라이드치킨', '추천', '배달', '빠르다', '양', '많다', '맛있다'],
+      docs: ['A', 'B', 'C'],
+      tf: [
+        [1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 0, 0, 1],
+        [1, 1, 0, 0, 1, 1, 1],
+      ],
+    },
+    weather: {
+      words: ['내일', '맑다', '하늘', '화창', '날씨', '예상', '햇볕', '따뜻하다'],
+      docs: ['A', 'B', 'C'],
+      tf: [
+        [2, 1, 1, 1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1, 1, 0, 0],
+        [1, 1, 1, 0, 0, 0, 1, 1],
+      ],
+    },
+    mining: {
+      words: ['마이닝', '개념', '특성', '추출', '텍스트', '데이터', '비정형', '통계', '패턴', '추세', '관계', '예측'],
+      docs: ['A', 'B', 'C'],
+      tf: [
+        [2, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 2, 0, 1, 0, 1, 1, 1, 0, 0],
+        [1, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1],
+      ],
+    },
+  };
+
+  function fmtFrac(v) {
+    // render simple fractions nicely for the small rational values that occur here
+    const s = v.toFixed(4);
+    if (Number.isInteger(v)) return String(v);
+    // try to detect n/2, n/3 etc within tolerance
+    for (const den of [2, 3, 4, 6]) {
+      const num = v * den;
+      if (Math.abs(num - Math.round(num)) < 1e-6) return Math.round(num) + '/' + den;
+    }
+    return s;
+  }
+
+  function buildTable(el, header, rowLabels, rows, highlightFn) {
+    let html = '<tr><th></th>' + header.map(h => `<th>${h}</th>`).join('') + '</tr>';
+    rows.forEach((row, ri) => {
+      html += `<tr><th>${rowLabels[ri]}</th>` + row.map((v, ci) => {
+        const hi = highlightFn && highlightFn(ri, ci, v, row) ? ' class="hi"' : '';
+        return `<td${hi}>${fmtFrac(v)}</td>`;
+      }).join('') + '</tr>';
+    });
+    el.innerHTML = html;
+  }
+
+  function loadPreset(key) {
+    const p = presets[key];
+    const n = p.docs.length;
+    const m = p.words.length;
+
+    buildTable(document.getElementById('tfTable'), p.words, p.docs.map(d => 'TF(' + d + ')'), p.tf);
+
+    const df = [];
+    const dfOverN = [];
+    for (let c = 0; c < m; c++) {
+      let count = 0;
+      for (let r = 0; r < n; r++) if (p.tf[r][c] > 0) count++;
+      df.push(count);
+      dfOverN.push(count / n);
+    }
+    buildTable(document.getElementById('dfTable'), p.words, ['DF', 'DF/n'], [df, dfOverN]);
+
+    const idf = df.map(d => n / d);
+    buildTable(document.getElementById('idfTable'), p.words, ['IDF'], [idf]);
+
+    const tfidf = p.tf.map(row => row.map((v, c) => v * idf[c]));
+    buildTable(document.getElementById('tfidfTable'), p.words, p.docs.map(d => 'TF-IDF(' + d + ')'), tfidf, (ri, ci, v, row) => {
+      const max = Math.max(...row);
+      return max > 0 && Math.abs(v - max) < 1e-9;
+    });
+
+    const concludeBox = document.getElementById('concludeBox');
+    const lines = p.docs.map((d, ri) => {
+      const max = Math.max(...tfidf[ri]);
+      const important = p.words.filter((w, ci) => Math.abs(tfidf[ri][ci] - max) < 1e-9 && max > 0);
+      return `<strong>${d}</strong> : ${important.join(', ')} (TF-IDF = ${fmtFrac(max)})`;
+    });
+    concludeBox.innerHTML = '문서별 중요도가 가장 높은 단어<br>' + lines.join('<br>');
+
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.querySelector('.widget')]);
+  }
+
+  loadPreset('chicken');
+</script>
+</body>
+</html>
