@@ -16,13 +16,49 @@
     </a>
     <span class="badge" aria-hidden="true">📋</span>
     <h1>12단계 · 과제 현황 관리하기</h1>
-    <p>제출·미제출 학생을 한눈에 걸러보고 리마인더를 보냅니다.</p>
+    <p>제출·미제출 학생을 한눈에 걸러보고, 상황에 맞게 리마인더를 보냅니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 성적 탭에서 필터링하기</h2>
+      <p>"성적" 탭에서는 과제별로 제출 여부가 색으로 표시됩니다. 상단 필터를 이용하면 "제출함", "누락", "채점됨"처럼 상태별로 걸러서 볼 수 있어, 전체 학생을 일일이 확인할 필요가 없습니다.</p>
+
+      <h2>2. 미제출 학생 확인하기</h2>
+      <p>"누락" 상태만 걸러보면 아직 제출하지 않은 학생만 바로 보입니다. 마감일이 지났는데도 여기 남아있는 학생은 별도로 확인이 필요합니다.</p>
+
+      <h2>3. 리마인더 보내기</h2>
+      <p>몇 명만 미제출이라면 6단계에서 배운 비공개 댓글로 개별 리마인더를 보내는 것이 효과적입니다. 미제출 학생이 많다면 스트림에 전체 공지를 올려 한 번에 알리는 편이 낫습니다.</p>
+
+      <h2>4. 제출률 계산기</h2>
+      <p>전체 학생 수와 제출한 학생 수를 넣으면 제출률과 함께 어떤 방식의 리마인더가 나을지 알려줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>제출률 계산기</h4>
+        <p class="practice-desc">전체 학생 수와 제출한 학생 수를 넣어보세요.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p12-total">전체 학생 수</label>
+            <input type="number" id="p12-total" min="1" value="28">
+          </div>
+          <div class="field">
+            <label for="p12-submitted">제출한 학생 수</label>
+            <input type="number" id="p12-submitted" min="0" value="22">
+          </div>
+        </div>
+
+        <div class="result-box" id="p12-result"></div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>마감 직후 바로 독촉하지 마세요</h4>
+        <p>마감 시간이 막 지난 시점에는 아직 제출을 마무리하는 학생이 있을 수 있습니다. 반나절 정도 여유를 두고 확인한 뒤 리마인더를 보내는 것이 좋습니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +74,36 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p12-result');
+
+  function update() {
+    var totalRaw = parseInt(document.getElementById('p12-total').value, 10);
+    var submittedRaw = parseInt(document.getElementById('p12-submitted').value, 10);
+    var total = isNaN(totalRaw) || totalRaw < 1 ? 1 : totalRaw;
+    var submitted = isNaN(submittedRaw) || submittedRaw < 0 ? 0 : Math.min(submittedRaw, total);
+    var missing = total - submitted;
+    var rate = Math.round((submitted / total) * 1000) / 10;
+
+    var advice;
+    if (missing === 0) {
+      advice = '전원 제출했습니다. 리마인더가 필요 없습니다.';
+    } else if (rate >= 80) {
+      advice = '미제출 ' + missing + '명에게는 비공개 댓글로 개별 리마인더를 보내는 것을 추천합니다.';
+    } else {
+      advice = '미제출이 ' + missing + '명으로 많은 편입니다. 스트림에 전체 공지를 올리는 것을 추천합니다.';
+    }
+
+    out.textContent = '제출률 ' + rate + '% (' + submitted + '/' + total + '명) — ' + advice;
+  }
+
+  ['p12-total', 'p12-submitted'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+  });
+  update();
+})();
+</script>
 </body>
 </html>
