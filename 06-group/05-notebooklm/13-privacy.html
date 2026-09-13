@@ -16,13 +16,46 @@
     </a>
     <span class="badge" aria-hidden="true">🔒</span>
     <h1>13단계 · 저작권·출처 신뢰성·개인정보 안전하게 다루기</h1>
-    <p>소스 저작권, 공유 범위, 학생 자료 업로드 시 주의점을 점검합니다.</p>
+    <p>소스 저작권, 출처 신뢰도, 학생 개인정보까지 배포 전에 점검할 것들입니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 소스 저작권 확인하기</h2>
+      <p>교과서 스캔본이나 시중 문제집, 논문처럼 저작권이 있는 자료를 올릴 때는 수업 준비라는 목적 범위 안에서만 사용하세요. 만들어진 결과물(요약, 오디오, 슬라이드)을 학교 밖으로 배포하거나 판매하는 것은 원본 저작권을 침해할 수 있습니다.</p>
+
+      <h2>2. 내 자료로 AI를 학습시키지 않습니다</h2>
+      <p>구글은 NotebookLM에 올린 소스나 대화 내용을 AI 모델 학습에 쓰지 않는다고 밝히고 있습니다. 다만 이것이 "자료가 전혀 저장되지 않는다"는 뜻은 아닙니다. 서비스를 쓰는 동안 내용은 처리·보관되며, 구글의 다른 개인정보 정책도 함께 적용됩니다.</p>
+
+      <h2>3. 출처 신뢰성 확인하기</h2>
+      <p>12단계의 Discover로 찾은 자료나 학생이 가져온 웹 링크는 출처가 분명하고 최신 정보인지 직접 확인하세요. 개인 블로그나 출처가 불분명한 글보다는 공신력 있는 기관·출판사 자료를 우선 소스로 쓰는 것이 안전합니다.</p>
+
+      <h2>4. 학생 개인정보 다루기</h2>
+      <p>학생 이름이나 성적이 들어간 파일은 소스로 올리기 전에 정말 필요한 정보인지 다시 생각해보세요. 특히 10단계에서 배운 공개 링크로 공유할 노트북이라면, 그 안에 학생 개인정보가 들어 있지 않은지 반드시 확인해야 합니다.</p>
+
+      <h2>5. 배포 전 점검 체크리스트</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>배포 전 점검 체크리스트</h4>
+        <p class="practice-desc">실제로 확인한 항목을 체크해보세요.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p13-check"> 소스로 올린 저작권 자료를 수업 준비 목적 안에서만 쓰고 있다.</label>
+          <label><input type="checkbox" class="p13-check"> Discover나 웹 링크로 가져온 자료의 출처와 최신성을 확인했다.</label>
+          <label><input type="checkbox" class="p13-check"> 학생 이름·성적이 담긴 자료는 공개 노트북에 포함하지 않았다.</label>
+          <label><input type="checkbox" class="p13-check"> 공유 권한(편집자·뷰어·공개 링크)이 의도한 대로 설정돼 있다.</label>
+        </div>
+
+        <div class="status-box" id="p13-status">0 / 4 완료</div>
+      </div>
+
+      <h2>6. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>공유를 끊어도 이미 저장된 사본은 남을 수 있습니다</h4>
+        <p>공유 링크를 삭제하거나 노트북을 지워도, 이미 그 내용을 내려받거나 캡처한 사람에게는 사본이 남아있을 수 있습니다. 처음부터 공유 범위를 신중하게 정하는 것이 가장 확실한 방법입니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +71,17 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p13-check'));
+  var status = document.getElementById('p13-status');
+  function update() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>
