@@ -16,13 +16,59 @@
     </a>
     <span class="badge" aria-hidden="true">✨</span>
     <h1>8단계 · Gemini로 과제 초안·진행 상황 요약받기</h1>
-    <p>과제 설명 초안을 받고, 학급 전체 진행 상황을 요약받습니다.</p>
+    <p>Gemini 앱에서 Classroom 데이터를 불러와 과제 초안을 만들고 학급 진행 상황을 요약받습니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. @Classroom으로 연결하기</h2>
+      <p>Gemini 앱 대화창에 <strong>"@Classroom"</strong>을 입력하면 뜨는 항목을 선택해 내 Classroom 계정 정보를 참고하도록 연결할 수 있습니다. 이후 요청에는 실제 내 클래스와 과제 데이터를 바탕으로 답해줍니다.</p>
+
+      <h2>2. 과제 초안 만들기</h2>
+      <p>단원과 목적을 설명하면 과제 설명 문구와 진행 일정까지 초안으로 만들어줍니다.</p>
+
+      <div class="callout tip">
+        <h4>요청 예시</h4>
+        <p>"@Classroom 중2 일차함수 단원 복습 과제를 만들어줘. 이번 주 금요일까지 제출받을 계획이고, 문제 5개 정도로 구성해줘."</p>
+      </div>
+
+      <h2>3. 진행 상황 요약받기</h2>
+      <p>지금 클래스의 제출 현황, 이전 과제 성취도, 도움이 더 필요해 보이는 학생을 요약해달라고 요청할 수 있습니다. 매번 성적 탭을 하나하나 확인하지 않아도 전체 흐름을 빠르게 파악할 수 있습니다.</p>
+
+      <h2>4. Classroom 안에서도 AI 피드백을 받습니다</h2>
+      <p>6단계에서 다룬 대로, 서술형 답안을 채점할 때 Classroom 화면 안에서 바로 AI가 피드백 문구를 제안해주는 기능도 있습니다. Gemini 앱에서의 요약·초안 작성과 Classroom 안의 채점 보조 기능은 서로 다른 화면에서 동작하는 별개의 기능이라는 점을 기억하세요.</p>
+
+      <h2>5. 요청 문구 만들어보기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>@Classroom 요청 문구 만들기</h4>
+        <p class="practice-desc">하려는 일과 세부 내용을 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p8-goal">하려는 일</label>
+          <select id="p8-goal">
+            <option value="draft">과제 초안 만들기</option>
+            <option value="summary">진행 상황 요약받기</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p8-detail">세부 내용</label>
+          <input type="text" id="p8-detail" placeholder="예: 중2 일차함수 단원 복습 과제, 이번 주 금요일 마감">
+        </div>
+
+        <div class="result-box" id="p8-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p8-copy">요청 문구 복사하기</button>
+        </div>
+      </div>
+
+      <h2>6. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>요약 내용도 성적부와 대조하세요</h4>
+        <p>Gemini가 정리해준 진행 상황 요약도 참고용입니다. 실제 성적 처리나 학부모 안내 전에는 성적 탭에서 직접 한 번 더 확인하세요. 학생 개인정보가 포함된 민감한 질문은 요청 문구에 최소한으로만 담으세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -31,12 +77,63 @@
         이전 단계 · Practice Sets로 자동 채점 연습문제 만들기
       </a>
       <a class="back" href="9-guardian.html" style="margin:0; flex-direction:row-reverse;">
-        다음 단계 · 학부모와 소통하기 — Guardian Summaries
+        다음 단계 · 학부모와 소통하기
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </a>
     </p>
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p8-result');
+  function update() {
+    var goal = document.getElementById('p8-goal').value;
+    var detail = document.getElementById('p8-detail').value.trim() || '[세부 내용]';
+    var text;
+    if (goal === 'draft') {
+      text = '@Classroom ' + detail + ' 과제를 만들어줘.';
+    } else {
+      text = '@Classroom ' + detail + '에 대한 지금까지의 제출·진행 상황을 요약해줘.';
+    }
+    out.textContent = text;
+  }
+  ['p8-goal', 'p8-detail'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p8-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
 </body>
 </html>
