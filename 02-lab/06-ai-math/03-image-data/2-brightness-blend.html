@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2차시 · 행렬 연산으로 밝기 조절하고 합성하기 · 이미지 데이터 처리</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .matrix-out { font-family: 'Courier New', monospace; font-size: 0.8rem; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-top: 8px; white-space: pre; overflow-x: auto; }
+  .side-by-side { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      이미지 데이터 처리
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-matrix-representation.html">1차시</a>
+      <a class="session-tab current" href="2-brightness-blend.html">2차시</a>
+      <a class="session-tab" href="3-transpose-grayscale.html">3차시</a>
+      <a class="session-tab" href="4-hamming-distance.html">4차시</a>
+      <a class="session-tab" href="5-matrix-multiply-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅲ단원 · 2 / 5차시</span>
+    <h1>행렬 연산으로 밝기 조절하고 합성하기</h1>
+    <p class="sub">행렬의 덧셈·스칼라배·아다마르 곱으로 이미지의 밝기를 바꾸고, 두 이미지를 오버랩하여 합성하는 방법을 배웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>행렬의 덧셈과 스칼라배로 이미지 데이터의 밝기를 변환할 수 있다.</li>
+        <li>아다마르 곱으로 이미지의 일부분만 밝기를 조절할 수 있다.</li>
+        <li>가중치를 이용해 두 이미지 데이터를 오버랩하여 합성할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>사진을 밝게, 흑백으로 바꾸는 원리</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>덧셈으로 이미지 전체의 밝기 조절하기</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>아다마르 곱으로 이미지 일부의 밝기 조절하기</td><td class="time">15분</td></tr>
+        <tr><td>활동3</td><td>두 이미지를 오버랩하여 합성하기</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>사진을 밝게, 흑백으로 바꾸는 원리</h2>
+    <p class="lead">스마트폰 애플리케이션으로 사진을 흑백으로 바꾸거나 밝은 분위기로 바꿀 수 있습니다. 픽셀의 정보는 행렬의 성분으로 표현되어 있으므로, <strong>행렬의 연산</strong>을 활용하여 성분을 바꾸면 이미지 데이터의 밝기가 바뀝니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>덧셈으로 이미지 전체의 밝기 조절하기</h2>
+    <p class="lead">원본 이미지를 나타낸 세 행렬 $R, G, B$와 같은 꼴이면서 모든 성분이 1인 행렬을 $J$라 하면, 실수 $t$에 대하여 밝기가 변환된 이미지를 나타낸 행렬을 $R_1=R+tJ$와 같이 놓을 수 있습니다.</p>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">$t<0$이면 원본보다 어둡고, $t>0$이면 원본보다 밝습니다. 단, 픽셀의 값이 0보다 작아지면 0(검은색), 255보다 커지면 255(흰색)로 조정합니다.</p>
+    <div class="widget">
+      <div class="widget-title">덧셈으로 밝기 조절하기</div>
+      <div class="control-row">
+        <label>밝기 변화량 $t$</label>
+        <input type="range" id="addT" min="-150" max="150" step="5" value="0" oninput="updateAdd()">
+        <span class="val" id="addTVal">0</span>
+      </div>
+      <div class="side-by-side">
+        <div><p style="font-size:0.8rem; text-align:center;">원본</p><canvas id="addCanvasBefore" width="150" height="150" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+        <div><p style="font-size:0.8rem; text-align:center;">R₁ = R + tJ (0~255로 조정)</p><canvas id="addCanvasAfter" width="150" height="150" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+      </div>
+      <div class="matrix-out" id="addMatrixOut"></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 15분</span>
+    <h2>아다마르 곱으로 이미지 일부의 밝기 조절하기</h2>
+    <p class="lead">같은 꼴의 두 행렬 $A, B$에 대하여 같은 위치의 성분끼리 곱하는 연산을 <strong>아다마르 곱</strong> $A\circ B$라고 합니다. 밝기를 변환할 부분의 성분이 양의 실수 $t$, 변환하지 않을 부분의 성분이 1인 행렬 $T$에 대하여 $R_1=R\circ T$로 놓으면 이미지의 <strong>일부분만</strong> 밝기를 조절할 수 있습니다.</p>
+    <div class="widget">
+      <div class="widget-title">아다마르 곱으로 왼쪽 위 2×2 부분만 밝기 조절하기 (교과서 확인 예제)</div>
+      <div class="control-row">
+        <label>부분 밝기 배율 $t$</label>
+        <input type="range" id="hadT" min="0.2" max="3" step="0.1" value="2" oninput="updateHad()">
+        <span class="val" id="hadTVal">2</span>
+      </div>
+      <div class="side-by-side">
+        <div><p style="font-size:0.8rem; text-align:center;">원본 (R,G,B)</p><canvas id="hadCanvasBefore" width="150" height="150" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+        <div><p style="font-size:0.8rem; text-align:center;">R₁=R∘T, G₁=G∘T, B₁=B∘T</p><canvas id="hadCanvasAfter" width="150" height="150" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft);">$t=2$일 때 교과서 값과 정확히 일치합니다: $R_1=\begin{pmatrix}240&240&100\\240&200&255\\100&255&255\end{pmatrix}$</p>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>두 이미지를 오버랩하여 합성하기</h2>
+    <p class="lead">두 이미지 데이터 X, Y를 합성한 이미지 Z에 대하여 가중치 $\alpha\,(0\le\alpha\le1)$를 이용해 $R=\alpha R_X+(1-\alpha)R_Y$, $G=\alpha G_X+(1-\alpha)G_Y$, $B=\alpha B_X+(1-\alpha)B_Y$로 놓으면, $\alpha$가 1에 가까울수록 이미지 X가, 0에 가까울수록 이미지 Y가 더 선명하게 보입니다.</p>
+    <div class="widget">
+      <div class="widget-title">오버랩 합성기</div>
+      <div class="control-row">
+        <label>가중치 $\alpha$</label>
+        <input type="range" id="alphaSlider" min="0" max="1" step="0.05" value="0.5" oninput="updateAlpha()">
+        <span class="val" id="alphaVal">0.5</span>
+      </div>
+      <div class="side-by-side">
+        <div><p style="font-size:0.8rem; text-align:center;">이미지 X</p><canvas id="blendX" width="120" height="120" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+        <div><p style="font-size:0.8rem; text-align:center;">이미지 Y</p><canvas id="blendY" width="120" height="120" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+        <div><p style="font-size:0.8rem; text-align:center;">합성 결과 Z</p><canvas id="blendZ" width="120" height="120" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+      </div>
+    </div>
+    <div class="qbox">이 원리는 <a href="image-blender.html" style="color:var(--accent-dark); font-weight:700;">🖌️ 이미지 블렌더</a> 공학 도구에서 실제 사진으로 직접 체험할 수 있습니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 행렬의 연산으로 이미지의 밝기를 조절하고 두 이미지를 합성하는 방법을 배웠습니다. 다음 시간에는 마스크를 이용한 부분 합성과 흑백 변환, 전치행렬로 이미지를 대칭시키는 방법을 배웁니다.</p>
+    <div class="next">다음 차시 : 3차시 — 부분 합성, 흑백 변환, 전치행렬로 대칭하기</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="1-matrix-representation.html">← 1차시 — 이미지를 행렬로 표현하기</a>
+    <a href="3-transpose-grayscale.html">3차시 — 부분 합성, 흑백 변환, 전치행렬로 대칭하기 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+  function drawGrid(canvasId, matrixR, matrixG, matrixB) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+    const rows = matrixR.length, cols = matrixR[0].length;
+    const cw = canvas.width / cols, ch = canvas.height / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        ctx.fillStyle = `rgb(${clamp255(matrixR[r][c])},${clamp255(matrixG[r][c])},${clamp255(matrixB[r][c])})`;
+        ctx.fillRect(c * cw, r * ch, cw, ch);
+        ctx.strokeStyle = '#ccc';
+        ctx.strokeRect(c * cw, r * ch, cw, ch);
+      }
+    }
+  }
+
+  // 활동1: 덧셈
+  const baseR = [[100,150,50],[200,80,120],[30,180,90]];
+  const baseG = [[120,90,160],[60,200,40],[150,70,110]];
+  const baseB = [[80,60,140],[180,100,50],[90,160,200]];
+  function updateAdd() {
+    const t = parseFloat(document.getElementById('addT').value);
+    document.getElementById('addTVal').textContent = t;
+    drawGrid('addCanvasBefore', baseR, baseG, baseB);
+    const R1 = baseR.map(row => row.map(v => clamp255(v + t)));
+    const G1 = baseG.map(row => row.map(v => clamp255(v + t)));
+    const B1 = baseB.map(row => row.map(v => clamp255(v + t)));
+    drawGrid('addCanvasAfter', R1, G1, B1);
+    document.getElementById('addMatrixOut').textContent =
+      'R₁ =\n' + R1.map(row => '(' + row.join(', ') + ')').join('\n');
+  }
+  updateAdd();
+
+  // 활동2: 아다마르 곱 (교과서 확인 예제 R,G,B)
+  const hadR = [[120,120,100],[120,100,255],[100,255,255]];
+  const hadG = [[0,0,0],[0,0,255],[0,255,255]];
+  const hadB = [[60,60,0],[60,0,0],[0,0,0]];
+  function updateHad() {
+    const t = parseFloat(document.getElementById('hadT').value);
+    document.getElementById('hadTVal').textContent = t;
+    drawGrid('hadCanvasBefore', hadR, hadG, hadB);
+    const T = [[t,t,1],[t,t,1],[1,1,1]];
+    const had = (M) => M.map((row, r) => row.map((v, c) => clamp255(v * T[r][c])));
+    drawGrid('hadCanvasAfter', had(hadR), had(hadG), had(hadB));
+  }
+  updateHad();
+
+  // 활동3: 오버랩 합성
+  const xColor = [[255,140,0],[30,144,255]]; // 2x1 pattern colors simplified to 2 rows x 2 cols grid below
+  const imgX = [[[255,140,0],[255,140,0]],[[255,90,0],[255,90,0]]];
+  const imgY = [[[30,120,255],[10,80,200]],[[30,120,255],[10,80,200]]];
+  function toRGBMats(img) {
+    const R = img.map(row => row.map(px => px[0]));
+    const G = img.map(row => row.map(px => px[1]));
+    const B = img.map(row => row.map(px => px[2]));
+    return { R, G, B };
+  }
+  const X = toRGBMats(imgX), Y = toRGBMats(imgY);
+  function updateAlpha() {
+    const a = parseFloat(document.getElementById('alphaSlider').value);
+    document.getElementById('alphaVal').textContent = a.toFixed(2);
+    drawGrid('blendX', X.R, X.G, X.B);
+    drawGrid('blendY', Y.R, Y.G, Y.B);
+    const mix = (mA, mB) => mA.map((row, r) => row.map((v, c) => clamp255(a * v + (1 - a) * mB[r][c])));
+    drawGrid('blendZ', mix(X.R, Y.R), mix(X.G, Y.G), mix(X.B, Y.B));
+  }
+  updateAlpha();
+</script>
+</body>
+</html>

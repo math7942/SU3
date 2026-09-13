@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4차시 · 해밍 거리로 손글씨 숫자 분류하기 · 이미지 데이터 처리</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .bit-row { display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap; }
+  .bit { width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; background: #fff; font-size: 0.82rem; }
+  .bit.one { background: var(--accent); color: #fff; }
+  .digit-grid { display: grid; gap: 1px; background: #ccc; border: 1px solid var(--line); border-radius: 6px; padding: 2px; width: max-content; }
+  .digit-cell { width: 22px; height: 22px; background: #fff; cursor: pointer; }
+  .digit-cell.on { background: #1a1a1a; }
+  .digit-cell.readonly { cursor: default; }
+  .templates-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; margin: 10px 0; }
+  .template-box { text-align: center; font-size: 0.8rem; }
+  .result-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .result-cell { flex: 1 1 100px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px; text-align: center; }
+  .result-cell .k { font-size: 0.7rem; color: var(--muted); font-weight: 700; }
+  .result-cell .v { font-size: 1.1rem; font-weight: 800; color: var(--accent-dark); }
+  .result-cell.best { border-color: var(--accent); border-width: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      이미지 데이터 처리
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-matrix-representation.html">1차시</a>
+      <a class="session-tab" href="2-brightness-blend.html">2차시</a>
+      <a class="session-tab" href="3-transpose-grayscale.html">3차시</a>
+      <a class="session-tab current" href="4-hamming-distance.html">4차시</a>
+      <a class="session-tab" href="5-matrix-multiply-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅲ단원 · 4 / 5차시</span>
+    <h1>해밍 거리로 손글씨 숫자 분류하기</h1>
+    <p class="sub">해밍 거리로 두 이미지 데이터의 유사도를 구하고, 이를 이용해 인공지능이 손글씨 숫자를 분류하는 원리를 배웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>두 문자열, 두 행렬의 해밍 거리를 구할 수 있다.</li>
+        <li>해밍 거리를 이용해 가장 유사한 이미지 데이터를 찾을 수 있다.</li>
+        <li>해밍 거리로 새로운 손글씨 숫자 이미지를 분류할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>인공지능은 이미지를 어떻게 분류할까?</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>두 문자열의 해밍 거리</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>두 행렬의 해밍 거리</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>해밍 거리로 손글씨 숫자 분류하기</td><td class="time">20분</td></tr>
+        <tr><td>정리</td><td>MNIST 데이터 세트</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>인공지능은 이미지를 어떻게 분류할까?</h2>
+    <p class="lead">개와 고양이를 한 번도 보지 못한 사람은 새로운 사진이 개인지 고양이인지 구분하기 어렵습니다. 인공지능도 마찬가지로, 학습 자료를 통해 특징을 습득해야 새로운 이미지를 분류할 수 있습니다. 그중 한 가지 방법은 <strong>입력된 이미지와 학습된 이미지의 유사도</strong>를 측정하는 것으로, 그 유사도 중 하나가 <strong>해밍 거리</strong>입니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>두 문자열의 해밍 거리</h2>
+    <p class="lead">길이가 같은 두 문자열 $l_1, l_2$에서 같은 위치에 있는 서로 다른 문자의 개수를 두 문자열의 <strong>해밍 거리(Hamming distance)</strong> $H(l_1,l_2)$라고 합니다. 해밍 거리가 작을수록 두 문자열이 유사합니다.</p>
+    <table class="data">
+      <tr><th>비교</th><th>해밍 거리</th></tr>
+      <tr><td>$l_1$: 1011100000, $l_2$: 1110000010</td><td>$H(l_1,l_2)=3$</td></tr>
+      <tr><td>$l_2$: 1110000010, $l_3$: 1010101000</td><td>$H(l_2,l_3)=5$</td></tr>
+      <tr><td>$l_3$: 1010101000, $l_1$: 1011100000</td><td>$H(l_3,l_1)=2$</td></tr>
+    </table>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">가장 유사한 두 문자열은 $l_3$, $l_1$입니다 (거리 2로 최소).</p>
+    <div class="widget">
+      <div class="widget-title">문자열 해밍 거리 계산기 — 비트를 클릭해 바꿔 보세요</div>
+      <div class="preset-row">
+        <button class="btn solid" onclick="loadStrPreset(0)">확인하기 1</button>
+        <button class="btn" onclick="loadStrPreset(1)">확인하기 2</button>
+      </div>
+      <div id="strWidgetBody"></div>
+    </div>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 확인하기 1, 2 정답 확인하기</button>
+      <div class="reveal-content ok hidden">
+        <p><strong>확인하기 1</strong> : $l_1$=0010110101, $l_2$=1000110011 → $H(l_1,l_2)=4$</p>
+        <p><strong>확인하기 2</strong> : $l_1$=0011001110, $l_2$=1111001010, $l_3$=0111001010 → $H(l_1,l_2)=3$, $H(l_2,l_3)=1$, $H(l_3,l_1)=2$이므로 가장 유사한 두 문자열은 $l_2, l_3$입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>두 행렬의 해밍 거리</h2>
+    <p class="lead">같은 꼴의 두 행렬 $A, B$에 대하여 같은 위치에 있는 서로 다른 성분의 개수를 두 행렬의 해밍 거리 $H(A,B)$라고 합니다. 세 이미지 데이터 A, B, C를 나타낸 행렬이 다음과 같을 때, 가장 유사한 두 이미지 데이터를 찾아봅시다.</p>
+    <table class="data">
+      <tr><th>비교</th><th>해밍 거리</th></tr>
+      <tr><td>$H(A,B)$</td><td>3</td></tr>
+      <tr><td>$H(A,C)$</td><td>4</td></tr>
+      <tr><td>$H(B,C)$</td><td>7</td></tr>
+    </table>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">해밍 거리가 가장 작은 A와 B가 가장 유사한 이미지 데이터입니다.</p>
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 확인하기 3 — 5×5 행렬로 연습하기</button>
+      <div class="reveal-content ok hidden">
+        <p>5×5 행렬 A, B, C에 대하여 해밍 거리를 구하면 $H(A,B)=12$, $H(A,C)=7$, $H(B,C)=5$이므로 가장 유사한 두 이미지 데이터는 B와 C입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 20분</span>
+    <h2>해밍 거리로 손글씨 숫자 분류하기</h2>
+    <p class="lead">손글씨 숫자 1, 4, 5의 이미지 데이터를 검은색 0, 흰색 1로 하여 6×6 행렬 A, B, C로 나타내고, 새로운 손글씨 숫자 이미지 데이터를 행렬 D로 나타냈습니다. 아래에서 D를 직접 그려 보고, 어떤 숫자와 가장 유사한지 확인해 보세요.</p>
+    <div class="widget">
+      <div class="widget-title">손글씨 숫자 분류기</div>
+      <div class="templates-row" id="templatesRow"></div>
+      <div class="template-box">
+        <div style="font-weight:700; margin-bottom:4px;">새로운 손글씨 D (클릭해서 그리기)</div>
+        <div class="digit-grid" id="digitD" style="grid-template-columns: repeat(6, 22px);"></div>
+      </div>
+      <div class="result-row" id="hammingResults"></div>
+      <div id="classifyResult" style="margin-top:10px; font-weight:800; color:var(--accent-dark);"></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>MNIST 데이터 세트</h2>
+    <p class="lead">프랑스 컴퓨터 과학자 <strong>얀 르쿤(Yann LeCun)</strong>이 만든 <strong>MNIST 데이터 세트</strong>는 0부터 9까지의 손글씨 숫자 이미지로, 학습 이미지 6만 개와 테스트 이미지 1만 개로 구성되어 있습니다. 새로운 손글씨와 학습 이미지 사이의 유사도를 구하는 과정에 해밍 거리와 같은 수학적 개념이 이용됩니다.</p>
+    <div class="qbox">해밍 거리는 이미지 전체를 픽셀 단위로 단순 비교하는 방법입니다. 실제 인공지능은 훨씬 정교한 신경망(CNN)으로 손글씨를 인식하는데, <a href="handwriting.html" style="color:var(--accent-dark); font-weight:700;">✍️ 손글씨 숫자 인식 (정밀 CNN)</a> 공학 도구에서 직접 체험할 수 있습니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 해밍 거리로 이미지 데이터의 유사도를 구해 손글씨 숫자를 분류하는 방법을 배웠습니다. 다음 시간에는 행렬의 곱셈으로 다층 퍼셉트론의 연산을 표현하고 Ⅲ단원을 정리합니다.</p>
+    <div class="next">다음 차시 : 5차시 — 행렬의 곱셈과 다층 퍼셉트론, 단원 정리</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="3-transpose-grayscale.html">← 3차시 — 부분 합성, 흑백 변환, 전치행렬로 대칭하기</a>
+    <a href="5-matrix-multiply-review.html">5차시 — 행렬의 곱셈과 다층 퍼셉트론, 단원 정리 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  // 활동1: 문자열 해밍 거리
+  const strPresets = [
+    { l1: '0010110101', l2: '1000110011' },
+    { l1: '0011001110', l2: '1111001010' },
+  ];
+  let curStrIdx = 0;
+  let strBits = {};
+
+  function renderStrWidget() {
+    const preset = strPresets[curStrIdx];
+    const body = document.getElementById('strWidgetBody');
+    body.innerHTML = '';
+    ['l1', 'l2'].forEach(key => {
+      if (!strBits[key] || strBits[key].length !== preset[key].length) {
+        strBits[key] = preset[key].split('').map(Number);
+      }
+      const row = document.createElement('div');
+      row.className = 'bit-row';
+      const label = document.createElement('span');
+      label.style.cssText = 'font-weight:700; min-width:24px;';
+      label.textContent = key + ':';
+      row.appendChild(label);
+      strBits[key].forEach((bit, idx) => {
+        const b = document.createElement('div');
+        b.className = 'bit' + (bit ? ' one' : '');
+        b.textContent = bit;
+        b.onclick = () => { strBits[key][idx] = strBits[key][idx] ? 0 : 1; renderStrWidget(); };
+        row.appendChild(b);
+      });
+      body.appendChild(row);
+    });
+    const dist = strBits.l1.reduce((s, v, i) => s + (v !== strBits.l2[i] ? 1 : 0), 0);
+    const distEl = document.createElement('div');
+    distEl.style.cssText = 'margin-top:8px; font-weight:800; color:var(--accent-dark);';
+    distEl.id = 'strDistOut';
+    distEl.textContent = 'H(l1, l2) = ' + dist;
+    body.appendChild(distEl);
+  }
+  function loadStrPreset(i) { curStrIdx = i; strBits = {}; renderStrWidget(); }
+  renderStrWidget();
+
+  // 활동3: 손글씨 숫자 분류
+  const digitA = [ // 1
+    [1,1,1,0,1,1],[1,1,0,0,1,1],[1,1,1,0,1,1],[1,1,1,0,1,1],[1,1,1,0,1,1],[1,1,0,0,0,1],
+  ];
+  const digitB = [ // 4
+    [1,1,1,1,1,1],[1,0,1,0,1,1],[1,0,1,0,1,1],[1,0,0,0,0,1],[1,1,1,0,1,1],[1,1,1,0,1,1],
+  ];
+  const digitC = [ // 5
+    [1,0,0,0,0,1],[1,0,1,1,1,1],[1,0,0,0,1,1],[1,1,1,1,0,1],[1,1,1,1,0,1],[1,0,0,0,1,1],
+  ];
+  const digitD0 = [ // 새로운 숫자 (교과서 예제, 정답: 1)
+    [1,1,1,1,1,1],[1,1,1,0,1,1],[1,1,1,0,1,1],[1,1,1,0,1,1],[1,1,1,0,1,1],[1,1,1,0,1,1],
+  ];
+  let dState = digitD0.map(row => row.slice());
+
+  function renderDigitGrid(container, mat, editable) {
+    container.innerHTML = '';
+    for (let r = 0; r < 6; r++) {
+      for (let c = 0; c < 6; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'digit-cell' + (mat[r][c] ? '' : ' on') + (editable ? '' : ' readonly');
+        if (editable) {
+          cell.onclick = () => { mat[r][c] = mat[r][c] ? 0 : 1; cell.classList.toggle('on'); updateHamming(); };
+        }
+        container.appendChild(cell);
+      }
+    }
+  }
+
+  function hammingMat(M, N) {
+    let d = 0;
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 6; c++) if (M[r][c] !== N[r][c]) d++;
+    return d;
+  }
+
+  function updateHamming() {
+    const hA = hammingMat(dState, digitA);
+    const hB = hammingMat(dState, digitB);
+    const hC = hammingMat(dState, digitC);
+    const results = [{ label: '1', tpl: digitA, h: hA }, { label: '4', tpl: digitB, h: hB }, { label: '5', tpl: digitC, h: hC }];
+    const minH = Math.min(hA, hB, hC);
+    const resultsRow = document.getElementById('hammingResults');
+    resultsRow.innerHTML = results.map(r =>
+      `<div class="result-cell${r.h === minH ? ' best' : ''}"><div class="k">H(D, ${r.label})</div><div class="v">${r.h}</div></div>`
+    ).join('');
+    const best = results.find(r => r.h === minH);
+    document.getElementById('classifyResult').textContent = `인공지능의 판단: 이 손글씨는 숫자 ${best.label}입니다. (해밍 거리 ${minH}로 가장 작음)`;
+  }
+
+  function initTemplates() {
+    const row = document.getElementById('templatesRow');
+    [{ name: 'A (숫자 1)', mat: digitA }, { name: 'B (숫자 4)', mat: digitB }, { name: 'C (숫자 5)', mat: digitC }].forEach(t => {
+      const box = document.createElement('div');
+      box.className = 'template-box';
+      box.innerHTML = `<div style="font-weight:700; margin-bottom:4px;">${t.name}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'digit-grid';
+      grid.style.gridTemplateColumns = 'repeat(6, 22px)';
+      box.appendChild(grid);
+      row.appendChild(box);
+      renderDigitGrid(grid, t.mat, false);
+    });
+  }
+  initTemplates();
+  renderDigitGrid(document.getElementById('digitD'), dState, true);
+  updateHamming();
+</script>
+</body>
+</html>
