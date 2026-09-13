@@ -16,13 +16,68 @@
     </a>
     <span class="badge" aria-hidden="true">🔁</span>
     <h1>14단계 · 반복 업무 자동화로 마무리</h1>
-    <p>게시물 재사용, 클래스 복사로 학기마다 반복되는 일을 줄입니다.</p>
+    <p>게시물 재사용과 클래스 복사로, 학기마다 새로 만들던 일을 줄입니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 반복되는 업무 찾아보기</h2>
+      <p>학기마다 거의 똑같이 올리는 공지사항, 오리엔테이션 자료, 단원 안내 과제가 있다면 매번 새로 만들 필요가 없습니다. Classroom은 게시물과 클래스 전체를 통째로 재사용하는 기능을 제공합니다.</p>
+
+      <h2>2. 게시물 재사용하기</h2>
+      <p>"수업" 탭에서 "만들기 → 게시물 재사용"을 선택하면, 지난 학기나 다른 반에 올렸던 자료·과제를 그대로 불러올 수 있습니다. 첨부 파일과 루브릭도 함께 복사되며(새 사본으로 만들지 선택 가능), 날짜와 세부 내용만 고쳐서 다시 게시하면 됩니다.</p>
+
+      <h2>3. 클래스 복사하기</h2>
+      <p>클래스 설정에서 "복사"를 선택하면 스트림의 게시물이 전부 <strong>초안 상태</strong>로 새 클래스에 복사됩니다. 자동으로 새 클래스 코드도 만들어지므로, 학생에게 배포하기 전에 초안들을 살펴보고 필요한 것만 게시하세요.</p>
+
+      <div class="callout tip">
+        <h4>학년 초에 이렇게 활용하세요</h4>
+        <p>작년에 쓰던 클래스를 복사해서 올해 반을 새로 만들면, 단원 구성과 루브릭을 처음부터 다시 만들 필요 없이 날짜만 조정하면 됩니다.</p>
+      </div>
+
+      <h2>4. 재사용할 게시물 정리해보기</h2>
+      <p>자주 재사용하는 자료 이름을 적어두면, 학기 시작할 때 순서대로 불러올 목록을 만들어줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>재사용 목록 정리기</h4>
+        <p class="practice-desc">자주 재사용하는 게시물 이름을 한 줄에 하나씩 입력하세요.</p>
+
+        <div class="field">
+          <label for="p14-posts">게시물 목록</label>
+          <textarea id="p14-posts" rows="4">오리엔테이션 안내
+수행평가 채점 기준 안내
+학습지 1단원</textarea>
+        </div>
+
+        <div class="result-box" id="p14-result"></div>
+      </div>
+
+      <h2>5. 내 학기 루틴 체크리스트</h2>
+      <p>이 가이드에서 배운 흐름을 학기 루틴으로 굳혀보세요. 실제로 준비했거나 시도한 항목을 체크해보세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>내 학기 루틴 체크리스트</h4>
+        <p class="practice-desc">체크할 때마다 진행률이 업데이트됩니다.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p14b-check"> 학기 시작 — 클래스를 복사하거나 새로 만들고 코드를 배포했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 자료를 만들 때 — 반복되는 게시물은 재사용으로 가져와 날짜만 고쳤다.</label>
+          <label><input type="checkbox" class="p14b-check"> 채점할 때 — 루브릭과 가중치 기준으로 일관되게 채점했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 소통할 때 — Guardian Summaries와 캘린더로 일정을 안내했다.</label>
+          <label><input type="checkbox" class="p14b-check"> 마무리할 때 — 학기 끝난 클래스를 보관 처리했다.</label>
+        </div>
+
+        <div class="status-box" id="p14b-status">0 / 5 완료</div>
+      </div>
+
+      <div class="callout tip">
+        <h4>여기까지 오셨다면</h4>
+        <p>이제 Classroom을 수업 운영과 채점, 학부모 소통까지 자신 있게 쓸 수 있는 단계입니다. 처음 만든 루브릭과 템플릿을 계속 다듬어가며 나만의 방식으로 발전시켜보세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +93,34 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p14-result');
+  function update() {
+    var raw = document.getElementById('p14-posts').value;
+    var posts = raw.split('\n').map(function (p) { return p.trim(); }).filter(function (p) { return p.length > 0; });
+
+    if (posts.length === 0) {
+      out.textContent = '재사용할 게시물 이름을 한 줄에 하나씩 입력하세요.';
+      return;
+    }
+
+    var lines = posts.map(function (p, i) { return (i + 1) + '. ' + p; });
+    out.textContent = '학기 시작 시 이 순서로 "게시물 재사용"을 불러오세요 (총 ' + posts.length + '개):\n' + lines.join('\n');
+  }
+  var textarea = document.getElementById('p14-posts');
+  if (textarea) textarea.addEventListener('input', update);
+  update();
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p14b-check'));
+  var status = document.getElementById('p14b-status');
+  function updateStatus() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', updateStatus); });
+})();
+</script>
 </body>
 </html>
