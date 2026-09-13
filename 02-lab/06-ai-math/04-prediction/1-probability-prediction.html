@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시 · 확률을 이용한 예측 · 예측과 최적화</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  table.cond { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 10px 0; }
+  table.cond th, table.cond td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; }
+  table.cond th { background: var(--accent-soft); color: var(--accent-dark); }
+  table.cond td.hi { background: var(--ok-bg); font-weight: 800; }
+  .prob-result { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 0.94rem; }
+  .prob-result .big { font-size: 1.2rem; font-weight: 800; color: var(--accent-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      예측과 최적화
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab current" href="1-probability-prediction.html">1차시</a>
+      <a class="session-tab" href="2-trendline-prediction.html">2차시</a>
+      <a class="session-tab" href="3-loss-function.html">3차시</a>
+      <a class="session-tab" href="4-derivative.html">4차시</a>
+      <a class="session-tab" href="5-gradient-descent-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅳ단원 · 1 / 5차시</span>
+    <h1>확률을 이용한 예측</h1>
+    <p class="sub">데이터를 분석하여 사건이 일어날 확률을 구하고, 이를 이용해 범주형 데이터를 예측하는 방법을 배웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>상대도수를 이용해 사건이 일어날 확률을 구할 수 있다.</li>
+        <li>조건이 주어졌을 때의 확률을 구하여 예측에 이용할 수 있다.</li>
+        <li>확률을 이용한 예측이 추천 시스템 등에 활용되는 원리를 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>자율주행 자동차의 의사 결정</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>확률을 이용하여 예측하기</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>조건이 주어진 경우의 확률로 예측하기</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>확률 기반 추천 시스템</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>자율주행 자동차의 의사 결정</h2>
+    <p class="lead">자율주행에 사용되는 인공지능은 센서에서 수집된 데이터를 바탕으로 사람처럼 의사 결정을 한다. 전방에 감지된 존재가 사람인지 자동차인지 구별하는 예측에는 <strong>확률</strong>을, 도착 예상 시각이나 주행 가능 거리 같은 수치 예측에는 <strong>추세선</strong>을 이용한다.</p>
+    <div class="qbox">동일한 조건에서 실험이나 관찰을 여러 번 반복할 때, 반복 횟수가 많아짐에 따라 사건 A가 일어나는 <strong>상대도수</strong>가 일정한 값 $p$에 가까워지면 이 값 $p$를 사건 A가 일어날 <strong>확률</strong>이라고 합니다.</div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>확률을 이용하여 예측하기</h2>
+    <p class="lead">어느 고등학교 학생 100명을 대상으로 특정 질병에 감염되었는지 파악하려고 세 가지 증상에 대하여 진단 검사를 시행했습니다.</p>
+    <table class="data">
+      <tr><th>검사 결과</th><th>양성</th><th>음성</th><th>합계</th></tr>
+      <tr><td>학생 수(명)</td><td>8</td><td>92</td><td>100</td></tr>
+    </table>
+    <p>진단 검사 결과가 양성일 확률 $=\dfrac{8}{100}=\dfrac{2}{25}$이므로, 인공지능은 25명 중 2명꼴로 이 질병에 걸렸을 것으로 예측합니다.</p>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 함께하기 1 — 윷가락 확률 비교하기</button>
+      <div class="reveal-content ok hidden">
+        <p>단면의 모양이 서로 다른 세 윷가락 A, B, C를 각각 100회, 120회, 140회씩 던져 등이 나온 횟수가 각각 58회, 72회, 63회일 때, 등이 나올 확률은</p>
+        <p>$a=\dfrac{58}{100}=\dfrac{29}{50}=0.58,\quad b=\dfrac{72}{120}=\dfrac{3}{5}=0.6,\quad c=\dfrac{63}{140}=\dfrac{9}{20}=0.45$</p>
+        <p>이므로 $b>a>c$. 등이 나올 확률이 가장 큰 윷가락은 <strong>B</strong>입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>조건이 주어진 경우의 확률로 예측하기</h2>
+    <p class="lead">데이터의 양을 늘리거나 적절한 조건을 추가하면 예측의 정확성을 높일 수 있습니다. 위 100명의 데이터를 증상별로 나누어 살펴봅시다.</p>
+
+    <div class="widget">
+      <div class="widget-title">증상별 조건부 확률 예측기</div>
+      <div class="btn-row">
+        <button class="btn solid" onclick="loadSymptom('fever')">발열</button>
+        <button class="btn" onclick="loadSymptom('cough')">기침</button>
+        <button class="btn" onclick="loadSymptom('taste')">미각 손실</button>
+      </div>
+      <table class="cond" id="condTable"></table>
+      <div class="prob-result" id="condResult"></div>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">세 증상 중 미각 손실이 있을 때 진단 검사 결과가 양성일 확률이 가장 높습니다. 따라서 인공지능은 미각 손실이 있는 학생의 진단 검사 결과가 양성일 가능성이 가장 높다고 예측합니다. 반대로, 양성 판정을 받은 학생에게는 발열 증상에 대비하도록 추천할 수 있습니다 (양성일 때 발열이 있을 확률 $\frac{6}{8}=0.75$로 최고).</p>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 확인하기 1 — 음악 추천 시스템</button>
+      <div class="reveal-content ok hidden">
+        <p>회원 90명 중 음악 A를 좋아하는 사람 중 음악 B도 좋아하는 사람은 8명, 좋아하지 않는 사람은 4명입니다.</p>
+        <p>⑴ 음악 B를 좋아할 확률 $=\dfrac{8+2}{90}=\dfrac{1}{9}$로 낮으므로, 임의로 택한 회원은 음악 B를 좋아하지 않을 것으로 예측합니다.</p>
+        <p>⑵ 음악 A를 좋아할 때 음악 B를 좋아할 확률 $=\dfrac{8}{8+4}=\dfrac{2}{3}$로 매우 높으므로, 음악 A를 좋아하는 회원은 음악 B도 좋아할 것으로 예측합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>확률 기반 추천 시스템</h2>
+    <p class="lead">인공지능은 조건부 확률을 이용해 스팸 메일을 분류하거나 상품을 추천합니다. 제목에 특수 기호가 있는 메일 중 스팸 메일일 확률은 $\dfrac{6}{8}=\dfrac{3}{4}$로, 일반 메일일 확률 $\dfrac{2}{8}=\dfrac{1}{4}$보다 높으므로 특수 기호가 있는 새 메일은 스팸으로 분류됩니다.</p>
+
+    <div class="widget">
+      <div class="widget-title">장바구니 추천 시스템 — 매점 구매 데이터</div>
+      <div class="btn-row">
+        <button class="btn solid" onclick="loadBasket('snack')">과자를 구매한 학생</button>
+        <button class="btn" onclick="loadBasket('bread')">빵을 구매한 학생</button>
+      </div>
+      <table class="cond" id="basketTable"></table>
+      <div class="prob-result" id="basketResult"></div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 확률과 조건부 확률로 범주형 데이터를 예측하는 방법을 배웠습니다. 다음 시간에는 연속형 데이터를 추세선으로 예측하는 방법을 배웁니다.</p>
+    <div class="next">다음 차시 : 2차시 — 추세선을 이용한 예측</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="index.html">← 예측과 최적화 목록으로</a>
+    <a href="2-trendline-prediction.html">2차시 — 추세선을 이용한 예측 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const symptomData = {
+    fever: { name: '발열', yes: { pos: 6, neg: 8 }, no: { pos: 2, neg: 84 } },
+    cough: { name: '기침', yes: { pos: 5, neg: 5 }, no: { pos: 3, neg: 87 } },
+    taste: { name: '미각 손실', yes: { pos: 3, neg: 1 }, no: { pos: 5, neg: 91 } },
+  };
+
+  function loadSymptom(key) {
+    const d = symptomData[key];
+    const yesTotal = d.yes.pos + d.yes.neg;
+    const noTotal = d.no.pos + d.no.neg;
+    document.getElementById('condTable').innerHTML = `
+      <tr><th>${d.name}</th><th>양성</th><th>음성</th><th>합계</th></tr>
+      <tr><td>있음</td><td class="hi">${d.yes.pos}</td><td>${d.yes.neg}</td><td>${yesTotal}</td></tr>
+      <tr><td>없음</td><td>${d.no.pos}</td><td>${d.no.neg}</td><td>${noTotal}</td></tr>
+    `;
+    const p = d.yes.pos / yesTotal;
+    document.getElementById('condResult').innerHTML =
+      `${d.name}이 있을 때 양성일 확률 = <span class="big">${d.yes.pos}/${yesTotal} ≈ ${p.toFixed(3)}</span>`;
+  }
+  loadSymptom('fever');
+
+  const basketData = {
+    snack: {
+      buyer: '과자를 구매한 학생 5명',
+      items: { 만두: 4, 빵: 1, 아이스크림: 1, 캔음료: 7, 우유: 2 },
+    },
+    bread: {
+      buyer: '빵을 구매한 학생 4명',
+      items: { 만두: 1, 과자: 1, 캔음료: 4, 우유: 6 },
+    },
+  };
+
+  function loadBasket(key) {
+    const d = basketData[key];
+    const total = Object.values(d.items).reduce((a, b) => a + b, 0);
+    const entries = Object.entries(d.items);
+    const maxVal = Math.max(...entries.map(([, v]) => v));
+    document.getElementById('basketTable').innerHTML =
+      `<tr><th>품목</th>${entries.map(([k]) => `<th>${k}</th>`).join('')}<th>합계</th></tr>` +
+      `<tr><td>개수(개)</td>${entries.map(([, v]) => `<td${v === maxVal ? ' class="hi"' : ''}>${v}</td>`).join('')}<td>${total}</td></tr>`;
+    const best = entries.find(([, v]) => v === maxVal);
+    document.getElementById('basketResult').innerHTML =
+      `${d.buyer}이 함께 구매한 품목 중 <span class="big">${best[0]}</span> (${best[1]}/${total})의 상대도수가 가장 높으므로, 이 품목을 추천할 수 있습니다.`;
+  }
+  loadBasket('snack');
+</script>
+</body>
+</html>

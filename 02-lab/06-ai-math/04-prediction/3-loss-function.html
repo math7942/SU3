@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3차시 · 손실함수 · 예측과 최적화</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  table.errtable { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 10px 0; }
+  table.errtable th, table.errtable td { border: 1px solid var(--line); padding: 5px; text-align: center; }
+  table.errtable th { background: var(--accent-soft); color: var(--accent-dark); }
+  .side-by-side { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      예측과 최적화
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-probability-prediction.html">1차시</a>
+      <a class="session-tab" href="2-trendline-prediction.html">2차시</a>
+      <a class="session-tab current" href="3-loss-function.html">3차시</a>
+      <a class="session-tab" href="4-derivative.html">4차시</a>
+      <a class="session-tab" href="5-gradient-descent-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅳ단원 · 3 / 5차시</span>
+    <h1>손실함수</h1>
+    <p class="sub">오차의 제곱의 평균으로 손실함수를 정의하고, 이를 이용해 데이터를 가장 잘 반영하는 추세선을 찾는 방법을 배웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>오차의 평균만으로는 추세선을 비교하기 어려운 이유를 설명할 수 있다.</li>
+        <li>오차의 제곱의 평균으로 손실함수를 정의하고 계산할 수 있다.</li>
+        <li>손실함수의 값을 비교하여 데이터를 더 잘 반영하는 추세선을 판정할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>인공지능 신호등의 최적화</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>오차의 평균으로 비교하기 어려운 이유</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>오차의 제곱의 평균 — 손실함수</td><td class="time">15분</td></tr>
+        <tr><td>활동3</td><td>손실함수 계산기로 최적의 추세선 찾기</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>인공지능 신호등의 최적화</h2>
+    <p class="lead">인공지능 신호등은 카메라에서 수집한 대기 차량 수 $x$와 통과 시간 $y$의 데이터를 학습하여 예측을 위한 수학적 모델(추세선) $f$를 최적화합니다. 만약 신호를 필요 이상으로 길게 혹은 짧게 유지하면 교통 정체나 보행자 안전 문제를 일으킬 수 있으므로, 예측이 얼마나 정확한지를 수치화하는 <strong>손실함수</strong>가 필요합니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>오차의 평균으로 비교하기 어려운 이유</h2>
+    <p class="lead">어느 교차로에서 대기 중인 차량 $x$대가 통과하는 데 걸린 시간 $y$초를 6회 측정한 데이터에 대하여, 두 추세선 $f_1(x)=2x$, $f_2(x)=-x+11$의 오차와 그 평균을 구하면 다음과 같습니다.</p>
+    <table class="errtable">
+      <tr><th>차량 수 $x$</th><th>통과 시간 $y$</th><th>$f_1(x)$</th><th>$f_2(x)$</th><th>$y-f_1(x)$</th><th>$y-f_2(x)$</th></tr>
+      <tr><td>2</td><td>3</td><td>4</td><td>9</td><td>-1</td><td>-6</td></tr>
+      <tr><td>3</td><td>4</td><td>6</td><td>8</td><td>-2</td><td>-4</td></tr>
+      <tr><td>3</td><td>8</td><td>6</td><td>8</td><td>2</td><td>0</td></tr>
+      <tr><td>4</td><td>7</td><td>8</td><td>7</td><td>-1</td><td>0</td></tr>
+      <tr><td>5</td><td>9</td><td>10</td><td>6</td><td>-1</td><td>3</td></tr>
+      <tr><td>5</td><td>10</td><td>10</td><td>6</td><td>0</td><td>4</td></tr>
+      <tr><td colspan="4">평균</td><td>$-\dfrac{1}{2}$</td><td>$-\dfrac{1}{2}$</td></tr>
+    </table>
+    <div class="qbox">두 추세선 중 $f_1$이 데이터의 특징을 더 잘 반영함을 그래프로는 직관적으로 알 수 있지만, <strong>오차의 평균은 서로 같으므로(둘 다 $-\frac{1}{2}$) 오차의 평균만으로는 어느 추세선이 더 나은지 비교할 수 없습니다.</strong> 반대 부호를 가진 오차들이 상쇄되기 때문입니다.</div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 15분</span>
+    <h2>오차의 제곱의 평균 — 손실함수</h2>
+    <p class="lead">오차를 제곱하면 음수가 없어지므로, 오차의 제곱의 평균을 구하면 오차들의 전체적인 크기를 비교할 수 있습니다.</p>
+    <p style="text-align:center;">$(f_1\text{의 오차 제곱 평균})=\dfrac{(-1)^2+(-2)^2+2^2+(-1)^2+(-1)^2+0^2}{6}=\dfrac{11}{6}$</p>
+    <p style="text-align:center;">$(f_2\text{의 오차 제곱 평균})=\dfrac{(-6)^2+(-4)^2+0^2+0^2+3^2+4^2}{6}=\dfrac{77}{6}$</p>
+    <p>$\dfrac{11}{6}<\dfrac{77}{6}$이므로 $f_1$이 $f_2$보다 데이터를 더 잘 반영합니다. 이처럼 입력값 $x$와 실제 측정값 $y$에 대하여 추세선의 관계식이 $f(x)=ax$($a$는 상수)일 때, 모든 오차의 크기를 전체적으로 나타내는 함수를 <strong>손실함수</strong>라 하고 $L(a)$로 나타냅니다.</p>
+    <div class="qbox">$$L(a)=\dfrac{(y_1-ax_1)^2+(y_2-ax_2)^2+\cdots+(y_n-ax_n)^2}{n}$$ 손실함수의 값이 작을수록 추세선이 데이터를 더 잘 반영합니다.</div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>손실함수 계산기로 최적의 추세선 찾기</h2>
+    <p class="lead">위 데이터에 대하여 추세선 $f(x)=ax$의 손실함수는 $L(a)=\dfrac{88a^2-330a+319}{6}=\dfrac{44}{3}\left(a-\dfrac{15}{8}\right)^2+\dfrac{77}{48}$이므로, 손실함수가 최소인 $a=\dfrac{15}{8}$일 때가 가장 최적화된 추세선입니다. 슬라이더로 $a$를 바꾸며 손실함수의 값을 확인해 보세요.</p>
+    <div class="widget">
+      <div class="widget-title">손실함수 L(a) 탐구기</div>
+      <div class="control-row">
+        <label>기울기 $a$</label>
+        <input type="range" id="aSlider" min="0" max="3" step="0.025" value="1.875" oninput="updateLossDemo()">
+        <span class="val" id="aVal">1.875</span>
+      </div>
+      <div class="side-by-side">
+        <div><p style="font-size:0.8rem; text-align:center;">손실함수 L(a)</p><canvas id="lossCanvas" width="300" height="220" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+        <div><p style="font-size:0.8rem; text-align:center;">추세선 f(x)=ax</p><canvas id="lineCanvas" width="300" height="220" style="border:1px solid var(--line); border-radius:8px;"></canvas></div>
+      </div>
+      <div class="readout">
+        <div class="cell"><div class="k">L(a)</div><div class="v" id="lValOut">1.604</div></div>
+        <div class="cell"><div class="k">최솟값 (a=15/8)</div><div class="v">77/48 ≈ 1.604</div></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 함께하기 1 — 전기 버스 데이터로 연습하기</button>
+      <div class="reveal-content ok hidden">
+        <p>충전 용량 $x$(kWh)와 주행 거리 $y$(km)를 4회 측정한 데이터 $(10,10),(20,30),(30,40),(40,60)$에 대하여, 추세선 $f(x)=ax$의 손실함수는 $L(a)=50(15a^2-43a+31)$입니다.</p>
+        <p>$L(1)=50(15-43+31)=150$, $L(2)=50(60-86+31)=250$이므로 $L(1)<L(2)$. 따라서 추세선 $f_1(x)=x$가 $f_2(x)=2x$보다 데이터의 특징을 더 잘 반영합니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 손실함수의 값이 작을수록 추세선이 데이터를 잘 반영한다는 것을 배웠습니다. 다음 시간에는 손실함수의 최솟값을 찾기 위한 도구인 미분계수를 배웁니다.</p>
+    <div class="next">다음 차시 : 4차시 — 이차함수의 미분계수</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="2-trendline-prediction.html">← 2차시 — 추세선을 이용한 예측</a>
+    <a href="4-derivative.html">4차시 — 이차함수의 미분계수 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const xs = [2, 3, 3, 4, 5, 5];
+  const ys = [3, 4, 8, 7, 9, 10];
+
+  function lossL(a) {
+    let sum = 0;
+    for (let i = 0; i < xs.length; i++) sum += (ys[i] - a * xs[i]) ** 2;
+    return sum / xs.length;
+  }
+
+  function updateLossDemo() {
+    const a = parseFloat(document.getElementById('aSlider').value);
+    document.getElementById('aVal').textContent = a.toFixed(3);
+    const Lval = lossL(a);
+    document.getElementById('lValOut').textContent = Lval.toFixed(3);
+    drawLossCanvas(a, Lval);
+    drawLineCanvas(a);
+  }
+
+  function drawLossCanvas(aCur, LCur) {
+    const canvas = document.getElementById('lossCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const pad = 34;
+    const aMin = 0, aMax = 3;
+    const Lmin = 77 / 48, Lmax = lossL(0);
+    const toPx = (a, L) => {
+      const px = pad + (a - aMin) / (aMax - aMin) * (canvas.width - pad * 2);
+      const py = canvas.height - pad - (L - Lmin) / (Lmax - Lmin) * (canvas.height - pad * 2);
+      return [px, py];
+    };
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, canvas.height - pad); ctx.lineTo(canvas.width - pad, canvas.height - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, canvas.height - pad); ctx.stroke();
+
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const a = aMin + (aMax - aMin) * i / 100;
+      const [px, py] = toPx(a, lossL(a));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    const [cx, cy] = toPx(aCur, LCur);
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fillStyle = '#c23b5a'; ctx.fill();
+
+    const [mx, my] = toPx(15 / 8, 77 / 48);
+    ctx.beginPath(); ctx.arc(mx, my, 4, 0, Math.PI * 2); ctx.strokeStyle = '#124b46'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  function drawLineCanvas(a) {
+    const canvas = document.getElementById('lineCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const pad = 34;
+    const xMax = 6, yMax = 12;
+    const toPx = (x, y) => [pad + x / xMax * (canvas.width - pad * 2), canvas.height - pad - y / yMax * (canvas.height - pad * 2)];
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, canvas.height - pad); ctx.lineTo(canvas.width - pad, canvas.height - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, canvas.height - pad); ctx.stroke();
+
+    xs.forEach((x, i) => {
+      const [px, py] = toPx(x, ys[i]);
+      ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fillStyle = '#556067'; ctx.fill();
+    });
+
+    const [x1, y1] = toPx(0, 0);
+    const [x2, y2] = toPx(xMax, a * xMax);
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  updateLossDemo();
+</script>
+</body>
+</html>

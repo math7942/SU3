@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4차시 · 이차함수의 미분계수 · 예측과 최적화</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  table.limtable { width: 100%; border-collapse: collapse; font-size: 0.84rem; margin: 10px 0; }
+  table.limtable th, table.limtable td { border: 1px solid var(--line); padding: 6px; text-align: center; }
+  table.limtable th { background: var(--accent-soft); color: var(--accent-dark); }
+  .mini-grid3 { display: grid; grid-template-columns: repeat(3, 70px); gap: 8px; margin: 8px 0; }
+  .mini-grid3 input { width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid var(--line); border-radius: 6px; text-align: center; font-weight: 700; }
+  .mini-grid3 label { font-size: 0.72rem; color: var(--muted); display: block; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      예측과 최적화
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-probability-prediction.html">1차시</a>
+      <a class="session-tab" href="2-trendline-prediction.html">2차시</a>
+      <a class="session-tab" href="3-loss-function.html">3차시</a>
+      <a class="session-tab current" href="4-derivative.html">4차시</a>
+      <a class="session-tab" href="5-gradient-descent-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅳ단원 · 4 / 5차시</span>
+    <h1>이차함수의 미분계수</h1>
+    <p class="sub">손실함수의 그래프의 경사를 수치화하는 미분계수의 뜻을 알고, 이차함수의 미분계수를 계산하는 방법을 배웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>함수의 극한과 접선의 뜻을 안다.</li>
+        <li>이차함수의 미분계수의 의미를 설명할 수 있다.</li>
+        <li>이차함수 $f(x)=ax^2+bx+c$의 미분계수 $f'(t)=2at+b$를 계산할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>손실함수의 경사를 어떻게 나타낼까?</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>함수의 극한과 접선</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>이차함수의 미분계수의 뜻</td><td class="time">10분</td></tr>
+        <tr><td>활동3</td><td>이차함수의 미분계수 계산기</td><td class="time">20분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>손실함수의 경사를 어떻게 나타낼까?</h2>
+    <p class="lead">인공지능은 손실함수의 정확한 최솟값을 구하는 대신, <strong>경사하강법</strong>에 따라 반복적인 계산으로 최솟값에 충분히 가까운 값을 찾아갑니다. 경사하강법의 원리를 이해하려면 먼저 '경사'에 해당하는 수학적 개념인 <strong>미분계수</strong>를 알아야 합니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>함수의 극한과 접선</h2>
+    <p class="lead">함수 $f(x)$에서 $x$의 값이 $a$가 아니면서 $a$에 한없이 가까워질 때, $f(x)$의 값이 일정한 값 $\alpha$에 한없이 가까워지면 함수 $f(x)$는 $\alpha$에 <strong>수렴</strong>한다고 합니다. 이때 $\alpha$를 $x=a$에서 함수 $f(x)$의 <strong>극한값</strong>이라 하고 $\displaystyle\lim_{x\to a}f(x)=\alpha$와 같이 나타냅니다.</p>
+    <div class="widget">
+      <div class="widget-title">$f(x)=\dfrac{x^2-2x}{x}$ ($x\neq0$)의 $x=0$에서의 극한 확인하기</div>
+      <table class="limtable" id="limTable"></table>
+      <div class="readout">
+        <div class="cell"><div class="k">$\lim_{x\to0}f(x)$</div><div class="v">-2</div></div>
+      </div>
+    </div>
+    <p class="lead" style="margin-top:18px;">이차함수 $y=f(x)$의 그래프 위의 서로 다른 두 점 $\mathrm{P}(t,f(t))$, $\mathrm{Q}(t+h,f(t+h))$에 대하여 $h\to0$이면 점 Q가 곡선을 따라 점 P에 한없이 가까워지고, 직선 PQ는 점 P를 지나는 어떤 직선 $l$에 한없이 가까워집니다. 이 직선 $l$을 점 P에서 곡선에 접하는 <strong>접선</strong>이라고 합니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 10분</span>
+    <h2>이차함수의 미분계수의 뜻</h2>
+    <p class="lead">이차함수 $y=f(x)$의 그래프 위의 점 $\mathrm{P}(t,f(t))$에서 접하는 접선의 기울기를 이차함수 $y=f(x)$의 $x=t$에서의 <strong>미분계수</strong>라 하고 $f'(t)$로 나타냅니다.</p>
+    <p>예를 들어 이차함수 $f(x)=(x-3)^2+1$의 그래프 위의 점 A, B, C, D, E ($x$좌표 1, 2, 3, 4, 5)에서 그은 접선의 기울기를 비교하면 $f'(1)<f'(2)<f'(3)=0<f'(4)<f'(5)$입니다. 즉 아래로 볼록한 그래프에서 꼭짓점의 왼쪽은 접선의 기울기가 음수, 오른쪽은 양수, 꼭짓점에서는 0입니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 20분</span>
+    <h2>이차함수의 미분계수 계산기</h2>
+    <p class="lead">이차함수 $f(x)=ax^2+bx+c$의 $x=t$에서의 미분계수는 극한의 정의로부터</p>
+    <p style="text-align:center;">$f'(t)=\displaystyle\lim_{h\to0}\dfrac{f(t+h)-f(t)}{h}=\lim_{h\to0}(ah+2at+b)=2at+b$</p>
+    <p>로 계산됩니다. 아래에서 $a, b, c, t$ 값을 바꾸며 미분계수와 접선을 확인해 보세요.</p>
+    <div class="widget">
+      <div class="widget-title">미분계수 계산기 — f(x) = ax² + bx + c</div>
+      <div class="mini-grid3">
+        <div><label>a</label><input type="number" id="paramA" value="1" step="0.5" oninput="updateDeriv()"></div>
+        <div><label>b</label><input type="number" id="paramB" value="-4" step="0.5" oninput="updateDeriv()"></div>
+        <div><label>c</label><input type="number" id="paramC" value="5" step="0.5" oninput="updateDeriv()"></div>
+      </div>
+      <div class="control-row">
+        <label>$t$ (접점의 x좌표)</label>
+        <input type="range" id="tSlider" min="-2" max="6" step="0.1" value="1" oninput="updateDeriv()">
+        <span class="val" id="tVal">1</span>
+      </div>
+      <canvas id="derivCanvas" height="260"></canvas>
+      <div class="readout">
+        <div class="cell"><div class="k">f(t)</div><div class="v" id="ftOut">2</div></div>
+        <div class="cell"><div class="k">f'(t) = 2at+b</div><div class="v" id="fptOut">-2</div></div>
+      </div>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">$f(x)=x^2-4x+5$이면 $f'(t)=2t-4$이므로 $f'(1)=-2, f'(2)=0, f'(3)=2$입니다. 슬라이더를 $t=1,2,3$으로 옮기며 확인해 보세요.</p>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 확인하기 3 — 곡선 위의 접선의 기울기</button>
+      <div class="reveal-content ok hidden">
+        <p>좌표평면에서 곡선 $y=-3(x-2)^2+1$ 위의 점 $(3,-2)$에서 그은 접선의 기울기를 구해 봅시다.</p>
+        <p>전개하면 $y=-3x^2+12x-11$이므로 $a=-3, b=12$이고, $f'(t)=2at+b=-6t+12$입니다.</p>
+        <p>점 $(3,-2)$는 $t=3$에 대응하므로 접선의 기울기는 $f'(3)=-6\times3+12=-6$입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 이차함수의 미분계수를 구하는 방법을 배웠습니다. 다음 시간에는 미분계수를 이용해 손실함수를 최소화하는 경사하강법을 배우고 Ⅳ단원을 정리합니다.</p>
+    <div class="next">다음 차시 : 5차시 — 경사하강법과 단원 정리</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="3-loss-function.html">← 3차시 — 손실함수</a>
+    <a href="5-gradient-descent-review.html">5차시 — 경사하강법과 단원 정리 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  function buildLimTable() {
+    const xs = [0.1, 0.01, 0.001, -0.001, -0.01, -0.1];
+    const f = x => (x * x - 2 * x) / x;
+    let html = '<tr>' + xs.map(x => `<th>x = ${x}</th>`).join('') + '</tr>';
+    html += '<tr>' + xs.map(x => `<td>${f(x).toFixed(4)}</td>`).join('') + '</tr>';
+    document.getElementById('limTable').innerHTML = html;
+  }
+  buildLimTable();
+
+  function updateDeriv() {
+    const a = parseFloat(document.getElementById('paramA').value) || 0;
+    const b = parseFloat(document.getElementById('paramB').value) || 0;
+    const c = parseFloat(document.getElementById('paramC').value) || 0;
+    const t = parseFloat(document.getElementById('tSlider').value);
+    document.getElementById('tVal').textContent = t;
+    const f = x => a * x * x + b * x + c;
+    const ft = f(t);
+    const fpt = 2 * a * t + b;
+    document.getElementById('ftOut').textContent = fmt(ft, 2);
+    document.getElementById('fptOut').textContent = fmt(fpt, 2);
+    drawDerivCanvas(a, b, c, t, ft, fpt);
+  }
+
+  function drawDerivCanvas(a, b, c, t, ft, fpt) {
+    const canvas = document.getElementById('derivCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 260);
+    ctx.clearRect(0, 0, cw, ch);
+    const xMin = -3, xMax = 7;
+    const f = x => a * x * x + b * x + c;
+    let yMin = Infinity, yMax = -Infinity;
+    for (let i = 0; i <= 100; i++) {
+      const x = xMin + (xMax - xMin) * i / 100;
+      const y = f(x);
+      if (y < yMin) yMin = y;
+      if (y > yMax) yMax = y;
+    }
+    yMin = Math.min(yMin, ft) - 2; yMax = Math.max(yMax, ft) + 2;
+    const pad = 30;
+    const toPx = (x, y) => [pad + (x - xMin) / (xMax - xMin) * (cw - pad * 2), ch - pad - (y - yMin) / (yMax - yMin) * (ch - pad * 2)];
+
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1;
+    const [ox, oy] = toPx(0, 0);
+    ctx.beginPath(); ctx.moveTo(pad, oy); ctx.lineTo(cw - pad, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, pad); ctx.lineTo(ox, ch - pad); ctx.stroke();
+
+    ctx.strokeStyle = '#556067'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const x = xMin + (xMax - xMin) * i / 200;
+      const [px, py] = toPx(x, f(x));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = '#c23b5a'; ctx.lineWidth = 2.2;
+    const [lx1, ly1] = toPx(t - 2, ft - fpt * 2);
+    const [lx2, ly2] = toPx(t + 2, ft + fpt * 2);
+    ctx.beginPath(); ctx.moveTo(lx1, ly1); ctx.lineTo(lx2, ly2); ctx.stroke();
+
+    const [px, py] = toPx(t, ft);
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fillStyle = '#0f8f86'; ctx.fill();
+  }
+
+  updateDeriv();
+  window.addEventListener('resize', updateDeriv);
+</script>
+</body>
+</html>
