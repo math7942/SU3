@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2단계 · 가입과 화면 구성 · NotebookLM · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      NotebookLM
+    </a>
+    <span class="badge" aria-hidden="true">🔑</span>
+    <h1>2단계 · 가입과 화면 구성</h1>
+    <p>노트북을 만들고 소스·채팅·Studio 세 영역으로 이루어진 화면을 익힙니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. NotebookLM 시작하기</h2>
+      <p><a href="https://notebooklm.google.com" target="_blank" rel="noopener">notebooklm.google.com</a>에 구글 계정으로 로그인하면 별도 가입 절차 없이 바로 시작할 수 있습니다.</p>
+
+      <div class="btn-row">
+        <a class="btn" href="https://notebooklm.google.com" target="_blank" rel="noopener">notebooklm.google.com 열기 ↗</a>
+      </div>
+
+      <h2>2. 노트북 만들기</h2>
+      <p>첫 화면에서 "새 노트북"을 누르면 빈 노트북이 만들어집니다. 노트북은 단원이나 반 단위로 하나씩 따로 만들어두면, 나중에 필요한 자료를 훨씬 빠르게 찾을 수 있습니다.</p>
+
+      <h2>3. 화면 구성 살펴보기</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>영역</th><th>쓰임새</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>왼쪽 — 소스</td><td>PDF·문서·웹 링크 등 참고 자료를 올려두는 곳입니다.</td></tr>
+            <tr><td>가운데 — 채팅</td><td>올린 소스를 근거로 질문하고 답을 받는 곳입니다.</td></tr>
+            <tr><td>오른쪽 — Studio</td><td>요약·오디오·영상·퀴즈 같은 결과물을 만드는 곳입니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>4. 노트북 이름 지어보기</h2>
+      <p>학년·단원·용도를 넣으면 알아보기 쉬운 노트북 이름을 만들어줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>노트북 이름 만들기</h4>
+        <p class="practice-desc">학년·단원과 용도를 넣어보세요.</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="p2-grade">학년</label>
+            <input type="text" id="p2-grade" placeholder="예: 2학년" value="2학년">
+          </div>
+          <div class="field">
+            <label for="p2-unit">단원</label>
+            <input type="text" id="p2-unit" placeholder="예: 이차함수" value="이차함수">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p2-purpose">용도</label>
+          <select id="p2-purpose">
+            <option value="수업 준비용">수업 준비용</option>
+            <option value="학생 배포용">학생 배포용</option>
+            <option value="개인 연구용">개인 연구용</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p2-result"></div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>학교 계정이라면 관리자 설정을 확인하세요</h4>
+        <p>학교·교육청 워크스페이스 계정은 관리자가 NotebookLM 사용을 꺼뒀을 수 있습니다. 화면에 접속이 안 된다면 담당 부서에 먼저 문의하세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="1-map.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 기능 지도
+      </a>
+      <a class="back" href="3-sources.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 소스 올리고 질문하기
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p2-result');
+  function update() {
+    var grade = document.getElementById('p2-grade').value.trim() || '[학년]';
+    var unit = document.getElementById('p2-unit').value.trim() || '[단원]';
+    var purpose = document.getElementById('p2-purpose').value;
+    out.textContent = grade + ' ' + unit + ' 단원 노트북 (' + purpose + ')';
+  }
+  ['p2-grade', 'p2-unit', 'p2-purpose'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+})();
+</script>
+</body>
+</html>
