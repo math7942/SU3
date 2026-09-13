@@ -16,13 +16,49 @@
     </a>
     <span class="badge" aria-hidden="true">🎬</span>
     <h1>6단계 · Video Overview로 영상 자료 만들기</h1>
-    <p>자료 내용을 애니메이션과 내레이션이 있는 영상으로 만듭니다.</p>
+    <p>소스 내용을 애니메이션과 내레이션이 있는 영상으로 바꿔 수업 밖에서도 볼 수 있게 만듭니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Video Overview란</h2>
+      <p>Studio의 "Video Overview"는 소스 내용을 바탕으로 내레이션과 애니메이션이 함께 나오는 영상을 만들어주는 기능입니다. 글이나 오디오보다 시각 자료가 필요한 개념(그래프, 도형 변화 과정)을 설명할 때 도움이 됩니다.</p>
+
+      <h2>2. 만들기</h2>
+      <p>소스를 올린 뒤 Studio에서 "Video Overview"를 선택하면 자동으로 생성이 시작됩니다. 자료 분량에 따라 만들어지는 데 시간이 걸릴 수 있으니, 수업 전날 미리 만들어두는 것이 좋습니다.</p>
+
+      <h2>3. 활용 예</h2>
+      <ul>
+        <li><strong>결석 학생 보충</strong> — 그날 배운 내용을 영상으로 만들어 따로 보내줍니다.</li>
+        <li><strong>거꾸로 수업(플립러닝)</strong> — 수업 전에 미리 보고 오게 해서, 수업 시간은 문제 풀이에 집중합니다.</li>
+        <li><strong>복습 자료</strong> — 시험 전 핵심 개념을 다시 훑어보는 용도로 공유합니다.</li>
+      </ul>
+
+      <h2>4. 활용 계획 세워보기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>영상 활용 방법 추천받기</h4>
+        <p class="practice-desc">지금 필요한 상황과 가장 가까운 것을 골라보세요.</p>
+
+        <div class="field">
+          <label for="p6-situation">지금 상황</label>
+          <select id="p6-situation">
+            <option value="absent">결석한 학생에게 수업 내용을 보충해주고 싶어요</option>
+            <option value="flip">수업 전에 미리 예습하고 오게 하고 싶어요</option>
+            <option value="review">시험 전 복습 자료로 나눠주고 싶어요</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p6-result"></div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>생성 시간과 내용을 미리 확인하세요</h4>
+        <p>영상은 오디오보다 만드는 데 시간이 더 걸릴 수 있으니 여유를 두고 준비하세요. 배포 전에 끝까지 재생해보고, 애니메이션이 실제 개념을 정확히 표현하는지 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +74,22 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p6-result');
+  var data = {
+    absent: '수업에서 쓴 자료를 소스로 올려 그날 배운 범위만 영상으로 만드세요. 결석 학생에게 링크만 보내면 됩니다.',
+    flip: '다음 수업 범위를 소스로 올려 미리 영상을 만들고, 수업 하루 전에 링크를 공유하세요. 수업 시간에는 질문과 문제 풀이에 집중할 수 있습니다.',
+    review: '시험 범위 전체 자료를 소스로 모아 핵심 개념 위주의 영상을 만들고, 시험 며칠 전에 배포하세요.'
+  };
+  function update() {
+    var situation = document.getElementById('p6-situation').value;
+    out.textContent = data[situation];
+  }
+  var select = document.getElementById('p6-situation');
+  if (select) select.addEventListener('change', update);
+  update();
+})();
+</script>
 </body>
 </html>

@@ -16,13 +16,52 @@
     </a>
     <span class="badge" aria-hidden="true">🎯</span>
     <h1>8단계 · 퀴즈·플래시카드로 복습 자료 만들기</h1>
-    <p>출처가 표시된 정답과 함께 자동 채점 퀴즈를 만듭니다.</p>
+    <p>소스를 근거로 한 퀴즈와 플래시카드를 자동으로 만들어 복습에 활용합니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 퀴즈 만들기</h2>
+      <p>Studio에서 "퀴즈"를 선택하면 객관식·단답형 문제를 자동으로 만들어줍니다. 각 정답에는 어느 소스의 어느 부분을 근거로 했는지 인용이 함께 달려 있어, 왜 그 답이 맞는지 원문에서 바로 확인할 수 있습니다.</p>
+
+      <h2>2. 플래시카드 만들기</h2>
+      <p>"플래시카드"를 선택하면 핵심 개념을 질문과 답 형태의 카드 묶음으로 만들어줍니다. 앞면에 질문, 뒷면에 답이 나오는 방식으로, 짧은 시간에 여러 개념을 훑어보기 좋습니다.</p>
+
+      <h2>3. 플래시카드 미리 만들어보기</h2>
+      <p>"질문,답"을 한 줄에 하나씩 넣고 카드를 눌러 뒤집어보세요.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>플래시카드 미리 보기</h4>
+        <p class="practice-desc">"질문,답" 형태로 한 줄에 하나씩 입력한 뒤 카드를 클릭해보세요.</p>
+
+        <div class="field">
+          <label for="p8-cards">카드 목록</label>
+          <textarea id="p8-cards" rows="4">이차방정식의 판별식 공식은?,b² - 4ac
+D > 0일 때 실근의 개수는?,서로 다른 두 실근
+등차수열의 일반항 공식은?,a_n = a_1 + (n-1)d</textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p8-build">카드 만들기</button>
+        </div>
+
+        <div id="p8-cardbox" style="margin-top:16px; display:none;">
+          <div id="p8-card" style="cursor:pointer; min-height:90px; border-radius:12px; background:var(--accent-soft); color:var(--ink); display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; font-weight:600;"></div>
+          <p class="count-hint" id="p8-hint" style="text-align:center;"></p>
+          <div class="btn-row" style="justify-content:center;">
+            <button class="btn secondary" type="button" id="p8-prev">◀ 이전</button>
+            <button class="btn secondary" type="button" id="p8-next">다음 ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <h2>4. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>정답 근거도 함께 확인하세요</h4>
+        <p>퀴즈 정답에 달린 인용을 눌러 실제로 그 소스에서 맞는 내용을 가져왔는지 확인하세요. 보기 구성이 너무 헷갈리게 되어 있지는 않은지도 직접 풀어보고 점검하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +77,66 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var cards = [];
+  var index = 0;
+  var showingAnswer = false;
+
+  var cardbox = document.getElementById('p8-cardbox');
+  var cardEl = document.getElementById('p8-card');
+  var hint = document.getElementById('p8-hint');
+
+  function parseCards() {
+    var raw = document.getElementById('p8-cards').value;
+    return raw.split('\n').map(function (line) {
+      var idx = line.indexOf(',');
+      if (idx === -1) return null;
+      var q = line.slice(0, idx).trim();
+      var a = line.slice(idx + 1).trim();
+      if (!q || !a) return null;
+      return { q: q, a: a };
+    }).filter(function (c) { return c !== null; });
+  }
+
+  function renderCard() {
+    if (cards.length === 0) return;
+    var c = cards[index];
+    cardEl.textContent = showingAnswer ? c.a : c.q;
+    hint.textContent = (index + 1) + ' / ' + cards.length + ' — 카드를 클릭하면 ' + (showingAnswer ? '질문' : '답') + '이 보입니다.';
+  }
+
+  document.getElementById('p8-build').addEventListener('click', function () {
+    cards = parseCards();
+    index = 0;
+    showingAnswer = false;
+    if (cards.length === 0) {
+      cardbox.style.display = 'none';
+      return;
+    }
+    cardbox.style.display = 'block';
+    renderCard();
+  });
+
+  cardEl.addEventListener('click', function () {
+    showingAnswer = !showingAnswer;
+    renderCard();
+  });
+
+  document.getElementById('p8-prev').addEventListener('click', function () {
+    if (cards.length === 0) return;
+    index = (index - 1 + cards.length) % cards.length;
+    showingAnswer = false;
+    renderCard();
+  });
+
+  document.getElementById('p8-next').addEventListener('click', function () {
+    if (cards.length === 0) return;
+    index = (index + 1) % cards.length;
+    showingAnswer = false;
+    renderCard();
+  });
+})();
+</script>
 </body>
 </html>
