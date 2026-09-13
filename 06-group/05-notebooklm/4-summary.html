@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4단계 · 요약·브리핑·타임라인 자동 생성하기 · NotebookLM · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      NotebookLM
+    </a>
+    <span class="badge" aria-hidden="true">📝</span>
+    <h1>4단계 · 요약·브리핑·타임라인 자동 생성하기</h1>
+    <p>소스를 올리기만 해도 자동으로 만들어지는 요약과, Studio에서 따로 요청하는 문서들을 활용합니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 노트북 가이드란</h2>
+      <p>소스를 올리면 오른쪽 Studio 패널에 자동으로 전체 요약과 자주 나올 법한 질문(FAQ) 목록이 만들어집니다. 자료를 처음부터 다 읽지 않아도 무슨 내용이 담겨 있는지 빠르게 파악할 수 있습니다.</p>
+
+      <h2>2. 브리핑 문서 만들기</h2>
+      <p>Studio에서 "브리핑 문서"를 요청하면, 핵심 내용을 회의나 수업 준비용으로 정리한 문서를 만들어줍니다. 동료 교사와 자료를 공유하기 전에 미리 만들어두면 설명 시간을 줄일 수 있습니다.</p>
+
+      <h2>3. 타임라인 만들기</h2>
+      <p>여러 자료에 걸쳐 순서가 있는 내용(교육과정 개편 이력, 단원별 학습 순서)을 정리해야 할 때는 "타임라인"을 요청하세요. 어떤 내용이 먼저 나오고 나중에 나오는지 순서대로 정리해줍니다.</p>
+
+      <h2>4. 요청 문구 만들어보기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>Studio 요청 문구 만들기</h4>
+        <p class="practice-desc">원하는 문서 종류와 목적을 넣어보세요.</p>
+
+        <div class="field">
+          <label for="p4-type">문서 종류</label>
+          <select id="p4-type">
+            <option value="summary">핵심 요약</option>
+            <option value="briefing">브리핑 문서</option>
+            <option value="timeline">타임라인</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p4-purpose">목적</label>
+          <input type="text" id="p4-purpose" placeholder="예: 동료 교사와 공유할 이차함수 단원 설명 자료">
+        </div>
+
+        <div class="result-box" id="p4-result"></div>
+        <div class="btn-row">
+          <button class="btn" type="button" id="p4-copy">요청 문구 복사하기</button>
+        </div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>요약본도 원본과 대조하세요</h4>
+        <p>자동 요약이 편리하긴 하지만, 세부적인 조건이나 예외 사항이 빠질 수 있습니다. 수업이나 평가에 그대로 쓰기 전에 원본 소스와 한 번은 비교해보세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="3-sources.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 소스 올리고 질문하기
+      </a>
+      <a class="back" href="5-audio.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · Audio Overview로 팟캐스트 학습자료 만들기
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p4-result');
+  var typeInfo = {
+    summary: { label: '핵심 요약', particle: '을' },
+    briefing: { label: '브리핑 문서', particle: '를' },
+    timeline: { label: '타임라인', particle: '을' }
+  };
+  function update() {
+    var type = document.getElementById('p4-type').value;
+    var purpose = document.getElementById('p4-purpose').value.trim() || '[목적]';
+    var info = typeInfo[type];
+    out.textContent = purpose + ' 목적으로 ' + info.label + info.particle + ' 만들어줘.';
+  }
+  ['p4-type', 'p4-purpose'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', update);
+    if (el && el.tagName === 'SELECT') el.addEventListener('change', update);
+  });
+  update();
+
+  var copyBtn = document.getElementById('p4-copy');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var text = out.textContent;
+      var done = function () {
+        var original = copyBtn.textContent;
+        copyBtn.textContent = '복사됨!';
+        setTimeout(function () { copyBtn.textContent = original; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+})();
+</script>
+</body>
+</html>
