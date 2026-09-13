@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5차시 · 경사하강법과 단원 정리 · 예측과 최적화</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .quiz-opt { display: block; width: 100%; text-align: left; padding: 10px 14px; margin: 6px 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; font-size: 0.9rem; }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.correct { background: var(--ok-bg); border-color: var(--ok-line); font-weight: 700; }
+  .quiz-opt.wrong { background: #fbe9ee; border-color: #e8b4c4; }
+  table.gdtable { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin: 10px 0; }
+  table.gdtable th, table.gdtable td { border: 1px solid var(--line); padding: 5px 6px; text-align: center; }
+  table.gdtable th { background: var(--accent-soft); color: var(--accent-dark); }
+  table.gdtable tbody { display: block; max-height: 220px; overflow-y: auto; }
+  table.gdtable thead, table.gdtable tbody tr { display: table; width: 100%; table-layout: fixed; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      예측과 최적화
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-probability-prediction.html">1차시</a>
+      <a class="session-tab" href="2-trendline-prediction.html">2차시</a>
+      <a class="session-tab" href="3-loss-function.html">3차시</a>
+      <a class="session-tab" href="4-derivative.html">4차시</a>
+      <a class="session-tab current" href="5-gradient-descent-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅳ단원 · 5 / 5차시</span>
+    <h1>경사하강법과 단원 정리</h1>
+    <p class="sub">미분계수를 이용해 손실함수의 값을 최소화하는 경사하강법을 배우고 Ⅳ단원 전체를 정리합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>경사하강법에서 $a$의 값을 갱신하는 식 $a_1=a_0-kL'(a_0)$의 의미를 설명할 수 있다.</li>
+        <li>경사하강법의 진행 과정을 순서도로 이해하고 반복 계산을 수행할 수 있다.</li>
+        <li>Ⅳ단원에서 배운 예측과 최적화의 개념을 종합적으로 적용할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>활동1</td><td>$a$의 값을 갱신하는 식</td><td class="time">15분</td></tr>
+        <tr><td>활동2</td><td>경사하강법 시뮬레이터</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>Ⅳ단원 정리 퀴즈</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 15분</span>
+    <h2>$a$의 값을 갱신하는 식</h2>
+    <p class="lead">손실함수 $L(a)$는 $a$에 대한 이차함수이므로 $a=g$에서 최소일 때 $L'(g)=0$입니다. 임의로 정한 $a_0$에 대하여 $L'(a_0)\neq0$이면, 손실함수의 값이 작아지도록 $a$의 값을 $a_0$에서 $a_1$으로 갱신합니다. 이때</p>
+    <p style="text-align:center; font-size:1.05rem;">$a_1=a_0-kL'(a_0)$ (단, $k>0$)</p>
+    <p>이 식을 경사하강법의 <strong>학습을 위한 식</strong>이라 하고, 양의 상수 $k$를 <strong>학습률</strong>이라고 합니다. $L'(a_0)$의 부호에 따라 $a$의 값이 커지거나 작아지도록 갱신되고, $|L'(a_0)|$가 클수록 큰 폭으로 갱신됩니다.</p>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 함께하기 3, 확인하기 4 — 학습을 위한 식 계산 연습</button>
+      <div class="reveal-content ok hidden">
+        <p><strong>함께하기 3</strong> : $L(a)=3a^2-2a+7$, $a_0=5$, 학습률 $k=0.1$일 때 $L'(a)=6a-2$이므로 $a_1=5-0.1\times(6\times5-2)=5-2.8=2.2$.</p>
+        <p><strong>확인하기 4</strong> : $L(a)=a^2+4a+5$, $a_0=-9$에서 1회 갱신한 값이 12일 때 학습률 $k$는? $L'(a)=2a+4$이므로 $L'(-9)=-14$. $12=-9-k\times(-14)=-9+14k$에서 $k=1.5$.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>경사하강법 시뮬레이터</h2>
+    <p class="lead">세 점 $(1,1), (2,1), (2,3)$에 대하여 추세선 $f(x)=ax$의 손실함수는 $L(a)=3a^2-6a+\dfrac{11}{3}=3(a-1)^2+\dfrac{2}{3}$이므로 $a=1$일 때 최소입니다. 학습률 $k=0.1$, 종료 기준 $|L'(a)|<0.001$로 경사하강법을 직접 실행해 보세요.</p>
+    <div class="widget">
+      <div class="widget-title">경사하강법 시뮬레이터 — L(a) = 3a² − 6a + 11/3</div>
+      <div class="control-row">
+        <label>초깃값 $a_0$</label>
+        <input type="range" id="a0Slider" min="-3" max="4" step="0.1" value="0" oninput="resetGD()">
+        <span class="val" id="a0Val">0</span>
+      </div>
+      <div class="control-row">
+        <label>학습률 $k$</label>
+        <input type="range" id="kSlider" min="0.02" max="0.3" step="0.01" value="0.1" oninput="resetGD()">
+        <span class="val" id="kVal">0.1</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn solid" onclick="stepGD()">1회 갱신 ▶</button>
+        <button class="btn" onclick="runGD()">수렴할 때까지 자동 실행</button>
+        <button class="btn" onclick="resetGD()">초기화</button>
+      </div>
+      <canvas id="gdCanvas" height="220"></canvas>
+      <table class="gdtable">
+        <thead><tr><th>갱신 횟수</th><th>a의 값</th><th>L'(a)의 값</th></tr></thead>
+        <tbody id="gdBody"></tbody>
+      </table>
+      <div id="gdStatus" style="font-weight:800; color:var(--accent-dark);"></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>Ⅳ단원 정리 퀴즈</h2>
+    <div class="widget">
+      <div class="widget-title">단원 마무리 문제</div>
+      <div id="quizWrap"></div>
+      <div class="readout">
+        <div class="cell"><div class="k">맞힌 개수</div><div class="v" id="quizScore">0 / 5</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="summary">
+    <h2>Ⅳ단원을 마치며</h2>
+    <p>확률과 추세선으로 데이터를 예측하는 방법, 손실함수로 추세선의 좋고 나쁨을 수치화하는 방법, 미분계수와 경사하강법으로 손실함수를 최소화하는 최적화 과정까지 살펴보았습니다. 수고 많았습니다!</p>
+    <div class="next">Ⅳ단원 완료 — 목록으로 돌아가 다른 단원을 이어서 학습해 보세요.</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="4-derivative.html">← 4차시 — 이차함수의 미분계수</a>
+    <a href="index.html">예측과 최적화 목록으로 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  function Lp(a) { return 6 * a - 6; }
+  function L(a) { return 3 * a * a - 6 * a + 11 / 3; }
+
+  let gdA = 0, gdK = 0.1, gdStep = 0, gdHistory = [];
+
+  function resetGD() {
+    gdA = parseFloat(document.getElementById('a0Slider').value);
+    gdK = parseFloat(document.getElementById('kSlider').value);
+    document.getElementById('a0Val').textContent = gdA;
+    document.getElementById('kVal').textContent = gdK.toFixed(2);
+    gdStep = 0;
+    gdHistory = [{ step: '초깃값', a: gdA, lp: Lp(gdA) }];
+    document.getElementById('gdStatus').textContent = '';
+    renderGD();
+  }
+
+  function stepGD() {
+    const lastA = gdHistory[gdHistory.length - 1].a;
+    const lp = Lp(lastA);
+    if (Math.abs(lp) < 0.001) {
+      document.getElementById('gdStatus').textContent = `이미 |L'(a)| < 0.001을 만족하여 갱신을 종료했습니다. (최적화된 a ≈ ${lastA.toFixed(6)})`;
+      return;
+    }
+    gdStep++;
+    const newA = lastA - gdK * lp;
+    gdHistory.push({ step: gdStep + '회', a: newA, lp: Lp(newA) });
+    renderGD();
+    if (Math.abs(Lp(newA)) < 0.001) {
+      document.getElementById('gdStatus').textContent = `${gdStep}회 갱신했을 때 |L'(a)| < 0.001을 처음 만족하여 갱신을 종료합니다. 최적화된 a ≈ ${newA.toFixed(6)}`;
+    }
+  }
+
+  function runGD() {
+    for (let i = 0; i < 200; i++) {
+      const lastA = gdHistory[gdHistory.length - 1].a;
+      if (Math.abs(Lp(lastA)) < 0.001) break;
+      stepGD();
+    }
+  }
+
+  function renderGD() {
+    document.getElementById('gdBody').innerHTML = gdHistory.map(h =>
+      `<tr><td>${h.step}</td><td>${h.a.toFixed(6)}</td><td>${h.lp.toFixed(6)}</td></tr>`
+    ).join('');
+    const tbody = document.getElementById('gdBody');
+    tbody.scrollTop = tbody.scrollHeight;
+    drawGDCanvas();
+  }
+
+  function drawGDCanvas() {
+    const canvas = document.getElementById('gdCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 220);
+    ctx.clearRect(0, 0, cw, ch);
+    const aMin = -3, aMax = 4;
+    const Lmin = 2 / 3, Lmax = Math.max(...gdHistory.map(h => L(h.a)), L(aMin), L(aMax));
+    const toPx = (a, l) => [30 + (a - aMin) / (aMax - aMin) * (cw - 60), ch - 30 - (l - Lmin) / (Lmax - Lmin + 1e-9) * (ch - 60)];
+    ctx.strokeStyle = '#0f8f86'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const a = aMin + (aMax - aMin) * i / 100;
+      const [px, py] = toPx(a, L(a));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    gdHistory.forEach((h, i) => {
+      const [px, py] = toPx(h.a, L(h.a));
+      ctx.beginPath(); ctx.arc(px, py, i === gdHistory.length - 1 ? 5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = i === gdHistory.length - 1 ? '#c23b5a' : '#556067';
+      ctx.fill();
+    });
+  }
+
+  resetGD();
+  window.addEventListener('resize', drawGDCanvas);
+
+  const quizItems = [
+    { text: '경사하강법에서 a의 값을 갱신하는 식 a₁=a₀-kL\'(a₀)에서, 양의 상수 k를 무엇이라 하는가?',
+      opts: ['학습률', '손실률', '경사율'], answer: '학습률' },
+    { text: '손실함수 L(a)=a²+4a+5에서 L\'(a)는?',
+      opts: ['2a+4', 'a+4', '2a+5'], answer: '2a+4' },
+    { text: '이차함수 f(x)=ax²+bx+c의 x=t에서의 미분계수 f\'(t)는?',
+      opts: ['2at+b', 'at+b', '2at+c'], answer: '2at+b' },
+    { text: '오차의 제곱의 평균으로 정의한, 추세선의 정확도를 수치화하는 함수는?',
+      opts: ['손실함수', '확률함수', '분포함수'], answer: '손실함수' },
+    { text: '경사하강법에서 |L\'(a)|가 0에 충분히 가까워지면 어떻게 되는가?',
+      opts: ['갱신을 종료하고 현재 a를 최적값으로 판단한다', '학습률을 두 배로 늘린다', '초깃값을 다시 정한다'],
+      answer: '갱신을 종료하고 현재 a를 최적값으로 판단한다' },
+  ];
+  let score = 0;
+  const quizWrap = document.getElementById('quizWrap');
+  quizItems.forEach((item, idx) => {
+    const block = document.createElement('div');
+    block.style.marginBottom = '14px';
+    block.innerHTML = `<p style="font-size:0.9rem; margin-bottom:6px;"><strong>Q${idx+1}.</strong> ${item.text}</p>` +
+      item.opts.map(opt => `<button class="quiz-opt" data-opt="${opt}">${opt}</button>`).join('');
+    quizWrap.appendChild(block);
+    const btns = block.querySelectorAll('.quiz-opt');
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        btns.forEach(b => b.disabled = true);
+        btns.forEach(b => { if (b.dataset.opt === item.answer) b.classList.add('correct'); });
+        if (btn.dataset.opt === item.answer) score++;
+        else btn.classList.add('wrong');
+        document.getElementById('quizScore').textContent = score + ' / ' + quizItems.length;
+      });
+    });
+  });
+</script>
+</body>
+</html>
