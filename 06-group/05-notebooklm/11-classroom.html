@@ -16,19 +16,55 @@
     </a>
     <span class="badge" aria-hidden="true">🏫</span>
     <h1>11단계 · Google Classroom 연동하기</h1>
-    <p>이미 올려둔 과제 자료를 그대로 모아 노트북을 만듭니다.</p>
+    <p>이미 배정해둔 과제 자료를 그대로 모아, 버튼 하나로 노트북을 만듭니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Classwork에서 바로 노트북 만들기</h2>
+      <p>Classroom의 "수업" 탭에서 새 게시물을 만들 때 NotebookLM 버튼을 선택하면, 그동안 올려둔 슬라이드·읽기 자료·학습 가이드를 그대로 소스로 모아 노트북을 만들 수 있습니다. 자료를 다시 하나하나 올릴 필요가 없습니다.</p>
+
+      <h2>2. 학생도 개인 노트북을 만들 수 있습니다</h2>
+      <p>학교 워크스페이스에서 Gemini·NotebookLM·Classroom용 Gemini 기능이 모두 켜져 있다면, 학생도 배정된 자료로 자기만의 노트북을 만들어 복습할 수 있습니다. 다만 이 기능은 학교(관리자)의 설정에 따라 켜져 있지 않을 수 있고, 조직에 따라 이용 가능한 학생 범위가 다르게 제한되어 있을 수 있습니다.</p>
+
+      <div class="callout warn">
+        <h4>학교 설정을 먼저 확인하세요</h4>
+        <p>학생용 노트북 생성 기능이 우리 학교에서 켜져 있는지는 담당 부서나 관리자에게 먼저 확인하세요. 꺼져 있다면 교사가 만든 노트북을 10단계처럼 공유하는 방식으로도 충분히 활용할 수 있습니다.</p>
+      </div>
+
+      <h2>3. 활용 예</h2>
+      <p>단원이 끝날 때마다 그동안 올린 자료를 모아 노트북으로 만들어두면, 기말고사 전 학생들이 단원 전체를 훑어보는 복습 노트로 바로 활용할 수 있습니다.</p>
+
+      <h2>4. 연동 방법 정리해보기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>연동 방법 추천받기</h4>
+        <p class="practice-desc">지금 상황과 가장 가까운 것을 골라보세요.</p>
+
+        <div class="field">
+          <label for="p11-situation">지금 상황</label>
+          <select id="p11-situation">
+            <option value="teacher">교사가 배정 자료로 복습용 노트북을 만들고 싶어요</option>
+            <option value="student">학생이 스스로 복습 노트북을 만들게 하고 싶어요</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p11-result"></div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>자동으로 모인 자료도 검토하세요</h4>
+        <p>Classwork에서 자동으로 불러온 자료 중 오래되었거나 더 이상 맞지 않는 내용이 섞여 있을 수 있습니다. 노트북을 학생에게 공유하기 전에 소스 목록을 한 번 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
       <a class="back" href="10-collaboration.html" style="margin:0;">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        이전 단계 · 학생과 함께 쓰기 — 공유·공동 편집
+        이전 단계 · 학생과 함께 쓰기
       </a>
       <a class="back" href="12-compare.html" style="margin:0; flex-direction:row-reverse;">
         다음 단계 · 여러 자료 비교·조사하기
@@ -38,5 +74,21 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p11-result');
+  var data = {
+    teacher: 'Classwork에서 새 게시물을 만들 때 NotebookLM을 선택해, 배정해둔 자료를 그대로 소스로 불러오세요.',
+    student: '학교 워크스페이스에서 학생용 NotebookLM·Gemini 기능이 켜져 있는지 먼저 확인한 뒤, 학생에게 Classwork에서 개인 노트북 만드는 법을 안내하세요.'
+  };
+  function update() {
+    var situation = document.getElementById('p11-situation').value;
+    out.textContent = data[situation];
+  }
+  var select = document.getElementById('p11-situation');
+  if (select) select.addEventListener('change', update);
+  update();
+})();
+</script>
 </body>
 </html>
