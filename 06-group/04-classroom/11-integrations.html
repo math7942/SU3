@@ -16,13 +16,51 @@
     </a>
     <span class="badge" aria-hidden="true">🧩</span>
     <h1>11단계 · 다른 도구 연동하기</h1>
-    <p>Docs·Sheets·Slides·Canva에서 만든 자료를 과제에 바로 첨부합니다.</p>
+    <p>Docs·Sheets·Slides·Canva에서 만든 자료를 과제에 바로 첨부하고, 표절 여부까지 확인합니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 자료 첨부하기</h2>
+      <p>과제를 만들 때 "추가" 버튼으로 내 드라이브 파일, 웹 링크, 유튜브 영상을 첨부할 수 있습니다. "만들기"를 누르면 Docs·Sheets·Slides·Forms 새 문서를 그 자리에서 만들어 바로 첨부할 수도 있습니다.</p>
+
+      <h2>2. Canva 연동</h2>
+      <p>Canva 가이드에서 다룬 것처럼, 캔바에서 만든 디자인도 "Google Classroom에 과제로 배포"를 선택하면 계정을 한 번 연결한 뒤 바로 과제로 올릴 수 있습니다. 학생이 링크를 열면 각자의 사본이 자동으로 만들어지고, 완성하면 다시 Classroom으로 제출합니다.</p>
+
+      <h2>3. Originality Reports로 표절 확인하기</h2>
+      <p>과제를 만들 때 "표절(원본성) 검사" 체크박스를 켜두면, 학생의 Docs·Slides·Word 파일을 인터넷 자료와 비교해 인용되지 않은 문장을 찾아줍니다. 학생은 제출 전 최대 3번까지 스스로 검사해볼 수 있고, 제출하면 교사에게만 보이는 보고서가 자동으로 만들어집니다.</p>
+
+      <div class="callout warn">
+        <h4>파일 크기 제한이 있습니다</h4>
+        <p>원본성 검사는 파일 크기가 2MB를 넘으면 실행되지 않습니다. 이미지가 많이 들어간 문서는 검사가 안 될 수 있다는 점을 학생에게 미리 안내하세요.</p>
+      </div>
+
+      <h2>4. 상황에 맞는 방법 추천받기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>연동 방법 추천받기</h4>
+        <p class="practice-desc">지금 하려는 일과 가장 가까운 것을 골라보세요.</p>
+
+        <div class="field">
+          <label for="p11-goal">지금 하려는 일</label>
+          <select id="p11-goal">
+            <option value="existing">이미 만들어둔 파일을 그대로 올리고 싶어요</option>
+            <option value="new">학생마다 각자 편집할 새 문서를 나눠주고 싶어요</option>
+            <option value="video">설명 영상을 보여주고 싶어요</option>
+            <option value="check">서술형 답안의 표절 여부를 확인하고 싶어요</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p11-result"></div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>원본성 보고서도 참고 자료입니다</h4>
+        <p>표시된 비율이 높다고 해서 곧바로 표절로 단정하지 마세요. 인용 표시를 빠뜨렸거나 흔히 쓰는 수학 용어가 겹친 경우일 수 있으니, 보고서를 근거로 학생과 직접 대화해서 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +76,23 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p11-result');
+  var data = {
+    existing: '"추가" 버튼으로 드라이브에 있는 파일을 그대로 첨부하세요. 학생은 보기 권한으로 열람만 하게 됩니다.',
+    new: '"만들기"에서 Docs·Sheets·Slides 새 문서를 만들고, 첨부 시 "학생별로 사본 제공"을 선택하세요. 학생마다 자기 사본이 자동으로 생깁니다.',
+    video: '유튜브 링크나 드라이브의 동영상 파일을 "추가"로 첨부하세요. 재생 시간이 길다면 설명에 꼭 봐야 할 구간을 함께 적어주세요.',
+    check: '과제를 만들 때 "표절(원본성) 검사" 체크박스를 켜세요. 제출 후 자동으로 만들어지는 보고서를 교사만 확인할 수 있습니다.'
+  };
+  function update() {
+    var goal = document.getElementById('p11-goal').value;
+    out.textContent = data[goal];
+  }
+  var select = document.getElementById('p11-goal');
+  if (select) select.addEventListener('change', update);
+  update();
+})();
+</script>
 </body>
 </html>

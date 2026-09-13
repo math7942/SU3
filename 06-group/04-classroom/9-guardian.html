@@ -16,13 +16,59 @@
     </a>
     <span class="badge" aria-hidden="true">👨‍👩‍👧</span>
     <h1>9단계 · 학부모와 소통하기 — Guardian Summaries</h1>
-    <p>미제출·예정 과제를 학부모에게 정기적으로 자동 발송합니다.</p>
+    <p>미제출·예정 과제를 학부모에게 정기적으로 자동 요약해서 보내는 기능입니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. Guardian Summaries란</h2>
+      <p>Guardian Summaries는 학생의 최근 미제출 과제, 다가오는 마감, 새 공지사항을 정리해 학부모 이메일로 자동 발송하는 기능입니다. 교사가 매번 따로 연락하지 않아도 학부모가 자녀의 학습 상황을 꾸준히 확인할 수 있습니다.</p>
+
+      <h2>2. 학부모 초대하기</h2>
+      <p>"사용자" 탭에서 학생 이름 옆 "보호자 초대"를 눌러 학부모 이메일을 입력합니다. 학부모가 한 번 초대를 수락하면, 이후로는 그 학부모가 연결된 자녀의 모든 수업에서 이 기능을 켠 교사들의 요약을 함께 받게 됩니다.</p>
+
+      <h2>3. 발송 주기 설정하기</h2>
+      <p>학부모는 초대를 수락할 때 요약을 매일 받을지, 매주 받을지 스스로 고를 수 있습니다. 교사가 강제로 주기를 정할 수는 없지만, 안내장을 보낼 때 추천 주기를 함께 알려주면 도움이 됩니다.</p>
+
+      <h2>4. 무엇이 포함되고 무엇이 빠지나</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>포함되는 것</th><th>포함되지 않는 것</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>미제출 과제 목록</td><td>과제별 점수·성적</td></tr>
+            <tr><td>다가오는 과제 마감</td><td>과제 원문이나 첨부 파일 내용</td></tr>
+            <tr><td>최근 올라온 공지사항</td><td>비공개 댓글·피드백 내용</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>5. 우리 반에 맞는 주기 추천받기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>추천 발송 주기 확인하기</h4>
+        <p class="practice-desc">학급 상황과 가장 가까운 것을 골라보세요.</p>
+
+        <div class="field">
+          <label for="p9-situation">학급 상황</label>
+          <select id="p9-situation">
+            <option value="often">과제 마감을 자주 놓치는 학생이 많아요</option>
+            <option value="stable">전반적으로 제출이 안정적이에요</option>
+            <option value="new">학기 초라 아직 파악 중이에요</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p9-result"></div>
+      </div>
+
+      <h2>6. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>성적은 따로 안내해야 합니다</h4>
+        <p>Guardian Summaries에는 점수나 성적이 들어가지 않습니다. 성적 관련 소통은 다른 가이드에서 다룬 이메일·안내문 방법을 함께 활용하세요. 보호자 이메일 주소가 정확한지도 미리 확인하세요.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +84,22 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var out = document.getElementById('p9-result');
+  var data = {
+    often: '매일 요약을 추천하세요. 미제출 과제를 자주 놓친다면, 매일 알림이 가는 편이 학부모가 더 빨리 챙길 수 있습니다.',
+    stable: '매주 요약으로 충분합니다. 제출이 안정적이라면 매일 받는 알림이 오히려 불필요하게 느껴질 수 있습니다.',
+    new: '처음에는 매주 요약으로 시작해서, 학급 분위기를 파악한 뒤 필요하면 매일로 조정하도록 안내하세요.'
+  };
+  function update() {
+    var situation = document.getElementById('p9-situation').value;
+    out.textContent = data[situation];
+  }
+  var select = document.getElementById('p9-situation');
+  if (select) select.addEventListener('change', update);
+  update();
+})();
+</script>
 </body>
 </html>
