@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3차시 · k-최근접 이웃(k-NN) 알고리즘으로 분류하기 · 인공지능과 수학 탐구</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .bit-row { display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap; }
+  .bit { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; background: #fff; font-size: 0.8rem; }
+  .bit.one { background: var(--accent); color: #fff; }
+  .result-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .result-cell { flex: 1 1 120px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; }
+  .result-cell .k { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
+  .result-cell .v { font-size: 1.05rem; font-weight: 800; color: var(--accent-dark); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 수학 탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-rational-decisions.html">1차시</a>
+      <a class="session-tab" href="2-ai-ethics-inquiry.html">2차시</a>
+      <a class="session-tab current" href="3-knn-classification.html">3차시</a>
+      <a class="session-tab" href="4-word-vectors.html">4차시</a>
+      <a class="session-tab" href="5-project-design-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅴ단원 · 3 / 5차시</span>
+    <h1>k-최근접 이웃(k-NN) 알고리즘으로 분류하기</h1>
+    <p class="sub">거리를 이용해 새로운 데이터를 분류하는 k-NN 알고리즘의 원리를 배우고, 기후 데이터와 재활용품 이미지를 직접 분류해 봅니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>유클리디언 거리를 이용해 두 데이터 사이의 거리를 구할 수 있다.</li>
+        <li>k-최근접 이웃(k-NN) 알고리즘의 원리를 설명하고, k값에 따라 분류 결과가 달라짐을 확인할 수 있다.</li>
+        <li>해밍 거리를 이용해 이미지 데이터를 분류할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>기후 변화 패턴을 어떻게 분류할까?</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>k-NN 알고리즘과 유클리디언 거리</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>k-NN 분류기 — k값에 따라 달라지는 분류</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>해밍 거리로 재활용품 분류하기</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>기후 변화 패턴을 어떻게 분류할까?</h2>
+    <p class="lead">전 세계 주요 도시들의 기후 데이터(온도, 강수량 등)를 분류하면 각 도시가 직면하고 있는 기후 변화를 파악하여 대응할 수 있습니다. 이번 시간에는 <strong>k-최근접 이웃(k-NN, k-Nearest Neighbors)</strong> 알고리즘의 수학적 원리와 분류 방법을 탐구해 봅니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>k-NN 알고리즘과 유클리디언 거리</h2>
+    <p class="lead"><strong>k-NN 알고리즘</strong>은 판별하고 싶은 데이터와 인접한 $k$개의 데이터를 찾아 데이터 간의 거리(distance)를 측정하여 다수결에 따라 새로운 데이터를 기존 클래스로 분류하는 방법입니다. 중요한 것은 새로운 데이터와 기존 데이터와의 거리를 측정하는 것이며, 이때 <strong>유클리디언 거리(Euclidean distance)</strong>가 주로 사용됩니다.</p>
+    <p style="text-align:center;">$\overline{PQ}=\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$</p>
+    <p>예를 들어 $P(4,4)$, $Q(2,2)$ 사이의 유클리디언 거리는 $\overline{PQ}=\sqrt{(4-2)^2+(4-2)^2}=2\sqrt2$입니다.</p>
+    <div class="qbox"><strong>k값 선정 방법</strong> : $k$값은 인접한 데이터의 개수를 의미합니다. $k=1$부터 시작하여 $k$값을 1씩 증가시키며 성능을 테스트하여 최적의 성능을 보이는 $k$값을 찾습니다.</div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>k-NN 분류기 — k값에 따라 달라지는 분류</h2>
+    <p class="lead">훈련 데이터는 노란 사각형, 파란 원의 클래스 2개로 나뉘어 있습니다. 새로운 테스트 데이터(★)가 어느 클래스에 속하는지, $k$값을 바꾸며 확인해 보세요.</p>
+    <div class="widget">
+      <div class="widget-title">k-NN 분류기 (온도-강수량 데이터)</div>
+      <div class="control-row">
+        <label>$k$ 값</label>
+        <input type="range" id="kSlider" min="1" max="10" step="1" value="3" oninput="updateKNN()">
+        <span class="val" id="kVal">3</span>
+      </div>
+      <canvas id="knnCanvas" height="280"></canvas>
+      <div class="result-row">
+        <div class="result-cell"><div class="k">노란 사각형</div><div class="v" id="sqCount">2</div></div>
+        <div class="result-cell"><div class="k">파란 원</div><div class="v" id="ciCount">1</div></div>
+        <div class="result-cell"><div class="k">분류 결과</div><div class="v" id="classResult">사각형</div></div>
+      </div>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">교과서 확인 결과와 비교해 보세요 — $k=3$일 때 사각형 2개, 원 1개로 <strong>사각형</strong>으로 분류, $k=7$일 때 사각형 3개, 원 4개로 <strong>원</strong>으로 분류, $k=10$일 때는 사각형 5개, 원 5개로 <strong>분류할 수 없습니다</strong> (동점).</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>해밍 거리로 재활용품 분류하기</h2>
+    <p class="lead">이미지를 행렬로 변환한 뒤 해밍 거리를 이용하면 재활용품(페트병, 캔)을 분류할 수 있습니다. $l_1, l_2$가 서로 다른 페트병이고 $l_3$가 캔, $l_4$가 페트병이라고 합시다. 해밍 거리는 0에 가까울수록 유사도가 높습니다.</p>
+    <div class="widget">
+      <div class="widget-title">해밍 거리로 재활용품 분류하기</div>
+      <div id="hamRows"></div>
+      <div class="result-row" id="hamResults"></div>
+    </div>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">기준 페트병 이미지($l_1$)와 해밍 거리가 0에 가까운 것을 찾아 다른 페트병을 분류할 수 있습니다. 다만 크기가 다르거나 형태가 일부 왜곡된 이미지에서는 정확한 분류가 어렵고, 해밍 거리는 위치에 따른 차이만 고려하므로 이미지의 전체적인 차이를 비교하기는 어렵다는 한계가 있습니다.</p>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 k-NN 알고리즘과 해밍 거리로 데이터를 분류하는 방법을 배웠습니다. 다음 시간에는 벡터 연산으로 ChatGPT가 언어를 이해하는 원리를 탐구합니다.</p>
+    <div class="next">다음 차시 : 4차시 — 단어 벡터 연산으로 ChatGPT의 원리 이해하기</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="2-ai-ethics-inquiry.html">← 2차시 — 인공지능 윤리 탐구활동</a>
+    <a href="4-word-vectors.html">4차시 — 단어 벡터 연산으로 ChatGPT의 원리 이해하기 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  // 활동2: k-NN (rank order chosen so cumulative counts match confirmed k=3,7,10 answers)
+  const knnOrder = ['sq', 'sq', 'ci', 'ci', 'ci', 'sq', 'ci', 'sq', 'sq', 'ci'];
+  const knnRadii = [30, 45, 58, 72, 85, 98, 110, 122, 134, 146];
+  const knnAngles = [20, 160, 280, 100, 220, 40, 310, 190, 70, 250];
+  const knnPoints = knnOrder.map((type, i) => ({
+    type,
+    r: knnRadii[i],
+    x: knnRadii[i] * Math.cos(knnAngles[i] * Math.PI / 180),
+    y: knnRadii[i] * Math.sin(knnAngles[i] * Math.PI / 180),
+  }));
+
+  function updateKNN() {
+    const k = parseInt(document.getElementById('kSlider').value);
+    document.getElementById('kVal').textContent = k;
+    const within = knnPoints.slice(0, k);
+    const sq = within.filter(p => p.type === 'sq').length;
+    const ci = within.filter(p => p.type === 'ci').length;
+    document.getElementById('sqCount').textContent = sq;
+    document.getElementById('ciCount').textContent = ci;
+    const resultEl = document.getElementById('classResult');
+    if (sq > ci) resultEl.textContent = '사각형';
+    else if (ci > sq) resultEl.textContent = '원';
+    else resultEl.textContent = '동점(분류 불가)';
+    drawKNN(k);
+  }
+
+  function drawKNN(k) {
+    const canvas = document.getElementById('knnCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 280);
+    ctx.clearRect(0, 0, cw, ch);
+    const cx = cw / 2, cy = ch / 2;
+    const scale = Math.min(cw, ch) / 340;
+
+    const boundaryR = (knnPoints[k - 1].r + (k < 10 ? knnPoints[k].r : knnPoints[k - 1].r + 15)) / 2 * scale;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeStyle = '#c23b5a'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(cx, cy, boundaryR, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    knnPoints.forEach((p, i) => {
+      const px = cx + p.x * scale, py = cy + p.y * scale;
+      const within = i < k;
+      ctx.globalAlpha = within ? 1 : 0.35;
+      if (p.type === 'sq') {
+        ctx.fillStyle = '#f5b942';
+        ctx.fillRect(px - 9, py - 9, 18, 18);
+      } else {
+        ctx.beginPath(); ctx.arc(px, py, 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#3a8fd6'; ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    });
+
+    // test point (star) at center
+    ctx.fillStyle = '#c23b5a';
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const ang = -Math.PI / 2 + i * 2 * Math.PI / 5;
+      const angIn = ang + Math.PI / 5;
+      const rOut = 10, rIn = 4;
+      ctx.lineTo(cx + rOut * Math.cos(ang), cy + rOut * Math.sin(ang));
+      ctx.lineTo(cx + rIn * Math.cos(angIn), cy + rIn * Math.sin(angIn));
+    }
+    ctx.closePath(); ctx.fill();
+  }
+  updateKNN();
+  window.addEventListener('resize', () => updateKNN());
+
+  // 활동3: 해밍 거리
+  const hamStrings = {
+    l1: '1011100000',
+    l2: '1111000010',
+    l3: '1010101010',
+    l4: '1011100010',
+  };
+  function hamDist(a, b) {
+    let d = 0;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++;
+    return d;
+  }
+  function renderHam() {
+    const rowsEl = document.getElementById('hamRows');
+    rowsEl.innerHTML = Object.entries(hamStrings).map(([key, str]) => `
+      <div style="margin-bottom:6px;"><strong>${key}</strong> (${key === 'l3' ? '캔' : '페트병'}) :
+      <span class="bit-row" style="display:inline-flex;">${str.split('').map(b => `<span class="bit${b === '1' ? ' one' : ''}">${b}</span>`).join('')}</span></div>
+    `).join('');
+    const pairs = [['l1', 'l2'], ['l1', 'l3'], ['l1', 'l4'], ['l2', 'l3']];
+    document.getElementById('hamResults').innerHTML = pairs.map(([a, b]) =>
+      `<div class="result-cell"><div class="k">H(${a}, ${b})</div><div class="v">${hamDist(hamStrings[a], hamStrings[b])}</div></div>`
+    ).join('');
+  }
+  renderHam();
+</script>
+</body>
+</html>

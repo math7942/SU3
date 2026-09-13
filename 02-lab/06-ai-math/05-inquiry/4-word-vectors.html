@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4차시 · 단어 벡터 연산으로 ChatGPT의 원리 이해하기 · 인공지능과 수학 탐구</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  .pipeline { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .pipeline-step { flex: 1 1 130px; background: var(--accent-soft); border-radius: 10px; padding: 10px; font-size: 0.8rem; text-align: center; }
+  .pipeline-step .t { font-weight: 800; color: var(--accent-dark); margin-bottom: 4px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 수학 탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab" href="1-rational-decisions.html">1차시</a>
+      <a class="session-tab" href="2-ai-ethics-inquiry.html">2차시</a>
+      <a class="session-tab" href="3-knn-classification.html">3차시</a>
+      <a class="session-tab current" href="4-word-vectors.html">4차시</a>
+      <a class="session-tab" href="5-project-design-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅴ단원 · 4 / 5차시</span>
+    <h1>단어 벡터 연산으로 ChatGPT의 원리 이해하기</h1>
+    <p class="sub">벡터의 연산과 기하학적 표현을 복습하고, 단어 임베딩에서 벡터 연산이 단어의 의미 관계를 어떻게 나타내는지 탐구합니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>벡터의 덧셈, 뺄셈, 실수배와 그 기하학적 표현을 설명할 수 있다.</li>
+        <li>단어 임베딩에서 벡터 연산으로 단어 사이의 의미 관계를 표현할 수 있음을 확인할 수 있다.</li>
+        <li>벡터 연산으로 언어를 모델링하는 것의 한계를 설명할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>ChatGPT는 문장을 어떻게 만들어낼까?</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>벡터의 연산과 기하학적 표현</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>단어 벡터 유추 탐구기</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>벡터 연산으로 언어를 완벽히 표현할 수 있을까?</td><td class="time">10분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>ChatGPT는 문장을 어떻게 만들어낼까?</h2>
+    <p class="lead">ChatGPT는 사람의 질문을 형태소 분석, 단어 임베딩을 거쳐 언어 모델에 입력합니다. 언어 모델에서는 문장을 이해하고 확률적으로 다음에 나올 단어를 예측하여 새로운 문장을 생성합니다.</p>
+    <div class="pipeline">
+      <div class="pipeline-step"><div class="t">질의문 작성</div>ChatGPT에게 질의</div>
+      <div class="pipeline-step"><div class="t">형태소 분석</div>텍스트를 단어나 형태소로 나눔</div>
+      <div class="pipeline-step"><div class="t">단어 임베딩</div>단어를 벡터 공간에 배치</div>
+      <div class="pipeline-step"><div class="t">언어 이해</div>문장을 이해하고 중요한 단어를 파악</div>
+      <div class="pipeline-step"><div class="t">언어 생성</div>확률을 기반으로 다음 단어를 예측하여 문장 생성</div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>벡터의 연산과 기하학적 표현</h2>
+    <p class="lead">두 벡터 $\vec a=(a_1,a_2,\cdots,a_n)$, $\vec b=(b_1,b_2,\cdots,b_n)$과 실수 $k$에 대하여</p>
+    <p style="text-align:center;">$\vec a+\vec b=(a_1+b_1,a_2+b_2,\cdots,a_n+b_n)$<br>$\vec a-\vec b=(a_1-b_1,a_2-b_2,\cdots,a_n-b_n)$<br>$k\vec a=(ka_1,ka_2,\cdots,ka_n)$</p>
+    <p>좌표평면에서 벡터 $\vec a$는 시점을 원점에 맞추었을 때 종점 $\mathrm{A}(a_1,a_2)$의 위치로 기하학적으로 표현할 수 있습니다. 단어 임베딩은 비슷한 의미가 있는 단어들을 서로 가까운 곳에 있는 벡터로 표현하므로, 벡터 연산을 하면 의미 있는 결과가 나옵니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>단어 벡터 유추 탐구기</h2>
+    <p class="lead">실제 단어 임베딩 공간에서는 다음과 같은 벡터 연산이 성립합니다 (출처: word2vec.kr). 버튼을 눌러 각 관계를 벡터 그림으로 확인해 보세요.</p>
+    <div class="widget">
+      <div class="widget-title">단어 벡터 유추 — A − B + C = D</div>
+      <div class="btn-row">
+        <button class="btn solid" onclick="loadAnalogy(0)">한국 − 서울 + 도쿄 = ?</button>
+        <button class="btn" onclick="loadAnalogy(1)">여자 − 여왕 + 왕 = ?</button>
+        <button class="btn" onclick="loadAnalogy(2)">우동 − 일본 + 한국 = ?</button>
+      </div>
+      <canvas id="vecCanvas" height="260"></canvas>
+      <div class="readout">
+        <div class="cell"><div class="k">계산 결과</div><div class="v" id="analogyResult">일본</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 10분</span>
+    <h2>벡터 연산으로 언어를 완벽히 표현할 수 있을까?</h2>
+    <p class="lead">벡터 연산은 '왕'과 '남자', '여왕'과 '여자'와 같은 관계는 잘 표현하지만, 모든 언어적 관계를 완벽하게 모델링할 수는 없습니다. 더 복잡한 문맥적 뉘앙스는 잘 포착하지 못할 수 있습니다.</p>
+    <div class="qbox">기하학적 표현은 단어 간의 관계를 표현하는 데 유용하지만, 실제 언어의 복잡성을 완전히 재현하기에는 한계가 있습니다. 이러한 기법들은 ChatGPT가 자연스럽고 유창한 대화를 생성하는 데 중요한 역할을 하지만, 완벽하게 언어를 이해하고 생성하려면 추가적인 연구가 필요합니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 벡터 연산이 단어의 의미 관계를 표현하는 원리를 배웠습니다. 다음 시간에는 인공지능 수학 탐구를 스스로 설계하는 5단계 방법을 배우고 전체 단원을 정리합니다.</p>
+    <div class="next">다음 차시 : 5차시 — 인공지능 수학 탐구 프로젝트 설계하기</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="3-knn-classification.html">← 3차시 — k-최근접 이웃(k-NN) 알고리즘으로 분류하기</a>
+    <a href="5-project-design-review.html">5차시 — 인공지능 수학 탐구 프로젝트 설계하기 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const analogies = [
+    { A: '한국', B: '서울', C: '도쿄', D: '일본' },
+    { A: '여자', B: '여왕', C: '왕', D: '남자' },
+    { A: '우동', B: '일본', C: '한국', D: '짜장' },
+  ];
+  // consistent layout: B=(1,1), A=(1,3), C=(4,1), D=(4,3)  (A-B = D-C = (0,2))
+  const layout = { A: [1, 3], B: [1, 1], C: [4, 1], D: [4, 3] };
+
+  function loadAnalogy(idx) {
+    const a = analogies[idx];
+    document.getElementById('analogyResult').textContent = a.D;
+    drawVec(a);
+  }
+
+  function drawVec(a) {
+    const canvas = document.getElementById('vecCanvas');
+    const { ctx, w: cw, h: ch } = fitCanvas(canvas, 260);
+    ctx.clearRect(0, 0, cw, ch);
+    const pad = 40, xMax = 5, yMax = 4;
+    const toPx = (x, y) => [pad + x / xMax * (cw - pad * 2), ch - pad - y / yMax * (ch - pad * 2)];
+
+    ctx.strokeStyle = '#c9d2d6'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, ch - pad); ctx.lineTo(cw - pad, ch - pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad, pad); ctx.lineTo(pad, ch - pad); ctx.stroke();
+
+    function arrow(p1, p2, color) {
+      const [x1, y1] = toPx(...p1), [x2, y2] = toPx(...p2);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 9 * Math.cos(ang - Math.PI / 7), y2 - 9 * Math.sin(ang - Math.PI / 7));
+      ctx.lineTo(x2 - 9 * Math.cos(ang + Math.PI / 7), y2 - 9 * Math.sin(ang + Math.PI / 7));
+      ctx.closePath(); ctx.fillStyle = color; ctx.fill();
+    }
+    // B -> A (offset vector), and C -> D (same offset, translated)
+    arrow(layout.B, layout.A, '#0f8f86');
+    arrow(layout.C, layout.D, '#c23b5a');
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = '#9aa4ab'; ctx.lineWidth = 1.2;
+    const [bx, by] = toPx(...layout.B), [cx, cy] = toPx(...layout.C);
+    ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(cx, cy); ctx.stroke();
+    const [ax, ay] = toPx(...layout.A), [dx, dy] = toPx(...layout.D);
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(dx, dy); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ['A', 'B', 'C', 'D'].forEach(key => {
+      const [px, py] = toPx(...layout[key]);
+      ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.fillStyle = key === 'D' ? '#c23b5a' : '#124b46'; ctx.fill();
+      ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#124b46'; ctx.textAlign = 'center';
+      ctx.fillText(a[key], px, py - 12);
+    });
+  }
+  loadAnalogy(0);
+  window.addEventListener('resize', () => drawVec(analogies[0]));
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시 · 합리적 의사 결정과 인공지능 사례 · 인공지능과 수학 탐구</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<style>
+  .decision-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 10px 0; }
+  .decision-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .decision-card h4 { margin: 0 0 6px; font-size: 0.92rem; color: var(--accent-dark); }
+  .decision-card p { margin: 0; font-size: 0.82rem; color: var(--ink-soft); }
+  .case-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 10px 0; }
+  .case-card .tag { display: inline-block; font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--accent); border-radius: 6px; padding: 2px 8px; margin-bottom: 8px; }
+  .flow-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; margin-top: 10px; }
+  .flow-step { flex: 1 1 140px; background: var(--accent-soft); border-radius: 10px; padding: 10px; font-size: 0.8rem; }
+  .flow-step .flow-title { font-weight: 800; color: var(--accent-dark); margin-bottom: 4px; }
+  .flow-arrow { align-self: center; color: var(--muted); font-size: 1.2rem; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      인공지능과 수학 탐구
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab current" href="1-rational-decisions.html">1차시</a>
+      <a class="session-tab" href="2-ai-ethics-inquiry.html">2차시</a>
+      <a class="session-tab" href="3-knn-classification.html">3차시</a>
+      <a class="session-tab" href="4-word-vectors.html">4차시</a>
+      <a class="session-tab" href="5-project-design-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅴ단원 · 1 / 5차시</span>
+    <h1>합리적 의사 결정과 인공지능 사례</h1>
+    <p class="sub">여러 가지 수학적 원리에 기반하여 인공지능이 최적화된 의사 결정을 수행하는 실제 사례를 살펴봅니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>합리적 의사 결정에 필요한 요소(목표, 정보, 선택, 평가)를 설명할 수 있다.</li>
+        <li>인공지능이 최적화를 통해 합리적인 의사 결정을 수행하는 사례를 수학적 원리와 연결할 수 있다.</li>
+        <li>인공지능의 의사 결정에서 발생할 수 있는 윤리적 쟁점을 토론할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>합리적 의사 결정 도구로 쓰이는 인공지능 — F1 경주</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>합리적 의사 결정은 어떻게 해야 할까</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>인공지능이 최적화로 합리적 의사 결정을 하는 사례</td><td class="time">20분</td></tr>
+        <tr><td>활동3</td><td>인공지능의 의사 결정, 윤리적으로 괜찮을까?</td><td class="time">15분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>합리적 의사 결정 도구로 쓰이는 인공지능</h2>
+    <p class="lead">F1 자동차 경주 경기에서는 트랙을 한 바퀴 돌 때마다 센서로 수집한 대량의 데이터가 발생합니다. 인공지능은 엔진 출력, 브레이크 온도, 연료 소비량, 타이어 마모 등의 변수에 대한 최적값을 계산하고, 다양한 위험 상황을 예측하여 합리적인 결정을 내리는 데 도움을 줍니다. 현재 F1 경기에서는 데이터를 분석하는 속도와 정확성이 승리를 결정할 만큼 인공지능이 중요한 요소가 되었습니다.</p>
+    <p style="font-size:0.8rem; color:var(--muted);">출처: 닉 폴슨, 제임스 스콧 저, 노태복 역, 『수학의 쓸모』</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>합리적 의사 결정은 어떻게 해야 할까</h2>
+    <p class="lead"><strong>합리적 의사 결정</strong>이란 여러 가지 선택지 중 최적의 선택을 하는 것을 의미합니다. 사용할 수 있는 정보를 모아 각 선택의 장단점을 고려하여 최선의 결과를 얻을 수 있는 결정을 하는 것입니다. 합리적 의사 결정을 잘하려면 다음 네 가지 요소가 필요합니다.</p>
+    <div class="decision-grid">
+      <div class="decision-card"><h4>🎯 목표</h4><p>문제를 정의하고, 이를 해결할 수 있도록 목표를 세워야 한다.</p></div>
+      <div class="decision-card"><h4>🔍 정보</h4><p>의사 결정을 잘하기 위해서는 충분한 정보가 있어야 한다.</p></div>
+      <div class="decision-card"><h4>🧭 선택</h4><p>정보를 분석하여 가능한 여러 선택지를 생성해야 한다.</p></div>
+      <div class="decision-card"><h4>✅ 평가</h4><p>선택한 결과가 합리적이었는지 평가해야 한다.</p></div>
+    </div>
+    <div class="qbox">인공지능은 실생활 데이터의 경향성을 바탕으로 최적화된 예측을 하여 합리적 의사 결정을 도와줄 수 있습니다. <strong>최적화</strong>는 주어진 조건과 상황에서 손실함수의 값을 최소화하는 값을 찾는 기법입니다.</div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 20분</span>
+    <h2>인공지능이 최적화로 합리적 의사 결정을 하는 사례</h2>
+
+    <div class="case-card">
+      <span class="tag">사례 1</span>
+      <h4>인공지능 기반 도로 상황 예측</h4>
+      <p style="font-size:0.86rem;">도로 상황 예측 시스템은 실시간 차량 흐름, 기상 데이터, 도로 정보, 사건·사고 데이터를 수집하여 5~15분 후의 도로 상황을 예측합니다.</p>
+      <div class="flow-row">
+        <div class="flow-step"><div class="flow-title">데이터 학습</div>실시간 차량 흐름, 기상 데이터, 도로 정보, 사건·사고 데이터를 수집한다.</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><div class="flow-title">최적화 전략 (확률)</div>과거 데이터로 특정 도로·시간대의 차량 정체 확률을 계산한다.</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><div class="flow-title">합리적 의사 결정</div>신호 조절, 경로 변경, 최적 경로를 선택하여 운전한다.</div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:8px;">→ 1단원에서 배운 <strong>확률</strong>과 4단원에서 배운 <strong>예측</strong>이 활용됩니다.</p>
+    </div>
+
+    <div class="case-card">
+      <span class="tag">사례 2</span>
+      <h4>자율주행 자동차</h4>
+      <p style="font-size:0.86rem;">자율주행 자동차는 카메라 및 센서로 도로 상황, 차량 위치, 기상 조건 등을 수집하고, 지도학습이나 비지도학습 알고리즘으로 모델을 훈련시킵니다.</p>
+      <div class="flow-row">
+        <div class="flow-step"><div class="flow-title">데이터 학습</div>카메라·센서로 도로 상황, 차량 위치, 보행자 위치 등을 수집하고 레이블링한다.</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><div class="flow-title">최적화 전략</div>연료·교통량·이동 시간을 고려해 효율적인 경로를 계산하고, 위험 상황과의 오차를 최소화한다.</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><div class="flow-title">합리적 의사 결정</div>주변 환경을 인식하고 상황을 판단하여 적절하게 운행한다.</div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:8px;">→ 3단원에서 배운 <strong>이미지 데이터 처리·분류</strong>와 4단원에서 배운 <strong>손실함수·최적화</strong>가 활용됩니다.</p>
+    </div>
+
+    <div class="case-card">
+      <span class="tag">사례 3</span>
+      <h4>생성 언어 모델 (ChatGPT)</h4>
+      <p style="font-size:0.86rem;">ChatGPT는 텍스트 문서를 처리할 때 각 단어를 벡터로 변환한 후, 단어 임베딩을 거쳐 각 단어의 의미와 관계를 학습합니다.</p>
+      <div class="flow-row">
+        <div class="flow-step"><div class="flow-title">데이터 학습</div>인간이 작성한 대화, 기사, 논문 등 대규모 텍스트 데이터를 수집하고 분석한다.</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><div class="flow-title">최적화 전략</div>이전 단어로 다음 단어를 확률적으로 예측하며, 손실함수 값을 최소화하는 방향으로 학습한다.</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-step"><div class="flow-title">합리적 의사 결정</div>사용자 정보를 이해하고 그에 맞는 문장을 생성한다.</div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-soft); margin-top:8px;">→ 2단원에서 배운 <strong>텍스트의 벡터 표현</strong>과 4단원에서 배운 <strong>손실함수</strong>가 활용됩니다.</p>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>인공지능의 의사 결정, 윤리적으로 괜찮을까?</h2>
+    <p class="lead">인공지능을 활용한 의사 결정에는 여러 윤리적 쟁점이 따릅니다. 다음 물음에 대해 생각하고 모둠원과 토론해 보세요.</p>
+    <div class="qbox"><strong>인공지능 판사</strong> — 인공지능 판사는 짧게는 몇 달에서 길게는 몇 년까지 걸리는 판결 시간을 줄일 수 있고 객관적으로 판결할 것으로 기대됩니다. 하지만 비슷해 보이는 범죄라도 상황이나 배경이 모두 다릅니다. 인공지능 판사가 합리적으로 의사 결정을 내릴 수 있을지 생각해 보세요.</div>
+    <textarea class="think" placeholder="인공지능 판사가 세심한 감정과 다양한 상황을 잘 이해할 수 있을지 적어 보세요"></textarea>
+
+    <div class="qbox" style="margin-top:14px;"><strong>자율주행 로보택시</strong> — 미국 샌프란시스코에서는 연중무휴 무인 로보택시를 운영합니다. 자율주행 시스템은 인간이 운전대를 잡지 않아도 차량이 스스로 운전합니다.</div>
+    <textarea class="think" placeholder="자율주행 로보택시 주행 중 사고가 발생하면 책임은 누구에게 있을지 적어 보세요"></textarea>
+
+    <div class="qbox" style="margin-top:14px;"><strong>ChatGPT의 환각(Hallucination)</strong> — ChatGPT는 환각 현상이 자주 발생하여 실제 사실과 다른 정보를 제공하는 경우가 많습니다. 언어 모델의 특성상 이러한 환각 현상을 완전히 제거하는 것은 불가능하다고 합니다.</div>
+    <textarea class="think" placeholder="ChatGPT의 환각 현상이 미래 사회에 어떤 영향을 미칠지 적어 보세요"></textarea>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 인공지능이 최적화를 통해 합리적으로 의사 결정을 하는 사례와, 그 과정에서 생기는 윤리적 쟁점을 살펴보았습니다. 다음 시간에는 인공지능 윤리 문제를 직접 탐구하는 활동을 진행합니다.</p>
+    <div class="next">다음 차시 : 2차시 — 인공지능 윤리 탐구활동</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="index.html">← 인공지능과 수학 탐구 목록으로</a>
+    <a href="2-ai-ethics-inquiry.html">2차시 — 인공지능 윤리 탐구활동 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+</body>
+</html>
