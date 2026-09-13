@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1차시 · 텍스트 데이터를 집합으로 표현하기 · 텍스트 데이터 처리</title>
+<link rel="stylesheet" href="../assets/aimath.css">
+<style>
+  .flow-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0; }
+  .flow-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 0.86rem; text-align: center; min-width: 70px; }
+  .flow-box.stop { background: #fbe9ee; border-color: #e8b4c4; color: #8a2745; text-decoration: line-through; }
+  .flow-arrow { color: var(--muted); font-size: 1.1rem; }
+  .set-result { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-top: 10px; font-size: 0.94rem; font-weight: 700; color: var(--accent-dark); min-height: 1.4em; }
+  .preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .word-chip { display: inline-block; padding: 4px 10px; margin: 3px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.82rem; background: #fff; }
+  .word-chip.in { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="back-link" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      텍스트 데이터 처리
+    </a>
+    <div class="session-tabs">
+      <a class="session-tab current" href="1-set-representation.html">1차시</a>
+      <a class="session-tab" href="2-vector-representation.html">2차시</a>
+      <a class="session-tab" href="3-tfidf.html">3차시</a>
+      <a class="session-tab" href="4-jaccard-euclidean.html">4차시</a>
+      <a class="session-tab" href="5-cosine-review.html">5차시</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">Ⅱ단원 · 1 / 5차시</span>
+    <h1>텍스트 데이터를 집합으로 표현하기</h1>
+    <p class="sub">인공지능이 텍스트를 인식하려면 수와 수학 기호로 바꾸어야 합니다. 문장을 전처리해 단어집합으로 표현하는 방법을 배웁니다.</p>
+
+    <div class="goal-card">
+      <h4>학습목표</h4>
+      <ul>
+        <li>텍스트 데이터를 수와 수학 기호로 표현해야 하는 이유를 설명할 수 있다.</li>
+        <li>텍스트 데이터에서 불용어를 제거하고 남은 단어로 집합을 표현할 수 있다.</li>
+        <li>여러 텍스트 데이터의 단어집합을 합집합으로 묶어 전체집합(단어집합)을 구할 수 있다.</li>
+      </ul>
+    </div>
+
+    <div class="time-card">
+      <h4>시간 배분</h4>
+      <table class="time-table">
+        <tr><th>단계</th><th>활동</th><th></th></tr>
+        <tr><td>도입</td><td>단어가방 — 문장을 숫자로 바꾸기</td><td class="time">5분</td></tr>
+        <tr><td>활동1</td><td>범주가 있는 데이터 vs 범주가 없는 텍스트 데이터</td><td class="time">10분</td></tr>
+        <tr><td>활동2</td><td>텍스트 전처리 — 어절 분리, 기본형, 불용어 제거</td><td class="time">15분</td></tr>
+        <tr><td>활동3</td><td>단어집합과 전체집합 U 구하기</td><td class="time">15분</td></tr>
+        <tr><td>정리</td><td>집합으로 표현하기의 한계</td><td class="time">5분</td></tr>
+      </table>
+    </div>
+  </header>
+
+  <section class="activity">
+    <span class="activity-tag">도입 · 5분</span>
+    <h2>단어가방 — 문장을 숫자로 바꾸기</h2>
+    <p class="lead">"나는 과일을 좋아해. 너도 과일을 좋아하니?"라는 두 문장을 하나의 <strong>단어가방</strong>에 넣고 등장한 단어의 횟수를 세면, 나(1회) 과일(2회) 좋아하다(2회) 너(1회)와 같이 문장을 숫자로 나타낼 수 있습니다.</p>
+    <div class="qbox">인공지능은 텍스트 데이터를 사람처럼 글자 형태로 인식할 수 없습니다. 데이터를 수 또는 수학 기호로 가공해야 인공지능이 인식할 수 있습니다.</div>
+    <textarea class="think" placeholder="이 많은 텍스트 데이터를 간단히 분석하는 방법은 무엇일지 생각해 보세요"></textarea>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 1 · 10분</span>
+    <h2>범주가 있는 데이터 vs 범주가 없는 텍스트 데이터</h2>
+    <p class="lead">붓꽃의 종류나 전기 자동차 에너지 등급처럼 특정한 범주로 나타낼 수 있는 데이터는 범주마다 수를 대응시켜 인공지능이 인식하게 할 수 있습니다.</p>
+    <table class="data">
+      <tr><th>붓꽃의 종류</th><th>세토사</th><th>버시컬러</th><th>버지니카</th></tr>
+      <tr><td>대응하는 수</td><td>0</td><td>1</td><td>2</td></tr>
+    </table>
+    <table class="data">
+      <tr><th>전기 자동차 에너지 등급 (km/kWh)</th><th>5.9 이상</th><th>5.1~5.8</th><th>4.3~5.0</th><th>3.5~4.2</th><th>3.4 이하</th></tr>
+      <tr><td>등급</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+    </table>
+    <p>하지만 댓글이나 리뷰 같은 텍스트 데이터는 특정한 범주가 없습니다. 이런 텍스트 데이터는 <strong>집합</strong>이나 <strong>벡터</strong>를 이용하여 표현합니다.</p>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 2 · 15분</span>
+    <h2>텍스트 전처리 — 어절 분리, 기본형, 불용어 제거</h2>
+    <p class="lead">책 『불편한 편의점』을 읽고 쓴 한 줄 평 데이터를 집합으로 표현하는 과정을 살펴봅시다. 문장을 <strong>어절</strong>로 분리한 후, 각 어절을 <strong>기본 사전형 단어</strong>로 바꾸고, 검색에 쓰이지 않는 <strong>불용어</strong>를 제거합니다.</p>
+    <div class="widget">
+      <div class="widget-title">전처리 과정 살펴보기</div>
+      <div class="preset-row">
+        <button class="btn solid" onclick="loadReview(0)">한 줄 평 A</button>
+        <button class="btn" onclick="loadReview(1)">한 줄 평 B</button>
+        <button class="btn" onclick="loadReview(2)">한 줄 평 C</button>
+      </div>
+      <p id="reviewText" style="font-size:0.92rem; font-weight:700; color:var(--ink);"></p>
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:4px;">① 어절 분리</p>
+      <div class="flow-row" id="stepWords"></div>
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:4px;">② 기본 사전형 단어로 변환 (불용어는 취소선)</p>
+      <div class="flow-row" id="stepStems"></div>
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:4px;">③ 불용어를 제거하고 남은 단어의 집합</p>
+      <div class="set-result" id="stepSet"></div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">활동 3 · 15분</span>
+    <h2>단어집합과 전체집합 U 구하기</h2>
+    <p class="lead">텍스트 데이터에서 불용어를 제거하고 남은 단어를 중복 없이 모아 놓은 것을 <strong>단어집합</strong>이라고 합니다. 한 줄 평 A, B, C의 단어집합을 각각 <strong>A, B, C</strong>라 하면 다음과 같습니다.</p>
+    <table class="data">
+      <tr><th>단어집합</th><th>원소</th></tr>
+      <tr><td>A</td><td>{불편하다, 편의점, 따뜻하다, 이야기, 감동하다}</td></tr>
+      <tr><td>B</td><td>{불편하다, 편의점, 찾아가다}</td></tr>
+      <tr><td>C</td><td>{불편하다, 편의점, 일상, 소중하다}</td></tr>
+    </table>
+    <p>세 집합 A, B, C의 합집합을 전체집합 U라 하면</p>
+    <p style="text-align:center; font-weight:700; color:var(--accent-dark);">U = A∪B∪C = {불편하다, 편의점, 따뜻하다, 이야기, 감동하다, 찾아가다, 일상, 소중하다}</p>
+    <p style="font-size:0.86rem; color:var(--ink-soft);">즉 전체집합 U는 원소가 8개인 집합입니다. 이 U를 기준으로 하면 각 단어가 어떤 문장에 등장했는지 숫자로 나타낼 수 있습니다 (다음 차시에서 벡터로 배웁니다).</p>
+
+    <div class="reveal">
+      <button class="reveal-btn" onclick="toggleReveal(this)">🔶 확인하기 — 아리스토텔레스 명언으로 연습하기</button>
+      <div class="reveal-content tip hidden">
+        <p><strong>문장 A</strong>: 희망은 깨어 있는 꿈이다. (아리스토텔레스)</p>
+        <p><strong>문장 B</strong>: 희망은 꿈을 현실로 만드는 것이다. (수엔스)</p>
+        <p><strong>문장 C</strong>: 희망은 꿈을 현실로 만드는 용기에 있다. (조너스 소크)</p>
+        <p>불용어를 제거하면 A={희망, 깨다, 꿈}, B={희망, 꿈, 현실, 만들다}, C={희망, 꿈, 현실, 만들다, 용기}이고, U=A∪B∪C={희망, 깨다, 꿈, 현실, 만들다, 용기}(원소 6개)입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="activity">
+    <span class="activity-tag">정리 · 5분</span>
+    <h2>집합으로 표현하기의 한계</h2>
+    <p>텍스트 데이터를 집합으로 표현하면 어떤 단어가 포함되는지 파악할 수 있습니다. 그러나 집합으로만 표현하면 <strong>단어들 사이의 순서를 고려하지 않고</strong>, <strong>중복된 단어는 한 번만 나타내기</strong> 때문에 텍스트 데이터의 특징을 충분히 담아내기 어렵다는 한계가 있습니다.</p>
+    <div class="qbox">다음 시간에는 이 한계를 넘어서기 위해 텍스트 데이터를 <strong>벡터</strong>로 표현하는 방법(원-핫 벡터, 빈도수 벡터)을 배웁니다.</div>
+  </section>
+
+  <div class="summary">
+    <h2>차시 예고</h2>
+    <p>오늘은 텍스트를 전처리해 단어집합으로 표현하는 방법을 배웠습니다. 다음 시간에는 단어집합을 벡터로 표현하는 방법을 배웁니다.</p>
+    <div class="next">다음 차시 : 2차시 — 텍스트 데이터를 벡터로 표현하기</div>
+  </div>
+
+  <div class="foot-nav">
+    <a href="index.html">← 텍스트 데이터 처리 목록으로</a>
+    <a href="2-vector-representation.html">2차시 — 텍스트 데이터를 벡터로 표현하기 →</a>
+  </div>
+</div>
+
+<script src="../assets/aimath.js"></script>
+<script>
+  const reviews = [
+    {
+      text: '한 줄 평 A : 불편한 편의점의 따뜻한 이야기에 감동했습니다.',
+      words: ['불편한', '편의점의', '따뜻한', '이야기에', '감동했습니다'],
+      stems: ['불편하다', '편의점', '따뜻하다', '이야기', '감동하다'],
+      stop: [false, false, false, false, false],
+    },
+    {
+      text: '한 줄 평 B : 이런 불편한 편의점이 있다면 찾아가고 싶습니다.',
+      words: ['이런', '불편한', '편의점이', '있다면', '찾아가고', '싶습니다'],
+      stems: ['이런', '불편하다', '편의점', '있다', '찾아가다', '싶다'],
+      stop: [true, false, false, true, false, true],
+    },
+    {
+      text: '한 줄 평 C : 불편한 편의점에서 불편한 일상이 소중해질 수 있었습니다.',
+      words: ['불편한', '편의점에서', '불편한', '일상이', '소중해질', '수', '있었습니다'],
+      stems: ['불편하다', '편의점', '불편하다', '일상', '소중하다', '수', '있다'],
+      stop: [false, false, false, false, false, true, true],
+    },
+  ];
+
+  function loadReview(i) {
+    const r = reviews[i];
+    document.getElementById('reviewText').textContent = r.text;
+    document.getElementById('stepWords').innerHTML = r.words.map(w => `<span class="flow-box">${w}</span>`).join('<span class="flow-arrow">→</span>');
+    document.getElementById('stepStems').innerHTML = r.stems.map((s, idx) => `<span class="flow-box${r.stop[idx] ? ' stop' : ''}">${s}</span>`).join('');
+    const kept = [...new Set(r.stems.filter((s, idx) => !r.stop[idx]))];
+    const label = String.fromCharCode(65 + i);
+    document.getElementById('stepSet').textContent = label + ' = {' + kept.join(', ') + '}';
+  }
+
+  loadReview(0);
+</script>
+</body>
+</html>
