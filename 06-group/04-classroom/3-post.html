@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3단계 · 수업 자료·과제 올리기 · Google Classroom · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="g6">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Google Classroom
+    </a>
+    <span class="badge" aria-hidden="true">📤</span>
+    <h1>3단계 · 수업 자료·과제 올리기</h1>
+    <p>목적에 맞는 게시물 유형을 골라 자료를 나눠주고 과제를 받는 법입니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 네 가지 게시물 유형</h2>
+      <div class="table-scroll">
+        <table class="compare-table">
+          <thead>
+            <tr><th>유형</th><th>쓰임새</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>자료</td><td>제출·채점 없이 읽기 자료나 참고 파일만 나눠줍니다.</td></tr>
+            <tr><td>과제</td><td>배점과 마감일을 정해 제출받고 직접 채점합니다.</td></tr>
+            <tr><td>퀴즈 과제</td><td>Google Forms가 자동으로 연결되어 객관식·단답형을 자동 채점합니다.</td></tr>
+            <tr><td>질문</td><td>객관식이나 단답형으로 학생 생각을 짧게 물어봅니다.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>2. 과제 만들기</h2>
+      <p>"수업" 탭에서 "만들기 → 과제"를 선택하고 제목, 설명, 첨부 파일, 배점, 마감일, 주제를 채웁니다. 파일은 내 드라이브뿐 아니라 Docs·Sheets·Slides에서 바로 새로 만들어 첨부할 수도 있습니다.</p>
+
+      <h2>3. 퀴즈 과제 만들기</h2>
+      <p>"만들기 → 퀴즈 과제"를 선택하면 Google Forms 문서가 자동으로 함께 만들어집니다. 폼에 문제를 만들고 "정답 표시"를 설정해두면, 학생이 제출하는 순간 자동으로 채점됩니다.</p>
+
+      <h2>4. 예약 게시하기</h2>
+      <p>게시물을 다 만든 뒤 "게시" 버튼 옆 화살표를 누르면 "예약"을 선택할 수 있습니다. 날짜와 시간을 정해두면, 그 시간에 자동으로 학생 화면에 나타납니다. 다음 주 진도까지 미리 만들어두고 예약해두면 편합니다.</p>
+
+      <h2>5. 어떤 유형을 쓸지 추천받기</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>게시물 유형 추천받기</h4>
+        <p class="practice-desc">지금 하려는 일과 가장 가까운 것을 골라보세요.</p>
+
+        <div class="field">
+          <label for="p3-goal">지금 하려는 일</label>
+          <select id="p3-goal">
+            <option value="explain">개념 설명 자료만 나눠주고 싶어요</option>
+            <option value="collect">학생 결과물을 제출받아 채점하고 싶어요</option>
+            <option value="auto">객관식·단답형 문제를 자동으로 채점받고 싶어요</option>
+            <option value="ask">학생 의견이나 이해도를 짧게 물어보고 싶어요</option>
+          </select>
+        </div>
+
+        <div class="result-box" id="p3-result"></div>
+      </div>
+
+      <h2>6. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>배점과 마감일을 다시 확인하세요</h4>
+        <p>과제를 게시하기 전에 배점이 0점으로 남아있거나, 마감일이 지난 날짜로 잘못 설정되지 않았는지 확인하세요. 게시 후에도 수정할 수 있지만, 이미 제출한 학생이 있으면 혼란스러울 수 있습니다.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="2-signup.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        이전 단계 · 가입과 화면 구성
+      </a>
+      <a class="back" href="4-topics.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 주제(Topic)로 자료 정리하기
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  var out = document.getElementById('p3-result');
+  var data = {
+    explain: '"자료" 게시물을 쓰세요. 제출이나 채점 없이 읽기 자료만 나눠줄 수 있습니다.',
+    collect: '"과제" 게시물을 쓰세요. 배점과 마감일을 정해 제출받고 직접 채점합니다.',
+    auto: '"퀴즈 과제"를 쓰세요. Google Forms가 자동으로 연결되어 채점까지 자동으로 됩니다.',
+    ask: '"질문" 게시물을 쓰세요. 객관식이나 단답형으로 빠르게 학생 생각을 받을 수 있습니다.'
+  };
+  function update() {
+    var goal = document.getElementById('p3-goal').value;
+    out.textContent = data[goal];
+  }
+  var select = document.getElementById('p3-goal');
+  if (select) select.addEventListener('change', update);
+  update();
+})();
+</script>
+</body>
+</html>
