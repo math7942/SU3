@@ -16,13 +16,43 @@
     </a>
     <span class="badge" aria-hidden="true">🔒</span>
     <h1>13단계 · 접근 권한·개인정보 안전하게 다루기</h1>
-    <p>클래스 코드 관리와 학생 개인정보 보호를 점검합니다.</p>
+    <p>클래스 코드 관리부터 학생 개인정보 보호까지, 배포 전에 점검할 것들입니다.</p>
   </header>
 
   <main>
-    <div class="blank">
-      <h3>이 단계는 아직 준비 중입니다</h3>
-      <p>다음 업데이트에서 실제 내용이 채워질 예정입니다.</p>
+    <div class="lesson">
+
+      <h2>1. 클래스 코드 관리하기</h2>
+      <p>"설정"(톱니바퀴 아이콘)에서 클래스 코드 옆 화살표를 누르면 코드를 재발급하거나 아예 껴서 <strong>더 이상 그 코드로 새 학생이 들어올 수 없게</strong> 막을 수 있습니다. 학기 초 명단이 확정되면 코드를 꺼두는 것이 안전합니다.</p>
+
+      <h2>2. 사용자 권한 확인하기</h2>
+      <p>"사용자" 탭에서 학생과 보조교사(공동 교사)의 목록을 볼 수 있습니다. 실수로 잘못 초대되었거나 전학·반 이동으로 더 이상 있으면 안 되는 사용자는 목록에서 바로 제거하세요.</p>
+
+      <h2>3. 학생 개인정보 다루기</h2>
+      <p>성적과 제출한 과제 내용은 원칙적으로 해당 학생과 교사만 볼 수 있습니다. 다만 스트림의 <strong>공개 댓글</strong>은 반 전체가 볼 수 있으므로, 성적이나 개인적인 사정처럼 민감한 내용은 절대 공개 댓글에 적지 말고 6단계에서 배운 비공개 댓글을 쓰세요.</p>
+
+      <h2>4. 접근 권한 점검 체크리스트</h2>
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>배포 전 점검 체크리스트</h4>
+        <p class="practice-desc">실제로 확인한 항목을 체크해보세요.</p>
+
+        <div class="check-list">
+          <label><input type="checkbox" class="p13-check"> 명단이 확정된 뒤 클래스 코드를 껐거나 재발급했다.</label>
+          <label><input type="checkbox" class="p13-check"> 사용자 목록에 잘못 들어온 사람이 없는지 확인했다.</label>
+          <label><input type="checkbox" class="p13-check"> 성적이나 민감한 내용은 공개 댓글이 아닌 비공개 댓글로만 남겼다.</label>
+          <label><input type="checkbox" class="p13-check"> 보조교사 권한을 준 계정이 지금도 필요한 사람인지 확인했다.</label>
+        </div>
+
+        <div class="status-box" id="p13-status">0 / 4 완료</div>
+      </div>
+
+      <h2>5. 확인할 점</h2>
+      <div class="callout warn">
+        <h4>학기가 끝나면 클래스를 보관하세요</h4>
+        <p>학기가 끝난 클래스는 삭제하는 대신 "보관 처리"하세요. 보관된 클래스는 목록에서 사라지지만 기록은 그대로 남아, 나중에 성적 문의가 와도 다시 열어 확인할 수 있습니다.</p>
+      </div>
+
     </div>
 
     <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
@@ -38,5 +68,17 @@
   </main>
 
 </div>
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.p13-check'));
+  var status = document.getElementById('p13-status');
+  function update() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    status.textContent = checked + ' / ' + boxes.length + ' 완료';
+    status.className = checked === boxes.length ? 'status-box ok' : 'status-box';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
 </body>
 </html>
