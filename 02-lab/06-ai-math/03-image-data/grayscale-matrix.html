@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이미지 행렬 변환기 (회색조 탐구)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef3fb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        font-size: 1.8rem;
+        color: #1e293b;
+        margin-top: 0;
+        margin-bottom: 8px;
+        letter-spacing: -1px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #4a5578;
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+        text-align: center;
+        max-width: 640px;
+        line-height: 1.5;
+    }
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    .card {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        width: 100%;
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 18px;
+        color: #1e293b;
+    }
+    .back-link {
+        align-self: flex-start;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    /* 업로드 영역 */
+    #dropzone {
+        border: 2px dashed #93c5fd;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        color: #64748b;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    #dropzone.dragover { background: #eff6ff; border-color: #3b82f6; }
+    #dropzone p { margin: 0 0 14px; font-size: 0.95rem; }
+    .btn {
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 10px 22px;
+        font-size: 0.9rem;
+        transition: opacity 0.2s;
+        font-family: inherit;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-blue { background-color: #3b82f6; }
+    .btn-green { background-color: #4ade80; color: #166534; }
+    .btn-red { background-color: #ef4444; }
+    #file-input { display: none; }
+
+    /* 미리보기 + 정보 */
+    .preview-row {
+        display: none;
+        gap: 24px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: center;
+    }
+    .preview-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    .preview-col h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #475569;
+    }
+    #orig-canvas, #gray-canvas {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        max-width: 260px;
+        max-height: 260px;
+        image-rendering: pixelated;
+    }
+    .info-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        font-size: 0.88rem;
+        color: #334155;
+        line-height: 1.7;
+        min-width: 220px;
+    }
+    .info-box b { color: #1e293b; }
+
+    /* 퀴즈 박스 */
+    .qbox {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 8px;
+        padding: 16px 18px;
+        margin-top: 16px;
+        font-size: 0.9rem;
+        color: #7c2d12;
+        line-height: 1.6;
+    }
+    .reveal-btn {
+        margin-top: 8px;
+        background: #fb923c;
+        border: none;
+        color: white;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 6px 14px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-family: inherit;
+    }
+    .reveal-content {
+        display: none;
+        margin-top: 10px;
+        background: #ffedd5;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-weight: 700;
+    }
+    .reveal-content.shown { display: block; }
+
+    /* 크기 조절 */
+    .size-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-weight: 700;
+        font-size: 0.92rem;
+    }
+    .size-controls input {
+        width: 60px;
+        height: 32px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+
+    /* 행렬 출력 */
+    #matrix-output-container {
+        display: none;
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        overflow-x: auto;
+    }
+    .matrix-title {
+        text-align: center;
+        font-size: 1.3rem;
+        color: #1e293b;
+        font-weight: 900;
+        margin-top: 0;
+        margin-bottom: 12px;
+    }
+    .matrix-toolbar {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .btn-toolbar {
+        padding: 8px 20px;
+        font-size: 0.95rem;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        opacity: 0.4;
+        transition: opacity 0.2s;
+        font-family: inherit;
+    }
+    .btn-toolbar.active { opacity: 1; }
+    .bg-blue { background-color: #3b82f6; }
+    .bg-gray { background-color: #475569; }
+
+    .matrix-scroll { display: flex; justify-content: center; }
+    .matrix-bracket {
+        position: relative;
+        padding: 10px 15px;
+        display: inline-flex;
+        justify-content: center;
+    }
+    .matrix-bracket::before, .matrix-bracket::after {
+        content: '';
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 12px;
+        border: 3px solid #111;
+    }
+    .matrix-bracket::before { left: 0; border-right: none; border-radius: 12px 0 0 12px; }
+    .matrix-bracket::after { right: 0; border-left: none; border-radius: 0 12px 12px 0; }
+    .matrix-table {
+        border-collapse: separate;
+        border-spacing: 2px;
+        font-family: monospace;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+    .matrix-table td {
+        padding: 2px 4px;
+        text-align: center;
+        min-width: 22px;
+        border-radius: 3px;
+    }
+    .btn-copy {
+        display: block;
+        margin: 16px auto 0;
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
+        color: #d84315;
+        border-radius: 4px;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .btn-copy:hover { background: #ffe0b2; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>이미지 행렬 변환기</h1>
+    <p class="subtitle">사진을 올리면 회색조(그레이스케일)로 바꾸고, 각 픽셀의 밝기 값(0~255)을 행렬로 확인할 수 있습니다. 크기를 줄여 원리를 살펴본 뒤, 원본 해상도라면 행렬이 몇 행 몇 열일지도 생각해 보세요.</p>
+
+    <div class="card">
+        <div class="card-title">이미지 업로드</div>
+        <div id="dropzone">
+            <p>이미지를 드래그&amp;드롭하거나 아래 버튼을 클릭하세요</p>
+            <button class="btn btn-blue" id="btn-upload">이미지 업로드</button>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+
+        <div class="preview-row" id="preview-row">
+            <div class="preview-col">
+                <h4>원본 이미지</h4>
+                <canvas id="orig-canvas"></canvas>
+            </div>
+            <div class="preview-col">
+                <h4>회색조 미리보기 (변환된 크기)</h4>
+                <canvas id="gray-canvas"></canvas>
+            </div>
+            <div class="info-box" id="info-box"></div>
+        </div>
+
+        <div class="qbox" id="qbox" style="display:none;">
+            🤔 원본 이미지의 해상도가 <b id="q-w">?</b> × <b id="q-h">?</b> 픽셀이라면, 전체 픽셀을 모두 행렬로 나타낼 때 행렬은 몇 행 몇 열이 될까요?
+            <br>
+            <button class="reveal-btn" id="btn-reveal">정답 확인</button>
+            <div class="reveal-content" id="reveal-answer"></div>
+        </div>
+    </div>
+
+    <div class="card" id="convert-card" style="display:none;">
+        <div class="card-title">행렬 크기 정하기</div>
+        <div class="size-controls">
+            가로(열): <input type="number" id="grid-w" value="16" min="2" max="48">
+            세로(행): <input type="number" id="grid-h" value="16" min="2" max="48">
+            <button class="btn btn-green" id="btn-convert">변환</button>
+            <button class="btn btn-red" id="btn-clear">전체 지우기</button>
+        </div>
+    </div>
+
+    <div id="matrix-output-container">
+        <h2 class="matrix-title">그레이스케일 행렬</h2>
+        <div class="matrix-toolbar">
+            <button class="btn-toolbar bg-blue active" id="btn-view-number">숫자 보기</button>
+            <button class="btn-toolbar bg-gray" id="btn-view-shade">명암 보기</button>
+        </div>
+        <div class="matrix-scroll">
+            <div class="matrix-bracket">
+                <table class="matrix-table" id="gray-table"></table>
+            </div>
+        </div>
+        <button class="btn-copy" id="btn-copy-matrix">행렬 복사</button>
+    </div>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const btnUpload = document.getElementById('btn-upload');
+    const previewRow = document.getElementById('preview-row');
+    const origCanvas = document.getElementById('orig-canvas');
+    const grayCanvas = document.getElementById('gray-canvas');
+    const infoBox = document.getElementById('info-box');
+    const qbox = document.getElementById('qbox');
+    const qW = document.getElementById('q-w');
+    const qH = document.getElementById('q-h');
+    const btnReveal = document.getElementById('btn-reveal');
+    const revealAnswer = document.getElementById('reveal-answer');
+    const convertCard = document.getElementById('convert-card');
+    const gridW = document.getElementById('grid-w');
+    const gridH = document.getElementById('grid-h');
+    const matrixContainer = document.getElementById('matrix-output-container');
+    const grayTable = document.getElementById('gray-table');
+    const btnViewNumber = document.getElementById('btn-view-number');
+    const btnViewShade = document.getElementById('btn-view-shade');
+
+    let img = null;
+    let grayValues = null; // 2D array of 0-255
+    let matrixViewMode = 'number';
+
+    btnUpload.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('click', (e) => { if (e.target === dropzone) fileInput.click(); });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) loadImageFile(e.target.files[0]);
+    });
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]);
+    });
+
+    function loadImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const image = new Image();
+            image.onload = () => onImageReady(image);
+            image.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function onImageReady(image) {
+        img = image;
+        previewRow.style.display = 'flex';
+        convertCard.style.display = 'block';
+        matrixContainer.style.display = 'none';
+
+        // 원본 미리보기: 실제 해상도로 그리고, 화면에는 CSS로 (작든 크든) 240px 안팎으로 표시
+        const targetDim = 240;
+        const dispScale = targetDim / Math.max(img.naturalWidth, img.naturalHeight);
+        origCanvas.width = img.naturalWidth;
+        origCanvas.height = img.naturalHeight;
+        origCanvas.style.width = Math.round(img.naturalWidth * dispScale) + 'px';
+        origCanvas.style.height = Math.round(img.naturalHeight * dispScale) + 'px';
+        const octx = origCanvas.getContext('2d');
+        octx.drawImage(img, 0, 0);
+
+        infoBox.innerHTML = `원본 해상도<br><b>${img.naturalWidth} × ${img.naturalHeight}</b> 픽셀`;
+
+        qbox.style.display = 'block';
+        qW.textContent = img.naturalWidth;
+        qH.textContent = img.naturalHeight;
+        revealAnswer.classList.remove('shown');
+        revealAnswer.textContent = '';
+
+        convertImage();
+    }
+
+    btnReveal.addEventListener('click', () => {
+        if (!img) return;
+        revealAnswer.textContent = `${img.naturalHeight}행 × ${img.naturalWidth}열 (세로 픽셀 수만큼 행, 가로 픽셀 수만큼 열)`;
+        revealAnswer.classList.add('shown');
+    });
+
+    function convertImage() {
+        if (!img) return;
+        const w = Math.min(48, Math.max(2, parseInt(gridW.value) || 16));
+        const h = Math.min(48, Math.max(2, parseInt(gridH.value) || 16));
+        gridW.value = w; gridH.value = h;
+
+        // 오프스크린 캔버스에 지정한 크기로 축소해서 그린 뒤 픽셀 데이터를 읽는다.
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const octx = off.getContext('2d');
+        octx.drawImage(img, 0, 0, w, h);
+        const data = octx.getImageData(0, 0, w, h).data;
+
+        grayValues = [];
+        for (let r = 0; r < h; r++) {
+            const row = [];
+            for (let c = 0; c < w; c++) {
+                const idx = (r * w + c) * 4;
+                const gray = Math.round(0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]);
+                row.push(gray);
+            }
+            grayValues.push(row);
+        }
+
+        // 회색조 미리보기 캔버스 (블록 확대해서 표시)
+        const cell = Math.max(4, Math.floor(240 / Math.max(w, h)));
+        grayCanvas.width = w * cell;
+        grayCanvas.height = h * cell;
+        const gctx = grayCanvas.getContext('2d');
+        for (let r = 0; r < h; r++) {
+            for (let c = 0; c < w; c++) {
+                const g = grayValues[r][c];
+                gctx.fillStyle = `rgb(${g},${g},${g})`;
+                gctx.fillRect(c * cell, r * cell, cell, cell);
+            }
+        }
+
+        renderMatrix();
+        matrixContainer.style.display = 'block';
+    }
+
+    document.getElementById('btn-convert').addEventListener('click', convertImage);
+    document.getElementById('btn-clear').addEventListener('click', () => {
+        img = null;
+        grayValues = null;
+        previewRow.style.display = 'none';
+        convertCard.style.display = 'none';
+        matrixContainer.style.display = 'none';
+        qbox.style.display = 'none';
+        fileInput.value = '';
+    });
+
+    function renderMatrix() {
+        grayTable.innerHTML = '';
+        for (let r = 0; r < grayValues.length; r++) {
+            const tr = document.createElement('tr');
+            for (let c = 0; c < grayValues[r].length; c++) {
+                const td = document.createElement('td');
+                const val = grayValues[r][c];
+                td.textContent = val;
+                td.dataset.val = val;
+                tr.appendChild(td);
+            }
+            grayTable.appendChild(tr);
+        }
+        applyMatrixViewMode();
+    }
+
+    function applyMatrixViewMode() {
+        const tds = document.querySelectorAll('#gray-table td');
+        tds.forEach(td => {
+            const val = parseInt(td.dataset.val);
+            if (isNaN(val)) return;
+            if (matrixViewMode === 'shade') {
+                td.style.backgroundColor = `rgb(${val},${val},${val})`;
+                td.style.color = val < 128 ? 'white' : 'black';
+            } else {
+                td.style.backgroundColor = 'transparent';
+                td.style.color = 'inherit';
+            }
+        });
+    }
+
+    btnViewNumber.addEventListener('click', () => {
+        matrixViewMode = 'number';
+        btnViewNumber.classList.add('active');
+        btnViewShade.classList.remove('active');
+        applyMatrixViewMode();
+    });
+    btnViewShade.addEventListener('click', () => {
+        matrixViewMode = 'shade';
+        btnViewShade.classList.add('active');
+        btnViewNumber.classList.remove('active');
+        applyMatrixViewMode();
+    });
+
+    document.getElementById('btn-copy-matrix').addEventListener('click', () => {
+        let text = '[\n';
+        for (const row of grayValues) {
+            text += '  [' + row.join(', ') + '],\n';
+        }
+        text = text.replace(/,\n$/, '\n') + ']';
+        navigator.clipboard.writeText(text).then(() => {
+            alert('복사되었습니다!');
+        }).catch(err => {
+            alert('복사 실패: ' + err);
+        });
+    });
+</script>
+</body>
+</html>
