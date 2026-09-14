@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이미지 합성의 수학적 원리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #fdf3e7;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        font-size: 1.8rem;
+        color: #1e293b;
+        margin-top: 0;
+        margin-bottom: 8px;
+        letter-spacing: -1px;
+        text-align: center;
+    }
+    .formula {
+        text-align: center;
+        font-family: monospace;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #c2410c;
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        color: #78716c;
+        font-size: 0.95rem;
+        margin-bottom: 24px;
+        text-align: center;
+        max-width: 680px;
+        line-height: 1.5;
+    }
+    .back-link {
+        align-self: flex-start;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #ea580c;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .layout {
+        width: 100%;
+        max-width: 1200px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+    .sidebar {
+        flex: 0 0 260px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    .main {
+        flex: 1 1 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        min-width: 0;
+    }
+    .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+    }
+    .card-title {
+        font-size: 0.95rem;
+        font-weight: 900;
+        margin-bottom: 12px;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .card-title .bar { width: 4px; height: 16px; background: #f97316; border-radius: 2px; display: inline-block; }
+
+    .upload-box {
+        border: 2px dashed #fdba74;
+        border-radius: 8px;
+        padding: 16px 10px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: #78716c;
+        margin-bottom: 10px;
+        cursor: pointer;
+    }
+    .upload-box.has-image { border-style: solid; color: #16a34a; font-weight: 700; }
+    .upload-box.dragover { background: #fff7ed; border-color: #f97316; }
+    input[type="file"] { display: none; }
+    .btn {
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        transition: opacity 0.2s;
+        font-family: inherit;
+        width: 100%;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-teal { background-color: #14b8a6; }
+    .btn-orange { background-color: #f97316; }
+    .btn-gray { background-color: #64748b; }
+    .btn-outline-sm {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        width: auto;
+        padding: 4px 10px;
+        font-size: 0.85rem;
+    }
+
+    .ratio-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    #ratio-slider { flex: 1; }
+    .ratio-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #57534e;
+    }
+
+    .size-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+    .size-row input {
+        width: 55px;
+        height: 28px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+
+    /* 결과 이미지 */
+    #result-canvas {
+        display: block;
+        margin: 0 auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        max-width: 100%;
+        image-rendering: pixelated;
+        background: #f8fafc;
+    }
+    .placeholder {
+        text-align: center;
+        color: #a8a29e;
+        font-size: 0.9rem;
+        padding: 40px 0;
+    }
+
+    /* 행렬 패널 */
+    .matrix-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+    .mode-btn {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #475569;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .mode-btn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+    .cellsize-control {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        margin-left: auto;
+    }
+    .step-btn {
+        width: 24px; height: 24px;
+        border: 1px solid #cbd5e1;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 900;
+    }
+    #matrix-scroll {
+        overflow: auto;
+        max-height: 420px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: #fff;
+    }
+    #matrix-scroll.expanded { max-height: 720px; }
+    #matrix-canvas { display: block; cursor: crosshair; }
+
+    .status-line {
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: #57534e;
+        text-align: center;
+        min-height: 1.2em;
+    }
+    .export-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .export-row .btn { width: auto; }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html" style="align-self:center; max-width:1200px; width:100%;">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+<h1>이미지 합성의 수학적 원리</h1>
+<p class="formula">result = α × image1 + (1 − α) × image2</p>
+<p class="subtitle">두 이미지를 업로드하여 동일한 크기로 만든 뒤 그레이스케일로 바꾸고, 혼합 비율(α)로 일차결합하여 합성합니다. 슬라이더를 움직이며 픽셀 밝기값 행렬이 어떻게 변하는지 살펴보세요.</p>
+
+<div class="layout">
+    <div class="sidebar">
+        <div class="card">
+            <div class="card-title"><span class="bar"></span>이미지 업로드</div>
+            <p style="font-size:0.8rem; font-weight:700; color:#57534e; margin:0 0 4px;">이미지 1</p>
+            <div class="upload-box" id="drop1">이미지를 드래그하거나 선택하세요</div>
+            <button class="btn btn-teal" id="btn-pick1" style="margin-bottom:14px;">📁 파일 선택</button>
+            <input type="file" id="file1" accept="image/*">
+
+            <p style="font-size:0.8rem; font-weight:700; color:#57534e; margin:0 0 4px;">이미지 2</p>
+            <div class="upload-box" id="drop2">이미지를 드래그하거나 선택하세요</div>
+            <button class="btn btn-teal" id="btn-pick2">📁 파일 선택</button>
+            <input type="file" id="file2" accept="image/*">
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span class="bar"></span>혼합 비율 (α)</div>
+            <div class="ratio-row">
+                <button class="step-btn" id="ratio-minus">◀</button>
+                <input type="range" id="ratio-slider" min="0" max="100" value="50">
+                <button class="step-btn" id="ratio-plus">▶</button>
+            </div>
+            <div class="ratio-labels">
+                <span id="ratio-label-1">이미지1 50%</span>
+                <span id="ratio-label-2">이미지2 50%</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span class="bar"></span>출력 크기</div>
+            <div class="size-row">
+                너비 <input type="number" id="out-w" value="40" min="4" max="100">
+                높이 <input type="number" id="out-h" value="40" min="4" max="100">
+            </div>
+            <button class="btn btn-orange" id="btn-apply">적용</button>
+            <button class="btn btn-gray" id="btn-reset" style="margin-top:8px;">초기화</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <div class="card-title"><span class="bar"></span>결과 이미지</div>
+            <canvas id="result-canvas" width="1" height="1" style="display:none;"></canvas>
+            <p class="placeholder" id="result-placeholder">이미지 1, 2를 업로드하고 "적용"을 눌러 보세요.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span class="bar"></span>픽셀 밝기값 행렬</div>
+            <div class="matrix-toolbar">
+                <button class="mode-btn" data-mode="number">숫자 모드</button>
+                <button class="mode-btn" data-mode="image">그림 모드</button>
+                <button class="mode-btn active" data-mode="mixed">혼합 모드</button>
+                <button class="btn-outline-sm" id="btn-expand">⤢ 크게 보기</button>
+                <div class="cellsize-control">
+                    <button class="step-btn" id="cell-minus">−</button>
+                    셀 크기: <span id="cell-size-label">20</span>px
+                    <button class="step-btn" id="cell-plus">+</button>
+                </div>
+            </div>
+            <div id="matrix-scroll">
+                <canvas id="matrix-canvas" width="1" height="1"></canvas>
+            </div>
+            <p class="status-line" id="status-line">픽셀을 클릭하면 좌표와 밝기값이 표시됩니다.</p>
+            <div class="export-row">
+                <button class="btn btn-outline-sm" id="btn-csv">⬇ CSV 다운로드</button>
+                <button class="btn btn-outline-sm" id="btn-excel">Excel 복사</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let img1 = null, img2 = null;
+    let blendMatrix = null; // 2D array [h][w] of 0-255
+    let cellSize = 20;
+    let viewMode = 'mixed';
+
+    const drop1 = document.getElementById('drop1'), drop2 = document.getElementById('drop2');
+    const file1 = document.getElementById('file1'), file2 = document.getElementById('file2');
+    const ratioSlider = document.getElementById('ratio-slider');
+    const ratioLabel1 = document.getElementById('ratio-label-1');
+    const ratioLabel2 = document.getElementById('ratio-label-2');
+    const outW = document.getElementById('out-w'), outH = document.getElementById('out-h');
+    const resultCanvas = document.getElementById('result-canvas');
+    const resultPlaceholder = document.getElementById('result-placeholder');
+    const matrixCanvas = document.getElementById('matrix-canvas');
+    const matrixScroll = document.getElementById('matrix-scroll');
+    const statusLine = document.getElementById('status-line');
+    const cellSizeLabel = document.getElementById('cell-size-label');
+
+    function setupUploader(dropEl, pickBtnId, fileEl, onLoaded) {
+        document.getElementById(pickBtnId).addEventListener('click', () => fileEl.click());
+        dropEl.addEventListener('click', () => fileEl.click());
+        fileEl.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+        dropEl.addEventListener('dragover', (e) => { e.preventDefault(); dropEl.classList.add('dragover'); });
+        dropEl.addEventListener('dragleave', () => dropEl.classList.remove('dragover'));
+        dropEl.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropEl.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        });
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const image = new Image();
+                image.onload = () => {
+                    onLoaded(image);
+                    dropEl.textContent = `✓ ${file.name}`;
+                    dropEl.classList.add('has-image');
+                };
+                image.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    setupUploader(drop1, 'btn-pick1', file1, (image) => { img1 = image; });
+    setupUploader(drop2, 'btn-pick2', file2, (image) => { img2 = image; });
+
+    function updateRatioLabels() {
+        const a = parseInt(ratioSlider.value);
+        ratioLabel1.textContent = `이미지1 ${a}%`;
+        ratioLabel2.textContent = `이미지2 ${100 - a}%`;
+    }
+    ratioSlider.addEventListener('input', updateRatioLabels);
+    document.getElementById('ratio-minus').addEventListener('click', () => {
+        ratioSlider.value = Math.max(0, parseInt(ratioSlider.value) - 5);
+        updateRatioLabels();
+    });
+    document.getElementById('ratio-plus').addEventListener('click', () => {
+        ratioSlider.value = Math.min(100, parseInt(ratioSlider.value) + 5);
+        updateRatioLabels();
+    });
+    updateRatioLabels();
+
+    function grayscaleOf(image, w, h) {
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const ctx = off.getContext('2d');
+        ctx.drawImage(image, 0, 0, w, h);
+        const data = ctx.getImageData(0, 0, w, h).data;
+        const gray = [];
+        for (let r = 0; r < h; r++) {
+            const row = [];
+            for (let c = 0; c < w; c++) {
+                const idx = (r * w + c) * 4;
+                row.push(0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]);
+            }
+            gray.push(row);
+        }
+        return gray;
+    }
+
+    document.getElementById('btn-apply').addEventListener('click', () => {
+        if (!img1 || !img2) { alert('이미지 1과 이미지 2를 모두 업로드해 주세요.'); return; }
+        const w = Math.min(100, Math.max(4, parseInt(outW.value) || 40));
+        const h = Math.min(100, Math.max(4, parseInt(outH.value) || 40));
+        outW.value = w; outH.value = h;
+
+        const alpha = parseInt(ratioSlider.value) / 100;
+        const g1 = grayscaleOf(img1, w, h);
+        const g2 = grayscaleOf(img2, w, h);
+
+        blendMatrix = [];
+        for (let r = 0; r < h; r++) {
+            const row = [];
+            for (let c = 0; c < w; c++) {
+                row.push(Math.round(alpha * g1[r][c] + (1 - alpha) * g2[r][c]));
+            }
+            blendMatrix.push(row);
+        }
+
+        renderResultImage();
+        renderMatrixCanvas();
+        resultCanvas.style.display = 'block';
+        resultPlaceholder.style.display = 'none';
+        statusLine.textContent = '픽셀을 클릭하면 좌표와 밝기값이 표시됩니다.';
+    });
+
+    function renderResultImage() {
+        const h = blendMatrix.length, w = blendMatrix[0].length;
+        const dispDim = 280;
+        const scale = dispDim / Math.max(w, h);
+        resultCanvas.width = w;
+        resultCanvas.height = h;
+        resultCanvas.style.width = Math.round(w * scale) + 'px';
+        resultCanvas.style.height = Math.round(h * scale) + 'px';
+        const ctx = resultCanvas.getContext('2d');
+        const imgData = ctx.createImageData(w, h);
+        for (let r = 0; r < h; r++) {
+            for (let c = 0; c < w; c++) {
+                const g = blendMatrix[r][c];
+                const idx = (r * w + c) * 4;
+                imgData.data[idx] = g; imgData.data[idx + 1] = g; imgData.data[idx + 2] = g; imgData.data[idx + 3] = 255;
+            }
+        }
+        ctx.putImageData(imgData, 0, 0);
+    }
+
+    function renderMatrixCanvas() {
+        const h = blendMatrix.length, w = blendMatrix[0].length;
+        matrixCanvas.width = w * cellSize;
+        matrixCanvas.height = h * cellSize;
+        const ctx = matrixCanvas.getContext('2d');
+        ctx.font = `${Math.max(9, Math.floor(cellSize * 0.42))}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        for (let r = 0; r < h; r++) {
+            for (let c = 0; c < w; c++) {
+                const g = blendMatrix[r][c];
+                const x = c * cellSize, y = r * cellSize;
+
+                if (viewMode === 'image') {
+                    ctx.fillStyle = `rgb(${g},${g},${g})`;
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                } else if (viewMode === 'number') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                    if (cellSize >= 14) {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillText(String(g), x + cellSize / 2, y + cellSize / 2 + 1);
+                    }
+                } else { // mixed
+                    ctx.fillStyle = `rgb(${g},${g},${g})`;
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                    if (cellSize >= 14) {
+                        ctx.fillStyle = g < 128 ? '#ffffff' : '#111111';
+                        ctx.fillText(String(g), x + cellSize / 2, y + cellSize / 2 + 1);
+                    }
+                }
+            }
+        }
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            viewMode = btn.dataset.mode;
+            if (blendMatrix) renderMatrixCanvas();
+        });
+    });
+
+    document.getElementById('cell-minus').addEventListener('click', () => {
+        cellSize = Math.max(6, cellSize - 4);
+        cellSizeLabel.textContent = cellSize;
+        if (blendMatrix) renderMatrixCanvas();
+    });
+    document.getElementById('cell-plus').addEventListener('click', () => {
+        cellSize = Math.min(48, cellSize + 4);
+        cellSizeLabel.textContent = cellSize;
+        if (blendMatrix) renderMatrixCanvas();
+    });
+
+    document.getElementById('btn-expand').addEventListener('click', (e) => {
+        matrixScroll.classList.toggle('expanded');
+        e.target.textContent = matrixScroll.classList.contains('expanded') ? '⤡ 작게 보기' : '⤢ 크게 보기';
+    });
+
+    matrixCanvas.addEventListener('click', (e) => {
+        if (!blendMatrix) return;
+        const rect = matrixCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left, y = e.clientY - rect.top;
+        const col = Math.floor(x / cellSize), row = Math.floor(y / cellSize);
+        if (row >= 0 && row < blendMatrix.length && col >= 0 && col < blendMatrix[0].length) {
+            statusLine.textContent = `(${row}행, ${col}열) 좌표의 밝기값: ${blendMatrix[row][col]}`;
+        }
+    });
+
+    document.getElementById('btn-csv').addEventListener('click', () => {
+        if (!blendMatrix) { alert('먼저 "적용"을 눌러 행렬을 만들어 주세요.'); return; }
+        const csv = blendMatrix.map(row => row.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'brightness_matrix.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-excel').addEventListener('click', () => {
+        if (!blendMatrix) { alert('먼저 "적용"을 눌러 행렬을 만들어 주세요.'); return; }
+        const tsv = blendMatrix.map(row => row.join('\t')).join('\n');
+        navigator.clipboard.writeText(tsv).then(() => {
+            alert('Excel에 붙여넣을 수 있도록 복사되었습니다!');
+        }).catch(err => {
+            alert('복사 실패: ' + err);
+        });
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        img1 = null; img2 = null; blendMatrix = null;
+        file1.value = ''; file2.value = '';
+        drop1.textContent = '이미지를 드래그하거나 선택하세요';
+        drop2.textContent = '이미지를 드래그하거나 선택하세요';
+        drop1.classList.remove('has-image');
+        drop2.classList.remove('has-image');
+        ratioSlider.value = 50;
+        updateRatioLabels();
+        outW.value = 40; outH.value = 40;
+        resultCanvas.style.display = 'none';
+        resultPlaceholder.style.display = 'block';
+        matrixCanvas.width = 1; matrixCanvas.height = 1;
+        statusLine.textContent = '픽셀을 클릭하면 좌표와 밝기값이 표시됩니다.';
+    });
+</script>
+</body>
+</html>

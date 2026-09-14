@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RGB 채널 분리기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef7f2;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        font-size: 1.8rem;
+        color: #1e293b;
+        margin-top: 0;
+        margin-bottom: 8px;
+        letter-spacing: -1px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #3f6b52;
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+        text-align: center;
+        max-width: 640px;
+        line-height: 1.5;
+    }
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    .card {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        width: 100%;
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 18px;
+        color: #1e293b;
+    }
+    .back-link {
+        align-self: flex-start;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #16a34a;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    #dropzone {
+        border: 2px dashed #86efac;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        color: #64748b;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    #dropzone.dragover { background: #f0fdf4; border-color: #22c55e; }
+    #dropzone p { margin: 0 0 14px; font-size: 0.95rem; }
+    .btn {
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 10px 22px;
+        font-size: 0.9rem;
+        transition: opacity 0.2s;
+        font-family: inherit;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-green { background-color: #22c55e; }
+    .btn-blue { background-color: #3b82f6; }
+    .btn-red { background-color: #ef4444; }
+    .btn-outline {
+        background: white;
+        border: 1px solid #3b82f6;
+        color: #3b82f6;
+    }
+    #file-input { display: none; }
+
+    /* 채널 미리보기 */
+    .channels-row {
+        display: none;
+        gap: 18px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .channel-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .channel-col h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #475569;
+    }
+    .channel-col h4.r { color: #dc2626; }
+    .channel-col h4.g { color: #16a34a; }
+    .channel-col h4.b { color: #2563eb; }
+    canvas.preview {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        max-width: 200px;
+        max-height: 200px;
+        image-rendering: pixelated;
+    }
+    .info-line {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+    .action-row {
+        display: none;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    /* 행렬 분석 데이터 */
+    #matrix-section {
+        display: none;
+    }
+    .size-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-weight: 700;
+        font-size: 0.92rem;
+        margin-bottom: 20px;
+    }
+    .size-controls input {
+        width: 60px;
+        height: 32px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+    .matrices-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .matrix-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: calc(33.33% - 14px);
+        min-width: 0;
+        flex-grow: 1;
+    }
+    @media (max-width: 900px) {
+        .matrix-section { max-width: 100%; }
+    }
+    .matrix-header {
+        font-size: 1.05rem;
+        font-weight: 900;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .btn-copy {
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
+        color: #d84315;
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        margin-left: 10px;
+        font-family: inherit;
+    }
+    .btn-copy:hover { background: #ffe0b2; }
+    .matrix-bracket {
+        position: relative;
+        padding: 10px 15px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        overflow: visible;
+    }
+    .matrix-bracket::before, .matrix-bracket::after {
+        content: '';
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 12px;
+        border: 3px solid #111;
+    }
+    .matrix-bracket::before { left: 0; border-right: none; border-radius: 12px 0 0 12px; }
+    .matrix-bracket::after { right: 0; border-left: none; border-radius: 0 12px 12px 0; }
+    .matrix-table {
+        border-collapse: separate;
+        border-spacing: 3px;
+        font-family: monospace;
+        font-size: 0.8rem;
+        font-weight: 700;
+        max-width: calc(100% - 30px);
+    }
+    .matrix-table td {
+        padding: 3px 5px;
+        text-align: center;
+        min-width: 26px;
+        white-space: nowrap;
+        border-radius: 3px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>RGB 채널 분리기</h1>
+    <p class="subtitle">사진 한 장을 R(빨강)·G(초록)·B(파랑) 세 채널로 분리해서 보고, 각 채널이 실제로 어떤 숫자 행렬인지 확인해 보세요.</p>
+
+    <div class="card">
+        <div class="card-title">이미지 업로드</div>
+        <div id="dropzone">
+            <p>JPG 또는 PNG 이미지를 드래그&amp;드롭하거나 선택하여 RGB 채널을 분석하세요</p>
+            <button class="btn btn-green" id="btn-upload">이미지 선택</button>
+            <input type="file" id="file-input" accept="image/*">
+        </div>
+
+        <div class="channels-row" id="channels-row">
+            <div class="channel-col">
+                <h4>원본</h4>
+                <canvas class="preview" id="canvas-orig"></canvas>
+            </div>
+            <div class="channel-col">
+                <h4 class="r">R 채널</h4>
+                <canvas class="preview" id="canvas-r"></canvas>
+            </div>
+            <div class="channel-col">
+                <h4 class="g">G 채널</h4>
+                <canvas class="preview" id="canvas-g"></canvas>
+            </div>
+            <div class="channel-col">
+                <h4 class="b">B 채널</h4>
+                <canvas class="preview" id="canvas-b"></canvas>
+            </div>
+        </div>
+        <p class="info-line" id="info-line"></p>
+
+        <div class="action-row" id="action-row">
+            <button class="btn btn-outline" id="btn-goto-matrix">↗ 행렬 분석 데이터로 이동</button>
+            <button class="btn btn-red" id="btn-clear">전체 지우기</button>
+        </div>
+    </div>
+
+    <div class="card" id="matrix-section">
+        <div class="card-title">행렬 분석 데이터</div>
+        <div class="size-controls">
+            가로(열): <input type="number" id="grid-w" value="10" min="2" max="30">
+            세로(행): <input type="number" id="grid-h" value="10" min="2" max="30">
+            <button class="btn btn-blue" id="btn-convert">변환</button>
+        </div>
+        <div class="matrices-wrapper">
+            <div class="matrix-section">
+                <div class="matrix-header">
+                    <span style="color:#dc2626;">R</span> 행렬
+                    <button class="btn-copy" data-target="table-r">복사</button>
+                </div>
+                <div class="matrix-bracket"><table class="matrix-table" id="table-r"></table></div>
+            </div>
+            <div class="matrix-section">
+                <div class="matrix-header">
+                    <span style="color:#16a34a;">G</span> 행렬
+                    <button class="btn-copy" data-target="table-g">복사</button>
+                </div>
+                <div class="matrix-bracket"><table class="matrix-table" id="table-g"></table></div>
+            </div>
+            <div class="matrix-section">
+                <div class="matrix-header">
+                    <span style="color:#2563eb;">B</span> 행렬
+                    <button class="btn-copy" data-target="table-b">복사</button>
+                </div>
+                <div class="matrix-bracket"><table class="matrix-table" id="table-b"></table></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const btnUpload = document.getElementById('btn-upload');
+    const channelsRow = document.getElementById('channels-row');
+    const actionRow = document.getElementById('action-row');
+    const infoLine = document.getElementById('info-line');
+    const matrixSection = document.getElementById('matrix-section');
+    const canvasOrig = document.getElementById('canvas-orig');
+    const canvasR = document.getElementById('canvas-r');
+    const canvasG = document.getElementById('canvas-g');
+    const canvasB = document.getElementById('canvas-b');
+    const gridW = document.getElementById('grid-w');
+    const gridH = document.getElementById('grid-h');
+
+    let img = null;
+
+    btnUpload.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('click', (e) => { if (e.target === dropzone) fileInput.click(); });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) loadImageFile(e.target.files[0]);
+    });
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]);
+    });
+
+    function loadImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const image = new Image();
+            image.onload = () => onImageReady(image);
+            image.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function onImageReady(image) {
+        img = image;
+        channelsRow.style.display = 'flex';
+        actionRow.style.display = 'flex';
+        matrixSection.style.display = 'none';
+
+        // 채널 분리를 위한 작업용 해상도 (너무 큰 사진은 축소해서 처리)
+        const maxWorkDim = 400;
+        const workScale = Math.min(1, maxWorkDim / img.naturalWidth, maxWorkDim / img.naturalHeight);
+        const w = Math.max(1, Math.round(img.naturalWidth * workScale));
+        const h = Math.max(1, Math.round(img.naturalHeight * workScale));
+
+        const work = document.createElement('canvas');
+        work.width = w; work.height = h;
+        const wctx = work.getContext('2d');
+        wctx.drawImage(img, 0, 0, w, h);
+        const data = wctx.getImageData(0, 0, w, h);
+
+        // 화면 표시 크기 (작은 이미지도 잘 보이도록 최소 크기 확보)
+        const dispDim = 180;
+        const dispScale = dispDim / Math.max(w, h);
+        const dispW = Math.round(w * dispScale);
+        const dispH = Math.round(h * dispScale);
+
+        function setupCanvas(canvas) {
+            canvas.width = w; canvas.height = h;
+            canvas.style.width = dispW + 'px';
+            canvas.style.height = dispH + 'px';
+        }
+        [canvasOrig, canvasR, canvasG, canvasB].forEach(setupCanvas);
+
+        canvasOrig.getContext('2d').putImageData(data, 0, 0);
+
+        function buildChannel(keep) {
+            const src = data.data;
+            const out = new Uint8ClampedArray(src.length);
+            for (let i = 0; i < src.length; i += 4) {
+                out[i] = keep === 'r' ? src[i] : 0;
+                out[i + 1] = keep === 'g' ? src[i + 1] : 0;
+                out[i + 2] = keep === 'b' ? src[i + 2] : 0;
+                out[i + 3] = src[i + 3];
+            }
+            return new ImageData(out, w, h);
+        }
+        canvasR.getContext('2d').putImageData(buildChannel('r'), 0, 0);
+        canvasG.getContext('2d').putImageData(buildChannel('g'), 0, 0);
+        canvasB.getContext('2d').putImageData(buildChannel('b'), 0, 0);
+
+        infoLine.textContent = `원본 해상도: ${img.naturalWidth} × ${img.naturalHeight} 픽셀`;
+    }
+
+    document.getElementById('btn-goto-matrix').addEventListener('click', () => {
+        matrixSection.style.display = 'block';
+        buildMatrices();
+        matrixSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+        img = null;
+        channelsRow.style.display = 'none';
+        actionRow.style.display = 'none';
+        matrixSection.style.display = 'none';
+        infoLine.textContent = '';
+        fileInput.value = '';
+    });
+
+    document.getElementById('btn-convert').addEventListener('click', buildMatrices);
+
+    function buildMatrices() {
+        if (!img) return;
+        const w = Math.min(30, Math.max(2, parseInt(gridW.value) || 10));
+        const h = Math.min(30, Math.max(2, parseInt(gridH.value) || 10));
+        gridW.value = w; gridH.value = h;
+
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const octx = off.getContext('2d');
+        octx.drawImage(img, 0, 0, w, h);
+        const data = octx.getImageData(0, 0, w, h).data;
+
+        const tableR = document.getElementById('table-r');
+        const tableG = document.getElementById('table-g');
+        const tableB = document.getElementById('table-b');
+        tableR.innerHTML = ''; tableG.innerHTML = ''; tableB.innerHTML = '';
+
+        for (let r = 0; r < h; r++) {
+            const trR = document.createElement('tr');
+            const trG = document.createElement('tr');
+            const trB = document.createElement('tr');
+            for (let c = 0; c < w; c++) {
+                const idx = (r * w + c) * 4;
+                const tdR = document.createElement('td'); tdR.textContent = data[idx];
+                const tdG = document.createElement('td'); tdG.textContent = data[idx + 1];
+                const tdB = document.createElement('td'); tdB.textContent = data[idx + 2];
+                trR.appendChild(tdR); trG.appendChild(tdG); trB.appendChild(tdB);
+            }
+            tableR.appendChild(trR); tableG.appendChild(trG); tableB.appendChild(trB);
+        }
+    }
+
+    document.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const table = document.getElementById(e.target.getAttribute('data-target'));
+            let text = '[\n';
+            for (const row of table.rows) {
+                const vals = Array.from(row.cells).map(td => td.textContent.padStart(3, ' '));
+                text += '  [' + vals.join(', ') + '],\n';
+            }
+            text = text.replace(/,\n$/, '\n') + ']';
+            navigator.clipboard.writeText(text).then(() => {
+                alert('복사되었습니다!');
+            }).catch(err => {
+                alert('복사 실패: ' + err);
+            });
+        });
+    });
+</script>
+</body>
+</html>
