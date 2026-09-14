@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 데이터 증강 판단 실험</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef1fb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 1050px; }
+    .back-link {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #4338ca;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+        font-size: 1.5rem;
+        color: #1e293b;
+        margin: 0 0 8px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #64748b;
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+        text-align: center;
+        max-width: 720px;
+        line-height: 1.5;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        padding: 24px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .col { flex: 1 1 260px; min-width: 240px; }
+    .col-title {
+        font-weight: 900;
+        text-align: center;
+        color: #1e293b;
+        margin-bottom: 10px;
+        font-size: 0.92rem;
+    }
+    .digit-canvas {
+        display: block;
+        margin: 0 auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+    }
+    .digit-caption {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-top: 8px;
+        font-weight: 700;
+    }
+
+    .exp-col { flex: 1 1 300px; min-width: 260px; }
+    .angle-label { font-size: 0.85rem; font-weight: 700; color: #475569; text-align: center; }
+    #angleSlider { width: 100%; margin: 8px 0; }
+    .preset-row {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+    .preset-row button {
+        border: 1px solid #c7d2fe;
+        background: #eef2ff;
+        color: #4338ca;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .preset-row button.active { background: #4338ca; color: white; }
+
+    .question-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 0.88rem;
+        color: #334155;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    .answer-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    .answer-btn {
+        flex: 1;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        color: white;
+        font-family: inherit;
+    }
+    .answer-btn.yes { background: #16a34a; }
+    .answer-btn.no { background: #92400e; }
+    .answer-btn:hover { opacity: 0.88; }
+
+    .feedback-box {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        text-align: center;
+        min-height: 4.5em;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .feedback-box.neutral { color: #64748b; }
+    .feedback-box.correct { background: #f0fdf4; color: #166534; font-weight: 700; }
+    .feedback-box.wrong { background: #fef2f2; color: #b91c1c; font-weight: 700; }
+
+    .ai-banner {
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: #3730a3;
+        line-height: 1.7;
+    }
+    .ai-banner b { color: #312e81; }
+
+    .nav-links {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        font-size: 0.85rem;
+    }
+    .nav-links a { color: #4338ca; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>AI는 회전한 그림도 같은 숫자로 배울까?</h1>
+    <p class="subtitle">회전 행렬은 점뿐 아니라 이미지의 각 화소 위치도 옮길 수 있습니다. 하지만 회전한 뒤에도 원래 라벨이 맞는지 확인해야 좋은 학습 데이터가 됩니다.</p>
+
+    <div class="card">
+        <div class="col">
+            <div class="col-title">원본 학습 이미지</div>
+            <canvas class="digit-canvas" id="origCanvas" width="200" height="200"></canvas>
+            <p class="digit-caption">라벨: 6</p>
+        </div>
+
+        <div class="col">
+            <div class="col-title">회전한 이미지</div>
+            <canvas class="digit-canvas" id="rotCanvas" width="200" height="200"></canvas>
+            <p class="digit-caption">회전 행렬로 화소 위치를 바꾼 결과</p>
+        </div>
+
+        <div class="exp-col">
+            <div class="col-title">데이터 증강 판단 실험</div>
+            <p class="angle-label">회전각을 바꿔 보세요: <span id="angleValue">15</span>°</p>
+            <input type="range" id="angleSlider" min="-180" max="180" step="1" value="15">
+            <div class="preset-row">
+                <button data-v="-15">-15°</button>
+                <button data-v="15" class="active">15°</button>
+                <button data-v="90">90°</button>
+                <button data-v="180">180°</button>
+            </div>
+
+            <div class="question-box">이 그림을 그대로 '6' 라벨로 학습 데이터에 더해도 될까요?</div>
+            <div class="answer-row">
+                <button class="answer-btn yes" id="btnYes">네, 같은 6이에요</button>
+                <button class="answer-btn no" id="btnNo">아니요, 라벨이 달라져요</button>
+            </div>
+            <div class="feedback-box neutral" id="feedbackBox">먼저 답을 골라 보세요.</div>
+        </div>
+    </div>
+
+    <div class="ai-banner">
+        <b>AI와 연결:</b> 작은 회전은 손글씨의 다양한 기울기를 학습시키는 <i>데이터 증강</i>에 쓸 수 있습니다. 그러나 숫자 6을 180도 돌리면 9처럼 보일 수 있으므로, 같은 '6' 라벨을 붙이면 오히려 잘못 가르치게 됩니다. 데이터 증강은 "회전할 수 있는가?"가 아니라 "회전해도 정답이 같은가?"를 먼저 판단해야 합니다.
+    </div>
+
+    <div class="nav-links">
+        <a href="rotation-3-photo-tilt.html">← 사진 기울기 보정 미션으로</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script>
+    const origCanvas = document.getElementById('origCanvas');
+    const rotCanvas = document.getElementById('rotCanvas');
+    const octx = origCanvas.getContext('2d');
+    const rctx = rotCanvas.getContext('2d');
+    const W = origCanvas.width, H = origCanvas.height;
+
+    function drawGrid(ctx) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= W; i += 20) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke();
+        }
+    }
+
+    function drawDigit(ctx, angleDeg) {
+        drawGrid(ctx);
+        ctx.save();
+        ctx.translate(W / 2, H / 2);
+        ctx.rotate(angleDeg * Math.PI / 180);
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = '900 130px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('6', 0, 8);
+        ctx.restore();
+    }
+
+    function normalizeAngle(deg) {
+        let a = ((deg + 180) % 360 + 360) % 360 - 180;
+        return a;
+    }
+    function isSafe(deg) {
+        return Math.abs(normalizeAngle(deg)) <= 20;
+    }
+
+    let currentAngle = 15;
+    const slider = document.getElementById('angleSlider');
+    const angleValue = document.getElementById('angleValue');
+    const feedbackBox = document.getElementById('feedbackBox');
+
+    function resetFeedback() {
+        feedbackBox.textContent = '먼저 답을 골라 보세요.';
+        feedbackBox.className = 'feedback-box neutral';
+    }
+
+    function update() {
+        drawDigit(octx, 0);
+        drawDigit(rctx, currentAngle);
+        angleValue.textContent = currentAngle;
+        slider.value = currentAngle;
+        document.querySelectorAll('.preset-row button').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.v) === currentAngle);
+        });
+        resetFeedback();
+    }
+
+    slider.addEventListener('input', () => {
+        currentAngle = parseInt(slider.value);
+        update();
+    });
+    document.querySelectorAll('.preset-row button').forEach(b => {
+        b.addEventListener('click', () => {
+            currentAngle = parseInt(b.dataset.v);
+            update();
+        });
+    });
+
+    function explanation(safe) {
+        const norm = normalizeAngle(currentAngle);
+        if (safe) {
+            return `이 정도(${currentAngle}°)의 작은 회전은 사람마다 다른 손글씨 기울기 범위 안에 있어서, 그대로 '6' 라벨을 써도 괜찮습니다.`;
+        }
+        if (Math.abs(Math.abs(norm) - 180) < 30) {
+            return `${currentAngle}°만큼 돌리면 6이 9처럼 보이기 쉽습니다. 그대로 '6' 라벨을 붙이면 AI에게 잘못된 정답을 가르치게 됩니다.`;
+        }
+        if (Math.abs(norm) >= 60) {
+            return `${currentAngle}°는 실제 손글씨에서 나오기 어려운 각도라서, 그대로 '6' 라벨을 붙이면 AI가 이상한 모양과 숫자를 연결해 배우게 됩니다.`;
+        }
+        return `${currentAngle}°는 자연스러운 손글씨 기울기라고 보기엔 조금 큽니다. 그대로 라벨을 유지하면 AI가 혼란스러운 예시를 학습할 수 있습니다.`;
+    }
+
+    function handleAnswer(userSaysYes) {
+        const safe = isSafe(currentAngle);
+        const correct = (userSaysYes === safe);
+        feedbackBox.textContent = (correct ? '정답이에요! ' : '다시 생각해 보세요. ') + explanation(safe);
+        feedbackBox.className = 'feedback-box ' + (correct ? 'correct' : 'wrong');
+    }
+
+    document.getElementById('btnYes').addEventListener('click', () => handleAnswer(true));
+    document.getElementById('btnNo').addEventListener('click', () => handleAnswer(false));
+
+    update();
+</script>
+</body>
+</html>
