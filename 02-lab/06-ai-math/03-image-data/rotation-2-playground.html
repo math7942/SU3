@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>벡터 회전 실습 도구</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef1fb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 1000px; }
+    .back-link {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #4338ca;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+        font-size: 1.6rem;
+        color: #1e293b;
+        margin: 0 0 6px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        text-align: center;
+    }
+
+    .banner {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        border-radius: 10px;
+        padding: 10px 16px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.88rem;
+        margin-bottom: 16px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        padding: 20px;
+    }
+    .top-row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .canvas-col {
+        flex: 0 0 auto;
+    }
+    #planeCanvas {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+        cursor: crosshair;
+        touch-action: none;
+    }
+    .canvas-hint {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        text-align: center;
+        margin-top: 8px;
+    }
+
+    .controls-col {
+        flex: 1 1 260px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-width: 240px;
+    }
+    .panel {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+    .panel h3 {
+        margin: 0 0 10px;
+        font-size: 0.92rem;
+        color: #1e293b;
+    }
+    .angle-inputs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+    }
+    .angle-inputs input {
+        width: 80px;
+        height: 30px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        text-align: center;
+        font-family: inherit;
+    }
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #475569;
+        margin: 10px 0;
+    }
+    .btn-row { display: flex; gap: 10px; }
+    .btn {
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        font-family: inherit;
+        flex: 1;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-blue { background-color: #3b82f6; }
+    .btn-red { background-color: #ef4444; }
+
+    .vector-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+    .vector-list li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+    }
+    .swatch { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+    .placeholder-text {
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .matrix-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-family: monospace;
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #3730a3;
+    }
+    .bracket { font-size: 1.8rem; }
+
+    table.coord-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.82rem;
+        margin-top: 10px;
+    }
+    table.coord-table th, table.coord-table td {
+        border: 1px solid #e2e8f0;
+        padding: 6px 8px;
+        text-align: center;
+    }
+    table.coord-table th { background: #f8fafc; color: #475569; }
+
+    .data-section {
+        margin-top: 20px;
+    }
+    .data-section h3 {
+        font-size: 1rem;
+        color: #1e293b;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .nav-links {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        font-size: 0.85rem;
+    }
+    .nav-links a { color: #4338ca; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>벡터 회전 실습 도구</h1>
+    <p class="subtitle">좌표평면을 클릭해 벡터를 여러 개 만들고, 회전각을 입력해 한 번에 회전시켜 보세요.</p>
+
+    <div class="banner" id="banner">클릭하여 벡터의 끝점을 정의해주세요. 시작점은 원점(0,0)입니다.</div>
+
+    <div class="card">
+        <div class="top-row">
+            <div class="canvas-col">
+                <canvas id="planeCanvas" width="440" height="440"></canvas>
+                <p class="canvas-hint">좌표평면을 클릭하면 원점에서 그 점까지 벡터가 추가됩니다.</p>
+            </div>
+
+            <div class="controls-col">
+                <div class="panel">
+                    <h3>회전각 입력</h3>
+                    <div class="angle-inputs">
+                        <label>도(°)</label>
+                        <input type="number" id="degInput" value="45">
+                        <span>또는</span>
+                        <label>라디안(rad)</label>
+                        <input type="number" id="radInput" step="0.01" value="0.79">
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="snapGrid" checked>
+                        <label for="snapGrid">격자점에 맞추기</label>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn btn-blue" id="btnRotate">회전 실행</button>
+                        <button class="btn btn-red" id="btnClear">모두 지우기</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>벡터 값</h3>
+                    <div id="vectorValuesBox"><p class="placeholder-text">벡터가 없습니다. 좌표평면을 클릭하여 벡터를 추가하세요.</p></div>
+                </div>
+
+                <div class="panel">
+                    <h3>회전 행렬 계산</h3>
+                    <div id="matrixBox"><p class="placeholder-text">벡터를 먼저 추가해주세요.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h3>좌표 데이터</h3>
+            <table class="coord-table" id="coordTable">
+                <thead>
+                    <tr><th>벡터</th><th>회전 전 (x, y)</th><th>회전각</th><th>회전 후 (x, y)</th></tr>
+                </thead>
+                <tbody id="coordTableBody">
+                    <tr><td colspan="4" class="placeholder-text">아직 회전 기록이 없습니다.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="rotation-1-basis-steps.html">← 회전 행렬 유도 단계로</a>
+        <a href="rotation-3-photo-tilt.html">사진 기울기 보정 미션으로 →</a>
+    </div>
+</div>
+
+<script>
+    const RANGE = 10;
+    const canvas = document.getElementById('planeCanvas');
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const scale = (canvas.width / 2) / RANGE;
+    const COLORS = ['#ef4444', '#3b82f6', '#16a34a', '#f59e0b', '#7c3aed', '#0ea5e9', '#db2777', '#65a30d'];
+
+    let vectors = []; // { x, y, color, label }
+    let historyRows = [];
+
+    function toPx(x, y) { return { x: cx + x * scale, y: cy - y * scale }; }
+    function toData(px, py) { return { x: (px - cx) / scale, y: -(py - cy) / scale }; }
+
+    function drawPlane() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+        for (let i = -RANGE; i <= RANGE; i++) {
+            if (i === 0) continue;
+            const p = toPx(i, 0);
+            ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, canvas.height); ctx.stroke();
+            const p2 = toPx(0, i);
+            ctx.beginPath(); ctx.moveTo(0, p2.y); ctx.lineTo(canvas.width, p2.y); ctx.stroke();
+        }
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px sans-serif';
+        [-10, -5, 5, 10].forEach(v => {
+            let p = toPx(v, 0);
+            ctx.fillText(String(v), p.x - 6, cy + 14);
+            p = toPx(0, v);
+            ctx.fillText(String(v), cx + 4, p.y + 4);
+        });
+        ctx.fillText('O', cx + 4, cy + 14);
+
+        vectors.forEach(v => drawArrow(0, 0, v.x, v.y, v.color, v.label));
+    }
+
+    function drawArrow(x0, y0, x1, y1, color, label) {
+        const p0 = toPx(x0, y0), p1 = toPx(x1, y1);
+        ctx.save();
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+        const ang = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+        const ah = 9;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p1.x - ah * Math.cos(ang - Math.PI / 7), p1.y - ah * Math.sin(ang - Math.PI / 7));
+        ctx.lineTo(p1.x - ah * Math.cos(ang + Math.PI / 7), p1.y - ah * Math.sin(ang + Math.PI / 7));
+        ctx.closePath(); ctx.fill();
+        if (label) {
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText(label, p1.x + 6, p1.y - 6);
+        }
+        ctx.restore();
+    }
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const px = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const py = (e.clientY - rect.top) * (canvas.height / rect.height);
+        let { x, y } = toData(px, py);
+        if (document.getElementById('snapGrid').checked) {
+            x = Math.round(x); y = Math.round(y);
+        } else {
+            x = Math.round(x * 100) / 100; y = Math.round(y * 100) / 100;
+        }
+        if (x === 0 && y === 0) return;
+        const color = COLORS[vectors.length % COLORS.length];
+        const label = `v${vectors.length + 1}`;
+        vectors.push({ x, y, color, label });
+        drawPlane();
+        renderVectorValues();
+        renderMatrix();
+    });
+
+    function fmt(n) { return (Math.round(n * 1000) / 1000).toString(); }
+
+    function renderVectorValues() {
+        const box = document.getElementById('vectorValuesBox');
+        if (vectors.length === 0) {
+            box.innerHTML = '<p class="placeholder-text">벡터가 없습니다. 좌표평면을 클릭하여 벡터를 추가하세요.</p>';
+            return;
+        }
+        const ul = document.createElement('ul');
+        ul.className = 'vector-list';
+        vectors.forEach(v => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="swatch" style="background:${v.color}"></span>${v.label} = (${fmt(v.x)}, ${fmt(v.y)})`;
+            ul.appendChild(li);
+        });
+        box.innerHTML = '';
+        box.appendChild(ul);
+    }
+
+    let lastEdited = 'deg';
+    const degInput = document.getElementById('degInput');
+    const radInput = document.getElementById('radInput');
+    degInput.addEventListener('input', () => {
+        lastEdited = 'deg';
+        const deg = parseFloat(degInput.value) || 0;
+        radInput.value = fmt(deg * Math.PI / 180);
+        renderMatrix();
+    });
+    radInput.addEventListener('input', () => {
+        lastEdited = 'rad';
+        const rad = parseFloat(radInput.value) || 0;
+        degInput.value = fmt(rad * 180 / Math.PI);
+        renderMatrix();
+    });
+
+    function currentThetaRad() {
+        if (lastEdited === 'rad') return parseFloat(radInput.value) || 0;
+        return (parseFloat(degInput.value) || 0) * Math.PI / 180;
+    }
+
+    function renderMatrix() {
+        const box = document.getElementById('matrixBox');
+        if (vectors.length === 0) {
+            box.innerHTML = '<p class="placeholder-text">벡터를 먼저 추가해주세요.</p>';
+            return;
+        }
+        const th = currentThetaRad();
+        const c = fmt(Math.cos(th)), s = fmt(Math.sin(th));
+        box.innerHTML = `<div class="matrix-display"><span class="bracket">[</span><div>${c}&nbsp;&nbsp;${-Math.sin(th) === 0 ? '0' : fmt(-Math.sin(th))}<br>${s}&nbsp;&nbsp;${c}</div><span class="bracket">]</span></div>`;
+    }
+
+    document.getElementById('btnRotate').addEventListener('click', () => {
+        if (vectors.length === 0) { alert('먼저 좌표평면을 클릭해 벡터를 추가해 주세요.'); return; }
+        const th = currentThetaRad();
+        const c = Math.cos(th), s = Math.sin(th);
+        const degDisplay = fmt(th * 180 / Math.PI);
+        vectors.forEach(v => {
+            const before = { x: v.x, y: v.y };
+            const nx = v.x * c - v.y * s;
+            const ny = v.x * s + v.y * c;
+            v.x = Math.round(nx * 1000) / 1000;
+            v.y = Math.round(ny * 1000) / 1000;
+            historyRows.push({ label: v.label, before, angle: degDisplay, after: { x: v.x, y: v.y } });
+        });
+        drawPlane();
+        renderVectorValues();
+        renderMatrix();
+        renderHistory();
+    });
+
+    function renderHistory() {
+        const tbody = document.getElementById('coordTableBody');
+        if (historyRows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="placeholder-text">아직 회전 기록이 없습니다.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = historyRows.map(r =>
+            `<tr><td>${r.label}</td><td>(${fmt(r.before.x)}, ${fmt(r.before.y)})</td><td>${r.angle}°</td><td>(${fmt(r.after.x)}, ${fmt(r.after.y)})</td></tr>`
+        ).join('');
+    }
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+        vectors = [];
+        historyRows = [];
+        drawPlane();
+        renderVectorValues();
+        renderMatrix();
+        renderHistory();
+    });
+
+    drawPlane();
+</script>
+</body>
+</html>
