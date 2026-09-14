@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>손글씨 숫자 → 28×28 행렬 변환기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #fdf6ec;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
+    .back-link {
+        font-size: 0.85rem;
+        color: #b45309;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+        font-size: 1.6rem;
+        color: #1e293b;
+        margin: 0;
+        text-align: center;
+    }
+    .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        padding: 24px;
+    }
+    .instruction-box {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        padding: 16px 20px;
+    }
+    .instruction-box b { color: #1e293b; }
+    .instruction-box ul { margin: 8px 0 0; padding-left: 20px; color: #78350f; font-size: 0.88rem; line-height: 1.7; }
+
+    .controls-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+    .mode-toggle { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; font-weight: 700; color: #57534e; }
+    .mode-btn {
+        border: 2px solid #e2e8f0;
+        background: white;
+        color: #475569;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-weight: 900;
+        font-size: 0.95rem;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .mode-btn.active { background: #1e3a8a; border-color: #1e3a8a; color: white; }
+
+    .brush-control { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 700; color: #57534e; }
+    #brushSlider { width: 140px; }
+    #brushDot { border-radius: 50%; background: #1e293b; display: inline-block; }
+
+    .canvas-wrap { display: flex; justify-content: center; }
+    #drawCanvas {
+        border: 2px solid #93c5fd;
+        border-radius: 12px;
+        cursor: crosshair;
+        background: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .action-row { display: flex; justify-content: center; gap: 14px; margin-top: 18px; }
+    .btn {
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 12px 22px;
+        font-size: 0.92rem;
+        font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-blue { background-color: #2563eb; }
+    .btn-red { background-color: #ef4444; }
+
+    .result-row {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    .preview-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .preview-col h4 { margin: 0; font-size: 0.85rem; color: #57534e; }
+    #previewCanvas {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        image-rendering: pixelated;
+        width: 168px;
+        height: 168px;
+    }
+
+    .matrix-col { flex: 1 1 380px; min-width: 300px; }
+    .matrix-toolbar {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .toolbar-btn {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #475569;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .toolbar-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
+    #matrixScroll {
+        max-height: 360px;
+        overflow: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        padding: 8px;
+    }
+    #matrixTable {
+        border-collapse: separate;
+        border-spacing: 1px;
+        font-family: monospace;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+    #matrixTable td {
+        padding: 2px 3px;
+        text-align: center;
+        min-width: 20px;
+        border-radius: 2px;
+    }
+    .btn-copy {
+        display: block;
+        margin: 12px auto 0;
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
+        color: #d84315;
+        border-radius: 4px;
+        padding: 6px 16px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .btn-copy:hover { background: #ffe0b2; }
+    .placeholder-text { color: #a8a29e; font-size: 0.85rem; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>손글씨 숫자 → 28×28 행렬 변환기</h1>
+
+    <div class="instruction-box">
+        <b>사용법</b>
+        <ul>
+            <li>아래 캔버스에 마우스로 숫자 0~9를 그려보세요</li>
+            <li>"변환" 버튼을 클릭하면 28×28 픽셀로 변환됩니다</li>
+            <li>각 픽셀의 명도값이 0~255 범위의 숫자로 표시됩니다 (검정=0, 흰색=255)</li>
+            <li>MNIST 데이터셋과 동일한 형식으로 변환됩니다</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <div class="controls-row">
+            <div class="mode-toggle">
+                변환 모드:
+                <button class="mode-btn active" id="mode28" data-v="28">28×28</button>
+                <button class="mode-btn" id="mode14" data-v="14">14×14</button>
+            </div>
+            <div class="brush-control">
+                붓 크기:
+                <input type="range" id="brushSlider" min="6" max="30" value="15">
+                <span id="brushDot" style="width:15px; height:15px;"></span>
+                <span id="brushLabel">15px</span>
+            </div>
+        </div>
+
+        <div class="canvas-wrap">
+            <canvas id="drawCanvas" width="280" height="280"></canvas>
+        </div>
+
+        <div class="action-row">
+            <button class="btn btn-blue" id="btnConvert">28×28 행렬로 변환</button>
+            <button class="btn btn-red" id="btnClear">지우기</button>
+        </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none;">
+        <div class="result-row">
+            <div class="preview-col">
+                <h4>변환된 이미지</h4>
+                <canvas id="previewCanvas" width="28" height="28"></canvas>
+            </div>
+            <div class="matrix-col">
+                <div class="matrix-toolbar">
+                    <button class="toolbar-btn active" id="viewNumber">숫자 보기</button>
+                    <button class="toolbar-btn" id="viewShade">명암 보기</button>
+                </div>
+                <div id="matrixScroll">
+                    <table id="matrixTable"></table>
+                </div>
+                <button class="btn-copy" id="btnCopy">행렬 복사</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const pctx = previewCanvas.getContext('2d');
+    const resultCard = document.getElementById('resultCard');
+    const matrixTable = document.getElementById('matrixTable');
+    const brushSlider = document.getElementById('brushSlider');
+    const brushDot = document.getElementById('brushDot');
+    const brushLabel = document.getElementById('brushLabel');
+    const btnConvert = document.getElementById('btnConvert');
+
+    let isDrawing = false;
+    let hasDrawn = false;
+    let mode = 28;
+    let matrixValues = null;
+    let viewMode = 'number';
+
+    function initCanvas() {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = parseInt(brushSlider.value);
+        hasDrawn = false;
+        resultCard.style.display = 'none';
+        matrixValues = null;
+    }
+    initCanvas();
+
+    canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true; hasDrawn = true;
+        ctx.beginPath();
+        ctx.moveTo(e.offsetX, e.offsetY);
+    });
+    canvas.addEventListener('mousemove', (e) => {
+        if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); }
+    });
+    canvas.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('mouseout', () => isDrawing = false);
+
+    brushSlider.addEventListener('input', () => {
+        const v = parseInt(brushSlider.value);
+        ctx.lineWidth = v;
+        brushDot.style.width = v + 'px';
+        brushDot.style.height = v + 'px';
+        brushLabel.textContent = v + 'px';
+    });
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('mode28').classList.toggle('active', m === 28);
+        document.getElementById('mode14').classList.toggle('active', m === 14);
+        btnConvert.textContent = `${m}×${m} 행렬로 변환`;
+    }
+    document.getElementById('mode28').addEventListener('click', () => setMode(28));
+    document.getElementById('mode14').addEventListener('click', () => setMode(14));
+
+    document.getElementById('btnClear').addEventListener('click', initCanvas);
+
+    btnConvert.addEventListener('click', () => {
+        if (!hasDrawn) { alert('먼저 캔버스에 숫자를 그려주세요!'); return; }
+
+        const off = document.createElement('canvas');
+        off.width = mode; off.height = mode;
+        const octx = off.getContext('2d');
+        octx.drawImage(canvas, 0, 0, mode, mode);
+        const data = octx.getImageData(0, 0, mode, mode).data;
+
+        matrixValues = [];
+        for (let r = 0; r < mode; r++) {
+            const row = [];
+            for (let c = 0; c < mode; c++) {
+                const idx = (r * mode + c) * 4;
+                const gray = Math.round(0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]);
+                row.push(gray);
+            }
+            matrixValues.push(row);
+        }
+
+        previewCanvas.width = mode; previewCanvas.height = mode;
+        const imgData = pctx.createImageData(mode, mode);
+        for (let r = 0; r < mode; r++) {
+            for (let c = 0; c < mode; c++) {
+                const g = matrixValues[r][c];
+                const idx = (r * mode + c) * 4;
+                imgData.data[idx] = g; imgData.data[idx + 1] = g; imgData.data[idx + 2] = g; imgData.data[idx + 3] = 255;
+            }
+        }
+        pctx.putImageData(imgData, 0, 0);
+
+        renderMatrix();
+        resultCard.style.display = 'block';
+    });
+
+    function renderMatrix() {
+        matrixTable.innerHTML = '';
+        for (let r = 0; r < mode; r++) {
+            const tr = document.createElement('tr');
+            for (let c = 0; c < mode; c++) {
+                const td = document.createElement('td');
+                const val = matrixValues[r][c];
+                td.textContent = val;
+                td.dataset.val = val;
+                tr.appendChild(td);
+            }
+            matrixTable.appendChild(tr);
+        }
+        applyViewMode();
+    }
+
+    function applyViewMode() {
+        const tds = matrixTable.querySelectorAll('td');
+        tds.forEach(td => {
+            const val = parseInt(td.dataset.val);
+            if (viewMode === 'shade') {
+                td.style.backgroundColor = `rgb(${val},${val},${val})`;
+                td.style.color = val < 128 ? '#ffffff' : '#000000';
+            } else {
+                td.style.backgroundColor = 'transparent';
+                td.style.color = 'inherit';
+            }
+        });
+    }
+
+    document.getElementById('viewNumber').addEventListener('click', () => {
+        viewMode = 'number';
+        document.getElementById('viewNumber').classList.add('active');
+        document.getElementById('viewShade').classList.remove('active');
+        applyViewMode();
+    });
+    document.getElementById('viewShade').addEventListener('click', () => {
+        viewMode = 'shade';
+        document.getElementById('viewShade').classList.add('active');
+        document.getElementById('viewNumber').classList.remove('active');
+        applyViewMode();
+    });
+
+    document.getElementById('btnCopy').addEventListener('click', () => {
+        if (!matrixValues) return;
+        let text = '[\n';
+        for (const row of matrixValues) text += '  [' + row.join(', ') + '],\n';
+        text = text.replace(/,\n$/, '\n') + ']';
+        navigator.clipboard.writeText(text).then(() => {
+            alert('복사되었습니다!');
+        }).catch(err => {
+            alert('복사 실패: ' + err);
+        });
+    });
+</script>
+</body>
+</html>
