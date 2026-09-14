@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>패턴을 행렬로 표현하기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f3f0ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        font-size: 1.8rem;
+        color: #1e293b;
+        margin-top: 0;
+        margin-bottom: 8px;
+        letter-spacing: -1px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #6b5b95;
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+        text-align: center;
+        max-width: 620px;
+        line-height: 1.5;
+    }
+    .container {
+        width: 100%;
+        max-width: 1100px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    .card {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        width: 100%;
+    }
+    .card-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        text-align: center;
+        margin-bottom: 18px;
+        color: #1e293b;
+    }
+
+    /* 패턴 버튼 */
+    .pattern-row {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .pattern-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #334155;
+        transition: border-color 0.15s, transform 0.1s, background 0.15s;
+    }
+    .pattern-btn:hover { border-color: #a78bfa; background: #f5f3ff; transform: translateY(-2px); }
+    .pattern-btn.active { border-color: #7c3aed; background: #ede9fe; color: #5b21b6; }
+    .pattern-icon {
+        width: 34px; height: 34px;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-position: center;
+    }
+
+    /* 그리드 영역 */
+    .grid-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+    }
+    .grid-wrapper {
+        background: #fff;
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px dashed #cbd5e1;
+        display: inline-block;
+    }
+    #pattern-grid {
+        display: grid;
+        border-top: 1px solid #e2e8f0;
+        border-left: 1px solid #e2e8f0;
+        user-select: none;
+        background-color: #fff;
+    }
+    .pcell {
+        width: 22px;
+        height: 22px;
+        border-right: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        box-sizing: border-box;
+        cursor: pointer;
+        background-color: #fff;
+    }
+    .pcell.black { background-color: #1e1e2e; }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    .btn-large {
+        min-width: 150px;
+        height: 44px;
+        font-size: 1rem;
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0 20px;
+        transition: opacity 0.2s;
+    }
+    .btn-large:hover { opacity: 0.85; }
+    .btn-show { background-color: #4b86f7; }
+    .btn-reset { background-color: #ef4444; }
+
+    .hint {
+        font-size: 0.85rem;
+        color: #64748b;
+        text-align: center;
+    }
+
+    /* 행렬 출력 */
+    #matrix-output-container {
+        display: none;
+        width: 100%;
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        overflow-x: auto;
+    }
+    .matrix-title {
+        text-align: center;
+        font-size: 1.3rem;
+        color: #1e293b;
+        font-weight: 900;
+        margin-top: 0;
+        margin-bottom: 16px;
+    }
+    .legend {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #6366f1;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+    .matrix-scroll {
+        display: flex;
+        justify-content: center;
+    }
+    .matrix-bracket {
+        position: relative;
+        padding: 10px 15px;
+        display: inline-flex;
+        justify-content: center;
+    }
+    .matrix-bracket::before, .matrix-bracket::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 12px;
+        border: 3px solid #111;
+    }
+    .matrix-bracket::before { left: 0; border-right: none; border-radius: 12px 0 0 12px; }
+    .matrix-bracket::after { right: 0; border-left: none; border-radius: 0 12px 12px 0; }
+    .matrix-table {
+        border-collapse: separate;
+        border-spacing: 2px;
+        font-family: monospace;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    .matrix-table td {
+        padding: 2px 4px;
+        text-align: center;
+        min-width: 18px;
+        border-radius: 3px;
+    }
+    .matrix-table td.v0 { background: #1e1e2e; color: #f8fafc; }
+    .matrix-table td.v1 { background: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; }
+
+    .btn-copy {
+        display: block;
+        margin: 16px auto 0;
+        background: #fff3e0;
+        border: 1px solid #ffe0b2;
+        color: #d84315;
+        border-radius: 4px;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .btn-copy:hover { background: #ffe0b2; }
+
+    .back-link {
+        align-self: flex-start;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #6366f1;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>패턴을 행렬로 표현하기</h1>
+    <p class="subtitle">검은색을 0, 흰색을 1로 두면 흑백 이미지는 0과 1로 이루어진 행렬이 됩니다. 샘플 패턴을 골라 보거나, 격자를 직접 클릭해 나만의 패턴을 만들고 이진행렬로 확인해 보세요.</p>
+
+    <div class="card">
+        <div class="card-title">샘플 패턴 선택</div>
+        <div class="pattern-row" id="pattern-buttons">
+            <button class="pattern-btn" data-pattern="stairs">
+                <span class="pattern-icon" id="icon-stairs"></span>
+                계단
+            </button>
+            <button class="pattern-btn" data-pattern="chess">
+                <span class="pattern-icon" id="icon-chess"></span>
+                체스판
+            </button>
+            <button class="pattern-btn" data-pattern="cross">
+                <span class="pattern-icon" id="icon-cross"></span>
+                십자가
+            </button>
+            <button class="pattern-btn" data-pattern="border">
+                <span class="pattern-icon" id="icon-border"></span>
+                테두리
+            </button>
+            <button class="pattern-btn" data-pattern="circle">
+                <span class="pattern-icon" id="icon-circle"></span>
+                원
+            </button>
+        </div>
+    </div>
+
+    <div class="card grid-area">
+        <div class="card-title">15 × 15 격자 (클릭해서 칠하기)</div>
+        <div class="grid-wrapper">
+            <div id="pattern-grid"></div>
+        </div>
+        <p class="hint">칸을 클릭하면 검은색(0) ↔ 흰색(1)이 바뀝니다. 드래그하면 여러 칸을 한 번에 칠할 수 있어요.</p>
+        <div class="action-buttons">
+            <button class="btn-large btn-show" id="btn-show-matrix">행렬 표시</button>
+            <button class="btn-large btn-reset" id="btn-reset">초기화</button>
+        </div>
+    </div>
+
+    <div id="matrix-output-container">
+        <h2 class="matrix-title">이진행렬 (15×15)</h2>
+        <div class="legend">■ 검은색 = 0 &nbsp;&nbsp; □ 흰색 = 1</div>
+        <div class="matrix-scroll">
+            <div class="matrix-bracket">
+                <table class="matrix-table" id="binary-table"></table>
+            </div>
+        </div>
+        <button class="btn-copy" id="btn-copy-matrix">행렬 복사</button>
+    </div>
+</div>
+
+<script>
+    const N = 15;
+    let grid = Array.from({ length: N }, () => Array(N).fill(1)); // 1 = 흰색(칠하지 않음), 0 = 검은색(칠함)
+    let isDrawing = false;
+    let matrixVisible = false;
+
+    const gridEl = document.getElementById('pattern-grid');
+    const matrixContainer = document.getElementById('matrix-output-container');
+    const binaryTable = document.getElementById('binary-table');
+
+    // ---- 패턴 정의 (true = 칠함(검은색=0)) ----
+    function makeStairs() {
+        const p = Array.from({ length: N }, () => Array(N).fill(false));
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c <= r; c++) p[r][c] = true;
+        }
+        return p;
+    }
+    function makeChess() {
+        const p = Array.from({ length: N }, () => Array(N).fill(false));
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) p[r][c] = (r + c) % 2 === 0;
+        return p;
+    }
+    function makeCross() {
+        const p = Array.from({ length: N }, () => Array(N).fill(false));
+        const mid = Math.floor(N / 2);
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+            if (Math.abs(r - mid) <= 1 || Math.abs(c - mid) <= 1) p[r][c] = true;
+        }
+        return p;
+    }
+    function makeBorder() {
+        const p = Array.from({ length: N }, () => Array(N).fill(false));
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+            if (r === 0 || r === N - 1 || c === 0 || c === N - 1) p[r][c] = true;
+        }
+        return p;
+    }
+    function makeCircle() {
+        const p = Array.from({ length: N }, () => Array(N).fill(false));
+        const mid = (N - 1) / 2;
+        const radius = mid;
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+            const d = Math.sqrt((r - mid) ** 2 + (c - mid) ** 2);
+            if (Math.abs(d - radius) < 1.0) p[r][c] = true;
+        }
+        return p;
+    }
+    const PATTERNS = {
+        stairs: makeStairs(),
+        chess: makeChess(),
+        cross: makeCross(),
+        border: makeBorder(),
+        circle: makeCircle()
+    };
+
+    // 패턴 버튼 미리보기 아이콘 렌더 (작은 canvas를 배경 이미지로)
+    function renderIcon(elId, pattern) {
+        const size = 34;
+        const cell = size / N;
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, size, size);
+        ctx.fillStyle = '#1e1e2e';
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+            if (pattern[r][c]) ctx.fillRect(c * cell, r * cell, cell, cell);
+        }
+        document.getElementById(elId).style.backgroundImage = `url(${canvas.toDataURL()})`;
+    }
+    renderIcon('icon-stairs', PATTERNS.stairs);
+    renderIcon('icon-chess', PATTERNS.chess);
+    renderIcon('icon-cross', PATTERNS.cross);
+    renderIcon('icon-border', PATTERNS.border);
+    renderIcon('icon-circle', PATTERNS.circle);
+
+    // ---- 격자 생성 ----
+    function buildGrid() {
+        gridEl.innerHTML = '';
+        gridEl.style.gridTemplateColumns = `repeat(${N}, 22px)`;
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'pcell';
+                cell.dataset.r = r;
+                cell.dataset.c = c;
+                cell.addEventListener('mousedown', (e) => { e.preventDefault(); isDrawing = true; toggleCell(r, c); });
+                cell.addEventListener('mouseenter', () => { if (isDrawing) paintCell(r, c, 0); });
+                gridEl.appendChild(cell);
+            }
+        }
+    }
+    document.addEventListener('mouseup', () => isDrawing = false);
+
+    function toggleCell(r, c) {
+        grid[r][c] = grid[r][c] === 1 ? 0 : 1;
+        refreshCell(r, c);
+        if (matrixVisible) renderMatrix();
+    }
+    function paintCell(r, c, val) {
+        if (grid[r][c] === val) return;
+        grid[r][c] = val;
+        refreshCell(r, c);
+        if (matrixVisible) renderMatrix();
+    }
+    function refreshCell(r, c) {
+        const cell = gridEl.children[r * N + c];
+        cell.classList.toggle('black', grid[r][c] === 0);
+    }
+    function refreshAllCells() {
+        for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) refreshCell(r, c);
+    }
+
+    // ---- 이진행렬 렌더 ----
+    function renderMatrix() {
+        binaryTable.innerHTML = '';
+        for (let r = 0; r < N; r++) {
+            const tr = document.createElement('tr');
+            for (let c = 0; c < N; c++) {
+                const td = document.createElement('td');
+                const val = grid[r][c];
+                td.textContent = val;
+                td.className = val === 0 ? 'v0' : 'v1';
+                tr.appendChild(td);
+            }
+            binaryTable.appendChild(tr);
+        }
+    }
+
+    document.getElementById('btn-show-matrix').addEventListener('click', () => {
+        matrixVisible = true;
+        matrixContainer.style.display = 'block';
+        renderMatrix();
+        matrixContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        grid = Array.from({ length: N }, () => Array(N).fill(1));
+        refreshAllCells();
+        document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+        if (matrixVisible) renderMatrix();
+    });
+
+    document.getElementById('btn-copy-matrix').addEventListener('click', () => {
+        let text = '[\n';
+        for (let r = 0; r < N; r++) {
+            text += '  [' + grid[r].join(', ') + '],\n';
+        }
+        text = text.replace(/,\n$/, '\n') + ']';
+        navigator.clipboard.writeText(text).then(() => {
+            alert('복사되었습니다!');
+        }).catch(err => {
+            alert('복사 실패: ' + err);
+        });
+    });
+
+    // ---- 패턴 버튼 클릭 ----
+    document.querySelectorAll('.pattern-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const key = btn.dataset.pattern;
+            const p = PATTERNS[key];
+            for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) grid[r][c] = p[r][c] ? 0 : 1;
+            refreshAllCells();
+            document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (matrixVisible) renderMatrix();
+        });
+    });
+
+    buildGrid();
+</script>
+</body>
+</html>
