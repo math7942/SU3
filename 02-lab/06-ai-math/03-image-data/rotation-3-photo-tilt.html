@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사진 기울기 보정 미션</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #fdf6ec;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 1000px; }
+    .back-link {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #c2410c;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+        font-size: 1.5rem;
+        color: #1e293b;
+        margin: 0 0 8px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #78716c;
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+        text-align: center;
+        max-width: 700px;
+        line-height: 1.5;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        padding: 24px;
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+    .col { flex: 1 1 320px; min-width: 280px; }
+    .col-title {
+        font-weight: 900;
+        text-align: center;
+        color: #1e293b;
+        margin-bottom: 12px;
+    }
+
+    #sceneCanvas {
+        display: block;
+        margin: 0 auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+
+    .level-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 14px;
+    }
+    .level-label { font-size: 0.85rem; font-weight: 700; color: #57534e; }
+    .level-track {
+        position: relative;
+        width: 180px;
+        height: 14px;
+        background: #f1f5f9;
+        border-radius: 7px;
+        border: 1px solid #e2e8f0;
+    }
+    .level-center-mark {
+        position: absolute;
+        left: 50%; top: -4px;
+        width: 2px; height: 22px;
+        background: #cbd5e1;
+        transform: translateX(-1px);
+    }
+    .level-bubble {
+        position: absolute;
+        top: -3px;
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        background: #f59e0b;
+        transform: translateX(-10px);
+        transition: left 0.15s, background 0.15s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .level-bubble.ok { background: #22c55e; }
+    .tilt-readout {
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #92400e;
+        margin-top: 8px;
+    }
+
+    .mission-box {
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 0.88rem;
+        color: #7c2d12;
+        line-height: 1.6;
+        margin-bottom: 16px;
+    }
+    .angle-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #57534e;
+        margin-bottom: 4px;
+    }
+    #correctionSlider { width: 100%; }
+    .preset-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin: 10px 0 16px;
+        flex-wrap: wrap;
+    }
+    .preset-row button {
+        border: 1px solid #fdba74;
+        background: #fff;
+        color: #c2410c;
+        border-radius: 6px;
+        padding: 6px 14px;
+        font-weight: 700;
+        font-size: 0.82rem;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .preset-row button.active { background: #f97316; color: white; }
+
+    .btn-check {
+        width: 100%;
+        background: #ea580c;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .btn-check:hover { opacity: 0.9; }
+
+    .feedback-box {
+        margin-top: 14px;
+        font-size: 0.85rem;
+        color: #78716c;
+        text-align: center;
+        min-height: 3em;
+        line-height: 1.5;
+    }
+    .feedback-box.ok { color: #16a34a; font-weight: 700; }
+    .feedback-box.bad { color: #b45309; font-weight: 700; }
+
+    .real-use-banner {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: #075985;
+        line-height: 1.7;
+    }
+    .real-use-banner b { color: #0c4a6e; }
+
+    .nav-links {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        font-size: 0.85rem;
+    }
+    .nav-links a { color: #c2410c; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>사진 편집 앱처럼 기울어진 사진을 바로잡아 보세요</h1>
+    <p class="subtitle">사진 편집 앱의 기울기 보정은 회전 행렬로 사진 속 모든 화소의 위치를 함께 돌리는 기능입니다. 아래 바다 사진의 수평선을 똑바로 맞춰 보세요.</p>
+
+    <div class="card">
+        <div class="col">
+            <div class="col-title">편집 미리보기</div>
+            <canvas id="sceneCanvas" width="360" height="270"></canvas>
+            <div class="level-row">
+                <span class="level-label">수평계</span>
+                <div class="level-track">
+                    <div class="level-center-mark"></div>
+                    <div class="level-bubble" id="levelBubble"></div>
+                </div>
+            </div>
+            <p class="tilt-readout" id="tiltReadout"></p>
+        </div>
+
+        <div class="col">
+            <div class="col-title">미션: 수평선 맞추기</div>
+            <div class="mission-box">사진은 왼쪽으로 <b>12.0°</b> 기울어져 있습니다. 보정 회전을 조절해 수평계를 가운데 맞춘 뒤, 결과를 확인하세요.</div>
+
+            <div class="angle-label">보정 회전각: <span id="correctionLabel">0</span>°</div>
+            <input type="range" id="correctionSlider" min="0" max="24" step="0.5" value="0">
+            <div class="preset-row">
+                <button data-v="0" class="active">원본</button>
+                <button data-v="6">+6°</button>
+                <button data-v="12">+12°</button>
+            </div>
+
+            <button class="btn-check" id="btnCheck">수평인지 확인</button>
+            <p class="feedback-box" id="feedbackBox">회전각을 움직여 수평선을 직접 맞춰 보세요.</p>
+        </div>
+    </div>
+
+    <div class="real-use-banner">
+        <b>실제 쓰임:</b> Photoshop 같은 사진 편집 앱, 스마트폰 사진 보정, 스캔 문서 똑바로 펴기에서 같은 원리가 쓰입니다. 사진을 돌리면 네 모서리에 빈 공간이 생길 수 있어, 실제 앱은 필요한 부분을 잘라내기(crop)도 합니다. 이 한 장의 사진에서도 모든 화소 좌표에 같은 회전 행렬이 적용됩니다.
+    </div>
+
+    <div class="nav-links">
+        <a href="rotation-2-playground.html">← 벡터 회전 실습 도구로</a>
+        <a href="rotation-4-ai-augmentation.html">AI 데이터 증강 판단 실험으로 →</a>
+    </div>
+</div>
+
+<script>
+    const INITIAL_TILT = -12; // 왼쪽으로 12도 기울어짐
+    const canvas = document.getElementById('sceneCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+
+    function drawScene(totalDeg) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#f1f5f9';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(totalDeg * Math.PI / 180);
+        ctx.translate(-cx, -cy);
+
+        // 넉넉하게 photo 영역을 그려서 회전해도 중앙은 항상 채워지도록 함
+        const pad = 60;
+        // 하늘
+        ctx.fillStyle = '#bfe3f7';
+        ctx.fillRect(-pad, -pad, W + pad * 2, H * 0.62 + pad);
+        // 태양
+        ctx.fillStyle = '#fde68a';
+        ctx.beginPath();
+        ctx.arc(W * 0.78, H * 0.22, 26, 0, Math.PI * 2);
+        ctx.fill();
+        // 산
+        ctx.fillStyle = '#65a30d';
+        ctx.beginPath();
+        ctx.moveTo(W * 0.12, H * 0.62);
+        ctx.lineTo(W * 0.38, H * 0.30);
+        ctx.lineTo(W * 0.60, H * 0.62);
+        ctx.closePath();
+        ctx.fill();
+        // 바다 (수평선 기준선)
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(-pad, H * 0.62, W + pad * 2, H * 0.5);
+        // 물결
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+            const y = H * 0.68 + i * 14;
+            ctx.beginPath();
+            ctx.moveTo(W * 0.05, y);
+            ctx.lineTo(W * 0.95, y);
+            ctx.stroke();
+        }
+        // 돛단배
+        ctx.fillStyle = '#fef9c3';
+        ctx.beginPath();
+        ctx.moveTo(W * 0.55, H * 0.60);
+        ctx.lineTo(W * 0.55, H * 0.44);
+        ctx.lineTo(W * 0.66, H * 0.60);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillRect(W * 0.50, H * 0.60, W * 0.18, 5);
+
+        ctx.restore();
+    }
+
+    function renderLevel(totalDeg) {
+        const bubble = document.getElementById('levelBubble');
+        const trackWidth = 180;
+        const clamped = Math.max(-20, Math.min(20, totalDeg));
+        const pct = 50 + (clamped / 20) * 45; // 5%~95%
+        bubble.style.left = pct + '%';
+        const isLevel = Math.abs(totalDeg) < 1;
+        bubble.classList.toggle('ok', isLevel);
+
+        const readout = document.getElementById('tiltReadout');
+        if (isLevel) {
+            readout.textContent = '수평입니다! (0°)';
+        } else if (totalDeg < 0) {
+            readout.textContent = `왼쪽으로 ${Math.abs(totalDeg).toFixed(1)}° 기울어짐`;
+        } else {
+            readout.textContent = `오른쪽으로 ${totalDeg.toFixed(1)}° 기울어짐`;
+        }
+    }
+
+    let correction = 0;
+    function update() {
+        const total = INITIAL_TILT + correction;
+        drawScene(total);
+        renderLevel(total);
+        document.getElementById('correctionLabel').textContent = correction.toFixed(1).replace(/\.0$/, '');
+    }
+
+    const slider = document.getElementById('correctionSlider');
+    slider.addEventListener('input', () => {
+        correction = parseFloat(slider.value);
+        document.querySelectorAll('.preset-row button').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.v) - correction) < 0.01));
+        update();
+    });
+    document.querySelectorAll('.preset-row button').forEach(b => {
+        b.addEventListener('click', () => {
+            correction = parseFloat(b.dataset.v);
+            slider.value = correction;
+            document.querySelectorAll('.preset-row button').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
+            update();
+        });
+    });
+
+    document.getElementById('btnCheck').addEventListener('click', () => {
+        const total = INITIAL_TILT + correction;
+        const box = document.getElementById('feedbackBox');
+        if (Math.abs(total) < 1) {
+            box.textContent = `정확해요! 원본(-${Math.abs(INITIAL_TILT)}°)에 +${correction.toFixed(1)}°를 더해 수평(0°)을 만들었습니다.`;
+            box.className = 'feedback-box ok';
+        } else if (total < 0) {
+            box.textContent = `아직 왼쪽으로 ${Math.abs(total).toFixed(1)}° 더 기울어져 있어요. 보정각을 더 키워 보세요.`;
+            box.className = 'feedback-box bad';
+        } else {
+            box.textContent = `너무 많이 돌렸어요! 오른쪽으로 ${total.toFixed(1)}° 넘어갔습니다. 보정각을 조금 줄여 보세요.`;
+            box.className = 'feedback-box bad';
+        }
+    });
+
+    update();
+</script>
+</body>
+</html>
