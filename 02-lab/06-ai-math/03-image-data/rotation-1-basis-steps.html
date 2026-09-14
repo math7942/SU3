@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기준벡터에서 회전 행렬까지</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef1fb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 1000px; }
+    .back-link {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #4338ca;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .eyebrow {
+        text-align: center;
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    h1 {
+        font-size: 1.6rem;
+        color: #1e293b;
+        margin: 0 0 8px;
+        text-align: center;
+    }
+    .subtitle {
+        color: #64748b;
+        font-size: 0.88rem;
+        margin-bottom: 16px;
+        text-align: center;
+        max-width: 700px;
+        line-height: 1.5;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .key-question {
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+        padding: 12px 20px;
+        text-align: center;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #3730a3;
+        max-width: 700px;
+        margin: 0 auto 20px;
+    }
+
+    .stepper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+    .step-dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border: none;
+        flex-shrink: 0;
+    }
+    .step-dot.current { background: #4338ca; color: white; }
+    .step-dot.done { background: #a5b4fc; color: white; }
+    .step-line { width: 18px; height: 2px; background: #cbd5e1; flex-shrink: 0; }
+    .step-labels {
+        display: none;
+    }
+
+    .work-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        padding: 24px;
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
+    .graph-col {
+        flex: 0 0 380px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .graph-box {
+        position: relative;
+    }
+    #graphCanvas {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+    }
+    .formula-box {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        text-align: center;
+        font-family: monospace;
+        line-height: 1.6;
+        color: #334155;
+    }
+    .graph-caption {
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: #475569;
+        text-align: center;
+        min-height: 2.2em;
+    }
+
+    .angle-control {
+        width: 100%;
+        margin-top: 14px;
+        text-align: center;
+    }
+    .angle-control label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #475569;
+    }
+    #thetaSlider { width: 100%; margin: 6px 0; }
+    .angle-presets {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    .angle-presets button {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #475569;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .angle-presets button.active { background: #4338ca; color: white; border-color: #4338ca; }
+
+    .content-col {
+        flex: 1 1 320px;
+        min-width: 280px;
+    }
+    .step-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 6px;
+    }
+    .step-title {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #1e293b;
+        margin: 0 0 12px;
+        line-height: 1.4;
+    }
+    .step-body {
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.7;
+        margin-bottom: 12px;
+    }
+    .formula-display {
+        background: #eef2ff;
+        border-radius: 8px;
+        padding: 12px 16px;
+        text-align: center;
+        font-family: monospace;
+        font-weight: 700;
+        color: #3730a3;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+    .note-box {
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 0.83rem;
+        line-height: 1.6;
+        margin-bottom: 10px;
+    }
+    .note-box.green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .note-box.blue { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+    .nav-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 18px;
+        gap: 10px;
+    }
+    .nav-btn {
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        padding: 10px 18px;
+        cursor: pointer;
+        font-size: 0.88rem;
+        font-family: inherit;
+    }
+    .nav-btn.prev { background: #e2e8f0; color: #475569; }
+    .nav-btn.next { background: #4338ca; color: white; }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; }
+    .hint-footer {
+        margin-top: 10px;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-align: center;
+    }
+
+    .next-tool-banner {
+        background: #fdf4ff;
+        border: 1px solid #f5d0fe;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-top: 20px;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #86198f;
+    }
+    .next-tool-banner a {
+        display: inline-block;
+        margin-top: 8px;
+        background: #a21caf;
+        color: white;
+        text-decoration: none;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <p class="eyebrow">회전변환 학습하기 · 8단계</p>
+    <h1>기준벡터에서 회전 행렬까지</h1>
+    <p class="subtitle">e₁, e₂라는 두 기준벡터가 무엇인지부터 시작합니다. 그 두 화살표를 회전시킨 결과를 모으면, 어떤 벡터도 돌리는 회전 행렬이 됩니다.</p>
+    <div class="key-question">핵심 질문: 모든 점을 하나씩 계산하지 않고, 왜 두 벡터만 알면 회전을 표현할 수 있을까요?</div>
+
+    <div class="stepper" id="stepper"></div>
+
+    <div class="work-card">
+        <div class="graph-col">
+            <div class="graph-box">
+                <canvas id="graphCanvas" width="360" height="360"></canvas>
+                <div class="formula-box" id="formulaBox"></div>
+            </div>
+            <p class="graph-caption" id="graphCaption"></p>
+            <div class="angle-control">
+                <label>회전각 θ = <span id="thetaLabel">45</span>°</label>
+                <input type="range" id="thetaSlider" min="0" max="180" value="45" step="1">
+                <div class="angle-presets">
+                    <button data-v="0">0°</button>
+                    <button data-v="30">30°</button>
+                    <button data-v="45" class="active">45°</button>
+                    <button data-v="90">90°</button>
+                    <button data-v="180">180°</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-col">
+            <div class="step-badge" id="stepBadge">1 / 8 단계</div>
+            <h2 class="step-title" id="stepTitle"></h2>
+            <div class="step-body" id="stepBody"></div>
+            <div class="formula-display" id="stepFormula"></div>
+            <div id="stepNotes"></div>
+            <div class="nav-row">
+                <button class="nav-btn prev" id="btnPrev">← 이전</button>
+                <button class="nav-btn next" id="btnNext">다음 단계 →</button>
+            </div>
+            <p class="hint-footer" id="hintFooter"></p>
+        </div>
+    </div>
+
+    <div class="next-tool-banner">
+        회전 행렬의 원리를 알아봤다면, 이제 직접 벡터를 그리고 돌려볼 차례입니다.
+        <br>
+        <a href="rotation-2-playground.html">벡터 회전 실습 도구로 이동 →</a>
+    </div>
+</div>
+
+<script>
+    const N = 8;
+    let step = 1;
+    let thetaDeg = 45;
+
+    const canvas = document.getElementById('graphCanvas');
+    const ctx = canvas.getContext('2d');
+    const RANGE = 2.6;
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const scale = (canvas.width / 2) / RANGE;
+
+    function toPx(x, y) { return { x: cx + x * scale, y: cy - y * scale }; }
+
+    function drawAxes() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+        for (let i = -2; i <= 2; i++) {
+            if (i === 0) continue;
+            let p1 = toPx(i, -RANGE), p2 = toPx(i, RANGE);
+            ctx.beginPath(); ctx.moveTo(p1.x, 0); ctx.lineTo(p1.x, canvas.height); ctx.stroke();
+            p1 = toPx(-RANGE, i); p2 = toPx(RANGE, i);
+            ctx.beginPath(); ctx.moveTo(0, p1.y); ctx.lineTo(canvas.width, p1.y); ctx.stroke();
+        }
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height); ctx.stroke();
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('x', canvas.width - 14, cy - 6);
+        ctx.fillText('y', cx + 6, 12);
+        ctx.fillText('O', cx - 14, cy + 14);
+    }
+
+    function drawArrow(x0, y0, x1, y1, color, lw, dashed) {
+        const p0 = toPx(x0, y0), p1 = toPx(x1, y1);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lw || 2.5;
+        if (dashed) ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+        ctx.setLineDash([]);
+        const ang = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+        const ah = 8;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p1.x - ah * Math.cos(ang - Math.PI / 7), p1.y - ah * Math.sin(ang - Math.PI / 7));
+        ctx.lineTo(p1.x - ah * Math.cos(ang + Math.PI / 7), p1.y - ah * Math.sin(ang + Math.PI / 7));
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawLabel(x, y, text, color, dx, dy) {
+        const p = toPx(x, y);
+        ctx.fillStyle = color;
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(text, p.x + (dx || 6), p.y + (dy || -6));
+    }
+
+    function drawDashedCircle(r, color) {
+        const p0 = toPx(0, 0);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(p0.x, p0.y, r * scale, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawAngleArc(thetaRad, color, r) {
+        const p0 = toPx(0, 0);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(p0.x, p0.y, r * scale, -thetaRad, 0, thetaRad > 0);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function fmt(n) { return (Math.round(n * 100) / 100).toFixed(2); }
+
+    function renderGraph() {
+        const th = thetaDeg * Math.PI / 180;
+        const c = Math.cos(th), s = Math.sin(th);
+        drawAxes();
+
+        const e1 = [1, 0], e2 = [0, 1];
+        const e1r = [c, s], e2r = [-s, c];
+        const v = [2, 1];
+        const vr = [v[0] * c - v[1] * s, v[0] * s + v[1] * c];
+
+        if (step === 1) {
+            drawArrow(0, 0, e1[0], e1[1], '#16a34a', 4);
+            drawLabel(e1[0], e1[1], 'e₁', '#16a34a');
+            drawArrow(0, 0, e2[0], e2[1], '#7c3aed', 4);
+            drawLabel(e2[0], e2[1], 'e₂', '#7c3aed');
+        } else if (step === 2 || step === 3) {
+            drawArrow(0, 0, v[0], 0, '#16a34a', 3);
+            drawArrow(v[0], 0, v[0], v[1], '#7c3aed', 3);
+            drawArrow(0, 0, v[0], v[1], '#f97316', 3.5);
+            drawLabel(v[0], v[1], 'v=(2,1)', '#f97316');
+            if (step === 3) {
+                drawArrow(0, 0, e1r[0] * 0.9, e1r[1] * 0.9, '#16a34a', 1.5, true);
+                drawArrow(0, 0, e2r[0] * 0.9, e2r[1] * 0.9, '#7c3aed', 1.5, true);
+            }
+        } else if (step === 4) {
+            drawDashedCircle(1, '#cbd5e1');
+            drawArrow(0, 0, e1[0], e1[1], '#86efac', 2.5);
+            drawArrow(0, 0, e2[0], e2[1], '#d8b4fe', 2.5);
+            drawArrow(0, 0, e1r[0], e1r[1], '#16a34a', 3.5);
+            drawLabel(e1r[0], e1r[1], "e₁'", '#16a34a');
+            drawArrow(0, 0, e2r[0], e2r[1], '#7c3aed', 3.5);
+            drawLabel(e2r[0], e2r[1], "e₂'", '#7c3aed');
+            drawAngleArc(th, '#f97316', 0.35);
+        } else if (step === 5) {
+            drawArrow(0, 0, e1[0], e1[1], '#86efac', 2, true);
+            drawArrow(0, 0, e1r[0], e1r[1], '#16a34a', 4);
+            drawLabel(e1r[0], e1r[1], "e₁'=(cosθ,sinθ)", '#16a34a');
+            drawAngleArc(th, '#f97316', 0.4);
+        } else if (step === 6) {
+            drawArrow(0, 0, e2[0], e2[1], '#d8b4fe', 2, true);
+            drawArrow(0, 0, e2r[0], e2r[1], '#7c3aed', 4);
+            drawLabel(e2r[0], e2r[1], "e₂'=(-sinθ,cosθ)", '#7c3aed', -70, -8);
+            drawAngleArc(th, '#f97316', 0.4);
+        } else if (step === 7) {
+            drawArrow(0, 0, v[0], v[1], '#fdba74', 2, true);
+            drawLabel(v[0], v[1], 'v', '#fdba74');
+            drawArrow(0, 0, e1r[0], e1r[1], '#bbf7d0', 1.5, true);
+            drawArrow(0, 0, e2r[0], e2r[1], '#e9d5ff', 1.5, true);
+            drawArrow(0, 0, vr[0], vr[1], '#ea580c', 4);
+            drawLabel(vr[0], vr[1], "v'", '#ea580c');
+        } else if (step === 8) {
+            drawArrow(0, 0, e1r[0], e1r[1], '#16a34a', 3.5);
+            drawLabel(e1r[0], e1r[1], "e₁'", '#16a34a');
+            drawArrow(0, 0, e2r[0], e2r[1], '#7c3aed', 3.5);
+            drawLabel(e2r[0], e2r[1], "e₂'", '#7c3aed');
+            drawArrow(0, 0, vr[0], vr[1], '#ea580c', 2.5, true);
+            drawLabel(vr[0], vr[1], "v'", '#ea580c');
+        }
+
+        document.getElementById('formulaBox').innerHTML =
+            `e₁'=(${fmt(c)}, ${fmt(s)})<br>e₂'=(${fmt(-s)}, ${fmt(c)})`;
+    }
+
+    const STEPS = {
+        1: {
+            title: '① e₁과 e₂는 좌표평면의 두 기준 화살표입니다',
+            body: 'e₁은 오른쪽을 향하는 길이 1의 화살표, e₂는 위를 향하는 길이 1의 화살표입니다. 좌표로 쓰면 e₁ = (1, 0), e₂ = (0, 1)입니다. 각각 가로 방향과 세로 방향의 가장 작은 한 칸을 뜻합니다.',
+            formula: "e₁ = (1, 0),  e₂ = (0, 1)",
+            notes: '<div class="note-box green">초록 e₁은 x축 방향 한 칸, 보라 e₂는 y축 방향 한 칸입니다. 두 화살표는 길이가 1이고 서로 직각입니다.</div><div class="note-box blue"><b>유도의 이유 · 출발점:</b> 회전 행렬은 이 두 기준 화살표가 회전 뒤 어디에 놓이는지를 기록하는 도구입니다. 그러니 먼저 e₁, e₂가 무엇인지 알아야 합니다.</div>',
+            hint: '먼저 e₁과 e₂가 각각 가로와 세로의 기준 한 칸이라는 점을 확인한 뒤 다음 카드로 넘어가세요.',
+            caption: '기준벡터 e₁(초록), e₂(보라)'
+        },
+        2: {
+            title: '② 아무 벡터나 e₁, e₂의 재료로 나눌 수 있어요',
+            body: '예를 들어 v = (2, 1)은 x축 방향으로 2칸, y축 방향으로 1칸 이동한 화살표입니다. 이는 e₁을 2배, e₂를 1배 한 다음 더한 것과 정확히 같습니다.',
+            formula: "v = (2,1) = 2·e₁ + 1·e₂",
+            notes: '<div class="note-box green">초록 화살표(2·e₁)를 따라간 뒤, 보라 화살표(1·e₂)만큼 더 이동하면 주황 화살표 v에 도착합니다.</div>',
+            hint: '어떤 벡터든 "e₁ 방향으로 얼마, e₂ 방향으로 얼마"의 조합으로 쪼갤 수 있다는 점이 핵심입니다.',
+            caption: 'v = 2·e₁ + 1·e₂ 로 분해'
+        },
+        3: {
+            title: '③ 왜 e₁, e₂ 두 개만 알면 충분할까요?',
+            body: '회전은 "선형변환"이어서, 더하고 배율을 바꾸는 순서를 바꿔도 결과가 같습니다. 그래서 v = x·e₁ + y·e₂를 회전시킨 결과는, e₁을 회전시킨 것을 x배, e₂를 회전시킨 것을 y배 해서 더한 것과 같습니다.',
+            formula: "R(x·e₁ + y·e₂) = x·R(e₁) + y·R(e₂)",
+            notes: '<div class="note-box blue">즉, 모든 점을 하나하나 회전시키는 대신 e₁, e₂ 두 개가 회전한 결과만 알아두면, 그 조합으로 어떤 벡터의 회전 결과도 계산할 수 있습니다.</div>',
+            hint: '이 식이 이번 8단계 전체의 핵심 아이디어입니다. 다음 단계부터 실제로 e₁과 e₂를 돌려봅니다.',
+            caption: '점선은 회전 후 e₁, e₂가 놓일 방향의 미리보기'
+        },
+        4: {
+            title: '④ 회전이 지키는 규칙',
+            body: '회전은 원점을 그대로 두고, 모든 화살표의 길이와 화살표 사이의 각도를 그대로 유지합니다. e₁, e₂는 길이가 1이고 서로 직각이었으므로, 회전한 e₁\', e₂\'도 길이가 1이고 서로 직각입니다.',
+            formula: "|e₁'| = |e₂'| = 1,  e₁' ⊥ e₂'",
+            notes: '<div class="note-box green">점선 원은 반지름 1인 원입니다. e₁\'과 e₂\'는 각도 θ만큼 돌았지만 여전히 이 원 위에 있습니다 (길이 보존).</div>',
+            hint: '슬라이더로 θ를 바꿔가며 e₁\', e₂\'가 항상 원 위에서 함께 움직이는 것을 확인해 보세요.',
+            caption: '회전 후에도 길이 1, 직각 유지'
+        },
+        5: {
+            title: '⑤ e₁을 회전시켜 봅시다',
+            body: 'e₁ = (1, 0)을 원점 기준으로 θ만큼 돌리면, 반지름 1인 원 위에서 각도 θ만큼 이동한 점에 도착합니다. 삼각함수의 정의에 따라 그 좌표는 (cosθ, sinθ)입니다.',
+            formula: "e₁' = (cos θ, sin θ)",
+            notes: '',
+            hint: '슬라이더를 움직여 θ를 바꾸면 e₁\'(진한 초록)이 원을 따라 움직이는 것을 확인하세요.',
+            caption: "e₁ → e₁' = (cosθ, sinθ)"
+        },
+        6: {
+            title: '⑥ e₂를 회전시켜 봅시다',
+            body: 'e₂ = (0, 1)도 같은 방식으로 θ만큼 돌립니다. e₂는 e₁보다 90° 앞서 있으므로, 회전한 결과는 (-sinθ, cosθ)가 됩니다.',
+            formula: "e₂' = (-sin θ, cos θ)",
+            notes: '<div class="note-box blue">e₁\'과 e₂\'는 항상 서로 직각을 유지합니다. θ를 바꿔가며 두 화살표가 늘 90°를 이루는지 확인해 보세요.</div>',
+            hint: '이제 회전된 두 기준벡터 e₁\', e₂\'를 모두 구했습니다.',
+            caption: "e₂ → e₂' = (-sinθ, cosθ)"
+        },
+        7: {
+            title: '⑦ 임의의 벡터 v를 회전시켜 봅시다',
+            body: '3단계에서 확인한 규칙 R(x·e₁+y·e₂) = x·R(e₁)+y·R(e₂)을 v=(2,1)에 적용해 봅시다. e₁ 대신 e₁\', e₂ 대신 e₂\'을 사용해서 더하면 됩니다.',
+            formula: "v' = 2·e₁' + 1·e₂' = (2cosθ−sinθ, 2sinθ+cosθ)",
+            notes: '<div class="note-box green">연한 점선은 회전 전 v, 진한 주황 화살표는 회전 후 v\'입니다. θ를 바꾸면 v\'도 함께 돌아갑니다.</div>',
+            hint: '이 식은 e₁\', e₂\'의 좌표만 있으면 어떤 벡터든 회전시킬 수 있다는 것을 보여줍니다.',
+            caption: "v = (2,1) → v' (회전 결과)"
+        },
+        8: {
+            title: '⑧ 열을 모아 행렬을 완성합니다',
+            body: 'e₁\'과 e₂\'을 나란히 세로로 세워 각각 첫째 열, 둘째 열로 삼으면 회전 행렬이 됩니다. 이 행렬에 어떤 벡터를 곱해도, 그 벡터를 θ만큼 회전시킨 결과가 나옵니다.',
+            formula: "R(θ) = [ cosθ  −sinθ ; sinθ  cosθ ]",
+            notes: '<div class="note-box blue">확인: R(θ)·v = 2·e₁\' + 1·e₂\' 이므로, 7단계에서 구한 v\'과 정확히 같은 값이 나옵니다. 이제 이 행렬 하나로 평면 위 모든 벡터를 회전시킬 수 있습니다!</div>',
+            hint: '아래 "벡터 회전 실습 도구"에서 직접 벡터를 그려 이 행렬로 회전시켜 보세요.',
+            caption: "R(θ)의 두 열 = e₁', e₂'"
+        }
+    };
+
+    function renderStep() {
+        const s = STEPS[step];
+        document.getElementById('stepBadge').textContent = `${step} / ${N} 단계`;
+        document.getElementById('stepTitle').textContent = s.title;
+        document.getElementById('stepBody').textContent = s.body;
+        document.getElementById('stepFormula').textContent = s.formula;
+        document.getElementById('stepNotes').innerHTML = s.notes;
+        document.getElementById('hintFooter').textContent = s.hint;
+        document.getElementById('graphCaption').textContent = s.caption;
+        document.getElementById('btnPrev').disabled = step === 1;
+        document.getElementById('btnNext').textContent = step === N ? '처음부터 다시 보기 ↺' : '다음 단계 →';
+
+        const stepper = document.getElementById('stepper');
+        stepper.innerHTML = '';
+        for (let i = 1; i <= N; i++) {
+            const dot = document.createElement('button');
+            dot.className = 'step-dot' + (i === step ? ' current' : i < step ? ' done' : '');
+            dot.textContent = i;
+            dot.addEventListener('click', () => { step = i; renderStep(); renderGraph(); });
+            stepper.appendChild(dot);
+            if (i < N) {
+                const line = document.createElement('div');
+                line.className = 'step-line';
+                stepper.appendChild(line);
+            }
+        }
+        renderGraph();
+    }
+
+    document.getElementById('btnPrev').addEventListener('click', () => {
+        if (step > 1) { step--; renderStep(); }
+    });
+    document.getElementById('btnNext').addEventListener('click', () => {
+        step = step === N ? 1 : step + 1;
+        renderStep();
+    });
+
+    const thetaSlider = document.getElementById('thetaSlider');
+    const thetaLabel = document.getElementById('thetaLabel');
+    function setTheta(v) {
+        thetaDeg = v;
+        thetaSlider.value = v;
+        thetaLabel.textContent = v;
+        document.querySelectorAll('.angle-presets button').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.v) === v);
+        });
+        renderGraph();
+    }
+    thetaSlider.addEventListener('input', () => setTheta(parseInt(thetaSlider.value)));
+    document.querySelectorAll('.angle-presets button').forEach(b => {
+        b.addEventListener('click', () => setTheta(parseInt(b.dataset.v)));
+    });
+
+    renderStep();
+</script>
+</body>
+</html>
