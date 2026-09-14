@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>행렬 곱셈 시각화</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef1fb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        font-size: 1.8rem;
+        color: #1e293b;
+        margin: 0 0 6px;
+        letter-spacing: -1px;
+        text-align: center;
+    }
+    .formula {
+        text-align: center;
+        font-family: monospace;
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #4338ca;
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        color: #64748b;
+        font-size: 0.88rem;
+        margin-bottom: 20px;
+        text-align: center;
+        max-width: 640px;
+        line-height: 1.5;
+    }
+    .back-link {
+        align-self: center;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #4338ca;
+        text-decoration: none;
+        font-weight: 700;
+        max-width: 1100px;
+        width: 100%;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .container { width: 100%; max-width: 1100px; }
+
+    .work-card {
+        background: linear-gradient(180deg, #eef1fb 0%, #e3e8fb 100%);
+        border: 1px solid #d9def5;
+        border-radius: 16px;
+        padding: 28px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+    .panel {
+        background: #fdfdff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 220px;
+    }
+    .panel-title {
+        font-weight: 900;
+        font-size: 1rem;
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+    .size-select {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .size-select select {
+        font-family: inherit;
+        font-weight: 700;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        padding: 2px 4px;
+    }
+    .hint-text {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    .checkbox-row {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .matrix-grid {
+        display: grid;
+        gap: 5px;
+        margin-bottom: 12px;
+    }
+    .mcell {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.1rem;
+        transition: outline 0.1s, transform 0.1s;
+    }
+    .mcell .coord {
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        font-size: 0.55rem;
+        font-weight: 700;
+        opacity: 0.75;
+    }
+    .mcell.input-cell { cursor: text; }
+    .mcell input {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: transparent;
+        text-align: center;
+        font-weight: 900;
+        font-size: 1.1rem;
+        font-family: inherit;
+        color: inherit;
+        outline: none;
+    }
+    .mcell.highlight { outline: 3px solid #111; z-index: 2; }
+    .mcell.result-cell { cursor: pointer; }
+
+    .op-symbol {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #64748b;
+        align-self: center;
+        margin: 40px 4px 0;
+    }
+
+    .mini-btn {
+        border: none;
+        border-radius: 6px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 6px 12px;
+        font-size: 0.78rem;
+        font-family: inherit;
+        margin-top: 4px;
+        width: 100%;
+    }
+    .mini-btn:hover { opacity: 0.85; }
+    .btn-purple { background-color: #7c3aed; }
+    .btn-cyan { background-color: #0ea5e9; }
+    .btn-row { display: flex; gap: 6px; width: 100%; }
+
+    .expr-line {
+        min-height: 1.4em;
+        font-family: monospace;
+        font-size: 0.82rem;
+        color: #334155;
+        text-align: center;
+        margin-top: 4px;
+    }
+
+    .action-row {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+    }
+    .action-btn {
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        font-family: inherit;
+    }
+    .action-btn:hover { opacity: 0.85; }
+    .btn-orange { background-color: #f59e0b; }
+    .btn-pink { background-color: #ec4899; }
+    .btn-teal { background-color: #14b8a6; }
+
+    .info-box {
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-top: 20px;
+        font-size: 0.85rem;
+        color: #3730a3;
+        line-height: 1.6;
+        text-align: center;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .quiz-box {
+        display: none;
+        background: #fff7ed;
+        border: 2px solid #fb923c;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-top: 16px;
+        text-align: center;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .quiz-box input {
+        width: 80px;
+        height: 32px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+        margin: 0 8px;
+    }
+    .quiz-feedback {
+        margin-top: 8px;
+        font-weight: 700;
+    }
+    .quiz-feedback.ok { color: #16a34a; }
+    .quiz-feedback.bad { color: #dc2626; }
+
+    .legend {
+        display: flex;
+        justify-content: center;
+        gap: 10px 18px;
+        flex-wrap: wrap;
+        margin-top: 24px;
+        max-width: 800px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #475569;
+    }
+    .legend-swatch {
+        width: 18px; height: 18px;
+        border-radius: 4px;
+    }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+<div class="container">
+    <h1>행렬 곱셈 시각화</h1>
+    <p class="formula">A × T = R</p>
+    <p class="subtitle">행렬의 각 칸 오른쪽 위 (a, b)는 "a"행, "b"열을 뜻하는 좌표입니다.</p>
+
+    <div class="work-card">
+        <div class="panel">
+            <div class="panel-title">입력 행렬 A</div>
+            <div class="size-select">
+                행렬 A 크기:
+                <select id="rowsA"><option>2</option><option selected>3</option><option>4</option></select>
+                ×
+                <select id="colsA"><option>2</option><option selected>3</option><option>4</option></select>
+            </div>
+            <div class="hint-text">값에 0~9의 값을 입력해보세요.</div>
+            <div class="matrix-grid" id="gridA"></div>
+            <div class="btn-row">
+                <button class="mini-btn btn-purple" id="btnRandomA">🎲 랜덤 값 생성</button>
+                <button class="mini-btn btn-cyan" id="btnTranspose">🔄 전치행렬</button>
+            </div>
+        </div>
+
+        <div class="op-symbol">×</div>
+
+        <div class="panel">
+            <div class="panel-title">변환 행렬 T</div>
+            <div class="size-select">
+                행렬 T 열 크기:
+                <select id="colsT"><option>2</option><option selected>3</option><option>4</option></select>
+            </div>
+            <div class="checkbox-row">
+                <input type="checkbox" id="binaryOnly"> 0과 1만 입력 가능
+            </div>
+            <div class="matrix-grid" id="gridT"></div>
+            <div class="btn-row">
+                <button class="mini-btn btn-purple" id="btnRandomT">🎲 랜덤 값 생성</button>
+            </div>
+        </div>
+
+        <div class="op-symbol">=</div>
+
+        <div class="panel">
+            <div class="panel-title">결과 행렬 R = A × T</div>
+            <div class="matrix-grid" id="gridR"></div>
+            <div class="expr-line" id="exprLine">결과 행렬의 칸에 마우스를 올려보세요.</div>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <button class="action-btn btn-orange" id="btnCompete">🏆 경쟁모드</button>
+        <button class="action-btn btn-pink" id="btnSwap">🔄 역할 뒤집기 (A×T ↔ T×A)</button>
+        <button class="action-btn btn-teal" id="btnReset">초기화</button>
+    </div>
+
+    <div class="quiz-box" id="quizBox">
+        <div id="quizQuestion">R(1,1)의 값은 무엇일까요?</div>
+        <div style="margin-top:10px;">
+            <input type="number" id="quizInput">
+            <button class="mini-btn btn-purple" id="quizSubmit" style="width:auto; display:inline-block;">확인</button>
+        </div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+    </div>
+
+    <div class="info-box">
+        💡 결과 행렬의 각 칸에 마우스를 올려보세요! 강조되는 A 행렬의 행과 T 행렬의 열이 서로 곱해진 값입니다.<br>
+        예: R(1,1)은 왼쪽 행렬의 1행과 오른쪽 행렬의 1열을 곱한 결과입니다.
+    </div>
+
+    <div class="legend" id="legend"></div>
+</div>
+
+<script>
+    const PALETTE = [
+        { hex: '#ef4444', name: '빨강', dark: false },
+        { hex: '#f97316', name: '주황', dark: false },
+        { hex: '#eab308', name: '노랑', dark: true },
+        { hex: '#a3e635', name: '연두', dark: true },
+        { hex: '#22c55e', name: '초록', dark: false },
+        { hex: '#22d3ee', name: '하늘', dark: true },
+        { hex: '#3b82f6', name: '파랑', dark: false },
+        { hex: '#1e3a8a', name: '남색', dark: false },
+        { hex: '#7e22ce', name: '보라', dark: false },
+        { hex: '#6b7280', name: '회색', dark: false },
+    ];
+
+    function colorFor(value) {
+        const idx = ((Math.round(value) % 10) + 10) % 10;
+        return PALETTE[idx];
+    }
+
+    let rowsA = 3, colsA = 3, colsT = 3;
+    let A = [], T = [];
+    let binaryOnly = false;
+
+    function makeMatrix(r, c, fill = 0) {
+        return Array.from({ length: r }, () => Array(c).fill(fill));
+    }
+    A = makeMatrix(rowsA, colsA, 0);
+    // seed A with the example from the reference image
+    const seed = [[1,2,3],[4,5,6],[7,8,9]];
+    for (let r = 0; r < rowsA && r < 3; r++) for (let c = 0; c < colsA && c < 3; c++) A[r][c] = seed[r][c];
+    T = makeMatrix(colsA, colsT, 0);
+
+    const rowsASel = document.getElementById('rowsA');
+    const colsASel = document.getElementById('colsA');
+    const colsTSel = document.getElementById('colsT');
+    const binaryCheckbox = document.getElementById('binaryOnly');
+    const gridA = document.getElementById('gridA');
+    const gridT = document.getElementById('gridT');
+    const gridR = document.getElementById('gridR');
+    const exprLine = document.getElementById('exprLine');
+
+    function resizeT(newRows, newCols) {
+        const next = makeMatrix(newRows, newCols, 0);
+        for (let r = 0; r < Math.min(newRows, T.length); r++) {
+            for (let c = 0; c < Math.min(newCols, T[0] ? T[0].length : 0); c++) {
+                next[r][c] = T[r][c];
+            }
+        }
+        T = next;
+    }
+
+    function renderAll() {
+        gridA.style.gridTemplateColumns = `repeat(${colsA}, 52px)`;
+        gridA.innerHTML = '';
+        for (let r = 0; r < rowsA; r++) {
+            for (let c = 0; c < colsA; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'mcell input-cell';
+                const col = colorFor(A[r][c]);
+                cell.style.background = col.hex;
+                cell.style.color = col.dark ? '#1e293b' : '#ffffff';
+                const coord = document.createElement('span');
+                coord.className = 'coord';
+                coord.textContent = `(${r + 1},${c + 1})`;
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = 0; input.max = 9;
+                input.value = A[r][c];
+                input.addEventListener('input', () => {
+                    let v = Math.min(9, Math.max(0, parseInt(input.value) || 0));
+                    A[r][c] = v;
+                    const nc = colorFor(v);
+                    cell.style.background = nc.hex;
+                    cell.style.color = nc.dark ? '#1e293b' : '#ffffff';
+                    computeR();
+                });
+                cell.appendChild(coord);
+                cell.appendChild(input);
+                gridA.appendChild(cell);
+            }
+        }
+
+        gridT.style.gridTemplateColumns = `repeat(${colsT}, 52px)`;
+        gridT.innerHTML = '';
+        for (let r = 0; r < colsA; r++) {
+            for (let c = 0; c < colsT; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'mcell input-cell';
+                const col = colorFor(T[r][c]);
+                cell.style.background = col.hex;
+                cell.style.color = col.dark ? '#1e293b' : '#ffffff';
+                const coord = document.createElement('span');
+                coord.className = 'coord';
+                coord.textContent = `(${r + 1},${c + 1})`;
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.min = 0; input.max = binaryOnly ? 1 : 9;
+                input.value = T[r][c];
+                input.addEventListener('input', () => {
+                    const max = binaryOnly ? 1 : 9;
+                    let v = Math.min(max, Math.max(0, parseInt(input.value) || 0));
+                    T[r][c] = v;
+                    input.value = v;
+                    const nc = colorFor(v);
+                    cell.style.background = nc.hex;
+                    cell.style.color = nc.dark ? '#1e293b' : '#ffffff';
+                    computeR();
+                });
+                cell.appendChild(coord);
+                cell.appendChild(input);
+                gridT.appendChild(cell);
+            }
+        }
+
+        computeR();
+    }
+
+    let R = [];
+    function computeR() {
+        R = makeMatrix(rowsA, colsT, 0);
+        for (let r = 0; r < rowsA; r++) {
+            for (let c = 0; c < colsT; c++) {
+                let sum = 0;
+                for (let k = 0; k < colsA; k++) sum += A[r][k] * T[k][c];
+                R[r][c] = sum;
+            }
+        }
+        renderR();
+    }
+
+    function renderR() {
+        gridR.style.gridTemplateColumns = `repeat(${colsT}, 52px)`;
+        gridR.innerHTML = '';
+        for (let r = 0; r < rowsA; r++) {
+            for (let c = 0; c < colsT; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'mcell result-cell';
+                const col = colorFor(R[r][c]);
+                cell.style.background = col.hex;
+                cell.style.color = col.dark ? '#1e293b' : '#ffffff';
+                const coord = document.createElement('span');
+                coord.className = 'coord';
+                coord.textContent = `(${r + 1},${c + 1})`;
+                const val = document.createElement('span');
+                val.textContent = R[r][c];
+                cell.appendChild(coord);
+                cell.appendChild(val);
+                cell.addEventListener('mouseenter', () => highlightRC(r, c));
+                cell.addEventListener('mouseleave', () => clearHighlight());
+                gridR.appendChild(cell);
+            }
+        }
+    }
+
+    function highlightRC(r, c) {
+        const aCells = gridA.children;
+        for (let i = 0; i < aCells.length; i++) {
+            const rr = Math.floor(i / colsA);
+            if (rr === r) aCells[i].classList.add('highlight');
+        }
+        const tCells = gridT.children;
+        for (let i = 0; i < tCells.length; i++) {
+            const cc = i % colsT;
+            if (cc === c) tCells[i].classList.add('highlight');
+        }
+        const terms = [];
+        for (let k = 0; k < colsA; k++) terms.push(`${A[r][k]}×${T[k][c]}`);
+        exprLine.textContent = `R(${r + 1},${c + 1}) = ${terms.join(' + ')} = ${R[r][c]}`;
+    }
+    function clearHighlight() {
+        Array.from(gridA.children).forEach(el => el.classList.remove('highlight'));
+        Array.from(gridT.children).forEach(el => el.classList.remove('highlight'));
+        exprLine.textContent = '결과 행렬의 칸에 마우스를 올려보세요.';
+    }
+
+    rowsASel.addEventListener('change', () => {
+        rowsA = parseInt(rowsASel.value);
+        A = (() => {
+            const next = makeMatrix(rowsA, colsA, 0);
+            for (let r = 0; r < Math.min(rowsA, A.length); r++)
+                for (let c = 0; c < colsA; c++) next[r][c] = A[r][c];
+            return next;
+        })();
+        renderAll();
+    });
+    colsASel.addEventListener('change', () => {
+        colsA = parseInt(colsASel.value);
+        A = (() => {
+            const next = makeMatrix(rowsA, colsA, 0);
+            for (let r = 0; r < rowsA; r++)
+                for (let c = 0; c < Math.min(colsA, A[0] ? A[0].length : 0); c++) next[r][c] = A[r][c];
+            return next;
+        })();
+        resizeT(colsA, colsT);
+        renderAll();
+    });
+    colsTSel.addEventListener('change', () => {
+        colsT = parseInt(colsTSel.value);
+        resizeT(colsA, colsT);
+        renderAll();
+    });
+    binaryCheckbox.addEventListener('change', () => {
+        binaryOnly = binaryCheckbox.checked;
+        if (binaryOnly) {
+            for (let r = 0; r < T.length; r++) for (let c = 0; c < T[0].length; c++) T[r][c] = T[r][c] > 0 ? 1 : 0;
+        }
+        renderAll();
+    });
+
+    document.getElementById('btnRandomA').addEventListener('click', () => {
+        for (let r = 0; r < rowsA; r++) for (let c = 0; c < colsA; c++) A[r][c] = Math.floor(Math.random() * 10);
+        renderAll();
+    });
+    document.getElementById('btnRandomT').addEventListener('click', () => {
+        const max = binaryOnly ? 2 : 10;
+        for (let r = 0; r < colsA; r++) for (let c = 0; c < colsT; c++) T[r][c] = Math.floor(Math.random() * max);
+        renderAll();
+    });
+    document.getElementById('btnTranspose').addEventListener('click', () => {
+        const newRows = colsA, newCols = rowsA;
+        const next = makeMatrix(newRows, newCols, 0);
+        for (let r = 0; r < rowsA; r++) for (let c = 0; c < colsA; c++) next[c][r] = A[r][c];
+        A = next;
+        rowsA = newRows; colsA = newCols;
+        rowsASel.value = String(rowsA);
+        colsASel.value = String(colsA);
+        resizeT(colsA, colsT);
+        renderAll();
+    });
+
+    document.getElementById('btnSwap').addEventListener('click', () => {
+        // T×A만 성립하려면 T의 열 크기가 A의 행 크기와 같아야 합니다.
+        if (colsT !== rowsA) {
+            alert(`역할을 뒤집으려면 "T 열 크기"(현재 ${colsT})가 "A 행 크기"(현재 ${rowsA})와 같아야 T×A가 성립합니다.\n두 크기를 같게 맞춘 뒤 다시 시도해 주세요.`);
+            return;
+        }
+        const oldA = A, oldT = T;
+        const newRowsA = colsA, newColsA = colsT, newColsT = colsA;
+        A = oldT.map(row => row.slice());
+        T = oldA.map(row => row.slice());
+        rowsA = newRowsA; colsA = newColsA; colsT = newColsT;
+        rowsASel.value = String(rowsA);
+        colsASel.value = String(colsA);
+        colsTSel.value = String(colsT);
+        renderAll();
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+        rowsA = 3; colsA = 3; colsT = 3;
+        rowsASel.value = '3'; colsASel.value = '3'; colsTSel.value = '3';
+        binaryOnly = false; binaryCheckbox.checked = false;
+        A = makeMatrix(3, 3, 0);
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) A[r][c] = seed[r][c];
+        T = makeMatrix(3, 3, 0);
+        quizBox.style.display = 'none';
+        renderAll();
+    });
+
+    const quizBox = document.getElementById('quizBox');
+    const quizQuestion = document.getElementById('quizQuestion');
+    const quizInput = document.getElementById('quizInput');
+    const quizFeedback = document.getElementById('quizFeedback');
+    let quizAnswer = null;
+
+    document.getElementById('btnCompete').addEventListener('click', () => {
+        const r = Math.floor(Math.random() * rowsA);
+        const c = Math.floor(Math.random() * colsT);
+        quizAnswer = R[r][c];
+        quizQuestion.textContent = `R(${r + 1},${c + 1})의 값은 무엇일까요? A의 ${r + 1}행과 T의 ${c + 1}열을 직접 곱해서 더해 보세요.`;
+        quizInput.value = '';
+        quizFeedback.textContent = '';
+        quizFeedback.className = 'quiz-feedback';
+        quizBox.style.display = 'block';
+        quizBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    document.getElementById('quizSubmit').addEventListener('click', () => {
+        const guess = parseInt(quizInput.value);
+        if (isNaN(guess)) { quizFeedback.textContent = '숫자를 입력해 주세요.'; quizFeedback.className = 'quiz-feedback bad'; return; }
+        if (guess === quizAnswer) {
+            quizFeedback.textContent = `정답입니다! 🎉 (정답: ${quizAnswer})`;
+            quizFeedback.className = 'quiz-feedback ok';
+        } else {
+            quizFeedback.textContent = `아쉬워요. 정답은 ${quizAnswer}입니다.`;
+            quizFeedback.className = 'quiz-feedback bad';
+        }
+    });
+
+    // 색상 범례
+    const legend = document.getElementById('legend');
+    PALETTE.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `<span class="legend-swatch" style="background:${p.hex}"></span>${i} = ${p.name}`;
+        legend.appendChild(item);
+    });
+
+    renderAll();
+</script>
+</body>
+</html>
