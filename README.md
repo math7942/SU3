@@ -64,6 +64,7 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 | 업무 도구 | `03-work/image-resize.html` | 이미지 크기 변환 |
 | 업무 도구 | `03-work/photo-format.html` | 원서용 사진 규격 변환 |
 | 업무 도구 | `03-work/exam-range.html` | 3학년 시험범위 수합 |
+| 업무 도구 | `03-work/interview-prep.html` | 면접 준비 (면접 편성표) |
 
 수학교사 1년 살이는 `04-festival/`에 8단계 가이드·도구로 전체 공개됐습니다. 수수는 아직 비어 있습니다.
 
