@@ -242,7 +242,10 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   .masthead, .controls-panel, #toggleAllBtn{ display:none!important; }
   .print-only{ display:block; }
   .stats-bar{ box-shadow:none; }
-  .stat-tile, .group-block{ box-shadow:none; border-color:#bbb; break-inside:avoid; }
+  .stat-tile, .group-block{ box-shadow:none; border-color:#bbb; }
+  .stat-tile{ break-inside:avoid; }
+  .group-block{ break-inside:auto; }
+  .group-block summary{ break-after:avoid; page-break-after:avoid; }
   thead{ display:table-header-group; }
   tr{ break-inside:avoid; }
   .group-block{ margin-bottom:8px; }
@@ -646,7 +649,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
   function render(){
     var label = currentScheduleLabel();
-    DIM_BY_ID.month.label = label + ' 월';
+    DIM_BY_ID.month.label = label + ' 날짜';
     var filterLabelSpan = document.getElementById('filterInterviewLabel');
     if(filterLabelSpan) filterLabelSpan.textContent = label + ' 일정이 있는 전형만 보기';
     var presetDateBtn = document.querySelector('.preset[data-preset="date"]');
