@@ -112,7 +112,7 @@ body{
 }
 .stats-bar{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr)) minmax(220px,1.6fr);
+  grid-template-columns:repeat(3,minmax(0,1fr)) minmax(200px,1.4fr) minmax(220px,1.6fr);
   gap:10px;
 }
 .stat-tile{
@@ -233,7 +233,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 .empty-msg{ padding:30px; text-align:center; color:var(--ink-dim); background:var(--surface); border:1px dashed var(--border); border-radius:10px; }
 @media (max-width:640px){
   .stats-bar{ grid-template-columns:repeat(2,1fr); }
-  .stat-tracks{ grid-column:1 / -1; }
+  .stat-tracks, .stat-schedule{ grid-column:1 / -1; }
   .masthead-top{ align-items:flex-start; }
 }
 @media print{
@@ -709,11 +709,19 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
     fileStatus.textContent = '불러온 파일: ' + state.currentFilename + ' · 전체 ' + totalAll + '건 · ' + label + ' 필요 ' + totalInterview + '건';
 
+    var typeCounts = SCHEDULE_TYPES.map(function(t){
+      return { label: t.label, count: state.rows.filter(function(r){ return !!r[t.id]; }).length };
+    });
+
     statsBar.innerHTML =
       '<div class="stat-tile"><span class="stat-num">' + totalAll + '</span><span class="stat-label">전체 지원 건수</span></div>' +
-      '<div class="stat-tile"><span class="stat-num">' + totalInterview + '</span><span class="stat-label">' + esc(label) + ' 필요 전형</span></div>' +
       '<div class="stat-tile"><span class="stat-num">' + rows.length + '</span><span class="stat-label">현재 표시 중</span></div>' +
       '<div class="stat-tile"><span class="stat-num">' + studentCount + '</span><span class="stat-label">해당 학생 수</span></div>' +
+      '<div class="stat-tile stat-schedule"><span class="stat-label">일정 유형별 건수</span><div class="track-legend">' +
+        typeCounts.map(function(t){
+          return '<span class="legend-item">' + esc(t.label) + ' ' + t.count + '</span>';
+        }).join('') +
+      '</div></div>' +
       '<div class="stat-tile stat-tracks"><span class="stat-label">계열 분포</span><div class="track-legend">' +
         trackKeys.map(function(t){
           return '<span class="legend-item"><span class="track-dot" style="--dot:' + (TRACK_COLOR[t]||'var(--ink-dim)') + '"></span>' + esc(t) + ' ' + trackCounts[t] + '</span>';
