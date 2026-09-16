@@ -246,13 +246,14 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   thead{ display:table-header-group; }
   tr{ break-inside:avoid; }
   .group-block{ margin-bottom:8px; }
+  .result > .group-block[data-dim="month"] + .group-block[data-dim="month"]{ break-before:page; page-break-before:always; }
 }
 </style>
 
 <div class="page">
   <div class="print-only print-header">
     <p class="eyebrow">수시 지원 현황</p>
-    <h1 style="font-family:var(--font-display);font-size:22px;margin:0 0 4px;">면접 편성표</h1>
+    <h1 id="printTitle" style="font-family:var(--font-display);font-size:22px;margin:0 0 4px;">면접 편성표</h1>
     <p id="printMeta" style="margin:0;font-size:12.5px;color:#555;"></p>
     <p id="printDate" style="margin:2px 0 0;font-size:11.5px;color:#777;"></p>
   </div>
@@ -261,7 +262,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     <div class="masthead-top">
       <div class="title-group">
         <p class="eyebrow">수시 지원 현황</p>
-        <h1>면접 편성표</h1>
+        <h1 id="mastheadTitle">면접 편성표</h1>
       </div>
       <div class="file-controls">
         <label class="btn btn-primary" for="fileInput">엑셀 불러오기</label>
@@ -276,7 +277,13 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
   <section class="controls-panel">
     <div class="control-row">
-      <label class="switch"><input type="checkbox" id="filterInterview"><span>면접 일정이 있는 전형만 보기</span></label>
+      <span class="control-label">일정 유형</span>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="interview">면접</button>
+      <button type="button" class="chip schedule-type-chip" data-schedule="essay">논술</button>
+      <button type="button" class="chip schedule-type-chip" data-schedule="practical">실기</button>
+    </div>
+    <div class="control-row">
+      <label class="switch"><input type="checkbox" id="filterInterview"><span id="filterInterviewLabel">면접 일정이 있는 전형만 보기</span></label>
       <label class="switch"><input type="checkbox" id="showExtra"><span>전형유형 · 계열 · 지역 함께 보기</span></label>
     </div>
     <div class="control-row">
@@ -305,6 +312,12 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 (function(){
   var RAW_DATA = [];
   var SOURCE_FILENAME = null;
+
+  var SCHEDULE_TYPES = [
+    {id:'interview', label:'면접', excelCol:'면접일자'},
+    {id:'essay', label:'논술', excelCol:'논술일자'},
+    {id:'practical', label:'실기', excelCol:'실기일자'}
+  ];
 
   var TRACK_PRIORITY = ['인문','사회','자연','공학','예체능','공통','미분류'];
   var TRACK_COLOR = {
@@ -349,7 +362,10 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     {id:'type1', label:'전형유형', get:function(r){ return r.type1 || '미기재'; }},
     {id:'type2', label:'전형명', get:function(r){ return r.type2 || '미기재'; }},
     {id:'region', label:'지역', get:function(r){ return r.region || '미기재'; }},
-    {id:'month', label:'면접 월', get:function(r){ return r.interview ? (r.interview.start.slice(0,7).replace('-','.') + '월') : '일정 미정'; }}
+    {id:'month', label:'면접 월', get:function(r){
+      var v = r[state.scheduleField];
+      return v ? (v.start.slice(0,7).replace('-','.') + '월') : '일정 미정';
+    }}
   ];
   var DIM_BY_ID = {};
   DIMENSIONS.forEach(function(d){ DIM_BY_ID[d.id] = d; });
@@ -360,7 +376,9 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     filterInterview: true,
     showExtra: false,
     groupFields: [],
-    allOpen: true
+    allOpen: true,
+    scheduleField: 'interview',
+    scheduleLabel: '면접'
   };
   var MULTI_GRADE = false;
   var YEAR_MULTI = false;
@@ -386,10 +404,23 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   filterCb.addEventListener('change', function(){ state.filterInterview = filterCb.checked; render(); });
   extraCb.addEventListener('change', function(){ state.showExtra = extraCb.checked; render(); });
 
+  Array.prototype.forEach.call(document.querySelectorAll('.schedule-type-chip'), function(btn){
+    btn.addEventListener('click', function(){
+      var type = SCHEDULE_TYPES.filter(function(t){ return t.id === btn.dataset.schedule; })[0];
+      if(!type) return;
+      state.scheduleField = type.id;
+      state.scheduleLabel = type.label;
+      Array.prototype.forEach.call(document.querySelectorAll('.schedule-type-chip'), function(b){
+        b.classList.toggle('active', b === btn);
+      });
+      render();
+    });
+  });
+
   Array.prototype.forEach.call(document.querySelectorAll('.preset'), function(btn){
     btn.addEventListener('click', function(){
       var p = btn.dataset.preset;
-      if(p === 'date'){ state.groupFields = []; state.filterInterview = true; }
+      if(p === 'date'){ state.groupFields = ['month']; state.filterInterview = true; }
       else if(p === 'track'){ state.groupFields = ['track']; state.filterInterview = true; }
       else if(p === 'reset'){ state.groupFields = []; state.filterInterview = true; state.showExtra = false; }
       filterCb.checked = state.filterInterview;
@@ -457,6 +488,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         track: cellStr(get(row,'계열')) || '미분류',
         region: cellStr(get(row,'지역')) || '',
         interview: parseRangeJS(get(row,'면접일자')),
+        essay: parseRangeJS(get(row,'논술일자')),
+        practical: parseRangeJS(get(row,'실기일자')),
         regStatus: cellStr(get(row,'등록여부')) || '',
         note: cellStr(get(row,'비고')) || ''
       });
@@ -513,8 +546,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
   function leafSort(rows){
     return rows.slice().sort(function(a,b){
-      var da = a.interview ? a.interview.start : '9999-99-99';
-      var db = b.interview ? b.interview.start : '9999-99-99';
+      var da = a[state.scheduleField] ? a[state.scheduleField].start : '9999-99-99';
+      var db = b[state.scheduleField] ? b[state.scheduleField].start : '9999-99-99';
       if(da !== db) return da < db ? -1 : 1;
       return (a.major||'').localeCompare(b.major||'','ko');
     });
@@ -544,7 +577,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       {id:'major', label:'모집단위'},
       {id:'track', label:'계열'},
       {id:'region', label:'지역'},
-      {id:'interview', label:'면접일자'}
+      {id:'schedule', label: state.scheduleLabel + '일자'}
     ];
     return base.filter(function(c){
       if(activeDimIds.indexOf(c.id) !== -1) return false;
@@ -558,7 +591,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     var head = '<th>학생</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('');
     var body = rows.map(function(r){
       var cells = cols.map(function(c){
-        if(c.id === 'interview') return '<td class="mono">' + fmtRange(r.interview, YEAR_MULTI) + '</td>';
+        if(c.id === 'schedule') return '<td class="mono">' + fmtRange(r[state.scheduleField], YEAR_MULTI) + '</td>';
         if(c.id === 'track'){
           var color = TRACK_COLOR[r.track] || 'var(--ink-dim)';
           return '<td><span class="track-dot" style="--dot:' + color + '"></span>' + esc(r.track) + '</td>';
@@ -576,7 +609,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     return node.children.map(function(child){
       var color = node.dim.id === 'track' ? (TRACK_COLOR[child.key] || 'var(--ink-dim)') : 'var(--accent)';
       var inner = renderNode(child.node, activeDimIds);
-      return '<details class="group-block" style="--group-accent:' + color + '" open>' +
+      return '<details class="group-block" data-dim="' + esc(node.dim.id) + '" style="--group-accent:' + color + '" open>' +
         '<summary><span class="group-label">' + esc(node.dim.label) + ' · ' + esc(child.key) + '</span>' +
         '<span class="group-count">' + child.rows.length + '건</span></summary>' +
         '<div class="group-body">' + inner + '</div></details>';
@@ -584,6 +617,16 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   }
 
   function render(){
+    DIM_BY_ID.month.label = state.scheduleLabel + ' 월';
+    var filterLabelSpan = document.getElementById('filterInterviewLabel');
+    if(filterLabelSpan) filterLabelSpan.textContent = state.scheduleLabel + ' 일정이 있는 전형만 보기';
+    var presetDateBtn = document.querySelector('.preset[data-preset="date"]');
+    if(presetDateBtn) presetDateBtn.textContent = '① ' + state.scheduleLabel + ' 일정순';
+    var mastheadTitle = document.getElementById('mastheadTitle');
+    if(mastheadTitle) mastheadTitle.textContent = state.scheduleLabel + ' 편성표';
+    var printTitleEl = document.getElementById('printTitle');
+    if(printTitleEl) printTitleEl.textContent = state.scheduleLabel + ' 편성표';
+
     if(state.rows.length === 0){
       fileStatus.textContent = '아직 불러온 파일이 없습니다. 위의 [엑셀 불러오기] 버튼으로 수시진학관리 엑셀 파일을 올려주세요.';
       statsBar.innerHTML = '';
@@ -599,16 +642,16 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     })();
 
     var rows = state.rows;
-    if(state.filterInterview) rows = rows.filter(function(r){ return r.interview; });
+    if(state.filterInterview) rows = rows.filter(function(r){ return r[state.scheduleField]; });
 
     YEAR_MULTI = (function(){
       var s = {}; var n = 0;
-      rows.forEach(function(r){ if(r.interview){ var y = r.interview.start.slice(0,4); if(!s[y]){ s[y]=1; n++; } } });
+      rows.forEach(function(r){ var v = r[state.scheduleField]; if(v){ var y = v.start.slice(0,4); if(!s[y]){ s[y]=1; n++; } } });
       return n > 1;
     })();
 
     var totalAll = state.rows.length;
-    var totalInterview = state.rows.filter(function(r){ return r.interview; }).length;
+    var totalInterview = state.rows.filter(function(r){ return r[state.scheduleField]; }).length;
     var studentSet = {};
     rows.forEach(function(r){ studentSet[r.grade+'-'+r.classNo+'-'+r.no] = 1; });
     var studentCount = Object.keys(studentSet).length;
@@ -621,11 +664,11 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     });
     var trackKeys = sortKeys(trackOrder, DIM_BY_ID.track);
 
-    fileStatus.textContent = '불러온 파일: ' + state.currentFilename + ' · 전체 ' + totalAll + '건 · 면접 필요 ' + totalInterview + '건';
+    fileStatus.textContent = '불러온 파일: ' + state.currentFilename + ' · 전체 ' + totalAll + '건 · ' + state.scheduleLabel + ' 필요 ' + totalInterview + '건';
 
     statsBar.innerHTML =
       '<div class="stat-tile"><span class="stat-num">' + totalAll + '</span><span class="stat-label">전체 지원 건수</span></div>' +
-      '<div class="stat-tile"><span class="stat-num">' + totalInterview + '</span><span class="stat-label">면접 필요 전형</span></div>' +
+      '<div class="stat-tile"><span class="stat-num">' + totalInterview + '</span><span class="stat-label">' + esc(state.scheduleLabel) + ' 필요 전형</span></div>' +
       '<div class="stat-tile"><span class="stat-num">' + rows.length + '</span><span class="stat-label">현재 표시 중</span></div>' +
       '<div class="stat-tile"><span class="stat-num">' + studentCount + '</span><span class="stat-label">해당 학생 수</span></div>' +
       '<div class="stat-tile stat-tracks"><span class="stat-label">계열 분포</span><div class="track-legend">' +
@@ -651,7 +694,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
     var descTxt;
     if(state.groupFields.length === 0){
-      descTxt = '면접일자 순으로 정렬된 전체 목록입니다.';
+      descTxt = state.scheduleLabel + '일자 순으로 정렬된 전체 목록입니다.';
     }else{
       descTxt = state.groupFields.map(function(id){ return DIM_BY_ID[id].label; }).join(' → ') + ' 순으로 그룹화했습니다.';
     }
