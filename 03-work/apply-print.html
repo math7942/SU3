@@ -143,6 +143,36 @@
   .select-all input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
   .picked-count { color: var(--muted); font-size: 0.86rem; }
 
+  .section-label {
+    margin: 18px 0 8px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  .column-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .column-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+  .column-item:hover { border-color: var(--accent); }
+  .column-item input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex: none; }
+
   .student-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -188,8 +218,7 @@
     .back, header.hero, .upload-card, .picker { display: none !important; }
     #printArea { display: block; }
 
-    .print-student { break-after: page; page-break-after: always; }
-    .print-student:last-child { break-after: auto; page-break-after: auto; }
+    .print-student + .print-student { break-before: page; page-break-before: always; }
 
     .print-title {
       margin: 0 0 2px;
@@ -240,17 +269,8 @@
       print-color-adjust: exact;
     }
     table.apply tr { break-inside: avoid; }
-    .col-univ { width: 13%; }
-    .col-term { width: 5%; text-align: center; }
-    .col-type1 { width: 9%; }
-    .col-type2 { width: 9%; }
-    .col-detail { width: 11%; }
-    .col-track { width: 5%; text-align: center; }
-    .col-major { width: 10%; }
-    .col-capacity { width: 4%; text-align: center; }
-    .col-select { width: 6%; text-align: center; }
-    .col-minreq { width: 14%; }
-    .col-interview, .col-practical, .col-essay, .col-announce { width: 6.75%; text-align: center; }
+    .col-term, .col-track, .col-capacity, .col-select,
+    .col-interview, .col-practical, .col-essay, .col-announce { text-align: center; }
   }
 </style>
 </head>
@@ -282,6 +302,19 @@
   </div>
 
   <div id="picker" class="picker">
+    <p class="section-label">인쇄할 항목 선택</p>
+    <div class="picker-toolbar">
+      <div class="left">
+        <label class="select-all">
+          <input type="checkbox" id="selectAllColCb" checked>
+          전체 선택
+        </label>
+        <span class="picked-count" id="pickedColCount"></span>
+      </div>
+    </div>
+    <div class="column-grid" id="columnGrid"></div>
+
+    <p class="section-label">인쇄할 학생 선택</p>
     <div class="picker-toolbar">
       <div class="left">
         <label class="select-all">
@@ -305,20 +338,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   var COLUMNS = [
-    { id: 'univ', label: '대학명', cls: 'col-univ' },
-    { id: 'term', label: '모집시기', cls: 'col-term' },
-    { id: 'type1', label: '전형유형', cls: 'col-type1' },
-    { id: 'type2', label: '전형명', cls: 'col-type2' },
-    { id: 'detail', label: '세부유형', cls: 'col-detail' },
-    { id: 'track', label: '계열', cls: 'col-track' },
-    { id: 'major', label: '모집단위', cls: 'col-major' },
-    { id: 'capacity', label: '인원', cls: 'col-capacity' },
-    { id: 'selectType', label: '선발방법', cls: 'col-select' },
-    { id: 'minReq', label: '최저학력기준', cls: 'col-minreq' },
-    { id: 'interview', label: '면접', cls: 'col-interview' },
-    { id: 'practical', label: '실기', cls: 'col-practical' },
-    { id: 'essay', label: '논술', cls: 'col-essay' },
-    { id: 'announce', label: '발표', cls: 'col-announce' }
+    { id: 'univ', label: '대학명', cls: 'col-univ', width: 13 },
+    { id: 'term', label: '모집시기', cls: 'col-term', width: 5 },
+    { id: 'type1', label: '전형유형', cls: 'col-type1', width: 9 },
+    { id: 'type2', label: '전형명', cls: 'col-type2', width: 9 },
+    { id: 'detail', label: '세부유형', cls: 'col-detail', width: 11 },
+    { id: 'track', label: '계열', cls: 'col-track', width: 5 },
+    { id: 'major', label: '모집단위', cls: 'col-major', width: 10 },
+    { id: 'capacity', label: '인원', cls: 'col-capacity', width: 4 },
+    { id: 'selectType', label: '선발방법', cls: 'col-select', width: 6 },
+    { id: 'minReq', label: '최저학력기준', cls: 'col-minreq', width: 14 },
+    { id: 'interview', label: '면접', cls: 'col-interview', width: 6.75 },
+    { id: 'practical', label: '실기', cls: 'col-practical', width: 6.75 },
+    { id: 'essay', label: '논술', cls: 'col-essay', width: 6.75 },
+    { id: 'announce', label: '발표', cls: 'col-announce', width: 6.75 }
   ];
 
   var students = {}; // key(학년-반-번호) -> { grade, classNo, no, rows: [...] }
@@ -328,6 +361,9 @@
   var fileStatus = document.getElementById('fileStatus');
   var emptyMsg = document.getElementById('emptyMsg');
   var picker = document.getElementById('picker');
+  var columnGrid = document.getElementById('columnGrid');
+  var selectAllColCb = document.getElementById('selectAllColCb');
+  var pickedColCount = document.getElementById('pickedColCount');
   var studentGrid = document.getElementById('studentGrid');
   var selectAllCb = document.getElementById('selectAllCb');
   var pickedCount = document.getElementById('pickedCount');
@@ -432,9 +468,61 @@
     reader.readAsArrayBuffer(file);
   });
 
+  function renderColumnPicker() {
+    columnGrid.innerHTML = COLUMNS.map(function (c) {
+      return '<label class="column-item">' +
+        '<input type="checkbox" class="column-cb" data-id="' + esc(c.id) + '" checked>' +
+        '<span>' + esc(c.label) + '</span>' +
+        '</label>';
+    }).join('');
+
+    updatePickedColCount();
+
+    Array.prototype.forEach.call(columnGrid.querySelectorAll('.column-cb'), function (cb) {
+      cb.addEventListener('change', function () {
+        updatePickedColCount();
+        syncSelectAllCol();
+      });
+    });
+  }
+
+  function checkedColumns() {
+    var ids = {};
+    Array.prototype.forEach.call(columnGrid.querySelectorAll('.column-cb:checked'), function (cb) {
+      ids[cb.dataset.id] = true;
+    });
+    return COLUMNS.filter(function (c) { return ids[c.id]; });
+  }
+
+  function updatePickedColCount() {
+    var n = checkedColumns().length;
+    pickedColCount.textContent = n + ' / ' + COLUMNS.length + '개 선택됨';
+    updatePrintBtn();
+  }
+
+  function syncSelectAllCol() {
+    var total = columnGrid.querySelectorAll('.column-cb').length;
+    var checked = checkedColumns().length;
+    selectAllColCb.checked = checked === total;
+    selectAllColCb.indeterminate = checked > 0 && checked < total;
+  }
+
+  selectAllColCb.addEventListener('change', function () {
+    var checked = selectAllColCb.checked;
+    Array.prototype.forEach.call(columnGrid.querySelectorAll('.column-cb'), function (cb) {
+      cb.checked = checked;
+    });
+    updatePickedColCount();
+  });
+
+  function updatePrintBtn() {
+    printBtn.disabled = checkedKeys().length === 0 || checkedColumns().length === 0;
+  }
+
   function renderPicker() {
     emptyMsg.style.display = 'none';
     picker.classList.add('show');
+    renderColumnPicker();
 
     studentGrid.innerHTML = studentKeys.map(function (key) {
       var s = students[key];
@@ -465,7 +553,7 @@
   function updatePickedCount() {
     var n = checkedKeys().length;
     pickedCount.textContent = n + ' / ' + studentKeys.length + '명 선택됨';
-    printBtn.disabled = n === 0;
+    updatePrintBtn();
   }
 
   function syncSelectAll() {
@@ -483,10 +571,14 @@
     updatePickedCount();
   });
 
-  function renderStudentTable(s) {
-    var head = COLUMNS.map(function (c) { return '<th class="' + c.cls + '">' + esc(c.label) + '</th>'; }).join('');
+  function renderStudentTable(s, cols) {
+    var totalWidth = cols.reduce(function (sum, c) { return sum + c.width; }, 0);
+    var pct = function (c) { return (c.width / totalWidth * 100).toFixed(2) + '%'; };
+    var head = cols.map(function (c) {
+      return '<th class="' + c.cls + '" style="width:' + pct(c) + '">' + esc(c.label) + '</th>';
+    }).join('');
     var body = s.rows.map(function (r) {
-      var cells = COLUMNS.map(function (c) {
+      var cells = cols.map(function (c) {
         return '<td class="' + c.cls + '">' + esc(r[c.id] || '—') + '</td>';
       }).join('');
       return '<tr>' + cells + '</tr>';
@@ -496,7 +588,8 @@
 
   printBtn.addEventListener('click', function () {
     var keys = checkedKeys();
-    if (!keys.length) return;
+    var cols = checkedColumns();
+    if (!keys.length || !cols.length) return;
 
     printArea.innerHTML = keys.map(function (key) {
       var s = students[key];
@@ -504,7 +597,7 @@
         '<div class="print-title">2026학년도 수시 원서접수 현황</div>' +
         '<div class="print-student-id">' + esc(studentLabel(s)) + '</div>' +
         '<p class="print-summary">지원 ' + s.rows.length + '건</p>' +
-        renderStudentTable(s) +
+        renderStudentTable(s, cols) +
         '</div>';
     }).join('');
 
