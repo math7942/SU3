@@ -279,9 +279,9 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     <div class="control-row">
       <span class="control-label">일정 유형</span>
       <button type="button" class="chip schedule-type-chip active" data-schedule="interview">면접</button>
-      <button type="button" class="chip schedule-type-chip" data-schedule="essay">논술</button>
-      <button type="button" class="chip schedule-type-chip" data-schedule="practical">실기</button>
-      <button type="button" class="chip schedule-type-chip" data-schedule="aptitude">적성</button>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="essay">논술</button>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="practical">실기</button>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="aptitude">적성</button>
     </div>
     <div class="control-row">
       <label class="switch"><input type="checkbox" id="filterInterview"><span id="filterInterviewLabel">면접 일정이 있는 전형만 보기</span></label>
@@ -357,6 +357,21 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     return sTxt + ' ~ ' + eTxt;
   }
 
+  function selectedTypes(){
+    return SCHEDULE_TYPES.filter(function(t){ return state.scheduleFields.indexOf(t.id) !== -1; });
+  }
+  function currentScheduleLabel(){
+    return selectedTypes().map(function(t){ return t.label; }).join('+');
+  }
+  function primaryDate(r){
+    var min = null;
+    state.scheduleFields.forEach(function(id){
+      var v = r[id];
+      if(v && (!min || v.start < min)) min = v.start;
+    });
+    return min;
+  }
+
   var DIMENSIONS = [
     {id:'track', label:'계열', get:function(r){ return r.track || '미분류'; }},
     {id:'major', label:'모집단위', get:function(r){ return r.major || '미기재'; }},
@@ -365,9 +380,9 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     {id:'type2', label:'전형명', get:function(r){ return r.type2 || '미기재'; }},
     {id:'region', label:'지역', get:function(r){ return r.region || '미기재'; }},
     {id:'student', label:'번호', get:function(r){ return studentLabel(r); }},
-    {id:'month', label:'면접 월', get:function(r){
-      var v = r[state.scheduleField];
-      return v ? (v.start.slice(0,7).replace('-','.') + '월') : '일정 미정';
+    {id:'month', label:'일정 월', get:function(r){
+      var d = primaryDate(r);
+      return d ? (d.slice(0,7).replace('-','.') + '월') : '일정 미정';
     }}
   ];
   var DIM_BY_ID = {};
@@ -380,8 +395,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     showExtra: false,
     groupFields: [],
     allOpen: true,
-    scheduleField: 'interview',
-    scheduleLabel: '면접'
+    scheduleFields: ['interview','essay','practical','aptitude']
   };
   var MULTI_GRADE = false;
   var YEAR_MULTI = false;
@@ -409,13 +423,16 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
   Array.prototype.forEach.call(document.querySelectorAll('.schedule-type-chip'), function(btn){
     btn.addEventListener('click', function(){
-      var type = SCHEDULE_TYPES.filter(function(t){ return t.id === btn.dataset.schedule; })[0];
-      if(!type) return;
-      state.scheduleField = type.id;
-      state.scheduleLabel = type.label;
-      Array.prototype.forEach.call(document.querySelectorAll('.schedule-type-chip'), function(b){
-        b.classList.toggle('active', b === btn);
-      });
+      var id = btn.dataset.schedule;
+      var idx = state.scheduleFields.indexOf(id);
+      if(idx !== -1){
+        if(state.scheduleFields.length === 1) return; // 최소 한 개는 선택되어 있어야 함
+        state.scheduleFields.splice(idx, 1);
+        btn.classList.remove('active');
+      }else{
+        state.scheduleFields.push(id);
+        btn.classList.add('active');
+      }
       render();
     });
   });
@@ -553,8 +570,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
   function leafSort(rows){
     return rows.slice().sort(function(a,b){
-      var da = a[state.scheduleField] ? a[state.scheduleField].start : '9999-99-99';
-      var db = b[state.scheduleField] ? b[state.scheduleField].start : '9999-99-99';
+      var da = primaryDate(a) || '9999-99-99';
+      var db = primaryDate(b) || '9999-99-99';
       if(da !== db) return da < db ? -1 : 1;
       if(a.grade !== b.grade) return (a.grade||'').localeCompare(b.grade||'','ko',{numeric:true});
       if(a.classNo !== b.classNo) return (a.classNo||'').localeCompare(b.classNo||'','ko',{numeric:true});
@@ -585,10 +602,12 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       {id:'type2', label:'전형명'},
       {id:'major', label:'모집단위'},
       {id:'track', label:'계열'},
-      {id:'region', label:'지역'},
-      {id:'schedule', label: state.scheduleLabel + '일자'}
+      {id:'region', label:'지역'}
     ];
-    return base.filter(function(c){
+    var scheduleCols = selectedTypes().map(function(t){
+      return {id:'sched_' + t.id, label: t.label + '일자', field: t.id};
+    });
+    return base.concat(scheduleCols).filter(function(c){
       if(activeDimIds.indexOf(c.id) !== -1) return false;
       if((c.id === 'track' || c.id === 'region' || c.id === 'type1') && !state.showExtra) return false;
       return true;
@@ -600,7 +619,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     var head = '<th>학생</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('');
     var body = rows.map(function(r){
       var cells = cols.map(function(c){
-        if(c.id === 'schedule') return '<td class="mono">' + fmtRange(r[state.scheduleField], YEAR_MULTI) + '</td>';
+        if(c.field) return '<td class="mono">' + fmtRange(r[c.field], YEAR_MULTI) + '</td>';
         if(c.id === 'track'){
           var color = TRACK_COLOR[r.track] || 'var(--ink-dim)';
           return '<td><span class="track-dot" style="--dot:' + color + '"></span>' + esc(r.track) + '</td>';
@@ -626,15 +645,16 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   }
 
   function render(){
-    DIM_BY_ID.month.label = state.scheduleLabel + ' 월';
+    var label = currentScheduleLabel();
+    DIM_BY_ID.month.label = label + ' 월';
     var filterLabelSpan = document.getElementById('filterInterviewLabel');
-    if(filterLabelSpan) filterLabelSpan.textContent = state.scheduleLabel + ' 일정이 있는 전형만 보기';
+    if(filterLabelSpan) filterLabelSpan.textContent = label + ' 일정이 있는 전형만 보기';
     var presetDateBtn = document.querySelector('.preset[data-preset="date"]');
-    if(presetDateBtn) presetDateBtn.textContent = '① ' + state.scheduleLabel + ' 일정순';
+    if(presetDateBtn) presetDateBtn.textContent = '① ' + label + ' 일정순';
     var mastheadTitle = document.getElementById('mastheadTitle');
-    if(mastheadTitle) mastheadTitle.textContent = state.scheduleLabel + ' 편성표';
+    if(mastheadTitle) mastheadTitle.textContent = label + ' 편성표';
     var printTitleEl = document.getElementById('printTitle');
-    if(printTitleEl) printTitleEl.textContent = state.scheduleLabel + ' 편성표';
+    if(printTitleEl) printTitleEl.textContent = label + ' 편성표';
 
     if(state.rows.length === 0){
       fileStatus.textContent = '아직 불러온 파일이 없습니다. 위의 [엑셀 불러오기] 버튼으로 수시진학관리 엑셀 파일을 올려주세요.';
@@ -651,16 +671,16 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     })();
 
     var rows = state.rows;
-    if(state.filterInterview) rows = rows.filter(function(r){ return r[state.scheduleField]; });
+    if(state.filterInterview) rows = rows.filter(function(r){ return primaryDate(r) !== null; });
 
     YEAR_MULTI = (function(){
       var s = {}; var n = 0;
-      rows.forEach(function(r){ var v = r[state.scheduleField]; if(v){ var y = v.start.slice(0,4); if(!s[y]){ s[y]=1; n++; } } });
+      rows.forEach(function(r){ var d = primaryDate(r); if(d){ var y = d.slice(0,4); if(!s[y]){ s[y]=1; n++; } } });
       return n > 1;
     })();
 
     var totalAll = state.rows.length;
-    var totalInterview = state.rows.filter(function(r){ return r[state.scheduleField]; }).length;
+    var totalInterview = state.rows.filter(function(r){ return primaryDate(r) !== null; }).length;
     var studentSet = {};
     rows.forEach(function(r){ studentSet[r.grade+'-'+r.classNo+'-'+r.no] = 1; });
     var studentCount = Object.keys(studentSet).length;
@@ -673,11 +693,11 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     });
     var trackKeys = sortKeys(trackOrder, DIM_BY_ID.track);
 
-    fileStatus.textContent = '불러온 파일: ' + state.currentFilename + ' · 전체 ' + totalAll + '건 · ' + state.scheduleLabel + ' 필요 ' + totalInterview + '건';
+    fileStatus.textContent = '불러온 파일: ' + state.currentFilename + ' · 전체 ' + totalAll + '건 · ' + label + ' 필요 ' + totalInterview + '건';
 
     statsBar.innerHTML =
       '<div class="stat-tile"><span class="stat-num">' + totalAll + '</span><span class="stat-label">전체 지원 건수</span></div>' +
-      '<div class="stat-tile"><span class="stat-num">' + totalInterview + '</span><span class="stat-label">' + esc(state.scheduleLabel) + ' 필요 전형</span></div>' +
+      '<div class="stat-tile"><span class="stat-num">' + totalInterview + '</span><span class="stat-label">' + esc(label) + ' 필요 전형</span></div>' +
       '<div class="stat-tile"><span class="stat-num">' + rows.length + '</span><span class="stat-label">현재 표시 중</span></div>' +
       '<div class="stat-tile"><span class="stat-num">' + studentCount + '</span><span class="stat-label">해당 학생 수</span></div>' +
       '<div class="stat-tile stat-tracks"><span class="stat-label">계열 분포</span><div class="track-legend">' +
@@ -703,7 +723,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
     var descTxt;
     if(state.groupFields.length === 0){
-      descTxt = state.scheduleLabel + '일자 순으로 정렬된 전체 목록입니다.';
+      descTxt = label + '일자 순으로 정렬된 전체 목록입니다.';
     }else{
       descTxt = state.groupFields.map(function(id){ return DIM_BY_ID[id].label; }).join(' → ') + ' 순으로 그룹화했습니다.';
     }
