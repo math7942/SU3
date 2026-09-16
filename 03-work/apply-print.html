@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원서접수 출력</title>
+<style>
+  :root {
+    --bg: #f2f0fa;
+    --surface: #ffffff;
+    --ink: #1b1830;
+    --ink-soft: #4a4666;
+    --muted: #7c7796;
+    --line: #e3dff2;
+    --accent: #c2601f;
+    --accent-soft: #fdeee0;
+    --good: #2f8f5b;
+    --good-soft: #e3f5ea;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 0 20px 72px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+      "Malgun Gothic", "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+
+  .page { max-width: 1100px; margin: 0 auto; }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 28px 0 22px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .back:hover { color: var(--accent); }
+
+  header.hero { padding: 4px 0 28px; }
+  .eyebrow {
+    display: inline-block;
+    margin: 0 0 14px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.6rem, 4vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  header.hero > p { max-width: 46em; margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+  .upload-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 22px 0 22px;
+    padding: 18px 22px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .upload-card .status { color: var(--muted); font-size: 0.88rem; }
+  .upload-card .status strong { color: var(--ink); }
+
+  .btn {
+    padding: 10px 18px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { opacity: 0.92; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--ink-soft);
+    border-color: var(--line);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  #fileInput { display: none; }
+
+  .empty-msg {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px dashed var(--line);
+    border-radius: 16px;
+    font-size: 0.92rem;
+  }
+
+  .picker { display: none; }
+  .picker.show { display: block; }
+
+  .picker-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .picker-toolbar .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .select-all input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .picked-count { color: var(--muted); font-size: 0.86rem; }
+
+  .student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    max-height: 420px;
+    overflow-y: auto;
+  }
+  .student-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 0.86rem;
+  }
+  .student-item:hover { border-color: var(--accent); }
+  .student-item input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; flex: none; }
+  .student-item .label { font-weight: 700; white-space: nowrap; }
+  .student-item .count { color: var(--muted); font-weight: 600; white-space: nowrap; }
+
+  .print-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .print-action-bar .hint { color: var(--muted); font-size: 0.84rem; margin-right: auto; }
+
+  #printArea { display: none; }
+
+  /* 학생별 한 페이지 인쇄 — A4 가로, 학생마다 새 페이지 */
+  @page { size: A4 landscape; margin: 10mm 12mm; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .back, header.hero, .upload-card, .picker { display: none !important; }
+    #printArea { display: block; }
+
+    .print-student { break-after: page; page-break-after: always; }
+    .print-student:last-child { break-after: auto; page-break-after: auto; }
+
+    .print-title {
+      margin: 0 0 2px;
+      font-size: 15pt;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+    .print-student-id {
+      margin: 0 0 8px;
+      font-size: 12pt;
+      font-weight: 700;
+      color: #444;
+      text-align: center;
+    }
+    .print-summary {
+      margin: 0 0 8px;
+      font-size: 8.5pt;
+      color: #333;
+      text-align: center;
+    }
+    table.apply {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 7.6pt;
+    }
+    table.apply th, table.apply td {
+      border: 1px solid #ccc;
+      padding: 4px 5px;
+      text-align: left;
+      vertical-align: top;
+      line-height: 1.28;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    table.apply thead th {
+      background: var(--accent-soft) !important;
+      color: var(--accent) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      font-weight: 700;
+      text-align: center;
+    }
+    table.apply tbody tr:nth-child(even) {
+      background: #f7f6fb !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    table.apply tr { break-inside: avoid; }
+    .col-univ { width: 13%; }
+    .col-term { width: 5%; text-align: center; }
+    .col-type1 { width: 9%; }
+    .col-type2 { width: 9%; }
+    .col-detail { width: 11%; }
+    .col-track { width: 5%; text-align: center; }
+    .col-major { width: 10%; }
+    .col-capacity { width: 4%; text-align: center; }
+    .col-select { width: 6%; text-align: center; }
+    .col-minreq { width: 14%; }
+    .col-interview, .col-practical, .col-essay, .col-announce { width: 6.75%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back" href="index.html">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    업무 도구
+  </a>
+
+  <header class="hero">
+    <span class="eyebrow">3학년 진학계</span>
+    <h1>원서접수 출력</h1>
+    <p>수시 원서접수 현황 엑셀을 올리면 학생별로 지원 내역을 정리합니다. 전체 학생 또는 원하는 학생만 골라 한 명당 한 페이지(A4 가로)로 출력할 수 있습니다.</p>
+  </header>
+
+  <div class="upload-card">
+    <p class="status" id="fileStatus">아직 불러온 파일이 없습니다.</p>
+    <div>
+      <label class="btn" for="fileInput">📁 엑셀 불러오기</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+  </div>
+
+  <div id="emptyMsg" class="empty-msg">
+    엑셀 파일을 불러오면 학생 목록이 여기에 나타납니다.<br>
+    (열: 학년, 반, 번호, 학교유형, 지역, 대학명, 모집시기, 전형유형, 전형명(대), 세부유형, 계열, 모집단위, 모집인원, 선발유형, 최저학력기준, 면접일자, 실기일자, 논술일자, 최종발표일)
+  </div>
+
+  <div id="picker" class="picker">
+    <div class="picker-toolbar">
+      <div class="left">
+        <label class="select-all">
+          <input type="checkbox" id="selectAllCb" checked>
+          전체 선택
+        </label>
+        <span class="picked-count" id="pickedCount"></span>
+      </div>
+    </div>
+    <div class="student-grid" id="studentGrid"></div>
+    <div class="print-action-bar">
+      <span class="hint">인쇄 대화상자의 레이아웃은 자동으로 가로(A4)가 적용됩니다.</span>
+      <button class="btn" id="printBtn" type="button">🖨 선택한 학생 인쇄</button>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  var COLUMNS = [
+    { id: 'univ', label: '대학명', cls: 'col-univ' },
+    { id: 'term', label: '모집시기', cls: 'col-term' },
+    { id: 'type1', label: '전형유형', cls: 'col-type1' },
+    { id: 'type2', label: '전형명', cls: 'col-type2' },
+    { id: 'detail', label: '세부유형', cls: 'col-detail' },
+    { id: 'track', label: '계열', cls: 'col-track' },
+    { id: 'major', label: '모집단위', cls: 'col-major' },
+    { id: 'capacity', label: '인원', cls: 'col-capacity' },
+    { id: 'selectType', label: '선발방법', cls: 'col-select' },
+    { id: 'minReq', label: '최저학력기준', cls: 'col-minreq' },
+    { id: 'interview', label: '면접', cls: 'col-interview' },
+    { id: 'practical', label: '실기', cls: 'col-practical' },
+    { id: 'essay', label: '논술', cls: 'col-essay' },
+    { id: 'announce', label: '발표', cls: 'col-announce' }
+  ];
+
+  var students = {}; // key(학년-반-번호) -> { grade, classNo, no, rows: [...] }
+  var studentKeys = [];
+
+  var fileInput = document.getElementById('fileInput');
+  var fileStatus = document.getElementById('fileStatus');
+  var emptyMsg = document.getElementById('emptyMsg');
+  var picker = document.getElementById('picker');
+  var studentGrid = document.getElementById('studentGrid');
+  var selectAllCb = document.getElementById('selectAllCb');
+  var pickedCount = document.getElementById('pickedCount');
+  var printBtn = document.getElementById('printBtn');
+  var printArea = document.getElementById('printArea');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function get(row, key) {
+    if (row[key] !== undefined && row[key] !== null) return String(row[key]).trim();
+    return '';
+  }
+
+  var DOW = ['일', '월', '화', '수', '목', '금', '토'];
+  function fmtDateRange(raw) {
+    if (!raw) return '—';
+    var parts = raw.split('~').map(function (s) { return s.trim(); });
+    var fmtOne = function (d) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+      if (!m) return d;
+      var dt = new Date(+m[1], +m[2] - 1, +m[3]);
+      return m[2] + '.' + m[3] + '(' + DOW[dt.getDay()] + ')';
+    };
+    if (parts.length === 1 || parts[0] === parts[1]) return fmtOne(parts[0]);
+    return fmtOne(parts[0]) + '~' + fmtOne(parts[1]);
+  }
+
+  function studentLabel(s) {
+    return s.grade + '학년 ' + s.classNo + '반 ' + s.no + '번';
+  }
+
+  function parseWorkbook(wb) {
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    var out = {};
+    var keys = [];
+    rows.forEach(function (row) {
+      var grade = get(row, '학년');
+      var classNo = get(row, '반');
+      var no = get(row, '번호');
+      var univ = get(row, '대학명');
+      if (!grade && !classNo && !no && !univ) return; // 완전히 빈 줄은 건너뜀
+      if (!univ) return; // 지원 내역이 없는 줄은 건너뜀
+
+      var key = grade + '-' + classNo + '-' + no;
+      if (!out[key]) {
+        out[key] = { grade: grade, classNo: classNo, no: no, rows: [] };
+        keys.push(key);
+      }
+      out[key].rows.push({
+        univ: univ,
+        term: get(row, '모집시기'),
+        type1: get(row, '전형유형'),
+        type2: get(row, '전형명(대)'),
+        detail: get(row, '세부유형'),
+        track: get(row, '계열'),
+        major: get(row, '모집단위'),
+        capacity: get(row, '모집인원'),
+        selectType: get(row, '선발유형'),
+        minReq: get(row, '최저학력기준'),
+        interview: fmtDateRange(get(row, '면접일자')),
+        practical: fmtDateRange(get(row, '실기일자')),
+        essay: fmtDateRange(get(row, '논술일자')),
+        announce: fmtDateRange(get(row, '최종발표일'))
+      });
+    });
+    keys.sort(function (a, b) {
+      var sa = out[a], sb = out[b];
+      if (sa.grade !== sb.grade) return sa.grade.localeCompare(sb.grade, 'ko', { numeric: true });
+      if (sa.classNo !== sb.classNo) return sa.classNo.localeCompare(sb.classNo, 'ko', { numeric: true });
+      return sa.no.localeCompare(sb.no, 'ko', { numeric: true });
+    });
+    return { students: out, keys: keys };
+  }
+
+  fileInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      try {
+        var wb = XLSX.read(evt.target.result, { type: 'array' });
+        var parsed = parseWorkbook(wb);
+        if (!parsed.keys.length) {
+          alert('학생 지원 내역을 인식하지 못했습니다. 원본 서식(학년·반·번호·대학명 등 열 포함)을 확인해주세요.');
+          return;
+        }
+        students = parsed.students;
+        studentKeys = parsed.keys;
+        var totalRows = studentKeys.reduce(function (sum, k) { return sum + students[k].rows.length; }, 0);
+        fileStatus.innerHTML = '불러온 파일: <strong>' + esc(file.name) + '</strong> · 학생 ' + studentKeys.length + '명 · 지원 ' + totalRows + '건';
+        renderPicker();
+      } catch (err) {
+        console.error(err);
+        alert('엑셀 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function renderPicker() {
+    emptyMsg.style.display = 'none';
+    picker.classList.add('show');
+
+    studentGrid.innerHTML = studentKeys.map(function (key) {
+      var s = students[key];
+      return '<label class="student-item">' +
+        '<input type="checkbox" class="student-cb" data-key="' + esc(key) + '" checked>' +
+        '<span class="label">' + esc(studentLabel(s)) + '</span>' +
+        '<span class="count">' + s.rows.length + '건</span>' +
+        '</label>';
+    }).join('');
+
+    updatePickedCount();
+
+    Array.prototype.forEach.call(studentGrid.querySelectorAll('.student-cb'), function (cb) {
+      cb.addEventListener('change', function () {
+        updatePickedCount();
+        syncSelectAll();
+      });
+    });
+  }
+
+  function checkedKeys() {
+    return Array.prototype.map.call(
+      studentGrid.querySelectorAll('.student-cb:checked'),
+      function (cb) { return cb.dataset.key; }
+    );
+  }
+
+  function updatePickedCount() {
+    var n = checkedKeys().length;
+    pickedCount.textContent = n + ' / ' + studentKeys.length + '명 선택됨';
+    printBtn.disabled = n === 0;
+  }
+
+  function syncSelectAll() {
+    var total = studentGrid.querySelectorAll('.student-cb').length;
+    var checked = checkedKeys().length;
+    selectAllCb.checked = checked === total;
+    selectAllCb.indeterminate = checked > 0 && checked < total;
+  }
+
+  selectAllCb.addEventListener('change', function () {
+    var checked = selectAllCb.checked;
+    Array.prototype.forEach.call(studentGrid.querySelectorAll('.student-cb'), function (cb) {
+      cb.checked = checked;
+    });
+    updatePickedCount();
+  });
+
+  function renderStudentTable(s) {
+    var head = COLUMNS.map(function (c) { return '<th class="' + c.cls + '">' + esc(c.label) + '</th>'; }).join('');
+    var body = s.rows.map(function (r) {
+      var cells = COLUMNS.map(function (c) {
+        return '<td class="' + c.cls + '">' + esc(r[c.id] || '—') + '</td>';
+      }).join('');
+      return '<tr>' + cells + '</tr>';
+    }).join('');
+    return '<table class="apply"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  printBtn.addEventListener('click', function () {
+    var keys = checkedKeys();
+    if (!keys.length) return;
+
+    printArea.innerHTML = keys.map(function (key) {
+      var s = students[key];
+      return '<div class="print-student">' +
+        '<div class="print-title">2026학년도 수시 원서접수 현황</div>' +
+        '<div class="print-student-id">' + esc(studentLabel(s)) + '</div>' +
+        '<p class="print-summary">지원 ' + s.rows.length + '건</p>' +
+        renderStudentTable(s) +
+        '</div>';
+    }).join('');
+
+    window.print();
+  });
+</script>
+</body>
+</html>
