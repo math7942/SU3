@@ -250,6 +250,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   tr{ break-inside:avoid; }
   .group-block{ margin-bottom:8px; }
   .result > .group-block[data-dim="month"] + .group-block[data-dim="month"]{ break-before:page; page-break-before:always; }
+  .sched-cell{ width:56px; }
 }
 </style>
 
@@ -338,7 +339,11 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   }
 
   function studentLabel(r){
-    return MULTI_GRADE ? (r.grade + '학년 ' + r.classNo + '반 ' + r.no + '번') : (r.classNo + '반 ' + r.no + '번');
+    var parts = [];
+    if(MULTI_GRADE) parts.push(r.grade + '학년');
+    if(MULTI_CLASS) parts.push(r.classNo + '반');
+    parts.push(r.no + '번');
+    return parts.join(' ');
   }
 
   function fmtOne(dstr){
@@ -357,7 +362,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     var sTxt = (showYear ? (s.y + '.') : '') + pad2(s.mo) + '.' + pad2(s.d) + '(' + s.dow + ')';
     if(range.start === range.end || !e) return sTxt;
     var eTxt = (showYear && e.y !== s.y ? (e.y + '.') : '') + pad2(e.mo) + '.' + pad2(e.d) + '(' + e.dow + ')';
-    return sTxt + ' ~ ' + eTxt;
+    return sTxt + '<br>~' + eTxt;
   }
 
   function selectedTypes(){
@@ -401,6 +406,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     scheduleFields: ['interview','essay','practical','aptitude']
   };
   var MULTI_GRADE = false;
+  var MULTI_CLASS = false;
   var YEAR_MULTI = false;
 
   var fileInput = document.getElementById('fileInput');
@@ -622,7 +628,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     var head = '<th>학생</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('');
     var body = rows.map(function(r){
       var cells = cols.map(function(c){
-        if(c.field) return '<td class="mono">' + fmtRange(r[c.field], YEAR_MULTI) + '</td>';
+        if(c.field) return '<td class="mono sched-cell">' + fmtRange(r[c.field], YEAR_MULTI) + '</td>';
         if(c.id === 'track'){
           var color = TRACK_COLOR[r.track] || 'var(--ink-dim)';
           return '<td><span class="track-dot" style="--dot:' + color + '"></span>' + esc(r.track) + '</td>';
@@ -670,6 +676,11 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     MULTI_GRADE = (function(){
       var s = {}; var n = 0;
       state.rows.forEach(function(r){ if(!s[r.grade]){ s[r.grade]=1; n++; } });
+      return n > 1;
+    })();
+    MULTI_CLASS = (function(){
+      var s = {}; var n = 0;
+      state.rows.forEach(function(r){ if(!s[r.classNo]){ s[r.classNo]=1; n++; } });
       return n > 1;
     })();
 
