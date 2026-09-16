@@ -281,6 +281,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       <button type="button" class="chip schedule-type-chip active" data-schedule="interview">면접</button>
       <button type="button" class="chip schedule-type-chip" data-schedule="essay">논술</button>
       <button type="button" class="chip schedule-type-chip" data-schedule="practical">실기</button>
+      <button type="button" class="chip schedule-type-chip" data-schedule="aptitude">적성</button>
     </div>
     <div class="control-row">
       <label class="switch"><input type="checkbox" id="filterInterview"><span id="filterInterviewLabel">면접 일정이 있는 전형만 보기</span></label>
@@ -316,7 +317,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   var SCHEDULE_TYPES = [
     {id:'interview', label:'면접', excelCol:'면접일자'},
     {id:'essay', label:'논술', excelCol:'논술일자'},
-    {id:'practical', label:'실기', excelCol:'실기일자'}
+    {id:'practical', label:'실기', excelCol:'실기일자'},
+    {id:'aptitude', label:'적성', excelCol:'적성일자'}
   ];
 
   var TRACK_PRIORITY = ['인문','사회','자연','공학','예체능','공통','미분류'];
@@ -362,6 +364,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     {id:'type1', label:'전형유형', get:function(r){ return r.type1 || '미기재'; }},
     {id:'type2', label:'전형명', get:function(r){ return r.type2 || '미기재'; }},
     {id:'region', label:'지역', get:function(r){ return r.region || '미기재'; }},
+    {id:'student', label:'번호', get:function(r){ return studentLabel(r); }},
     {id:'month', label:'면접 월', get:function(r){
       var v = r[state.scheduleField];
       return v ? (v.start.slice(0,7).replace('-','.') + '월') : '일정 미정';
@@ -490,6 +493,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         interview: parseRangeJS(get(row,'면접일자')),
         essay: parseRangeJS(get(row,'논술일자')),
         practical: parseRangeJS(get(row,'실기일자')),
+        aptitude: parseRangeJS(get(row,'적성일자')),
         regStatus: cellStr(get(row,'등록여부')) || '',
         note: cellStr(get(row,'비고')) || ''
       });
@@ -537,6 +541,9 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         return a.localeCompare(b,'ko');
       });
     }
+    if(dim.id === 'student'){
+      return keys.sort(function(a,b){ return a.localeCompare(b,'ko',{numeric:true}); });
+    }
     return keys.sort(function(a,b){
       if(a === '미기재') return 1;
       if(b === '미기재') return -1;
@@ -549,7 +556,9 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       var da = a[state.scheduleField] ? a[state.scheduleField].start : '9999-99-99';
       var db = b[state.scheduleField] ? b[state.scheduleField].start : '9999-99-99';
       if(da !== db) return da < db ? -1 : 1;
-      return (a.major||'').localeCompare(b.major||'','ko');
+      if(a.grade !== b.grade) return (a.grade||'').localeCompare(b.grade||'','ko',{numeric:true});
+      if(a.classNo !== b.classNo) return (a.classNo||'').localeCompare(b.classNo||'','ko',{numeric:true});
+      return (a.no||'').localeCompare(b.no||'','ko',{numeric:true});
     });
   }
 
