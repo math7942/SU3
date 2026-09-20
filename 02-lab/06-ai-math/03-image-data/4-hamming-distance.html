@@ -140,6 +140,17 @@
         <div style="font-weight:700; margin-bottom:4px;">새로운 손글씨 D (클릭해서 그리기)</div>
         <div class="digit-grid" id="digitD" style="grid-template-columns: repeat(6, 22px);"></div>
       </div>
+      <div class="template-box" style="text-align:left;">
+        <div style="font-weight:700; margin-bottom:4px;">✏️ 마우스로 직접 그려서 D 만들기</div>
+        <canvas id="drawD" width="180" height="180" style="width:180px; height:180px; border:2px solid var(--accent); border-radius:8px; background:#fff; cursor:crosshair; display:block;"></canvas>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:0.82rem;">
+          붓 크기: <input type="range" id="drawBrush" min="8" max="30" value="18" style="width:100px;"> <span id="drawBrushLabel">18px</span>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn" onclick="clearDrawD()">지우기</button>
+          <button class="btn solid" onclick="applyDrawD()">이진화 변환 → D에 반영</button>
+        </div>
+      </div>
       <div class="result-row" id="hammingResults"></div>
       <div id="classifyResult" style="margin-top:10px; font-weight:800; color:var(--accent-dark);"></div>
     </div>
@@ -273,6 +284,56 @@
   initTemplates();
   renderDigitGrid(document.getElementById('digitD'), dState, true);
   updateHamming();
+
+  // 활동3 확장: 마우스로 직접 그려서 D 만들기
+  const drawCanvas = document.getElementById('drawD');
+  const drawCtx = drawCanvas.getContext('2d');
+  const drawBrush = document.getElementById('drawBrush');
+  let isDrawingD = false;
+
+  function initDrawCanvas() {
+    drawCtx.fillStyle = '#fff';
+    drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+    drawCtx.strokeStyle = '#000';
+    drawCtx.lineWidth = parseInt(drawBrush.value);
+  }
+  initDrawCanvas();
+
+  drawCanvas.addEventListener('mousedown', (e) => {
+    isDrawingD = true;
+    drawCtx.beginPath();
+    drawCtx.moveTo(e.offsetX, e.offsetY);
+  });
+  drawCanvas.addEventListener('mousemove', (e) => {
+    if (isDrawingD) { drawCtx.lineTo(e.offsetX, e.offsetY); drawCtx.stroke(); }
+  });
+  drawCanvas.addEventListener('mouseup', () => isDrawingD = false);
+  drawCanvas.addEventListener('mouseout', () => isDrawingD = false);
+  drawBrush.addEventListener('input', () => {
+    drawCtx.lineWidth = parseInt(drawBrush.value);
+    document.getElementById('drawBrushLabel').textContent = drawBrush.value + 'px';
+  });
+
+  function clearDrawD() { initDrawCanvas(); }
+
+  function applyDrawD() {
+    const off = document.createElement('canvas');
+    off.width = 6; off.height = 6;
+    const octx = off.getContext('2d');
+    octx.drawImage(drawCanvas, 0, 0, 6, 6);
+    const data = octx.getImageData(0, 0, 6, 6).data;
+    for (let r = 0; r < 6; r++) {
+      for (let c = 0; c < 6; c++) {
+        const idx = (r * 6 + c) * 4;
+        const gray = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+        dState[r][c] = gray < 200 ? 0 : 1; // 검게 칠해졌으면 0(검은색), 아니면 1(흰색)
+      }
+    }
+    renderDigitGrid(document.getElementById('digitD'), dState, true);
+    updateHamming();
+  }
 </script>
 </body>
 </html>
