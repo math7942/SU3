@@ -1,0 +1,793 @@
+<title>면접 편성표</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F6F3EC;
+  --surface:#FFFFFF;
+  --surface-2:#EFE9DC;
+  --surface-3:#E3DCC9;
+  --ink:#24252A;
+  --ink-dim:#63666F;
+  --border:#DAD2BC;
+  --accent:#2A3A63;
+  --accent-ink:#FFFFFF;
+  --accent-soft:#E4E8F3;
+  --shadow:0 1px 2px rgba(36,37,42,.07), 0 4px 16px rgba(36,37,42,.07);
+  --track-인문:#B14A2C;
+  --track-자연:#2C7A52;
+  --track-공학:#2E6CA4;
+  --track-예체능:#7C4A9E;
+  --track-사회:#A6821E;
+  --track-공통:#6B6F76;
+  --track-미분류:#8A8D95;
+  --font-display:'Noto Serif KR', 'Nanum Myeongjo', serif;
+  --font-body:'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:'Roboto Mono', ui-monospace, 'SFMono-Regular', monospace;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1C20; --surface:#25262C; --surface-2:#2F3038; --surface-3:#3A3B45;
+    --ink:#ECE8DD; --ink-dim:#A5A8B3; --border:#40414C;
+    --accent:#8CA0DD; --accent-ink:#1B1C20; --accent-soft:#2A3350;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 6px 22px rgba(0,0,0,.4);
+    --track-인문:#E08863; --track-자연:#5FBF8E; --track-공학:#6FA8DC; --track-예체능:#B58AD9; --track-사회:#D2B25A; --track-공통:#9BA0AC; --track-미분류:#8B8F99;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1C20; --surface:#25262C; --surface-2:#2F3038; --surface-3:#3A3B45;
+  --ink:#ECE8DD; --ink-dim:#A5A8B3; --border:#40414C;
+  --accent:#8CA0DD; --accent-ink:#1B1C20; --accent-soft:#2A3350;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 6px 22px rgba(0,0,0,.4);
+  --track-인문:#E08863; --track-자연:#5FBF8E; --track-공학:#6FA8DC; --track-예체능:#B58AD9; --track-사회:#D2B25A; --track-공통:#9BA0AC; --track-미분류:#8B8F99;
+}
+*{ box-sizing:border-box; }
+[hidden]{ display:none!important; }
+img{ max-width:100%; }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:14.5px;
+  line-height:1.55;
+}
+.page{
+  max-width:1180px;
+  margin:0 auto;
+  padding-inline:20px;
+  padding-block:28px 64px;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+.print-only{ display:none; }
+.eyebrow{
+  margin:0 0 4px;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.09em;
+  color:var(--ink-dim);
+}
+.masthead{ display:flex; flex-direction:column; gap:10px; }
+.masthead-top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:14px;
+}
+.masthead h1{
+  margin:0;
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:clamp(24px,4vw,32px);
+  text-wrap:balance;
+}
+.file-controls{ display:flex; gap:8px; flex-wrap:wrap; }
+.btn{
+  font-family:var(--font-body);
+  font-weight:600;
+  font-size:13px;
+  padding:9px 16px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.btn:hover{ border-color:var(--accent); }
+.btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.btn-primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.btn-ghost{ background:transparent; }
+.file-status{
+  margin:0;
+  font-size:13px;
+  color:var(--ink-dim);
+  font-family:var(--font-mono);
+}
+.stats-bar{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr)) minmax(200px,1.4fr) minmax(220px,1.6fr);
+  gap:10px;
+}
+.stat-tile{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  box-shadow:var(--shadow);
+}
+.stat-num{
+  font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums;
+  font-size:22px;
+  font-weight:700;
+  color:var(--accent);
+}
+.stat-label{ font-size:12px; color:var(--ink-dim); font-weight:600; }
+.stat-tracks{ gap:6px; }
+.track-legend{ display:flex; flex-wrap:wrap; gap:8px 12px; }
+.legend-item{ font-size:12.5px; color:var(--ink); display:inline-flex; align-items:center; font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.schedule-legend{ display:grid; grid-template-columns:repeat(2,auto); gap:5px 18px; }
+.schedule-legend .legend-item{ font-size:14.5px; font-weight:700; }
+.track-dot{
+  display:inline-block; width:9px; height:9px; border-radius:50%;
+  background:var(--dot); margin-right:6px; vertical-align:middle; flex:none;
+}
+.controls-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-shadow:var(--shadow);
+}
+.control-row{ display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px; }
+.control-label{ font-size:12px; font-weight:700; color:var(--ink-dim); letter-spacing:.04em; margin-right:2px; }
+.switch{ display:inline-flex; align-items:center; gap:7px; font-size:13.5px; cursor:pointer; }
+.switch input{ width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+.chip{
+  font-family:var(--font-body);
+  font-size:13px;
+  font-weight:600;
+  padding:7px 13px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--ink);
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.chip:hover{ border-color:var(--accent); }
+.chip:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.chip.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.chip-order{
+  background:rgba(0,0,0,.16);
+  border-radius:50%;
+  width:16px; height:16px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:10px; font-family:var(--font-mono);
+}
+.dim-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.result-section{ display:flex; flex-direction:column; gap:12px; }
+.result-header{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+}
+.group-desc{ margin:0; font-size:13.5px; color:var(--ink-dim); }
+.result{ display:flex; flex-direction:column; gap:10px; }
+.group-block{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:4px solid var(--group-accent, var(--accent));
+  border-radius:10px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.group-block + .group-block{ margin-top:0; }
+.result > .group-block + .group-block{ margin-top:2px; }
+.group-block summary{
+  list-style:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 16px;
+  background:var(--surface-2);
+}
+.group-block summary::-webkit-details-marker{ display:none; }
+.group-block summary::before{
+  content:'▸'; margin-right:8px; color:var(--ink-dim);
+  display:inline-block; transition:transform .12s ease;
+}
+.group-block[open] > summary::before{ transform:rotate(90deg); }
+.group-label{
+  display:inline-flex; align-items:center;
+  font-family:var(--font-display); font-weight:700; font-size:15px;
+}
+.group-count{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--ink-dim); font-weight:500; white-space:nowrap; }
+.group-body{ padding:10px 14px 14px; display:flex; flex-direction:column; gap:10px; }
+.table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:8px; }
+table{ width:100%; border-collapse:collapse; font-size:13px; background:var(--surface); min-width:520px; }
+thead th{
+  position:sticky; top:0;
+  background:var(--surface-3); color:var(--ink);
+  text-align:left; padding:8px 10px; font-weight:700;
+  border-bottom:1px solid var(--border); white-space:nowrap;
+}
+tbody td{ padding:7px 10px; border-bottom:1px solid var(--border); color:var(--ink); }
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:nth-child(even){ background:var(--surface-2); }
+.mono{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.student-cell{ font-weight:700; }
+.empty-msg{ padding:30px; text-align:center; color:var(--ink-dim); background:var(--surface); border:1px dashed var(--border); border-radius:10px; }
+@media (max-width:640px){
+  .stats-bar{ grid-template-columns:repeat(2,1fr); }
+  .stat-tracks, .stat-schedule{ grid-column:1 / -1; }
+  .masthead-top{ align-items:flex-start; }
+}
+@media print{
+  body{ background:#fff; }
+  .page{ padding:0; max-width:none; gap:12px; }
+  .masthead, .controls-panel, #toggleAllBtn{ display:none!important; }
+  .print-only{ display:block; }
+  .stats-bar{ box-shadow:none; }
+  .stat-tile, .group-block{ box-shadow:none; border-color:#bbb; }
+  .stat-tile{ break-inside:avoid; }
+  .group-block{ break-inside:auto; }
+  .group-block summary{ break-after:avoid; page-break-after:avoid; }
+  thead{ display:table-header-group; }
+  tr{ break-inside:avoid; }
+  .group-block{ margin-bottom:8px; }
+  .result > .group-block[data-dim="month"] + .group-block[data-dim="month"]{ break-before:page; page-break-before:always; }
+  .sched-cell{ width:56px; }
+
+  body.print-compact .print-header h1{ font-size:17px !important; margin-bottom:2px !important; }
+  body.print-compact #printMeta, body.print-compact #printDate{ font-size:10.5px !important; }
+  body.print-compact .stat-tile{ padding:7px 9px; }
+  body.print-compact .stat-num{ font-size:16px; }
+  body.print-compact .stat-label{ font-size:10px; }
+  body.print-compact .legend-item{ font-size:10.5px; }
+  body.print-compact .schedule-legend .legend-item{ font-size:11.5px; }
+  body.print-compact .group-block summary{ padding:6px 10px; }
+  body.print-compact .group-label{ font-size:13px; }
+  body.print-compact .group-count{ font-size:11px; }
+  body.print-compact table{ font-size:10px; }
+  body.print-compact thead th{ padding:4px 5px; }
+  body.print-compact tbody td{ padding:3px 5px; line-height:1.15; }
+  body.print-compact .sched-cell{ width:44px; }
+}
+</style>
+
+<div class="page">
+  <div class="print-only print-header">
+    <p class="eyebrow">수시 지원 현황</p>
+    <h1 id="printTitle" style="font-family:var(--font-display);font-size:22px;margin:0 0 4px;">면접 편성표</h1>
+    <p id="printMeta" style="margin:0;font-size:12.5px;color:#555;"></p>
+    <p id="printDate" style="margin:2px 0 0;font-size:11.5px;color:#777;"></p>
+  </div>
+
+  <header class="masthead">
+    <div class="masthead-top">
+      <div class="title-group">
+        <p class="eyebrow">수시 지원 현황</p>
+        <h1 id="mastheadTitle">면접 편성표</h1>
+      </div>
+      <div class="file-controls">
+        <label class="btn btn-primary" for="fileInput">엑셀 불러오기</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+        <button type="button" class="btn" id="printBtn">인쇄</button>
+      </div>
+    </div>
+    <p class="file-status" id="fileStatus"></p>
+  </header>
+
+  <section class="stats-bar" id="statsBar" aria-label="요약 통계"></section>
+
+  <section class="controls-panel">
+    <div class="control-row">
+      <span class="control-label">일정 유형</span>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="interview">면접</button>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="essay">논술</button>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="practical">실기</button>
+      <button type="button" class="chip schedule-type-chip active" data-schedule="aptitude">적성</button>
+    </div>
+    <div class="control-row">
+      <label class="switch"><input type="checkbox" id="filterInterview"><span id="filterInterviewLabel">면접 일정이 있는 전형만 보기</span></label>
+      <label class="switch"><input type="checkbox" id="showExtra"><span>전형유형 · 계열 · 지역 함께 보기</span></label>
+    </div>
+    <div class="control-row">
+      <label class="switch"><input type="checkbox" id="compactPrint"><span>인쇄할 때 최대한 압축해서 1페이지에 맞추기</span></label>
+    </div>
+    <div class="control-row">
+      <span class="control-label">보기</span>
+      <button type="button" class="chip preset" data-preset="date">① 면접 일정순</button>
+      <button type="button" class="chip preset" data-preset="track">② 계열별 그룹</button>
+      <button type="button" class="chip preset" data-preset="reset">초기화</button>
+    </div>
+    <div class="control-row">
+      <span class="control-label">직접 조합하기</span>
+      <div class="dim-chips" id="dimChips"></div>
+    </div>
+  </section>
+
+  <section class="result-section">
+    <div class="result-header">
+      <p class="group-desc" id="groupDesc"></p>
+      <button type="button" class="btn btn-ghost" id="toggleAllBtn">전체 접기</button>
+    </div>
+    <div class="result" id="result"></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  var RAW_DATA = [];
+  var SOURCE_FILENAME = null;
+
+  var SCHEDULE_TYPES = [
+    {id:'interview', label:'면접', excelCol:'면접일자'},
+    {id:'essay', label:'논술', excelCol:'논술일자'},
+    {id:'practical', label:'실기', excelCol:'실기일자'},
+    {id:'aptitude', label:'적성', excelCol:'적성일자'}
+  ];
+
+  var TRACK_PRIORITY = ['인문','사회','자연','공학','예체능','공통','미분류'];
+  var TRACK_COLOR = {
+    '인문':'var(--track-인문)','자연':'var(--track-자연)','공학':'var(--track-공학)',
+    '예체능':'var(--track-예체능)','사회':'var(--track-사회)','공통':'var(--track-공통)','미분류':'var(--track-미분류)'
+  };
+  var DOW = ['일','월','화','수','목','금','토'];
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function studentLabel(r){
+    var parts = [];
+    if(MULTI_GRADE) parts.push(r.grade + '학년');
+    if(MULTI_CLASS) parts.push(r.classNo + '반');
+    parts.push(r.no + '번');
+    return parts.join(' ');
+  }
+
+  function fmtOne(dstr){
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dstr);
+    if(!m) return null;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    var dt = new Date(y, mo-1, d);
+    return {y:y, mo:mo, d:d, dow:DOW[dt.getDay()]};
+  }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function fmtRange(range, showYear){
+    if(!range) return '—';
+    var s = fmtOne(range.start);
+    var e = fmtOne(range.end);
+    if(!s) return range.raw;
+    var sTxt = (showYear ? (s.y + '.') : '') + pad2(s.mo) + '.' + pad2(s.d) + '(' + s.dow + ')';
+    if(range.start === range.end || !e) return sTxt;
+    var eTxt = (showYear && e.y !== s.y ? (e.y + '.') : '') + pad2(e.mo) + '.' + pad2(e.d) + '(' + e.dow + ')';
+    return sTxt + '<br>~' + eTxt;
+  }
+
+  function selectedTypes(){
+    return SCHEDULE_TYPES.filter(function(t){ return state.scheduleFields.indexOf(t.id) !== -1; });
+  }
+  function currentScheduleLabel(){
+    return selectedTypes().map(function(t){ return t.label; }).join('+');
+  }
+  function primaryDate(r){
+    var min = null;
+    state.scheduleFields.forEach(function(id){
+      var v = r[id];
+      if(v && (!min || v.start < min)) min = v.start;
+    });
+    return min;
+  }
+
+  var DIMENSIONS = [
+    {id:'track', label:'계열', get:function(r){ return r.track || '미분류'; }},
+    {id:'major', label:'모집단위', get:function(r){ return r.major || '미기재'; }},
+    {id:'univ', label:'대학명', get:function(r){ return r.univ || '미기재'; }},
+    {id:'type1', label:'전형유형', get:function(r){ return r.type1 || '미기재'; }},
+    {id:'type2', label:'전형명', get:function(r){ return r.type2 || '미기재'; }},
+    {id:'region', label:'지역', get:function(r){ return r.region || '미기재'; }},
+    {id:'student', label:'번호', get:function(r){ return studentLabel(r); }},
+    {id:'month', label:'일정 월', get:function(r){
+      var d = primaryDate(r);
+      return d ? (d.slice(0,7).replace('-','.') + '월') : '일정 미정';
+    }}
+  ];
+  var DIM_BY_ID = {};
+  DIMENSIONS.forEach(function(d){ DIM_BY_ID[d.id] = d; });
+
+  var state = {
+    rows: RAW_DATA.slice(),
+    currentFilename: SOURCE_FILENAME,
+    filterInterview: true,
+    showExtra: false,
+    groupFields: [],
+    allOpen: true,
+    scheduleFields: ['interview','essay','practical','aptitude']
+  };
+  var MULTI_GRADE = false;
+  var MULTI_CLASS = false;
+  var YEAR_MULTI = false;
+
+  var fileInput = document.getElementById('fileInput');
+  var fileStatus = document.getElementById('fileStatus');
+  var statsBar = document.getElementById('statsBar');
+  var dimChips = document.getElementById('dimChips');
+  var resultEl = document.getElementById('result');
+  var groupDescEl = document.getElementById('groupDesc');
+  var filterCb = document.getElementById('filterInterview');
+  var extraCb = document.getElementById('showExtra');
+  var toggleAllBtn = document.getElementById('toggleAllBtn');
+  var printBtn = document.getElementById('printBtn');
+  var printMeta = document.getElementById('printMeta');
+  var printDate = document.getElementById('printDate');
+
+  printDate.textContent = '생성일: ' + new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric'});
+
+  filterCb.checked = state.filterInterview;
+  extraCb.checked = state.showExtra;
+
+  filterCb.addEventListener('change', function(){ state.filterInterview = filterCb.checked; render(); });
+  extraCb.addEventListener('change', function(){ state.showExtra = extraCb.checked; render(); });
+
+  var compactCb = document.getElementById('compactPrint');
+  compactCb.addEventListener('change', function(){
+    document.body.classList.toggle('print-compact', compactCb.checked);
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.schedule-type-chip'), function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.dataset.schedule;
+      var idx = state.scheduleFields.indexOf(id);
+      if(idx !== -1){
+        if(state.scheduleFields.length === 1) return; // 최소 한 개는 선택되어 있어야 함
+        state.scheduleFields.splice(idx, 1);
+        btn.classList.remove('active');
+      }else{
+        state.scheduleFields.push(id);
+        btn.classList.add('active');
+      }
+      render();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.preset'), function(btn){
+    btn.addEventListener('click', function(){
+      var p = btn.dataset.preset;
+      if(p === 'date'){ state.groupFields = ['month']; state.filterInterview = true; }
+      else if(p === 'track'){ state.groupFields = ['track']; state.filterInterview = true; }
+      else if(p === 'reset'){ state.groupFields = []; state.filterInterview = true; state.showExtra = false; }
+      filterCb.checked = state.filterInterview;
+      extraCb.checked = state.showExtra;
+      render();
+    });
+  });
+
+  toggleAllBtn.addEventListener('click', function(){
+    state.allOpen = !state.allOpen;
+    Array.prototype.forEach.call(resultEl.querySelectorAll('details'), function(d){ d.open = state.allOpen; });
+    toggleAllBtn.textContent = state.allOpen ? '전체 접기' : '전체 펼치기';
+  });
+
+  printBtn.addEventListener('click', function(){
+    Array.prototype.forEach.call(resultEl.querySelectorAll('details'), function(d){ d.open = true; });
+    window.print();
+  });
+
+  function cellStr(v){
+    if(v === null || v === undefined) return null;
+    var s = String(v).trim();
+    return (s && s !== '-' && s !== "'-") ? s : null;
+  }
+  function parseRangeJS(v){
+    var s = cellStr(v);
+    if(!s) return null;
+    var parts = s.split('~').map(function(x){ return x.trim(); });
+    var start = parts[0], end = parts[1] || parts[0];
+    if(!/^\d{4}-\d{2}-\d{2}/.test(start)) return null;
+    return {raw:s, start:start, end:end};
+  }
+
+  function parseWorkbook(wb){
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    var aoa = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+    var headerRowIdx = -1;
+    for(var i=0; i<Math.min(aoa.length,8); i++){
+      if(aoa[i] && aoa[i].indexOf('모집단위') !== -1){ headerRowIdx = i; break; }
+    }
+    if(headerRowIdx === -1) return [];
+    var header = aoa[headerRowIdx];
+    var idx = {};
+    header.forEach(function(h,i){
+      if(h !== null && h !== undefined){
+        var key = String(h).trim();
+        if(!(key in idx)) idx[key] = i;
+      }
+    });
+    function get(row, name){ return (idx[name] !== undefined) ? row[idx[name]] : null; }
+    var out = [];
+    for(var r = headerRowIdx+1; r < aoa.length; r++){
+      var row = aoa[r];
+      if(!row) continue;
+      var univ = cellStr(get(row,'대학명'));
+      if(!univ) continue;
+      out.push({
+        grade: cellStr(get(row,'학년')) || '',
+        classNo: cellStr(get(row,'반')) || '',
+        no: cellStr(get(row,'번호')) || '',
+        univ: univ,
+        type1: cellStr(get(row,'전형유형')) || '',
+        type2: cellStr(get(row,'전형명(대)')) || '',
+        major: cellStr(get(row,'모집단위')) || '',
+        track: cellStr(get(row,'계열')) || '미분류',
+        region: cellStr(get(row,'지역')) || '',
+        interview: parseRangeJS(get(row,'면접일자')),
+        essay: parseRangeJS(get(row,'논술일자')),
+        practical: parseRangeJS(get(row,'실기일자')),
+        aptitude: parseRangeJS(get(row,'적성일자')),
+        regStatus: cellStr(get(row,'등록여부')) || '',
+        note: cellStr(get(row,'비고')) || ''
+      });
+    }
+    return out;
+  }
+
+  fileInput.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        var wb = XLSX.read(evt.target.result, {type:'array'});
+        var rows = parseWorkbook(wb);
+        if(!rows.length){
+          alert('면접 데이터를 인식하지 못했습니다. 원본 서식(모집단위, 면접일자 등 열 포함)을 확인해주세요.');
+          return;
+        }
+        state.rows = rows;
+        state.currentFilename = file.name;
+        state.groupFields = [];
+        render();
+      }catch(err){
+        console.error(err);
+        alert('엑셀 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function sortKeys(keys, dim){
+    if(dim.id === 'track'){
+      return keys.sort(function(a,b){
+        var ia = TRACK_PRIORITY.indexOf(a), ib = TRACK_PRIORITY.indexOf(b);
+        var pa = ia === -1 ? 99 : ia, pb = ib === -1 ? 99 : ib;
+        if(pa !== pb) return pa - pb;
+        return a.localeCompare(b,'ko');
+      });
+    }
+    if(dim.id === 'month'){
+      return keys.sort(function(a,b){
+        if(a === '일정 미정') return 1;
+        if(b === '일정 미정') return -1;
+        return a.localeCompare(b,'ko');
+      });
+    }
+    if(dim.id === 'student'){
+      return keys.sort(function(a,b){ return a.localeCompare(b,'ko',{numeric:true}); });
+    }
+    return keys.sort(function(a,b){
+      if(a === '미기재') return 1;
+      if(b === '미기재') return -1;
+      return a.localeCompare(b,'ko');
+    });
+  }
+
+  function leafSort(rows){
+    return rows.slice().sort(function(a,b){
+      var da = primaryDate(a) || '9999-99-99';
+      var db = primaryDate(b) || '9999-99-99';
+      if(da !== db) return da < db ? -1 : 1;
+      if(a.grade !== b.grade) return (a.grade||'').localeCompare(b.grade||'','ko',{numeric:true});
+      if(a.classNo !== b.classNo) return (a.classNo||'').localeCompare(b.classNo||'','ko',{numeric:true});
+      return (a.no||'').localeCompare(b.no||'','ko',{numeric:true});
+    });
+  }
+
+  function buildTree(rows, dims){
+    if(dims.length === 0) return {type:'leaf', rows: leafSort(rows)};
+    var dim = dims[0];
+    var map = {};
+    var order = [];
+    rows.forEach(function(r){
+      var k = dim.get(r) || '미기재';
+      if(!map[k]){ map[k] = []; order.push(k); }
+      map[k].push(r);
+    });
+    var keys = sortKeys(order, dim);
+    return {type:'branch', dim:dim, children: keys.map(function(k){
+      return {key:k, rows:map[k], node: buildTree(map[k], dims.slice(1))};
+    })};
+  }
+
+  function leafColumns(activeDimIds){
+    var base = [
+      {id:'univ', label:'대학명'},
+      {id:'type1', label:'전형유형'},
+      {id:'type2', label:'전형명'},
+      {id:'major', label:'모집단위'},
+      {id:'track', label:'계열'},
+      {id:'region', label:'지역'}
+    ];
+    var scheduleCols = selectedTypes().map(function(t){
+      return {id:'sched_' + t.id, label: t.label + '일자', field: t.id};
+    });
+    return base.concat(scheduleCols).filter(function(c){
+      if(activeDimIds.indexOf(c.id) !== -1) return false;
+      if((c.id === 'track' || c.id === 'region' || c.id === 'type1') && !state.showExtra) return false;
+      return true;
+    });
+  }
+
+  function renderLeafTable(rows, activeDimIds){
+    var cols = leafColumns(activeDimIds);
+    var head = '<th>학생</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('');
+    var body = rows.map(function(r){
+      var cells = cols.map(function(c){
+        if(c.field) return '<td class="mono sched-cell">' + fmtRange(r[c.field], YEAR_MULTI) + '</td>';
+        if(c.id === 'track'){
+          var color = TRACK_COLOR[r.track] || 'var(--ink-dim)';
+          return '<td><span class="track-dot" style="--dot:' + color + '"></span>' + esc(r.track) + '</td>';
+        }
+        var v = r[c.id] || '—';
+        return '<td>' + esc(v) + '</td>';
+      }).join('');
+      return '<tr><td class="mono student-cell">' + esc(studentLabel(r)) + '</td>' + cells + '</tr>';
+    }).join('');
+    return '<div class="table-wrap"><table><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+
+  function renderNode(node, activeDimIds){
+    if(node.type === 'leaf') return renderLeafTable(node.rows, activeDimIds);
+    return node.children.map(function(child){
+      var color = node.dim.id === 'track' ? (TRACK_COLOR[child.key] || 'var(--ink-dim)') : 'var(--accent)';
+      var inner = renderNode(child.node, activeDimIds);
+      return '<details class="group-block" data-dim="' + esc(node.dim.id) + '" style="--group-accent:' + color + '" open>' +
+        '<summary><span class="group-label">' + esc(node.dim.label) + ' · ' + esc(child.key) + '</span>' +
+        '<span class="group-count">' + child.rows.length + '건</span></summary>' +
+        '<div class="group-body">' + inner + '</div></details>';
+    }).join('');
+  }
+
+  function render(){
+    var label = currentScheduleLabel();
+    DIM_BY_ID.month.label = label + ' 날짜';
+    var filterLabelSpan = document.getElementById('filterInterviewLabel');
+    if(filterLabelSpan) filterLabelSpan.textContent = label + ' 일정이 있는 전형만 보기';
+    var presetDateBtn = document.querySelector('.preset[data-preset="date"]');
+    if(presetDateBtn) presetDateBtn.textContent = '① ' + label + ' 일정순';
+    var mastheadTitle = document.getElementById('mastheadTitle');
+    if(mastheadTitle) mastheadTitle.textContent = label + ' 편성표';
+    var printTitleEl = document.getElementById('printTitle');
+    if(printTitleEl) printTitleEl.textContent = label + ' 편성표';
+
+    if(state.rows.length === 0){
+      fileStatus.textContent = '아직 불러온 파일이 없습니다. 위의 [엑셀 불러오기] 버튼으로 수시진학관리 엑셀 파일을 올려주세요.';
+      statsBar.innerHTML = '';
+      dimChips.innerHTML = '';
+      groupDescEl.textContent = '';
+      resultEl.innerHTML = '<p class="empty-msg">엑셀 파일을 불러오면 면접 편성표가 여기에 표시됩니다.</p>';
+      return;
+    }
+    MULTI_GRADE = (function(){
+      var s = {}; var n = 0;
+      state.rows.forEach(function(r){ if(!s[r.grade]){ s[r.grade]=1; n++; } });
+      return n > 1;
+    })();
+    MULTI_CLASS = (function(){
+      var s = {}; var n = 0;
+      state.rows.forEach(function(r){ if(!s[r.classNo]){ s[r.classNo]=1; n++; } });
+      return n > 1;
+    })();
+
+    var rows = state.rows;
+    if(state.filterInterview) rows = rows.filter(function(r){ return primaryDate(r) !== null; });
+
+    YEAR_MULTI = (function(){
+      var s = {}; var n = 0;
+      rows.forEach(function(r){ var d = primaryDate(r); if(d){ var y = d.slice(0,4); if(!s[y]){ s[y]=1; n++; } } });
+      return n > 1;
+    })();
+
+    var totalAll = state.rows.length;
+    var totalInterview = state.rows.filter(function(r){ return primaryDate(r) !== null; }).length;
+    var studentSet = {};
+    rows.forEach(function(r){ studentSet[r.grade+'-'+r.classNo+'-'+r.no] = 1; });
+    var studentCount = Object.keys(studentSet).length;
+
+    var trackCounts = {}; var trackOrder = [];
+    rows.forEach(function(r){
+      var t = r.track || '미분류';
+      if(!trackCounts[t]){ trackCounts[t]=0; trackOrder.push(t); }
+      trackCounts[t]++;
+    });
+    var trackKeys = sortKeys(trackOrder, DIM_BY_ID.track);
+
+    fileStatus.textContent = '불러온 파일: ' + state.currentFilename + ' · 전체 ' + totalAll + '건 · ' + label + ' 필요 ' + totalInterview + '건';
+
+    var typeCounts = SCHEDULE_TYPES.map(function(t){
+      return { label: t.label, count: state.rows.filter(function(r){ return !!r[t.id]; }).length };
+    });
+
+    statsBar.innerHTML =
+      '<div class="stat-tile"><span class="stat-num">' + totalAll + '</span><span class="stat-label">전체 지원 건수</span></div>' +
+      '<div class="stat-tile"><span class="stat-num">' + rows.length + '</span><span class="stat-label">현재 표시 중</span></div>' +
+      '<div class="stat-tile"><span class="stat-num">' + studentCount + '</span><span class="stat-label">해당 학생 수</span></div>' +
+      '<div class="stat-tile stat-schedule"><span class="stat-label">일정 유형별 건수</span><div class="schedule-legend">' +
+        typeCounts.map(function(t){
+          return '<span class="legend-item">' + esc(t.label) + ' ' + t.count + '</span>';
+        }).join('') +
+      '</div></div>' +
+      '<div class="stat-tile stat-tracks"><span class="stat-label">계열 분포</span><div class="track-legend">' +
+        trackKeys.map(function(t){
+          return '<span class="legend-item"><span class="track-dot" style="--dot:' + (TRACK_COLOR[t]||'var(--ink-dim)') + '"></span>' + esc(t) + ' ' + trackCounts[t] + '</span>';
+        }).join('') +
+      '</div></div>';
+
+    dimChips.innerHTML = DIMENSIONS.map(function(d){
+      var idx = state.groupFields.indexOf(d.id);
+      var active = idx !== -1;
+      return '<button type="button" class="chip dim-chip' + (active?' active':'') + '" data-dim="' + d.id + '">' +
+        (active ? '<span class="chip-order">' + (idx+1) + '</span>' : '') + esc(d.label) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(dimChips.querySelectorAll('.dim-chip'), function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.dataset.dim;
+        var i = state.groupFields.indexOf(id);
+        if(i === -1) state.groupFields.push(id); else state.groupFields.splice(i,1);
+        render();
+      });
+    });
+
+    var descTxt;
+    if(state.groupFields.length === 0){
+      descTxt = label + '일자 순으로 정렬된 전체 목록입니다.';
+    }else{
+      descTxt = state.groupFields.map(function(id){ return DIM_BY_ID[id].label; }).join(' → ') + ' 순으로 그룹화했습니다.';
+    }
+    groupDescEl.textContent = descTxt;
+    printMeta.textContent = state.currentFilename + ' · ' + descTxt + ' (표시 중 ' + rows.length + '건 / ' + studentCount + '명)';
+
+    if(rows.length === 0){
+      resultEl.innerHTML = '<p class="empty-msg">표시할 데이터가 없습니다. 필터를 확인해주세요.</p>';
+      return;
+    }
+    var dims = state.groupFields.map(function(id){ return DIM_BY_ID[id]; });
+    var tree = buildTree(rows, dims);
+    resultEl.innerHTML = renderNode(tree, state.groupFields);
+    state.allOpen = true;
+    toggleAllBtn.textContent = '전체 접기';
+  }
+
+  render();
+})();
+</script>
