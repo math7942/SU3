@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>이미지 확대와 축소</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef1fb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #7c3aed; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+    h1 { font-size: 1.6rem; color: #1e293b; margin: 0 0 4px; text-align: center; }
+    .subtitle { color: #64748b; font-size: 0.88rem; text-align: center; margin-bottom: 6px; }
+
+    .top-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .formula-card, .coord-card {
+        flex: 1 1 300px;
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .formula-card { text-align: center; }
+    .formula-title { font-weight: 900; color: #1e293b; margin-bottom: 14px; }
+    .matrix-eq {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-family: monospace;
+        font-weight: 900;
+        font-size: 1.1rem;
+        color: #4338ca;
+    }
+    .bracket { font-size: 2rem; color: #64748b; }
+    .matrix-2x2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 14px; }
+    .matrix-col1 { display: flex; flex-direction: column; gap: 4px; }
+    .formula-note { font-size: 0.78rem; color: #94a3b8; margin-top: 12px; }
+
+    .coord-card { background: #fff7ed; border: 1px solid #fed7aa; }
+    .coord-title { font-weight: 900; color: #9a3412; margin-bottom: 8px; font-size: 0.92rem; }
+    .coord-card p { font-size: 0.82rem; color: #7c2d12; line-height: 1.7; margin: 4px 0; }
+    .coord-card b { color: #431407; }
+
+    .step-card {
+        background: white;
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #4338ca;
+        color: white;
+        font-weight: 900;
+        font-size: 0.8rem;
+        padding: 5px 14px;
+        border-radius: 999px;
+        margin-bottom: 14px;
+    }
+
+    .upload-box {
+        border: 2px dashed #a5b4fc;
+        border-radius: 10px;
+        padding: 22px 14px;
+        text-align: center;
+        cursor: pointer;
+        color: #475569;
+        font-size: 0.85rem;
+    }
+    .upload-box.has-image { border-style: solid; color: #16a34a; font-weight: 700; }
+    .upload-box.dragover { background: #eef2ff; border-color: #4338ca; }
+    input[type="file"] { display: none; }
+
+    .res-row { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+    .res-row label { font-size: 0.85rem; font-weight: 700; color: #475569; white-space: nowrap; }
+    #resSlider { flex: 1; min-width: 160px; }
+    .res-value { font-weight: 900; color: #4338ca; }
+    .res-hint { font-size: 0.78rem; color: #94a3b8; margin-top: 6px; }
+
+    .scale-row { display: flex; gap: 24px; flex-wrap: wrap; }
+    .scale-col { flex: 1 1 200px; }
+    .scale-col label { font-size: 0.85rem; font-weight: 700; color: #475569; }
+    .scale-col input[type="range"] { width: 100%; }
+    .scale-col .val { font-weight: 900; color: #4338ca; }
+
+    #pointCanvas { display: block; margin: 16px auto 0; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+
+    .result-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .result-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .result-col h4 { margin: 0; font-size: 0.82rem; color: #475569; }
+    .result-col canvas { border: 1px solid #e2e8f0; border-radius: 6px; image-rendering: pixelated; max-width: 220px; max-height: 220px; }
+
+    .example-box {
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-top: 16px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: #3730a3;
+        text-align: center;
+        line-height: 1.8;
+    }
+    .placeholder { color: #94a3b8; text-align: center; padding: 20px; font-size: 0.85rem; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #4338ca; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>🎨 이미지 확대와 축소</h1>
+    <p class="subtitle">행렬 변환을 이용한 이미지 변환 시각화</p>
+
+    <div class="top-row">
+        <div class="formula-card">
+            <div class="formula-title">변환 행렬</div>
+            <div class="matrix-eq">
+                <span class="bracket">|</span>
+                <div class="matrix-col1"><span>x'</span><span>y'</span></div>
+                <span class="bracket">|</span>
+                <span>=</span>
+                <span class="bracket">|</span>
+                <div class="matrix-2x2"><span>W</span><span>0</span><span>0</span><span>H</span></div>
+                <span class="bracket">|</span>
+                <span class="bracket">|</span>
+                <div class="matrix-col1"><span>x</span><span>y</span></div>
+                <span class="bracket">|</span>
+            </div>
+            <p class="formula-note">W: 가로 배율(확대 계수), H: 세로 배율(확대 계수)</p>
+        </div>
+
+        <div class="coord-card">
+            <div class="coord-title">💡 좌표 체계 안내</div>
+            <p><b>수학:</b> 행렬은 (1,1)부터 시작</p>
+            <p><b>컴퓨터:</b> 배열은 (0,0)부터 시작</p>
+            <p>이 도구는 프로그래밍 방식인 <b>0-based</b>를 사용합니다.</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <div class="step-badge">① 이미지 업로드 및 해상도 설정</div>
+        <div class="upload-box" id="dropzone">📁 이미지를 선택하거나 드래그하세요<br><span style="font-weight:400;">JPG, PNG 형식 지원</span></div>
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="res-row">
+            <label>분석 해상도:</label>
+            <input type="range" id="resSlider" min="4" max="32" value="16">
+            <span class="res-value" id="resValue">16×16</span>
+        </div>
+        <p class="res-hint">해상도가 높을수록 더 세밀한 분석이 가능하지만, 처리 시간이 길어집니다.</p>
+    </div>
+
+    <div class="step-card">
+        <div class="step-badge">② 확대·축소 배율(W, H) 설정</div>
+        <p class="placeholder" id="step2Placeholder">먼저 STEP 1에서 이미지를 업로드해 주세요.</p>
+        <div id="step2Body" style="display:none;">
+            <div class="scale-row">
+                <div class="scale-col">
+                    <label>가로 배율 W = <span class="val" id="wVal">2.0</span></label>
+                    <input type="range" id="wSlider" min="0.5" max="4" step="0.5" value="2">
+                </div>
+                <div class="scale-col">
+                    <label>세로 배율 H = <span class="val" id="hVal">2.0</span></label>
+                    <input type="range" id="hSlider" min="0.5" max="4" step="0.5" value="2">
+                </div>
+            </div>
+            <canvas id="pointCanvas" width="360" height="360"></canvas>
+            <p class="res-hint" style="text-align:center;">파란 점 = 원본 좌표 (x, y) · 빨간 점 = 변환 후 좌표 (Wx, Hy)</p>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <div class="step-badge">③ 변환 결과 확인</div>
+        <p class="placeholder" id="step3Placeholder">STEP 1과 STEP 2를 완료하면 결과가 나타납니다.</p>
+        <div id="step3Body" style="display:none;">
+            <div class="result-row">
+                <div class="result-col"><h4>원본</h4><canvas id="resOrig"></canvas></div>
+                <div class="result-col"><h4>변환 결과</h4><canvas id="resScaled"></canvas></div>
+            </div>
+            <div class="example-box" id="exampleBox"></div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="image-upscaler.html">← 이미지 업스케일러로 돌아가기</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const resSlider = document.getElementById('resSlider');
+    const resValue = document.getElementById('resValue');
+    let img = null;
+    let workCanvas = null;
+    let N = 16;
+
+    function loadImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const image = new Image();
+            image.onload = () => { img = image; dropzone.textContent = '✓ ' + file.name; dropzone.classList.add('has-image'); buildWorkCanvas(); };
+            image.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => { if (e.target.files[0]) loadImageFile(e.target.files[0]); });
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); if (e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]); });
+
+    let gridW = 16, gridH = 16;
+    function buildWorkCanvas() {
+        N = parseInt(resSlider.value);
+        const scale = Math.min(N / img.naturalWidth, N / img.naturalHeight);
+        gridW = Math.max(2, Math.round(img.naturalWidth * scale));
+        gridH = Math.max(2, Math.round(img.naturalHeight * scale));
+        resValue.textContent = `${gridW}×${gridH}`;
+        workCanvas = document.createElement('canvas');
+        workCanvas.width = gridW; workCanvas.height = gridH;
+        workCanvas.getContext('2d').drawImage(img, 0, 0, gridW, gridH);
+
+        document.getElementById('step2Placeholder').style.display = 'none';
+        document.getElementById('step2Body').style.display = 'block';
+        renderPoints();
+        renderResult();
+    }
+    resSlider.addEventListener('input', () => { if (img) buildWorkCanvas(); });
+
+    const wSlider = document.getElementById('wSlider');
+    const hSlider = document.getElementById('hSlider');
+    const wVal = document.getElementById('wVal');
+    const hVal = document.getElementById('hVal');
+    wSlider.addEventListener('input', () => { wVal.textContent = parseFloat(wSlider.value).toFixed(1); renderPoints(); renderResult(); });
+    hSlider.addEventListener('input', () => { hVal.textContent = parseFloat(hSlider.value).toFixed(1); renderPoints(); renderResult(); });
+
+    function renderPoints() {
+        if (!workCanvas) return;
+        const canvas = document.getElementById('pointCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = parseFloat(wSlider.value), H = parseFloat(hSlider.value);
+        const pad = 30;
+        const maxX = Math.max(gridW - 1, (gridW - 1) * W);
+        const maxY = Math.max(gridH - 1, (gridH - 1) * H);
+        const scale = Math.min((canvas.width - pad * 2) / Math.max(1, maxX), (canvas.height - pad * 2) / Math.max(1, maxY));
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.strokeRect(pad, pad, canvas.width - pad * 2, canvas.height - pad * 2);
+
+        const step = Math.max(1, Math.floor(Math.max(gridW, gridH) / 8));
+        for (let y = 0; y < gridH; y += step) {
+            for (let x = 0; x < gridW; x += step) {
+                const ox = pad + x * scale, oy = pad + y * scale;
+                ctx.fillStyle = '#3b82f6';
+                ctx.beginPath(); ctx.arc(ox, oy, 3, 0, Math.PI * 2); ctx.fill();
+
+                const nx = pad + (x * W) * scale, ny = pad + (y * H) * scale;
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath(); ctx.arc(nx, ny, 3, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+                ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(nx, ny); ctx.stroke();
+            }
+        }
+    }
+
+    function renderResult() {
+        if (!workCanvas) return;
+        document.getElementById('step3Placeholder').style.display = 'none';
+        document.getElementById('step3Body').style.display = 'block';
+
+        const W = parseFloat(wSlider.value), H = parseFloat(hSlider.value);
+        const outW = Math.max(1, Math.round(gridW * W));
+        const outH = Math.max(1, Math.round(gridH * H));
+
+        const DISPLAY_DIM = 200;
+
+        const resOrig = document.getElementById('resOrig');
+        resOrig.width = gridW; resOrig.height = gridH;
+        resOrig.getContext('2d').drawImage(workCanvas, 0, 0);
+        const origDispScale = DISPLAY_DIM / Math.max(gridW, gridH);
+        resOrig.style.width = Math.round(gridW * origDispScale) + 'px';
+        resOrig.style.height = Math.round(gridH * origDispScale) + 'px';
+
+        const resScaled = document.getElementById('resScaled');
+        resScaled.width = outW; resScaled.height = outH;
+        const sctx = resScaled.getContext('2d');
+        sctx.imageSmoothingEnabled = false;
+        sctx.drawImage(workCanvas, 0, 0, outW, outH);
+        const scaledDispScale = DISPLAY_DIM / Math.max(outW, outH);
+        resScaled.style.width = Math.round(outW * scaledDispScale) + 'px';
+        resScaled.style.height = Math.round(outH * scaledDispScale) + 'px';
+
+        const ex = Math.max(0, gridW - 1), ey = Math.max(0, gridH - 1);
+        const exX = Math.round(ex * W), exY = Math.round(ey * H);
+        document.getElementById('exampleBox').innerHTML =
+            `예시: 픽셀 (${ex}, ${ey})에 변환 행렬을 곱하면<br>` +
+            `x' = W×${ex} = ${W}×${ex} = ${(W*ex).toFixed(1)} → ${exX}<br>` +
+            `y' = H×${ey} = ${H}×${ey} = ${(H*ey).toFixed(1)} → ${exY}<br>` +
+            `즉 (${ex}, ${ey}) → (${exX}, ${exY})로 이동합니다.<br>` +
+            `원본 ${gridW}×${gridH} → 변환 후 ${outW}×${outH}`;
+    }
+</script>
+</body>
+</html>
