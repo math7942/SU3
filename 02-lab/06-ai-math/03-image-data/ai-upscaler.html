@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 기반 이미지 업스케일러</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #a5b4fc; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+        font-size: 1.7rem;
+        text-align: center;
+        margin: 0;
+        background: linear-gradient(90deg, #f97316, #ec4899);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+        border: none;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-weight: 700;
+        font-size: 0.88rem;
+        cursor: pointer;
+        color: white;
+        font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-select { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+    .btn-sample { background: linear-gradient(90deg, #ec4899, #f472b6); }
+    .btn-run { background: linear-gradient(90deg, #22c55e, #4ade80); }
+    .btn-download { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+    input[type="file"] { display: none; }
+
+    .status-bar {
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.88rem;
+        padding: 12px;
+        border-radius: 10px;
+        background: rgba(74,222,128,0.15);
+        color: #4ade80;
+        border: 1px solid rgba(74,222,128,0.3);
+    }
+    .status-bar.busy { background: rgba(250,204,21,0.15); color: #facc15; border-color: rgba(250,204,21,0.3); }
+    .status-bar.error { background: rgba(248,113,113,0.15); color: #f87171; border-color: rgba(248,113,113,0.3); }
+
+    .help-box {
+        background: rgba(255,255,255,0.06);
+        border-radius: 12px;
+        padding: 18px 20px;
+    }
+    .help-box h3 { margin: 0 0 10px; font-size: 0.92rem; color: #f1f5f9; }
+    .help-box ul { margin: 0; padding-left: 20px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.8; }
+    .help-box .note {
+        margin-top: 10px;
+        font-size: 0.78rem;
+        color: #fbbf24;
+        background: rgba(251,191,36,0.1);
+        border-radius: 8px;
+        padding: 8px 12px;
+    }
+
+    .result-card {
+        background: rgba(255,255,255,0.06);
+        border-radius: 14px;
+        padding: 20px;
+        display: none;
+    }
+    .result-row { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .result-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .result-col h4 { margin: 0; font-size: 0.85rem; color: #cbd5e1; }
+    .result-col canvas { border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); max-width: 280px; max-height: 280px; }
+    .download-row { text-align: center; margin-top: 16px; }
+
+    .placeholder { text-align: center; color: #94a3b8; font-size: 0.85rem; padding: 20px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>🚀 AI 기반 이미지 업스케일러</h1>
+
+    <div class="btn-row">
+        <button class="btn btn-select" id="btnSelect">📁 이미지 선택</button>
+        <button class="btn btn-sample" id="btnSample">🖼️ 샘플사진</button>
+        <button class="btn btn-run" id="btnRun">⚡ 업스케일링 시작</button>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <div class="status-bar" id="statusBar">모델 로드 완료. 업스케일링 준비 완료</div>
+
+    <div class="help-box">
+        <h3>도움말</h3>
+        <ul>
+            <li>GPU 사용환경이 제한적이기에 5MB 이하의 이미지만 업로드 가능합니다.</li>
+            <li>"샘플사진" 버튼으로 내장된 랜덤 이미지를 불러옵니다.</li>
+            <li>고화질 사진, 사용자의 컴퓨터 환경에 따라 업스케일링 진행시간이 오래걸릴 수 있습니다.</li>
+            <li>완료 후 "다운로드" 버튼이 활성화됩니다.</li>
+        </ul>
+        <div class="note">💡 실제 RealESRGAN 같은 초해상도 AI는 수십 MB짜리 신경망을 GPU로 돌립니다. 이 학습 도구는 브라우저에서 곧바로 실행할 수 있도록, 초해상도 AI의 핵심 아이디어(주변 픽셀의 패턴을 분석해 경계를 보강하는 것)를 <b>간단한 컨볼루션 필터로 흉내 낸 경량 버전</b>입니다.</div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+        <div class="result-row">
+            <div class="result-col"><h4>원본</h4><canvas id="origCanvas"></canvas></div>
+            <div class="result-col"><h4>AI 업스케일 (x4)</h4><canvas id="upCanvas"></canvas></div>
+        </div>
+        <div class="download-row">
+            <button class="btn btn-download" id="btnDownload" disabled>⬇ 다운로드</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const statusBar = document.getElementById('statusBar');
+    const resultCard = document.getElementById('resultCard');
+    const btnDownload = document.getElementById('btnDownload');
+    const MAX_BYTES = 5 * 1024 * 1024;
+    const MAX_WORK_DIM = 90;
+    const SCALE = 4;
+
+    let workCanvas = null;
+    let upscaledCanvas = null;
+
+    function setStatus(text, mode) {
+        statusBar.textContent = text;
+        statusBar.className = 'status-bar' + (mode ? ' ' + mode : '');
+    }
+
+    document.getElementById('btnSelect').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+    function loadFile(file) {
+        if (!file.type.startsWith('image/')) { setStatus('이미지 파일을 선택해 주세요.', 'error'); return; }
+        if (file.size > MAX_BYTES) { setStatus(`이미지 용량이 너무 큽니다 (${(file.size / 1024 / 1024).toFixed(1)}MB). 5MB 이하 이미지만 업로드할 수 있습니다.`, 'error'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => { setUpImage(img); setStatus('이미지 로드 완료. "업스케일링 시작"을 눌러주세요.'); };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function setUpImage(img) {
+        const scale = Math.min(1, MAX_WORK_DIM / img.naturalWidth, MAX_WORK_DIM / img.naturalHeight);
+        const w = Math.max(4, Math.round(img.naturalWidth * scale));
+        const h = Math.max(4, Math.round(img.naturalHeight * scale));
+        workCanvas = document.createElement('canvas');
+        workCanvas.width = w; workCanvas.height = h;
+        workCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resultCard.style.display = 'block';
+        showOriginalPreview();
+        btnDownload.disabled = true;
+        upscaledCanvas = null;
+    }
+
+    function showOriginalPreview() {
+        const c = document.getElementById('origCanvas');
+        const dim = 200;
+        const s = dim / Math.max(workCanvas.width, workCanvas.height);
+        c.width = workCanvas.width; c.height = workCanvas.height;
+        c.style.width = Math.round(workCanvas.width * s) + 'px';
+        c.style.height = Math.round(workCanvas.height * s) + 'px';
+        c.getContext('2d').drawImage(workCanvas, 0, 0);
+        document.getElementById('upCanvas').width = 1;
+        document.getElementById('upCanvas').height = 1;
+    }
+
+    document.getElementById('btnSample').addEventListener('click', () => {
+        const sample = document.createElement('canvas');
+        sample.width = 48; sample.height = 36;
+        const ctx = sample.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 36);
+        grad.addColorStop(0, '#7dd3fc'); grad.addColorStop(1, '#e0f2fe');
+        ctx.fillStyle = grad; ctx.fillRect(0, 0, 48, 22);
+        ctx.fillStyle = '#fde68a'; ctx.beginPath(); ctx.arc(38, 8, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#65a30d';
+        ctx.beginPath(); ctx.moveTo(4, 22); ctx.lineTo(16, 6); ctx.lineTo(28, 22); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(0, 22, 48, 14);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(2, 26 + i * 4); ctx.lineTo(46, 26 + i * 4); ctx.stroke(); }
+
+        const img = new Image();
+        img.onload = () => { setUpImage(img); setStatus('샘플 이미지 로드 완료. "업스케일링 시작"을 눌러주세요.'); };
+        img.src = sample.toDataURL();
+    });
+
+    function clampPx(data, w, h, x, y) {
+        x = Math.max(0, Math.min(w - 1, x));
+        y = Math.max(0, Math.min(h - 1, y));
+        const i = (y * w + x) * 4;
+        return [data[i], data[i + 1], data[i + 2], data[i + 3]];
+    }
+    function cubicWeight(x) {
+        const a = -0.5; x = Math.abs(x);
+        if (x <= 1) return (a + 2) * x ** 3 - (a + 3) * x ** 2 + 1;
+        if (x < 2) return a * x ** 3 - 5 * a * x ** 2 + 8 * a * x - 4 * a;
+        return 0;
+    }
+    function bicubicUpscale(src, sw, sh, dw, dh) {
+        const out = new Uint8ClampedArray(dw * dh * 4);
+        for (let dy = 0; dy < dh; dy++) {
+            for (let dx = 0; dx < dw; dx++) {
+                const sx = (dx + 0.5) * sw / dw - 0.5, sy = (dy + 0.5) * sh / dh - 0.5;
+                const ix = Math.floor(sx), iy = Math.floor(sy);
+                const fx = sx - ix, fy = sy - iy;
+                const wx = [cubicWeight(fx + 1), cubicWeight(fx), cubicWeight(fx - 1), cubicWeight(fx - 2)];
+                const wy = [cubicWeight(fy + 1), cubicWeight(fy), cubicWeight(fy - 1), cubicWeight(fy - 2)];
+                const acc = [0, 0, 0, 0];
+                for (let m = -1; m <= 2; m++) for (let n = -1; n <= 2; n++) {
+                    const p = clampPx(src, sw, sh, ix + n, iy + m);
+                    const wgt = wx[n + 1] * wy[m + 1];
+                    for (let c = 0; c < 4; c++) acc[c] += p[c] * wgt;
+                }
+                const oi = (dy * dw + dx) * 4;
+                for (let c = 0; c < 4; c++) out[oi + c] = Math.max(0, Math.min(255, acc[c]));
+            }
+        }
+        return new ImageData(out, dw, dh);
+    }
+
+    // 간단한 언샤프 마스크(경계 강화) — 초해상도 AI가 디테일을 보강하는 것을 흉내
+    function sharpen(imgData, amount) {
+        const { data, width: w, height: h } = imgData;
+        const out = new Uint8ClampedArray(data.length);
+        const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const oi = (y * w + x) * 4;
+                for (let c = 0; c < 3; c++) {
+                    let sum = 0, k = 0;
+                    for (let m = -1; m <= 1; m++) for (let n = -1; n <= 1; n++) {
+                        const p = clampPx(data, w, h, x + n, y + m);
+                        sum += p[c] * kernel[k++];
+                    }
+                    const blended = data[oi + c] * (1 - amount) + sum * amount;
+                    out[oi + c] = Math.max(0, Math.min(255, blended));
+                }
+                out[oi + 3] = data[oi + 3];
+            }
+        }
+        return new ImageData(out, w, h);
+    }
+
+    document.getElementById('btnRun').addEventListener('click', () => {
+        if (!workCanvas) { setStatus('먼저 이미지를 선택하거나 샘플사진을 불러와 주세요.', 'error'); return; }
+        setStatus('업스케일링 중... 🧠', 'busy');
+        btnDownload.disabled = true;
+        setTimeout(() => {
+            const sw = workCanvas.width, sh = workCanvas.height;
+            const dw = sw * SCALE, dh = sh * SCALE;
+            const srcData = workCanvas.getContext('2d').getImageData(0, 0, sw, sh).data;
+            let result = bicubicUpscale(srcData, sw, sh, dw, dh);
+            result = sharpen(result, 0.5);
+
+            upscaledCanvas = document.createElement('canvas');
+            upscaledCanvas.width = dw; upscaledCanvas.height = dh;
+            upscaledCanvas.getContext('2d').putImageData(result, 0, 0);
+
+            const disp = document.getElementById('upCanvas');
+            const dim = 200;
+            const s = dim / Math.max(dw, dh);
+            disp.width = dw; disp.height = dh;
+            disp.style.width = Math.round(dw * s) + 'px';
+            disp.style.height = Math.round(dh * s) + 'px';
+            disp.getContext('2d').drawImage(upscaledCanvas, 0, 0);
+
+            btnDownload.disabled = false;
+            setStatus(`업스케일링 완료! (${sw}×${sh} → ${dw}×${dh})`);
+        }, 300);
+    });
+
+    btnDownload.addEventListener('click', () => {
+        if (!upscaledCanvas) return;
+        const url = upscaledCanvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'ai-upscaled.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+</script>
+</body>
+</html>
