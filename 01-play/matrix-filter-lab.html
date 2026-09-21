@@ -472,7 +472,7 @@
                 <div class="filter-buttons">
                     <button class="filter-btn active" data-filter="blur">
                         <div>🌫️ 블러 (흐릿함)</div>
-                        <div class="filter-formula">[2 4 2] [4 8 4] [2 4 2] ÷ 32</div>
+                        <div class="filter-formula">[4 8 4] [8 16 8] [4 8 4] ÷ 64</div>
                     </button>
                     <button class="filter-btn" data-filter="sharpen">
                         <div>✨ 선명화 (또렷함)</div>
@@ -664,7 +664,7 @@
 
         // 필터 정의
         const filters = {
-            blur: [[2, 4, 2], [4, 8, 4], [2, 4, 2]],
+            blur: [[4, 8, 4], [8, 16, 8], [4, 8, 4]],
             sharpen: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]],
             edge: [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
             boost: [[0, 0, 0], [0, 5, 0], [0, 0, 0]]
@@ -860,7 +860,7 @@
 
         function getFilterFormula(filter) {
             const formulas = {
-                blur: '[2 4 2] [4 8 4] [2 4 2] ÷ 32',
+                blur: '[4 8 4] [8 16 8] [4 8 4] ÷ 64',
                 sharpen: '[0 -1 0] [-1 5 -1] [0 -1 0]',
                 edge: '[-1 -1 -1] [-1 8 -1] [-1 -1 -1]',
                 boost: '[0 0 0] [0 5 0] [0 0 0]'
