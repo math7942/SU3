@@ -289,6 +289,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         <label class="btn btn-primary" for="fileInput">엑셀 불러오기</label>
         <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
         <button type="button" class="btn" id="printBtn">인쇄</button>
+        <button type="button" class="btn" id="downloadBtn">엑셀 다운로드</button>
       </div>
     </div>
     <p class="file-status" id="fileStatus"></p>
@@ -423,7 +424,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     showExtra: false,
     groupFields: [],
     allOpen: true,
-    scheduleFields: ['interview','essay','practical','aptitude']
+    scheduleFields: ['interview','essay','practical','aptitude'],
+    filteredRows: []
   };
   var MULTI_GRADE = false;
   var MULTI_CLASS = false;
@@ -439,6 +441,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   var extraCb = document.getElementById('showExtra');
   var toggleAllBtn = document.getElementById('toggleAllBtn');
   var printBtn = document.getElementById('printBtn');
+  var downloadBtn = document.getElementById('downloadBtn');
   var printMeta = document.getElementById('printMeta');
   var printDate = document.getElementById('printDate');
 
@@ -494,6 +497,76 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     window.print();
   });
 
+  function fmtFullDate(range){
+    if(!range) return '';
+    var s = fmtOne(range.start);
+    if(!s) return range.raw || '';
+    if(range.start === range.end || !range.end) return range.start + '(' + s.dow + ')';
+    var e = fmtOne(range.end);
+    if(!e) return range.start + '(' + s.dow + ')';
+    return range.start + '~' + range.end + '(' + s.dow + '~' + e.dow + ')';
+  }
+
+  function exportExcel(){
+    var records = [];
+    state.filteredRows.forEach(function(r){
+      selectedTypes().forEach(function(t){
+        var range = r[t.id];
+        if(!range) return;
+        records.push({
+          classNo: r.classNo,
+          no: r.no,
+          name: r.name,
+          univMajor: r.univ + (r.major ? '(' + r.major + ')' : ''),
+          typeLabel: t.label,
+          dateText: fmtFullDate(range),
+          monthKey: range.start.slice(0,7)
+        });
+      });
+    });
+
+    if(!records.length){
+      alert('다운로드할 일정이 없습니다. 학생 목록과 선택한 일정 유형을 확인해주세요.');
+      return;
+    }
+
+    var monthMap = {};
+    var monthKeys = [];
+    records.forEach(function(rec){
+      if(!monthMap[rec.monthKey]){ monthMap[rec.monthKey] = []; monthKeys.push(rec.monthKey); }
+      monthMap[rec.monthKey].push(rec);
+    });
+    monthKeys.sort();
+
+    var yearSet = {};
+    monthKeys.forEach(function(k){ yearSet[k.slice(0,4)] = 1; });
+    var multiYear = Object.keys(yearSet).length > 1;
+
+    var wb = XLSX.utils.book_new();
+    monthKeys.forEach(function(key){
+      var list = monthMap[key].slice().sort(function(a,b){
+        if(a.dateText !== b.dateText) return a.dateText < b.dateText ? -1 : 1;
+        if(a.classNo !== b.classNo) return (a.classNo||'').localeCompare(b.classNo||'','ko',{numeric:true});
+        return (a.no||'').localeCompare(b.no||'','ko',{numeric:true});
+      });
+      var aoa = [['반','번호','이름','대학명(학과명)','실기 또는 면접','일자(요일)']];
+      list.forEach(function(rec){
+        aoa.push([rec.classNo, rec.no, rec.name, rec.univMajor, rec.typeLabel, rec.dateText]);
+      });
+      var ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws['!cols'] = [{wch:6},{wch:8},{wch:10},{wch:32},{wch:14},{wch:18}];
+      var yy = key.slice(0,4), mm = +key.slice(5,7);
+      var sheetName = (multiYear ? yy + '년 ' : '') + mm + '월';
+      XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
+    });
+
+    var today = new Date();
+    var fname = '일정_명단_' + today.getFullYear() + pad2(today.getMonth()+1) + pad2(today.getDate()) + '.xlsx';
+    XLSX.writeFile(wb, fname);
+  }
+
+  downloadBtn.addEventListener('click', exportExcel);
+
   function cellStr(v){
     if(v === null || v === undefined) return null;
     var s = String(v).trim();
@@ -535,6 +608,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         grade: cellStr(get(row,'학년')) || '',
         classNo: cellStr(get(row,'반')) || '',
         no: cellStr(get(row,'번호')) || '',
+        name: cellStr(get(row,'이름')) || '',
         univ: univ,
         type1: cellStr(get(row,'전형유형')) || '',
         type2: cellStr(get(row,'전형명(대)')) || '',
@@ -711,6 +785,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
     var rows = state.rows;
     if(state.filterInterview) rows = rows.filter(function(r){ return primaryDate(r) !== null; });
+    state.filteredRows = rows;
 
     YEAR_MULTI = (function(){
       var s = {}; var n = 0;
