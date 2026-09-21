@@ -535,30 +535,122 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                // 간단한 사자 그리기
-                ctx.fillStyle = '#fdb813';
+                // 귀여운 강아지 얼굴 (눈코입) 🐶
+                // 밝은 배경
+                ctx.fillStyle = '#fffef5';
+                ctx.fillRect(0, 0, 400, 300);
+
+                // 강아지 머리 (머핀 위에 올라갈 부분)
+                const headGradient = ctx.createLinearGradient(200, 100, 200, 180);
+                headGradient.addColorStop(0, '#f4a460');
+                headGradient.addColorStop(1, '#d2691e');
+                ctx.fillStyle = headGradient;
                 ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.arc(200, 140, 65, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#f5a623';
+                // 얼굴 밝은 부분
+                ctx.fillStyle = '#ffb88c';
                 ctx.beginPath();
-                ctx.arc(200, 150, 60, 0, Math.PI * 2);
+                ctx.ellipse(200, 155, 50, 45, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 눈
+                // 큰 눈 (왼쪽)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(165, 120, 20, 25, 0.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 큰 눈 (오른쪽)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.ellipse(235, 120, 20, 25, -0.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 눈 윤곽
+                ctx.strokeStyle = '#8b4513';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.ellipse(165, 120, 20, 25, 0.2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(235, 120, 20, 25, -0.2, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // 동공 (큼직하고 귀여우면서 생생하게)
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(180, 130, 8, 0, Math.PI * 2);
+                ctx.arc(168, 125, 11, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(220, 130, 8, 0, Math.PI * 2);
+                ctx.arc(238, 125, 11, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 코
+                // 눈동자 윤기 (하이라이트)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(171, 122, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(241, 122, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 코 (검은 동그란 코)
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(200, 150, 5, 0, Math.PI * 2);
+                ctx.arc(200, 155, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 코 윤기
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(197, 152, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 입 (귀여운 혀 내민 표정)
+                ctx.fillStyle = '#ffb6c1';
+                ctx.beginPath();
+                ctx.moveTo(185, 170);
+                ctx.lineTo(215, 170);
+                ctx.quadraticCurveTo(200, 180, 200, 185);
+                ctx.quadraticCurveTo(200, 175, 185, 170);
+                ctx.fill();
+
+                // 혀
+                ctx.fillStyle = '#ff69b4';
+                ctx.beginPath();
+                ctx.ellipse(200, 185, 10, 8, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 입 테두리
+                ctx.strokeStyle = '#8b4513';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(185, 170);
+                ctx.lineTo(215, 170);
+                ctx.quadraticCurveTo(200, 180, 200, 185);
+                ctx.quadraticCurveTo(200, 175, 185, 170);
+                ctx.stroke();
+
+                // 귀 (왼쪽)
+                ctx.fillStyle = '#d2691e';
+                ctx.beginPath();
+                ctx.ellipse(140, 105, 18, 35, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 귀 (오른쪽)
+                ctx.fillStyle = '#d2691e';
+                ctx.beginPath();
+                ctx.ellipse(260, 105, 18, 35, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 귀 안쪽 (핑크색)
+                ctx.fillStyle = '#ffb6c1';
+                ctx.beginPath();
+                ctx.ellipse(140, 110, 10, 20, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(260, 110, 10, 20, -0.3, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
                 // 밝은 배경
@@ -690,70 +782,63 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                // 호랑이 얼굴
-                ctx.fillStyle = '#ff8c42';
+                // 귀여운 머핀 🧁
+                // 배경
+                ctx.fillStyle = '#fff8f0';
+                ctx.fillRect(0, 0, 400, 300);
+
+                // 머핀 베이스 (아래쪽 - 컵 부분)
+                const muffinGradient = ctx.createLinearGradient(200, 120, 200, 220);
+                muffinGradient.addColorStop(0, '#d4a574');
+                muffinGradient.addColorStop(1, '#8b6f47');
+                ctx.fillStyle = muffinGradient;
                 ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
+                ctx.ellipse(200, 180, 70, 60, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 호랑이 줄무늬
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 4;
-                for (let i = 0; i < 5; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(150 + i * 20, 100);
-                    ctx.lineTo(160 + i * 20, 120);
-                    ctx.stroke();
-                }
-                for (let i = 0; i < 5; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(150 + i * 20, 180);
-                    ctx.lineTo(160 + i * 20, 160);
-                    ctx.stroke();
-                }
-
-                // 눈
-                ctx.fillStyle = '#fff';
+                // 머핀 윗부분 (부풀어오른 부분)
+                const topGradient = ctx.createLinearGradient(200, 70, 200, 140);
+                topGradient.addColorStop(0, '#c9956a');
+                topGradient.addColorStop(1, '#a67c52');
+                ctx.fillStyle = topGradient;
                 ctx.beginPath();
-                ctx.arc(175, 130, 12, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(225, 130, 12, 0, Math.PI * 2);
+                ctx.ellipse(200, 110, 75, 65, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 동공
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(175, 130, 7, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(225, 130, 7, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 코
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(200, 155, 6, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 입
-                ctx.strokeStyle = '#000';
+                // 머핀 테두리 (윤곽선)
+                ctx.strokeStyle = '#6b5344';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(200, 155);
-                ctx.lineTo(200, 170);
+                ctx.ellipse(200, 110, 75, 65, 0, 0, Math.PI * 2);
                 ctx.stroke();
 
-                // 수염
-                for (let i = 1; i <= 3; i++) {
+                // 초콜릿 칩 데코레이션
+                ctx.fillStyle = '#3d2817';
+                const chips = [
+                    {x: 160, y: 90}, {x: 190, y: 75}, {x: 230, y: 85},
+                    {x: 170, y: 120}, {x: 210, y: 115}, {x: 240, y: 120},
+                    {x: 180, y: 140}, {x: 200, y: 145}, {x: 220, y: 135}
+                ];
+                chips.forEach(chip => {
                     ctx.beginPath();
-                    ctx.moveTo(200, 160 - i * 5);
-                    ctx.lineTo(165, 160 - i * 5);
-                    ctx.stroke();
+                    ctx.arc(chip.x, chip.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
 
+                // 머핀 윤기 (하이라이트)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.beginPath();
+                ctx.ellipse(170, 80, 25, 20, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 머핀 컵 부분의 주름
+                ctx.strokeStyle = '#996633';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
                     ctx.beginPath();
-                    ctx.moveTo(200, 160 - i * 5);
-                    ctx.lineTo(235, 160 - i * 5);
+                    ctx.moveTo(200, 180);
+                    ctx.lineTo(200 + Math.cos(angle) * 70, 180 + Math.sin(angle) * 60);
                     ctx.stroke();
                 }
             } else if (type === 'face') {
