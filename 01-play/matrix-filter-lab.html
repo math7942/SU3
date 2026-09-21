@@ -484,7 +484,7 @@
                     </button>
                     <button class="filter-btn" data-filter="boost">
                         <div>💪 색감 부스트</div>
-                        <div class="filter-formula">[0 0 0] [0 2 0] [0 0 0]</div>
+                        <div class="filter-formula">[0 0 0] [0 5 0] [0 0 0]</div>
                     </button>
                 </div>
             </div>
@@ -752,7 +752,7 @@
                     currentFilter = btn.dataset.filter;
 
                     createTestImage(canvas1Filtered);
-                    applyConvolution(canvas1Filtered, filters[currentFilter], true);
+                    applyConvolution(canvas1Filtered, filters[currentFilter], currentFilter !== 'boost');
                 });
             });
         }
@@ -795,7 +795,7 @@
 
             const canvas3Quiz = document.getElementById('canvas3-quiz');
             createTestImage(canvas3Quiz);
-            applyConvolution(canvas3Quiz, filters[quizFilter], true);
+            applyConvolution(canvas3Quiz, filters[quizFilter], quizFilter !== 'boost');
 
             const quizChoices = document.getElementById('quizChoices');
             quizChoices.innerHTML = '';
@@ -823,7 +823,7 @@
                 blur: '[1 2 1] [2 4 2] [1 2 1] ÷ 16',
                 sharpen: '[0 -1 0] [-1 5 -1] [0 -1 0]',
                 edge: '[-1 -1 -1] [-1 8 -1] [-1 -1 -1]',
-                boost: '[0 0 0] [0 2 0] [0 0 0]'
+                boost: '[0 0 0] [0 5 0] [0 0 0]'
             };
             return formulas[filter] || '';
         }
