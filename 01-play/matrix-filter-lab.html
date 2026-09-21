@@ -840,6 +840,15 @@
                     // 필터 커널 조정
                     let adjustedKernel = adjustFilterKernel(filterName, sliderValue);
 
+                    // 커널 공식 업데이트
+                    const activeBtn = document.querySelector(`.filter-btn[data-filter="${filterName}"]`);
+                    if (activeBtn) {
+                        const formulaDiv = activeBtn.querySelector('.filter-formula');
+                        if (formulaDiv) {
+                            formulaDiv.textContent = formatKernel(adjustedKernel, filterName);
+                        }
+                    }
+
                     // 미리보기 업데이트
                     createTestImage(canvas1Filtered);
                     applyConvolution(canvas1Filtered, adjustedKernel, filterName !== 'boost');
@@ -871,6 +880,18 @@
             }
 
             return kernel.map(row => row.map(val => Math.round(val * multiplier)));
+        }
+
+        // 커널을 화면에 표시할 형식으로 변환
+        function formatKernel(kernel, filterName) {
+            const kernelStr = kernel.map(row => '[' + row.join(' ') + ']').join(' ');
+            const normalizations = {
+                blur: ' ÷ 64',
+                sharpen: '',
+                edge: '',
+                boost: ' ÷ 1'
+            };
+            return kernelStr + (normalizations[filterName] || '');
         }
 
         // Stage 2 초기화
