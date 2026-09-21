@@ -610,7 +610,10 @@
                 ctx.ellipse(cx + 30, cy + 120, 20, 40, 0.3, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'pattern') {
-                // 별과 달만 (배경 없음)
+                // 별과 달 (배경 포함)
+                ctx.fillStyle = '#001a4d';
+                ctx.fillRect(0, 0, 400, 300);
+
                 // 별들
                 ctx.fillStyle = '#fff';
                 for (let i = 0; i < 50; i++) {
@@ -808,8 +811,8 @@
                 ctx.lineTo(200, 120);
                 ctx.stroke();
             } else if (type === 'pattern') {
-                // 검은색만 있는 밤 하늘
-                ctx.fillStyle = '#000814';
+                // 어두운 밤 하늘 (배경만)
+                ctx.fillStyle = '#0a1628';
                 ctx.fillRect(0, 0, 400, 300);
             } else if (type === 'meme') {
                 // 웃는 얼굴 (노란색)
