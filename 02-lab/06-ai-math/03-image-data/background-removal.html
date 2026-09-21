@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI가 배경을 지우는 법 — 배경 제거 체험</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f8fafc;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 1040px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #7c2d92; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    .title-row { display: flex; justify-content: center; align-items: center; gap: 14px; position: relative; }
+    h1 { font-size: 1.35rem; margin: 0; text-align: center; }
+    .help-btn {
+        position: absolute; right: 0;
+        background: #7c2d92; color: white; border: none;
+        border-radius: 8px; padding: 8px 16px; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+        font-family: inherit;
+    }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .help-detail {
+        display: none;
+        background: #fdf4ff;
+        border: 1px solid #f0abfc;
+        border-radius: 10px;
+        padding: 14px 18px;
+        font-size: 0.82rem;
+        color: #701a75;
+        line-height: 1.6;
+    }
+    .help-detail.shown { display: block; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .intro-box { background: #fdf4ff; border: 1px solid #f0abfc; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #701a75; }
+    .intro-box p { margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box b { color: #701a75; }
+
+    .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 11px 20px; font-weight: 700;
+        font-size: 0.88rem; cursor: pointer; color: white; font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-upload { background: #7c2d92; }
+    .btn-webcam { background: #db2777; }
+    .btn-stop { background: #64748b; }
+    .btn-sample { background: #0f766e; }
+    .btn-download { background: #059669; }
+    input[type="file"] { display: none; }
+
+    .status-line { text-align: center; font-size: 0.82rem; color: #64748b; margin-top: 14px; font-weight: 700; }
+    .status-line.ready { color: #16a34a; }
+    .status-line.error { color: #dc2626; }
+
+    .step-section h3 { font-size: 0.95rem; color: #334155; margin: 0 0 4px; }
+    .step-note { font-size: 0.78rem; color: #64748b; line-height: 1.6; margin: 0 0 14px; }
+    .step-note b { color: #b45309; }
+    .step-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .step-cell { text-align: center; }
+    .step-cell .canvas-wrap {
+        background: repeating-conic-gradient(#e2e8f0 0% 25%, #f8fafc 0% 50%) 0 0 / 16px 16px;
+        border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden;
+        display: flex; align-items: center; justify-content: center; min-height: 140px;
+    }
+    .step-cell canvas { max-width: 100%; display: block; }
+    .step-cell .tag { font-size: 0.68rem; color: #94a3b8; margin-top: 8px; }
+    .step-cell .label { font-size: 0.78rem; color: #334155; font-weight: 700; margin-top: 2px; }
+    .step-empty { grid-column: 1 / -1; color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 20px; }
+
+    .bg-color-row { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .bg-color-row label { font-size: 0.8rem; color: #475569; font-weight: 700; }
+    .bg-swatch {
+        width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+    }
+    .bg-swatch.active { border-color: #1e293b; }
+    .bg-swatch.transparent-swatch {
+        background: repeating-conic-gradient(#e2e8f0 0% 25%, #ffffff 0% 50%) 0 0 / 10px 10px;
+    }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #7c2d92; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) { .step-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="object-recognition.html">← AI의 눈으로 세상 보기로</a>
+    <div class="title-row">
+        <h1>AI가 배경을 지우는 법 — 배경 제거 체험</h1>
+        <button class="help-btn" id="btnHelp">❓ 도움말</button>
+    </div>
+    <p class="subtitle">사진에서 사람만 남기고 배경을 지우는 AI의 4단계를 따라가 보세요!</p>
+
+    <div class="help-detail" id="helpDetail">
+        <b>3단계(분할 마스크)와 4단계(배경 제거 결과)</b>는 실제로 브라우저에서 동작하는 TensorFlow.js 공식 사전학습 모델인 <b>BodyPix</b>(U-Net 계열 구조로 사람의 실루엣을 픽셀 단위로 구분하는 모델)를 사용합니다. 모델을 불러오지 못하면 배경색과의 색상 차이를 이용한 간단한 대체 방식으로 자동 전환되며, 화면에 어떤 방식이 쓰였는지 표시됩니다.<br><br>
+        <b>1단계(필터 수집)와 2단계(레이어 판단)</b>는 실제 BodyPix 내부 값이 아니라, CNN이 여러 층을 거치며 "이 픽셀이 전경(사람)인지"를 판단해가는 과정을 간단한 컨볼루션 필터로 <b>개념적으로 재현</b>한 것입니다.
+    </div>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>배경 제거 AI는 어떻게 동작할까?</h3>
+            <p>영상 통화 배경 흐림, 인물 사진 배경 교체 같은 기능은 <b>의미론적 분할(Semantic Segmentation)</b> AI로 만들어집니다. 이 AI는 사진의 모든 픽셀 하나하나에 대해 "이 픽셀은 사람인가, 배경인가?"를 CNN으로 판단해서 마스크(가면)를 만들고, 그 마스크로 배경만 지웁니다.</p>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px;">
+            <button class="btn btn-upload" id="btnUpload">📷 이미지 업로드</button>
+            <button class="btn btn-webcam" id="btnWebcam">📹 웹캠 시작</button>
+            <button class="btn btn-stop" id="btnStop" style="display:none;">⏹ 중지</button>
+            <button class="btn btn-sample" id="btnSample">🖼️ 샘플 이미지</button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <p class="status-line" id="statusLine">모델을 불러오는 중...</p>
+    </div>
+
+    <div class="card step-section">
+        <h3>🪄 배경 제거 4단계</h3>
+        <p class="step-note"><b>1·2단계는 실제 내부 값이 아닌 개념적 재현입니다.</b> 3·4단계는 이미지를 불러오면 실제 분할 모델(또는 대체 방식)로 계산됩니다.</p>
+        <div class="step-grid" id="stepGrid">
+            <p class="step-empty">이미지를 먼저 불러와 주세요.</p>
+        </div>
+        <div class="bg-color-row" id="bgColorRow" style="display:none;">
+            <label>새 배경:</label>
+            <div class="bg-swatch transparent-swatch active" data-bg="transparent" title="투명"></div>
+            <div class="bg-swatch" data-bg="#ffffff" style="background:#ffffff; border-color:#cbd5e1;" title="흰색"></div>
+            <div class="bg-swatch" data-bg="#22c55e" style="background:#22c55e;" title="초록(크로마키)"></div>
+            <div class="bg-swatch" data-bg="#3b82f6" style="background:#3b82f6;" title="파랑"></div>
+            <div class="bg-swatch" data-bg="#facc15" style="background:#facc15;" title="노랑"></div>
+            <button class="btn btn-download" id="btnDownload" style="margin-left:8px;">💾 PNG 저장</button>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="object-recognition.html">← AI의 눈으로 세상 보기로</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
+<script>
+    const statusLine = document.getElementById('statusLine');
+    let model = null;
+    let webcamStream = null;
+    let webcamLoopId = null;
+    let currentMask = null;   // Uint8Array of 0/1, length w*h
+    let currentSrcCanvas = null; // canvas holding the current source frame
+    let bgChoice = 'transparent';
+
+    // ---- 3x3 커널 (다른 도구들과 동일한 정의를 재사용) ----
+    const KERNELS = {
+        edgeH: [-1,-1,-1, 0,0,0, 1,1,1],
+        edgeV: [-1,0,1, -1,0,1, -1,0,1],
+        blur: [1,1,1, 1,1,1, 1,1,1],
+    };
+
+    function clampG(gray, w, h, x, y) {
+        x = Math.max(0, Math.min(w - 1, x));
+        y = Math.max(0, Math.min(h - 1, y));
+        return gray[y * w + x];
+    }
+
+    function convGray(gray, w, h, kernel) {
+        let kernelSum = kernel.reduce((s, v) => s + v, 0);
+        if (Math.abs(kernelSum) < 1e-6) kernelSum = 1;
+        const out = new Float64Array(w * h);
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                let sum = 0, ki = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        sum += clampG(gray, w, h, x + dx, y + dy) * kernel[ki++];
+                    }
+                }
+                out[y * w + x] = Math.max(0, Math.min(255, sum / kernelSum));
+            }
+        }
+        return out;
+    }
+
+    function edgeMagnitude(gray, w, h) {
+        const gh = convGray(gray, w, h, KERNELS.edgeH);
+        const gv = convGray(gray, w, h, KERNELS.edgeV);
+        const out = new Float64Array(w * h);
+        for (let i = 0; i < w * h; i++) out[i] = Math.min(255, Math.sqrt(gh[i] * gh[i] + gv[i] * gv[i]));
+        return out;
+    }
+
+    function grayscaleFromCanvas(canvas) {
+        const w = canvas.width, h = canvas.height;
+        const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const gray = new Float64Array(w * h);
+        for (let i = 0; i < w * h; i++) gray[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+        return gray;
+    }
+
+    // 2단계 "레이어 판단" 개념 재현: 엣지 밀도를 블러로 뭉쳐서 "전경일 가능성"의 근사치로 사용
+    function saliencyProxy(gray, w, h) {
+        const mag = edgeMagnitude(gray, w, h);
+        const smoothed1 = convGray(mag, w, h, KERNELS.blur);
+        const smoothed2 = convGray(smoothed1, w, h, KERNELS.blur);
+        return smoothed2;
+    }
+
+    // 배경색 거리 기반 간단 대체 마스크: 네 모서리 색을 배경으로 추정하고, 그 색과 거리가 먼 픽셀을 전경으로 분류
+    function classicalMask(canvas) {
+        const w = canvas.width, h = canvas.height;
+        const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const corners = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+        let br = 0, bg = 0, bb = 0;
+        corners.forEach(([x, y]) => { const i = (y * w + x) * 4; br += d[i]; bg += d[i + 1]; bb += d[i + 2]; });
+        br /= 4; bg /= 4; bb /= 4;
+        const mask = new Uint8Array(w * h);
+        const threshold = 45;
+        for (let p = 0; p < w * h; p++) {
+            const i = p * 4;
+            const dist = Math.sqrt((d[i] - br) ** 2 + (d[i + 1] - bg) ** 2 + (d[i + 2] - bb) ** 2);
+            mask[p] = dist > threshold ? 1 : 0;
+        }
+        return mask;
+    }
+
+    function drawGrayToCanvas(canvas, gray, w, h) {
+        canvas.width = w; canvas.height = h;
+        const imgData = new ImageData(w, h);
+        for (let i = 0; i < w * h; i++) {
+            const v = Math.round(gray[i]);
+            imgData.data[i * 4] = v; imgData.data[i * 4 + 1] = v; imgData.data[i * 4 + 2] = v; imgData.data[i * 4 + 3] = 255;
+        }
+        canvas.getContext('2d').putImageData(imgData, 0, 0);
+    }
+
+    function drawMaskToCanvas(canvas, mask, w, h) {
+        canvas.width = w; canvas.height = h;
+        const imgData = new ImageData(w, h);
+        for (let i = 0; i < w * h; i++) {
+            const v = mask[i] ? 255 : 0;
+            imgData.data[i * 4] = v; imgData.data[i * 4 + 1] = 40; imgData.data[i * 4 + 2] = mask[i] ? 200 : 0; imgData.data[i * 4 + 3] = 255;
+        }
+        canvas.getContext('2d').putImageData(imgData, 0, 0);
+    }
+
+    function drawCutoutToCanvas(canvas, srcCanvas, mask, w, h, bg) {
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        const srcData = srcCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const out = new Uint8ClampedArray(w * h * 4);
+        let bgR = 255, bgG = 255, bgB = 255;
+        if (bg && bg !== 'transparent') {
+            const tmp = document.createElement('canvas').getContext('2d');
+            tmp.fillStyle = bg;
+            bgR = parseInt(bg.slice(1, 3), 16); bgG = parseInt(bg.slice(3, 5), 16); bgB = parseInt(bg.slice(5, 7), 16);
+        }
+        for (let i = 0; i < w * h; i++) {
+            const o = i * 4;
+            if (mask[i]) {
+                out[o] = srcData[o]; out[o + 1] = srcData[o + 1]; out[o + 2] = srcData[o + 2]; out[o + 3] = 255;
+            } else if (bg === 'transparent' || !bg) {
+                out[o] = 0; out[o + 1] = 0; out[o + 2] = 0; out[o + 3] = 0;
+            } else {
+                out[o] = bgR; out[o + 1] = bgG; out[o + 2] = bgB; out[o + 3] = 255;
+            }
+        }
+        ctx.putImageData(new ImageData(out, w, h), 0, 0);
+    }
+
+    function makeStepCell(canvas, tag, label) {
+        const cell = document.createElement('div');
+        cell.className = 'step-cell';
+        const wrap = document.createElement('div');
+        wrap.className = 'canvas-wrap';
+        wrap.appendChild(canvas);
+        cell.appendChild(wrap);
+        const tagEl = document.createElement('div'); tagEl.className = 'tag'; tagEl.textContent = tag;
+        const labelEl = document.createElement('div'); labelEl.className = 'label'; labelEl.textContent = label;
+        cell.appendChild(tagEl); cell.appendChild(labelEl);
+        return cell;
+    }
+
+    async function runPipeline(sourceEl) {
+        const naturalW = sourceEl.naturalWidth || sourceEl.videoWidth;
+        const naturalH = sourceEl.naturalHeight || sourceEl.videoHeight;
+        const MAX_DIM = 200;
+        const scale = Math.min(1, MAX_DIM / Math.max(naturalW, naturalH));
+        const w = Math.max(1, Math.round(naturalW * scale));
+        const h = Math.max(1, Math.round(naturalH * scale));
+
+        const srcCanvas = document.createElement('canvas');
+        srcCanvas.width = w; srcCanvas.height = h;
+        srcCanvas.getContext('2d').drawImage(sourceEl, 0, 0, w, h);
+        currentSrcCanvas = srcCanvas;
+
+        const gray = grayscaleFromCanvas(srcCanvas);
+        const edgeMag = edgeMagnitude(gray, w, h);
+        const saliency = saliencyProxy(gray, w, h);
+
+        let mask, maskSourceLabel;
+        if (model) {
+            try {
+                const seg = await model.segmentPerson(srcCanvas, { internalResolution: 'medium', segmentationThreshold: 0.6 });
+                mask = new Uint8Array(seg.data);
+                maskSourceLabel = '실제 BodyPix(U-Net 기반) 마스크';
+                statusLine.textContent = '✓ 실제 BodyPix 모델로 분할했습니다.';
+                statusLine.className = 'status-line ready';
+            } catch (err) {
+                mask = classicalMask(srcCanvas);
+                maskSourceLabel = '모델 실행 실패 → 배경색 기준 대체 방식';
+                statusLine.textContent = '모델 실행 중 오류가 발생해 대체 방식을 사용합니다: ' + err.message;
+                statusLine.className = 'status-line error';
+            }
+        } else {
+            mask = classicalMask(srcCanvas);
+            maskSourceLabel = '모델 미로드 → 배경색 기준 대체 방식';
+        }
+        currentMask = mask;
+
+        const grid = document.getElementById('stepGrid');
+        grid.innerHTML = '';
+
+        const c1 = document.createElement('canvas');
+        drawGrayToCanvas(c1, edgeMag, w, h);
+        grid.appendChild(makeStepCell(c1, '1/4 · 개념 재현', 'CNN 필터로 특징 수집(엣지)'));
+
+        const c2 = document.createElement('canvas');
+        drawGrayToCanvas(c2, saliency, w, h);
+        grid.appendChild(makeStepCell(c2, '2/4 · 개념 재현', '레이어별 판단 누적'));
+
+        const c3 = document.createElement('canvas');
+        drawMaskToCanvas(c3, mask, w, h);
+        grid.appendChild(makeStepCell(c3, '3/4 · ' + maskSourceLabel, '분할 마스크'));
+
+        const c4 = document.createElement('canvas');
+        drawCutoutToCanvas(c4, srcCanvas, mask, w, h, bgChoice);
+        grid.appendChild(makeStepCell(c4, '4/4 · 최종 결과', '배경 제거 결과'));
+
+        document.getElementById('bgColorRow').style.display = 'flex';
+    }
+
+    function redrawCutoutOnly() {
+        if (!currentSrcCanvas || !currentMask) return;
+        const c4 = document.querySelectorAll('#stepGrid .step-cell canvas')[3];
+        if (c4) drawCutoutToCanvas(c4, currentSrcCanvas, currentMask, currentSrcCanvas.width, currentSrcCanvas.height, bgChoice);
+    }
+
+    document.querySelectorAll('.bg-swatch').forEach(sw => {
+        sw.addEventListener('click', () => {
+            document.querySelectorAll('.bg-swatch').forEach(s => s.classList.remove('active'));
+            sw.classList.add('active');
+            bgChoice = sw.dataset.bg;
+            redrawCutoutOnly();
+        });
+    });
+
+    document.getElementById('btnDownload').addEventListener('click', () => {
+        const c4 = document.querySelectorAll('#stepGrid .step-cell canvas')[3];
+        if (!c4) return;
+        const a = document.createElement('a');
+        a.href = c4.toDataURL('image/png');
+        a.download = 'background_removed.png';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+
+    async function loadModel() {
+        if (typeof tf === 'undefined' || typeof bodyPix === 'undefined') {
+            statusLine.textContent = '네트워크 문제로 AI 모델 라이브러리를 불러오지 못했습니다. 배경색 기준 대체 방식으로 동작합니다.';
+            statusLine.className = 'status-line error';
+            return;
+        }
+        try {
+            model = await bodyPix.load();
+            statusLine.textContent = '✓ 모델 로드 완료! 이미지를 업로드하거나 웹캠·샘플 이미지를 사용해 보세요.';
+            statusLine.className = 'status-line ready';
+        } catch (err) {
+            statusLine.textContent = '모델 다운로드에 실패했습니다. 배경색 기준 대체 방식으로 동작합니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    }
+    loadModel();
+
+    document.getElementById('btnHelp').addEventListener('click', () => {
+        document.getElementById('helpDetail').classList.toggle('shown');
+    });
+
+    document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) loadImageFile(e.target.files[0]);
+    });
+
+    function loadImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        stopWebcam();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => runPipeline(img);
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    document.getElementById('btnWebcam').addEventListener('click', async () => {
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const videoEl = document.createElement('video');
+            videoEl.autoplay = true; videoEl.playsInline = true; videoEl.muted = true;
+            videoEl.srcObject = webcamStream;
+            await videoEl.play();
+            document.getElementById('btnStop').style.display = 'inline-block';
+            webcamLoop(videoEl);
+        } catch (err) {
+            statusLine.textContent = '웹캠에 접근할 수 없습니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    });
+
+    let webcamFrameCount = 0;
+    async function webcamLoop(videoEl) {
+        if (!webcamStream) return;
+        if (webcamFrameCount % 20 === 0) await runPipeline(videoEl);
+        webcamFrameCount++;
+        webcamLoopId = requestAnimationFrame(() => webcamLoop(videoEl));
+    }
+
+    function stopWebcam() {
+        if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
+        if (webcamLoopId) { cancelAnimationFrame(webcamLoopId); webcamLoopId = null; }
+        webcamFrameCount = 0;
+        document.getElementById('btnStop').style.display = 'none';
+    }
+    document.getElementById('btnStop').addEventListener('click', stopWebcam);
+
+    // ---- 샘플 이미지 (네트워크 없이도 항상 동작하는 합성 이미지: 단색 배경 + 대비되는 인물 모양) ----
+    function makeSampleImage() {
+        const c = document.createElement('canvas');
+        c.width = 200; c.height = 240;
+        const cx = c.getContext('2d');
+        cx.fillStyle = '#bae6fd'; cx.fillRect(0, 0, 200, 240);
+        cx.fillStyle = '#7c3f00';
+        cx.beginPath(); cx.arc(100, 60, 30, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#1e3a8a';
+        cx.fillRect(60, 95, 80, 110);
+        cx.fillRect(40, 100, 20, 80);
+        cx.fillRect(140, 100, 20, 80);
+        return c;
+    }
+    document.getElementById('btnSample').addEventListener('click', () => {
+        stopWebcam();
+        const sample = makeSampleImage();
+        const img = new Image();
+        img.onload = () => runPipeline(img);
+        img.src = sample.toDataURL();
+    });
+</script>
+</body>
+</html>
