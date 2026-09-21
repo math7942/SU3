@@ -63,7 +63,7 @@
 
     .measure-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 14px; }
     .measure-cell {
-        border: 1px solid #e9d5ff; border-radius: 8px; padding: 8px 4px; text-align: center; background: #faf5ff;
+        border: 1px solid #e9d5ff; border-radius: 8px; padding: 6px 2px; text-align: center; background: #faf5ff;
         font-size: 0.72rem;
     }
     .measure-cell.filled { background: #ede9fe; border-color: #a855f7; }
@@ -71,7 +71,17 @@
     .measure-cell .idx { font-weight: 700; color: #5b21b6; }
     .measure-cell .val { color: #7c3aed; font-weight: 900; margin-top: 2px; }
     .measure-cell .val.empty { color: #c4b5fd; }
+    .measure-cell svg { display: block; margin: 2px auto 0; }
     .part-label { font-size: 0.78rem; font-weight: 700; color: #5b21b6; margin: 10px 0 4px; }
+    .progress-line { text-align: center; font-size: 0.82rem; color: #475569; font-weight: 700; margin-top: 10px; }
+
+    .ref-table-wrap { overflow-x: auto; margin-top: 10px; }
+    .ref-table { border-collapse: collapse; margin: 0 auto 18px; font-size: 0.7rem; }
+    .ref-table th, .ref-table td { border: 1px solid #e9d5ff; padding: 2px 3px; text-align: center; }
+    .ref-table th { background: #f3e8ff; color: #5b21b6; font-weight: 700; }
+    .ref-table td.sum-label { background: #f3e8ff; color: #5b21b6; font-weight: 700; }
+    .ref-table td.selected { background: #fde68a; }
+    .ref-table td.latest { outline: 2px solid #f59e0b; outline-offset: -2px; }
 
     .hist-wrap { display: flex; align-items: flex-end; gap: 6px; height: 160px; margin-top: 14px; padding: 0 4px; }
     .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
@@ -148,11 +158,21 @@
         <div class="measure-grid" id="grid1"></div>
         <div class="part-label">제2부 Zweiter Theil (9~16마디)</div>
         <div class="measure-grid" id="grid2"></div>
+        <p class="progress-line" id="progressLine">0 / 16개 마디 완성</p>
 
-        <div class="btn-row" style="margin-top:16px;">
+        <div class="btn-row" style="margin-top:10px;">
             <button class="btn btn-play" id="btnPlay" disabled>▶ 완성한 곡 재생하기</button>
         </div>
         <p class="status-line" id="statusLine"></p>
+    </div>
+
+    <div class="card">
+        <h2>🎵 모차르트의 176마디 악보 표</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.6;">각 마디 자리(열)마다 주사위 합(2~12, 행)에 대응하는 음악 조각이 미리 준비되어 있습니다. 주사위를 굴릴 때마다 실제로 어떤 자리의 악보가 선택됐는지 아래 표에서 노란색으로 표시됩니다.</p>
+        <div class="part-label">제1부 Erster Theil</div>
+        <div class="ref-table-wrap"><table class="ref-table" id="refTable1"></table></div>
+        <div class="part-label">제2부 Zweiter Theil</div>
+        <div class="ref-table-wrap"><table class="ref-table" id="refTable2"></table></div>
     </div>
 
     <div class="card">
@@ -237,6 +257,63 @@
         for (let s = 2; s <= 12; s++) TABLE[p][s] = generateMotif(p, s);
     }
 
+    // ---- 미니 악보(오선보) 그리기 ----
+    const NATURAL_INDEX = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+    function noteStepIndex(note) {
+        return parseInt(note.slice(1)) * 7 + NATURAL_INDEX[note[0]];
+    }
+    const REF_STEP = noteStepIndex('E4'); // 오선보 맨 아래 줄
+    function noteY(note) {
+        return 32 - (noteStepIndex(note) - REF_STEP) * 4;
+    }
+    function renderMiniStaffSVG(notes) {
+        const w = 58, h = 48;
+        let svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
+        for (let i = 0; i < 5; i++) {
+            const y = i * 8 + 6;
+            svg += `<line x1="2" y1="${y}" x2="${w - 2}" y2="${y}" stroke="#94a3b8" stroke-width="0.7"/>`;
+        }
+        const stepX = (w - 14) / Math.max(1, notes.length - 1);
+        notes.forEach((n, i) => {
+            const x = 8 + i * stepX;
+            const y = noteY(n) + 6;
+            if (y > 38 || y < 6) {
+                svg += `<line x1="${x - 5}" y1="${y}" x2="${x + 5}" y2="${y}" stroke="#5b21b6" stroke-width="0.7"/>`;
+            }
+            const stemUp = y > 22;
+            const stemY2 = stemUp ? y - 18 : y + 18;
+            svg += `<line x1="${x + (stemUp ? 3.6 : -3.6)}" y1="${y}" x2="${x + (stemUp ? 3.6 : -3.6)}" y2="${stemY2}" stroke="#5b21b6" stroke-width="1"/>`;
+            svg += `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="2.8" fill="#5b21b6"/>`;
+        });
+        svg += `</svg>`;
+        return svg;
+    }
+
+    function renderRefTables() {
+        for (const [tableId, start] of [['refTable1', 1], ['refTable2', 9]]) {
+            const table = document.getElementById(tableId);
+            let html = '<tr><th>합</th>' + Array.from({ length: 8 }, (_, i) => `<th>${start + i}마디</th>`).join('') + '</tr>';
+            for (let s = 2; s <= 12; s++) {
+                html += `<tr><td class="sum-label">${s}</td>`;
+                for (let i = start; i < start + 8; i++) {
+                    html += `<td id="ref-${i}-${s}">${renderMiniStaffSVG(TABLE[i][s])}</td>`;
+                }
+                html += '</tr>';
+            }
+            table.innerHTML = html;
+        }
+    }
+
+    function highlightRefCell(position, sum) {
+        document.querySelectorAll('.ref-table td.latest').forEach(td => td.classList.remove('latest'));
+        const cell = document.getElementById(`ref-${position}-${sum}`);
+        if (cell) { cell.classList.add('selected'); cell.classList.add('latest'); }
+    }
+
+    function clearRefHighlights() {
+        document.querySelectorAll('.ref-table td.selected, .ref-table td.latest').forEach(td => td.classList.remove('selected', 'latest'));
+    }
+
     // ---- 시뮬레이터 상태 ----
     let currentPosition = 1;
     const chosen = {}; // position -> sum
@@ -252,11 +329,15 @@
             for (let i = start; i < start + 8; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'measure-cell' + (chosen[i] !== undefined ? ' filled' : '') + (i === currentPosition ? ' current' : '');
-                const val = chosen[i] !== undefined ? chosen[i] : '—';
-                cell.innerHTML = `<div class="idx">${i}마디</div><div class="val${chosen[i] === undefined ? ' empty' : ''}">${val}</div>`;
+                if (chosen[i] !== undefined) {
+                    cell.innerHTML = `<div class="idx">${i}마디 · 합 ${chosen[i]}</div>${renderMiniStaffSVG(TABLE[i][chosen[i]])}`;
+                } else {
+                    cell.innerHTML = `<div class="idx">${i}마디</div><div class="val empty">—</div>`;
+                }
                 grid.appendChild(cell);
             }
         }
+        document.getElementById('progressLine').textContent = `${Object.keys(chosen).length} / 16개 마디 완성`;
     }
 
     function updateControls() {
@@ -277,6 +358,7 @@
         document.getElementById('die2').textContent = d2;
         document.getElementById('diceSum').textContent = sum;
         chosen[currentPosition] = sum;
+        highlightRefCell(currentPosition, sum);
         currentPosition++;
         renderGrids();
         updateControls();
@@ -293,6 +375,7 @@
         document.getElementById('die2').textContent = '?';
         document.getElementById('diceSum').textContent = '?';
         document.getElementById('statusLine').textContent = '';
+        clearRefHighlights();
         renderGrids();
         updateControls();
     }
@@ -427,6 +510,7 @@
         });
     });
 
+    renderRefTables();
     renderGrids();
     updateControls();
     renderSteps();
