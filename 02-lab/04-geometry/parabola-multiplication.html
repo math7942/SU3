@@ -118,9 +118,17 @@
                 <div class="readout-grid">
                     <div class="readout-cell"><div class="k">점 A (오른쪽)</div><div class="v" id="pointA">(4, 16)</div></div>
                     <div class="readout-cell"><div class="k">점 B (왼쪽)</div><div class="v" id="pointB">(−3, 9)</div></div>
-                    <div class="readout-cell"><div class="k">실의 기울기</div><div class="v" id="slopeVal">?</div></div>
-                    <div class="readout-cell"><div class="k">y축과 만나는 점</div><div class="v" id="interceptVal">?</div></div>
-                    <div class="readout-cell result-cell"><div class="k">a × b</div><div class="v" id="productVal">4 × 3 = 12</div></div>
+                </div>
+                <p style="font-size:0.8rem; color:#78716c; margin:10px 0 0; line-height:1.6;">실을 건 뒤, 왼쪽 그래프에서 실이 y축과 만나는 위치의 눈금을 직접 읽어 보세요. 그 값이 방금 고른 두 점의 좌표와 어떤 관계가 있을까요?</p>
+                <div class="reveal-row" id="answerRow" style="display:none; margin-top:10px;">
+                    <button class="reveal-btn" id="btnCheckAnswer">🔍 내가 읽은 값이 맞는지 확인하기</button>
+                    <div class="reveal-content" id="answerReveal">
+                        <div class="readout-grid">
+                            <div class="readout-cell"><div class="k">실의 기울기</div><div class="v" id="slopeVal">?</div></div>
+                            <div class="readout-cell"><div class="k">y축과 만나는 점</div><div class="v" id="interceptVal">?</div></div>
+                            <div class="readout-cell result-cell"><div class="k">a × b</div><div class="v" id="productVal">?</div></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,6 +187,14 @@
     // 좌표계: x는 [-11,11], y는 [-6,108] (a,b가 -10~10 범위이므로 a^2 최대 100)
     const X_MIN = -11, X_MAX = 11, Y_MIN = -20, Y_MAX = 108;
 
+    // 1~10 사이 정수끼리의 모든 곱 — 실제 교구처럼 y축에 "나올 수 있는 답"만 눈금으로 표시해서
+    // 체험자가 직접 값을 읽게 하고, 정답을 미리 알려주지 않는다.
+    const PRODUCT_TICKS = (() => {
+        const s = new Set();
+        for (let i = 1; i <= 10; i++) for (let j = 1; j <= 10; j++) s.add(i * j);
+        return [...s].sort((x, y) => x - y);
+    })();
+
     function worldToScreen(x, y, w, h) {
         const sx = (w - 40) / (X_MAX - X_MIN);
         const sy = (h - 40) / (Y_MAX - Y_MIN);
@@ -212,19 +228,37 @@
         aBadge.textContent = fmt(a);
         bBadge.textContent = fmt(b);
 
+        const [ox, oy] = worldToScreen(0, 0, w, h);
+
+        // y축 기준 가로줄 — 1~10끼리의 모든 곱 위치에 옅은 기준선을 그어서
+        // 실이 y축과 만나는 위치를 자로 재듯 정확히 읽을 수 있게 한다.
+        PRODUCT_TICKS.forEach(yv => {
+            if (yv > Y_MAX) return;
+            const [, py] = worldToScreen(0, yv, w, h);
+            ctx.beginPath();
+            ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 1;
+            ctx.moveTo(20, py); ctx.lineTo(w - 20, py);
+            ctx.stroke();
+        });
+
         // 축
         ctx.strokeStyle = '#d6d3d1'; ctx.lineWidth = 1;
-        const [ox, oy] = worldToScreen(0, 0, w, h);
         ctx.beginPath(); ctx.moveTo(20, oy); ctx.lineTo(w - 20, oy); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(ox, h - 20); ctx.lineTo(ox, 20); ctx.stroke();
 
-        // y축 눈금 (20 단위)
-        ctx.fillStyle = '#a8a29e'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
-        for (let yv = 0; yv <= 100; yv += 20) {
+        // y축 눈금 — 1~10끼리의 모든 곱을 눈금으로 표시 (정답을 미리 알려주지 않고 직접 읽게 함)
+        ctx.fillStyle = '#a8a29e'; ctx.font = '8px sans-serif'; ctx.textAlign = 'right';
+        PRODUCT_TICKS.forEach(yv => {
+            if (yv > Y_MAX) return;
             const [, py] = worldToScreen(0, yv, w, h);
-            ctx.fillText(yv, ox - 5, py + 3);
-        }
-        // x축 눈금 (5 단위)
+            ctx.beginPath();
+            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
+            ctx.moveTo(ox - 3, py); ctx.lineTo(ox, py);
+            ctx.stroke();
+            ctx.fillStyle = '#78716c';
+            ctx.fillText(yv, ox - 5, py + 2.5);
+        });
+        // x축 눈금 (정수마다 이미 못으로 표시되므로 5 단위 레이블만)
         ctx.textAlign = 'center';
         for (let xv = -10; xv <= 10; xv += 5) {
             const [px] = worldToScreen(xv, 0, w, h);
@@ -322,10 +356,14 @@
     function updateReadouts(a, b, degenerate, hung) {
         document.getElementById('pointA').textContent = `(${fmt(a)}, ${fmt(a * a)})`;
         document.getElementById('pointB').textContent = `(${fmt(-b)}, ${fmt(b * b)})`;
-        if (!hung) {
-            document.getElementById('slopeVal').textContent = '?';
-            document.getElementById('interceptVal').textContent = '실을 걸어보세요';
-        } else if (degenerate) {
+
+        const answerRow = document.getElementById('answerRow');
+        const answerReveal = document.getElementById('answerReveal');
+        answerRow.style.display = hung ? 'block' : 'none';
+        // 점이나 실 상태가 바뀌면 이전에 확인한 답은 다시 가려서, 매번 스스로 먼저 읽어보게 한다
+        answerReveal.classList.remove('shown');
+
+        if (degenerate) {
             document.getElementById('slopeVal').textContent = '정의 안 됨';
             document.getElementById('interceptVal').textContent = '—';
         } else {
@@ -419,6 +457,10 @@
         btn.addEventListener('click', () => {
             document.getElementById(btn.dataset.target).classList.toggle('shown');
         });
+    });
+
+    document.getElementById('btnCheckAnswer').addEventListener('click', () => {
+        document.getElementById('answerReveal').classList.toggle('shown');
     });
 
     drawScene();
