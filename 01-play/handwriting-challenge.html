@@ -86,15 +86,14 @@
             grid-template-columns: 1fr 1fr;
             gap: 30px;
             margin-bottom: 30px;
-            justify-items: center;
         }
 
         .canvas-section {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            width: 100%;
-            max-width: 350px;
+            width: 280px;
+            margin: 0 auto;
         }
 
         .canvas-section h3 {
@@ -164,8 +163,9 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
-            width: 100%;
-            max-width: 350px;
+            width: 280px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .result-section h3 {
@@ -350,29 +350,6 @@
             <h3>🎯 당신의 미션</h3>
             <p>사람 눈에는 완벽한 '3'인데, AI는 '8'로 착각하게 숫자를 그려보세요!<br>
             AI를 가장 엉뚱한 숫자로 헷갈리게 하는 참가자가 명예의 전당에 오릅니다. 🏆</p>
-        </div>
-
-        <!-- 미션 선택 -->
-        <div style="margin-bottom: 24px;">
-            <h3 style="color: #334155; margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 600;">💡 추천 미션</h3>
-            <div class="challenge-list">
-                <div class="challenge-item" onclick="setChallenge(3, 8)">
-                    <strong>3 → 8</strong>
-                    <span>AI를 속여보세요!</span>
-                </div>
-                <div class="challenge-item" onclick="setChallenge(5, 0)">
-                    <strong>5 → 0</strong>
-                    <span>쉬운 난이도</span>
-                </div>
-                <div class="challenge-item" onclick="setChallenge(7, 1)">
-                    <strong>7 → 1</strong>
-                    <span>중간 난이도</span>
-                </div>
-                <div class="challenge-item" onclick="setChallenge(2, 9)">
-                    <strong>2 → 9</strong>
-                    <span>어려운 난이도</span>
-                </div>
-            </div>
         </div>
 
         <div class="main-grid">
