@@ -86,12 +86,15 @@
             grid-template-columns: 1fr 1fr;
             gap: 30px;
             margin-bottom: 30px;
+            justify-items: center;
         }
 
         .canvas-section {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            width: 100%;
+            max-width: 350px;
         }
 
         .canvas-section h3 {
@@ -161,6 +164,8 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
+            width: 100%;
+            max-width: 350px;
         }
 
         .result-section h3 {
@@ -373,7 +378,7 @@
         <div class="main-grid">
             <!-- 캔버스 -->
             <div class="canvas-section">
-                <h3>✏️ 숫자를 그려보세요</h3>
+                <h3>✏️ 숫자를 써 보세요</h3>
                 <div class="canvas-container">
                     <canvas id="drawingCanvas" width="280" height="280"></canvas>
                 </div>
