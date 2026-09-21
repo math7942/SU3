@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 스타일 변환 스튜디오</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background: linear-gradient(135deg, #ede9fe 0%, #fce7f3 100%);
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #7c3aed; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+    h1 {
+        font-size: 1.6rem;
+        text-align: center;
+        margin: 0;
+        background: linear-gradient(90deg, #7c3aed, #ec4899);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .subtitle { text-align: center; color: #6b21a8; font-size: 0.85rem; margin: 0; }
+
+    .card { background: white; border-radius: 16px; padding: 22px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+    .model-title { text-align: center; font-size: 0.82rem; font-weight: 700; color: #6b7280; margin-bottom: 10px; }
+    .model-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+    .model-btn {
+        border: 2px solid #e5e7eb; background: #f9fafb; border-radius: 10px;
+        padding: 10px 22px; cursor: pointer; font-weight: 700; font-size: 0.85rem; color: #4b5563;
+        display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: inherit;
+    }
+    .model-btn .icon { font-size: 1.3rem; }
+    .model-btn.active { border-color: #7c3aed; background: #f5f3ff; color: #6d28d9; }
+
+    .upload-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .upload-col { flex: 1 1 260px; }
+    .upload-col h4 { font-size: 0.82rem; color: #4b5563; margin: 0 0 8px; display: flex; align-items: center; gap: 6px; }
+    .upload-box {
+        border: 2px dashed #d1d5db; border-radius: 12px; padding: 26px 14px; text-align: center;
+        color: #9ca3af; font-size: 0.82rem; cursor: pointer; min-height: 90px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .upload-box.has-image { border-style: solid; border-color: #22c55e; color: #16a34a; font-weight: 700; }
+    .upload-box.dragover { background: #f5f3ff; border-color: #7c3aed; }
+    .upload-box .big { font-size: 1.6rem; margin-bottom: 4px; }
+    input[type="file"] { display: none; }
+
+    .transform-btn-row { text-align: center; margin: 20px 0; }
+    .transform-btn {
+        background: linear-gradient(90deg, #7c3aed, #a78bfa);
+        color: white; border: none; border-radius: 10px; padding: 13px 30px;
+        font-weight: 700; font-size: 0.92rem; cursor: pointer; font-family: inherit;
+    }
+    .transform-btn:hover { opacity: 0.9; }
+    .transform-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .status-bar {
+        text-align: center; font-weight: 700; font-size: 0.85rem; padding: 12px; border-radius: 10px;
+        background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+    }
+    .status-bar.busy { background: #fefce8; color: #a16207; border-color: #fde68a; }
+    .status-bar.error { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+
+    .preview-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+    .preview-col { flex: 1 1 240px; text-align: center; }
+    .preview-col h4 { font-size: 0.85rem; color: #374151; margin: 0 0 8px; }
+    .preview-box {
+        border: 1px solid #e5e7eb; border-radius: 10px; min-height: 160px;
+        display: flex; align-items: center; justify-content: center; background: #f9fafb; overflow: hidden;
+    }
+    .preview-box canvas { max-width: 100%; max-height: 220px; display: none; }
+    .preview-box .ph { color: #9ca3af; font-size: 0.8rem; padding: 10px; }
+
+    .note {
+        font-size: 0.76rem; color: #6b7280; margin-top: 14px; line-height: 1.6;
+        background: #f9fafb; border-radius: 8px; padding: 10px 14px;
+    }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #7c3aed; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <h1>🎨 AI 스타일 변환 스튜디오</h1>
+    <p class="subtitle">AI 기반 스타일 변환으로 원본 이미지의 비율을 유지하며 예술적으로 변환</p>
+
+    <div class="card">
+        <div class="model-title">모델 선택</div>
+        <div class="model-row">
+            <button class="model-btn active" id="modelMagenta" data-m="magenta">
+                <span class="icon">🧠</span>Magenta (AI 신경망)
+            </button>
+            <button class="model-btn" id="modelClassic" data-m="classic">
+                <span class="icon">🎨</span>클래식 (색상 전이)
+            </button>
+        </div>
+
+        <div class="upload-row">
+            <div class="upload-col">
+                <h4>📷 원본 이미지</h4>
+                <div class="upload-box" id="dropContent">
+                    <span class="big">📷</span>원본 이미지를 선택하세요<br><span style="font-weight:400;">JPG, PNG 파일을 지원합니다</span>
+                </div>
+                <input type="file" id="inputContent" accept="image/*">
+            </div>
+            <div class="upload-col">
+                <h4>🎭 스타일 이미지</h4>
+                <div class="upload-box" id="dropStyle">
+                    <span class="big">🎭</span>스타일 이미지를 선택하세요<br><span style="font-weight:400;">변환할 스타일을 정의합니다</span>
+                </div>
+                <input type="file" id="inputStyle" accept="image/*">
+            </div>
+        </div>
+
+        <div class="transform-btn-row">
+            <button class="transform-btn" id="btnTransform">✨ 스타일 변환하기</button>
+        </div>
+
+        <div class="status-bar" id="statusBar">Magenta 모델 준비 완료!</div>
+
+        <div class="note" id="modelNote">
+            Magenta 모드는 Google의 <b>arbitrary-image-stylization</b> 신경망(magenta.js 공식 모델)을 브라우저에서 그대로 실행합니다. 처음 사용할 때 모델(약 10MB)을 내려받기 때문에 몇 초 정도 걸릴 수 있습니다.
+        </div>
+
+        <div class="preview-row">
+            <div class="preview-col"><h4>원본 이미지</h4><div class="preview-box"><canvas id="canvasContent"></canvas><p class="ph" id="phContent">원본 이미지를 업로드하면<br>미리보기가 나타납니다</p></div></div>
+            <div class="preview-col"><h4>스타일 참조</h4><div class="preview-box"><canvas id="canvasStyle"></canvas><p class="ph" id="phStyle">스타일 이미지를 업로드하면<br>미리보기가 나타납니다</p></div></div>
+            <div class="preview-col"><h4>변환 결과</h4><div class="preview-box"><canvas id="canvasResult"></canvas><p class="ph" id="phResult">두 이미지를 올리고<br>변환해 보세요</p></div></div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="yolo-detector.html">← YOLO 객체 탐지 체험하기로</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@magenta/image@0.2.3/dist/mi.min.js"></script>
+<script>
+    let contentImg = null, styleImg = null;
+    let currentModel = 'magenta';
+    let magentaNet = null;
+    const MAX_WORK_DIM = 200;
+
+    function setStatus(text, mode) {
+        const el = document.getElementById('statusBar');
+        el.textContent = text;
+        el.className = 'status-bar' + (mode ? ' ' + mode : '');
+    }
+
+    document.querySelectorAll('.model-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.model-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentModel = btn.dataset.m;
+            if (currentModel === 'magenta') {
+                setStatus(magentaNet ? 'Magenta 모델 준비 완료!' : 'Magenta 모델을 사용하려면 "스타일 변환하기"를 눌러 불러오세요.');
+                document.getElementById('modelNote').innerHTML = 'Magenta 모드는 Google의 <b>arbitrary-image-stylization</b> 신경망(magenta.js 공식 모델)을 브라우저에서 그대로 실행합니다. 처음 사용할 때 모델(약 10MB)을 내려받기 때문에 몇 초 정도 걸릴 수 있습니다.';
+            } else {
+                setStatus('클래식 모드 준비 완료! (다운로드 없이 바로 계산합니다)');
+                document.getElementById('modelNote').innerHTML = '클래식 모드는 신경망 없이, <b>Reinhard 색상 전이(Color Transfer, 2001)</b> 알고리즘으로 스타일 이미지의 색 분포(평균·표준편차)를 원본 이미지에 통계적으로 옮깁니다. 모양은 원본 그대로, 색감만 스타일을 따라갑니다.';
+            }
+        });
+    });
+
+    function setupUploader(dropId, inputId, canvasId, phId, onLoaded) {
+        const drop = document.getElementById(dropId);
+        const input = document.getElementById(inputId);
+        drop.addEventListener('click', () => input.click());
+        input.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+        drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+        drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+        drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    onLoaded(img);
+                    drop.innerHTML = '✓ ' + file.name;
+                    drop.classList.add('has-image');
+                    showPreview(img, canvasId, phId);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function showPreview(img, canvasId, phId) {
+        const c = document.getElementById(canvasId);
+        const scale = Math.min(1, 220 / img.naturalWidth, 220 / img.naturalHeight);
+        c.width = Math.round(img.naturalWidth * scale);
+        c.height = Math.round(img.naturalHeight * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        c.style.display = 'inline-block';
+        document.getElementById(phId).style.display = 'none';
+    }
+
+    setupUploader('dropContent', 'inputContent', 'canvasContent', 'phContent', (img) => { contentImg = img; });
+    setupUploader('dropStyle', 'inputStyle', 'canvasStyle', 'phStyle', (img) => { styleImg = img; });
+
+    // ---- 클래식 모드: Reinhard 색상 전이 (Lαβ 색공간) ----
+    function workCanvasFor(img) {
+        const scale = Math.min(1, MAX_WORK_DIM / img.naturalWidth, MAX_WORK_DIM / img.naturalHeight);
+        const c = document.createElement('canvas');
+        c.width = Math.max(2, Math.round(img.naturalWidth * scale));
+        c.height = Math.max(2, Math.round(img.naturalHeight * scale));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        return c;
+    }
+
+    function rgbToLab(r, g, b) {
+        r = Math.max(1, r); g = Math.max(1, g); b = Math.max(1, b); // log(0) 방지
+        const L = 0.3811 * r + 0.5783 * g + 0.0402 * b;
+        const M = 0.1967 * r + 0.7244 * g + 0.0782 * b;
+        const S = 0.0241 * r + 0.1288 * g + 0.8444 * b;
+        const l = Math.log10(L), m = Math.log10(M), s = Math.log10(S);
+        return [
+            (l + m + s) / Math.sqrt(3),
+            (l + m - 2 * s) / Math.sqrt(6),
+            (l - m) / Math.sqrt(2)
+        ];
+    }
+    function labToRgb(l, a, b) {
+        const L = l / Math.sqrt(3) + a / Math.sqrt(6) + b / Math.sqrt(2);
+        const M = l / Math.sqrt(3) + a / Math.sqrt(6) - b / Math.sqrt(2);
+        const S = l / Math.sqrt(3) - 2 * a / Math.sqrt(6);
+        const LL = Math.pow(10, L), MM = Math.pow(10, M), SS = Math.pow(10, S);
+        return [
+            Math.max(0, Math.min(255, 4.4679 * LL - 3.5873 * MM + 0.1193 * SS)),
+            Math.max(0, Math.min(255, -1.2186 * LL + 2.3809 * MM - 0.1624 * SS)),
+            Math.max(0, Math.min(255, 0.0497 * LL - 0.2439 * MM + 1.2045 * SS))
+        ];
+    }
+
+    function meanStd(arr) {
+        const n = arr.length;
+        const mean = arr.reduce((s, v) => s + v, 0) / n;
+        const variance = arr.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+        return [mean, Math.sqrt(variance)];
+    }
+
+    function reinhardColorTransfer(contentCanvas, styleCanvas) {
+        const cw = contentCanvas.width, ch = contentCanvas.height;
+        const sw = styleCanvas.width, sh = styleCanvas.height;
+        const cData = contentCanvas.getContext('2d').getImageData(0, 0, cw, ch).data;
+        const sData = styleCanvas.getContext('2d').getImageData(0, 0, sw, sh).data;
+
+        const cLab = [], sLab = [];
+        for (let i = 0; i < cData.length; i += 4) cLab.push(rgbToLab(cData[i], cData[i + 1], cData[i + 2]));
+        for (let i = 0; i < sData.length; i += 4) sLab.push(rgbToLab(sData[i], sData[i + 1], sData[i + 2]));
+
+        const [cMeanL, cStdL] = meanStd(cLab.map(p => p[0]));
+        const [cMeanA, cStdA] = meanStd(cLab.map(p => p[1]));
+        const [cMeanB, cStdB] = meanStd(cLab.map(p => p[2]));
+        const [sMeanL, sStdL] = meanStd(sLab.map(p => p[0]));
+        const [sMeanA, sStdA] = meanStd(sLab.map(p => p[1]));
+        const [sMeanB, sStdB] = meanStd(sLab.map(p => p[2]));
+
+        const out = new Uint8ClampedArray(cData.length);
+        for (let i = 0; i < cLab.length; i++) {
+            const [l, a, b] = cLab[i];
+            const nl = (l - cMeanL) * (cStdL > 1e-6 ? sStdL / cStdL : 1) + sMeanL;
+            const na = (a - cMeanA) * (cStdA > 1e-6 ? sStdA / cStdA : 1) + sMeanA;
+            const nb = (b - cMeanB) * (cStdB > 1e-6 ? sStdB / cStdB : 1) + sMeanB;
+            const [r, g, bl] = labToRgb(nl, na, nb);
+            const oi = i * 4;
+            out[oi] = r; out[oi + 1] = g; out[oi + 2] = bl; out[oi + 3] = 255;
+        }
+        return new ImageData(out, cw, ch);
+    }
+
+    async function runClassic() {
+        const contentWork = workCanvasFor(contentImg);
+        const styleWork = workCanvasFor(styleImg);
+        const result = reinhardColorTransfer(contentWork, styleWork);
+        const rc = document.getElementById('canvasResult');
+        rc.width = result.width; rc.height = result.height;
+        rc.getContext('2d').putImageData(result, 0, 0);
+        const dispScale = Math.min(1, 220 / result.width, 220 / result.height);
+        rc.style.width = Math.round(result.width * dispScale) + 'px';
+        rc.style.height = Math.round(result.height * dispScale) + 'px';
+        rc.style.display = 'inline-block';
+        document.getElementById('phResult').style.display = 'none';
+    }
+
+    async function runMagenta() {
+        if (typeof mi === 'undefined') {
+            throw new Error('magenta.js 라이브러리를 불러오지 못했습니다 (네트워크 문제일 수 있습니다).');
+        }
+        if (!magentaNet) {
+            setStatus('Magenta 모델을 내려받는 중... 🧠', 'busy');
+            magentaNet = new mi.ArbitraryStyleTransferNetwork();
+            await magentaNet.initialize();
+        }
+        const resultCanvas = await magentaNet.stylize(contentImg, styleImg);
+        const rc = document.getElementById('canvasResult');
+        rc.width = resultCanvas.width; rc.height = resultCanvas.height;
+        rc.getContext('2d').drawImage(resultCanvas, 0, 0);
+        const dispScale = Math.min(1, 220 / resultCanvas.width, 220 / resultCanvas.height);
+        rc.style.width = Math.round(resultCanvas.width * dispScale) + 'px';
+        rc.style.height = Math.round(resultCanvas.height * dispScale) + 'px';
+        rc.style.display = 'inline-block';
+        document.getElementById('phResult').style.display = 'none';
+    }
+
+    document.getElementById('btnTransform').addEventListener('click', async () => {
+        if (!contentImg || !styleImg) { setStatus('원본 이미지와 스타일 이미지를 모두 업로드해 주세요.', 'error'); return; }
+        const btn = document.getElementById('btnTransform');
+        btn.disabled = true;
+        try {
+            if (currentModel === 'classic') {
+                setStatus('색상 통계를 계산하는 중...', 'busy');
+                await runClassic();
+                setStatus('변환 완료! (클래식 색상 전이)');
+            } else {
+                await runMagenta();
+                setStatus('변환 완료! (Magenta AI 신경망)');
+            }
+        } catch (err) {
+            setStatus('오류: ' + err.message, 'error');
+        }
+        btn.disabled = false;
+    });
+</script>
+</body>
+</html>
