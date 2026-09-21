@@ -179,6 +179,55 @@
             word-break: break-all;
         }
 
+        .filter-slider-wrapper {
+            padding: 0 12px 12px 12px;
+            display: none;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-btn.active ~ .filter-slider-wrapper {
+            display: flex;
+        }
+
+        .filter-slider-wrapper input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .filter-slider-wrapper input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-slider-wrapper input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-value {
+            min-width: 30px;
+            text-align: right;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
         /* Stage 2: 나만의 필터 */
         .custom-filter {
             display: grid;
@@ -473,19 +522,35 @@
                     <button class="filter-btn active" data-filter="blur">
                         <div>🌫️ 블러 (흐릿함)</div>
                         <div class="filter-formula">[4 8 4] [8 16 8] [4 8 4] ÷ 64</div>
-                    </button>
+</button>
+                    <div class="filter-slider-wrapper">
+                        <input type="range" class="filter-slider" data-filter="sharpen" min="-8" max="8" value="2">
+                        <span class="filter-value" id="value-sharpen">2</span>
+                    </div>
                     <button class="filter-btn" data-filter="sharpen">
                         <div>✨ 선명화 (또렷함)</div>
                         <div class="filter-formula">[0 -1 0] [-1 5 -1] [0 -1 0]</div>
-                    </button>
+</button>
+                    <div class="filter-slider-wrapper">
+                        <input type="range" class="filter-slider" data-filter="edge" min="-8" max="8" value="4">
+                        <span class="filter-value" id="value-edge">4</span>
+                    </div>
                     <button class="filter-btn" data-filter="edge">
                         <div>🔍 엣지감지 (윤곽)</div>
                         <div class="filter-formula">[-1 -1 -1] [-1 8 -1] [-1 -1 -1]</div>
-                    </button>
+</button>
+                    <div class="filter-slider-wrapper">
+                        <input type="range" class="filter-slider" data-filter="boost" min="0" max="10" value="5">
+                        <span class="filter-value" id="value-boost">5</span>
+                    </div>
                     <button class="filter-btn" data-filter="boost">
                         <div>💪 색감 부스트</div>
                         <div class="filter-formula">[0 0 0] [0 5 0] [0 0 0]</div>
                     </button>
+                    <div class="filter-slider-wrapper">
+                        <input type="range" class="filter-slider" data-filter="boost" min="0" max="10" value="5">
+                        <span class="filter-value" id="value-boost">5</span>
+                    </div>
                 </div>
             </div>
 
@@ -758,6 +823,50 @@
                     applyConvolution(canvas1Filtered, filters[currentFilter], currentFilter !== 'boost');
                 });
             });
+
+            // 슬라이더 이벤트 처리
+            document.querySelectorAll('.filter-slider').forEach(slider => {
+                slider.addEventListener('input', () => {
+                    const filterName = slider.dataset.filter;
+                    const sliderValue = parseFloat(slider.value);
+
+                    // 값 표시 업데이트
+                    document.getElementById(`value-${filterName}`).textContent = sliderValue;
+
+                    // 필터 커널 조정
+                    let adjustedKernel = adjustFilterKernel(filterName, sliderValue);
+
+                    // 미리보기 업데이트
+                    createTestImage(canvas1Filtered);
+                    applyConvolution(canvas1Filtered, adjustedKernel, filterName !== 'boost');
+                });
+            });
+        }
+
+        // 필터 커널을 슬라이더 값에 따라 조정
+        function adjustFilterKernel(filterName, sliderValue) {
+            const baseKernels = {
+                blur: [[4, 8, 4], [8, 16, 8], [4, 8, 4]],
+                sharpen: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]],
+                edge: [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
+                boost: [[0, 0, 0], [0, 5, 0], [0, 0, 0]]
+            };
+
+            const kernel = baseKernels[filterName];
+            if (!kernel) return kernel;
+
+            let multiplier;
+            if (filterName === 'blur') {
+                multiplier = sliderValue / 4; // 0~2배
+            } else if (filterName === 'sharpen') {
+                multiplier = sliderValue / 2; // -4~4배 (기본값이 2일 때)
+            } else if (filterName === 'edge') {
+                multiplier = sliderValue / 4; // 0~2배 (음수도 가능)
+            } else if (filterName === 'boost') {
+                multiplier = sliderValue / 5; // 0~2배
+            }
+
+            return kernel.map(row => row.map(val => Math.round(val * multiplier)));
         }
 
         // Stage 2 초기화
