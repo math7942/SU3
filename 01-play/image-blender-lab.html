@@ -807,36 +807,31 @@
                 ctx.lineTo(200, 155);
                 ctx.stroke();
             } else if (type === 'pattern') {
-                // 로봇/마스크 얼굴
-                ctx.fillStyle = '#c0c0c0';
-                ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
-                ctx.fill();
+                // 깜깜한 밤 하늘
+                ctx.fillStyle = '#000814';
+                ctx.fillRect(0, 0, 400, 300);
 
-                // 선글라스 같은 눈
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(170, 130, 15, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(230, 130, 15, 0, Math.PI * 2);
-                ctx.fill();
+                // 별들 (여러 개, 밝기 다양)
+                ctx.fillStyle = '#fff';
+                const stars = [
+                    {x: 50, y: 40, size: 1.5},
+                    {x: 120, y: 60, size: 1},
+                    {x: 180, y: 30, size: 2},
+                    {x: 280, y: 50, size: 1},
+                    {x: 350, y: 70, size: 1.5},
+                    {x: 70, y: 150, size: 1},
+                    {x: 200, y: 120, size: 1.5},
+                    {x: 320, y: 160, size: 1},
+                    {x: 100, y: 240, size: 1.5},
+                    {x: 260, y: 220, size: 1},
+                    {x: 350, y: 240, size: 2},
+                ];
 
-                ctx.fillStyle = '#4da6ff';
-                ctx.beginPath();
-                ctx.arc(170, 130, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(230, 130, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 입
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(180, 170);
-                ctx.lineTo(220, 170);
-                ctx.stroke();
+                stars.forEach(star => {
+                    ctx.beginPath();
+                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
             } else if (type === 'meme') {
                 // 웃는 얼굴 (노란색)
                 ctx.fillStyle = '#ffeb3b';
