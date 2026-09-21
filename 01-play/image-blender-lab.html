@@ -410,6 +410,12 @@
                         📁 파일 업로드
                         <input type="file" id="file2" accept="image/*">
                     </label>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 동물</button>
+                        <button class="preset-btn" onclick="loadSampleImage('face')">👤 얼굴</button>
+                        <button class="preset-btn" onclick="loadSampleImage('pattern')">🎨 패턴</button>
+                        <button class="preset-btn" onclick="loadSampleImage('meme')">😂 밈</button>
+                    </div>
                     <div class="hint-box">
                         <strong>💡 팁:</strong> 같은 크기의 이미지를 사용하면 더 좋은 결과가 나옵니다!
                     </div>
@@ -515,6 +521,113 @@
             }
         });
 
+        // 샘플 이미지 로드
+        function loadSampleImage(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+
+            if (type === 'animal') {
+                // 간단한 사자 그리기
+                ctx.fillStyle = '#fdb813';
+                ctx.beginPath();
+                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#f5a623';
+                ctx.beginPath();
+                ctx.arc(200, 150, 60, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 눈
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(180, 130, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(220, 130, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 코
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(200, 150, 5, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (type === 'face') {
+                // 얼굴 그리기
+                ctx.fillStyle = '#f4a460';
+                ctx.beginPath();
+                ctx.arc(200, 150, 70, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 눈
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(175, 120, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(225, 120, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 입
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(200, 160, 20, 0, Math.PI);
+                ctx.stroke();
+            } else if (type === 'pattern') {
+                // 기하학 패턴
+                ctx.fillStyle = '#667eea';
+                for (let i = 0; i < 10; i++) {
+                    for (let j = 0; j < 10; j++) {
+                        if ((i + j) % 2 === 0) {
+                            ctx.fillRect(i * 40, j * 30, 40, 30);
+                        }
+                    }
+                }
+
+                // 원형 그라데이션
+                const gradient = ctx.createRadialGradient(200, 150, 10, 200, 150, 100);
+                gradient.addColorStop(0, 'rgba(255, 192, 203, 0.5)');
+                gradient.addColorStop(1, 'rgba(255, 20, 147, 0.8)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(200, 150, 100, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (type === 'meme') {
+                // 웃는 얼굴
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 눈
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(170, 120, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(230, 120, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 입 (웃음)
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(200, 160, 30, 0, Math.PI);
+                ctx.stroke();
+            }
+
+            const image = new Image();
+            image.onload = () => {
+                img2 = image;
+                displayImage(image, 'container2', 'img2', 'placeholder2');
+                updateBlend();
+            };
+            image.src = canvas.toDataURL();
+        }
+
         // 웹캠 함수들
         async function startWebcam() {
             try {
@@ -530,7 +643,9 @@
                 webcamActive = true;
                 canvasStream = stream;
             } catch (err) {
-                alert('웹캠에 접근할 수 없습니다: ' + err.message);
+                const errorMsg = `웹캠 접근 오류: ${err.name}\n\n${err.message}\n\n해결방법:\n1. 브라우저 권한 설정 확인\n2. HTTPS 연결 확인\n3. 대신 파일을 업로드해주세요`;
+                alert(errorMsg);
+                console.error('웹캠 에러:', err);
             }
         }
 
