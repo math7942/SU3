@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>행렬 암호 해독기 · 수수의 수학</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            color: #1e293b;
+            margin: 0 0 8px 0;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+
+        .stage-container {
+            display: none;
+        }
+
+        .stage-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            transition: background 0.3s;
+        }
+
+        .progress-dot.active {
+            background: #667eea;
+        }
+
+        .progress-dot.done {
+            background: #10b981;
+        }
+
+        /* Stage 1: 필터 마법사 */
+        .filter-wizard {
+            display: grid;
+            gap: 20px;
+        }
+
+        .wizard-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .image-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .image-preview h3 {
+            color: #334155;
+            font-size: 0.95rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .canvas-container {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            background: #f8fafc;
+            text-align: center;
+            min-height: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .filter-formula {
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+
+        /* Stage 2: 나만의 필터 */
+        .custom-filter {
+            display: grid;
+            gap: 20px;
+        }
+
+        .filter-grid-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 16px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            width: fit-content;
+        }
+
+        .filter-input {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 1rem;
+            text-align: center;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .filter-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #334155;
+            border-left: 4px solid #667eea;
+        }
+
+        .normalization {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #334155;
+            margin-top: 8px;
+        }
+
+        /* Stage 3: 추리 게임 */
+        .quiz-section {
+            display: grid;
+            gap: 20px;
+        }
+
+        .quiz-image {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            background: #f8fafc;
+            text-align: center;
+        }
+
+        .quiz-image h3 {
+            color: #334155;
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .quiz-choices {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .choice-btn {
+            padding: 14px;
+            border: 2px solid #cbd5e1;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: left;
+            font-weight: 500;
+            color: #334155;
+            transition: all 0.2s;
+        }
+
+        .choice-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .choice-btn.selected {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .choice-btn.correct {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .choice-btn.incorrect {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: white;
+        }
+
+        .formula-display {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        /* 버튼들 */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .result-message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .result-message.show {
+            display: block;
+        }
+
+        .result-message.correct {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .result-message.incorrect {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .rank-board {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .rank-board.show {
+            display: block;
+        }
+
+        .rank-board h4 {
+            margin: 0 0 12px 0;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        .rank-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #334155;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rank-num {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 24px; }
+            h1 { font-size: 1.5rem; }
+            .wizard-section,
+            .filter-grid-section,
+            .quiz-image { grid-template-columns: 1fr; }
+            .canvas-container { min-height: 200px; }
+            .filter-input { width: 50px; height: 50px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">🔢 2026 광주수학축제</div>
+            <h1>행렬 암호 해독기</h1>
+            <p class="subtitle">행렬로 만들고 AI로 읽다 · 필터 연산의 신비로운 세계</p>
+        </div>
+
+        <div class="progress">
+            <div class="progress-dot active" id="dot0"></div>
+            <div class="progress-dot" id="dot1"></div>
+            <div class="progress-dot" id="dot2"></div>
+        </div>
+
+        <!-- Stage 1: 필터 마법사 -->
+        <div class="stage-container active" id="stage1">
+            <h2 style="color: #334155; margin-bottom: 20px;">1️⃣ 필터 마법사</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">다양한 필터를 선택해 이미지가 어떻게 변하는지 관찰해보세요!</p>
+
+            <div class="filter-wizard">
+                <div class="wizard-section">
+                    <div class="image-preview">
+                        <h3>원본 이미지</h3>
+                        <div class="canvas-container">
+                            <canvas id="canvas1-original" width="240" height="240"></canvas>
+                        </div>
+                    </div>
+                    <div class="image-preview">
+                        <h3>필터 적용 결과</h3>
+                        <div class="canvas-container">
+                            <canvas id="canvas1-filtered" width="240" height="240"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="blur">
+                        <div>🌫️ 블러 (흐릿함)</div>
+                        <div class="filter-formula">[1 2 1] [2 4 2] [1 2 1] ÷ 16</div>
+                    </button>
+                    <button class="filter-btn" data-filter="sharpen">
+                        <div>✨ 선명화 (또렷함)</div>
+                        <div class="filter-formula">[0 -1 0] [-1 5 -1] [0 -1 0]</div>
+                    </button>
+                    <button class="filter-btn" data-filter="edge">
+                        <div>🔍 엣지감지 (윤곽)</div>
+                        <div class="filter-formula">[-1 -1 -1] [-1 8 -1] [-1 -1 -1]</div>
+                    </button>
+                    <button class="filter-btn" data-filter="boost">
+                        <div>💪 색감 부스트</div>
+                        <div class="filter-formula">[0 0 0] [0 2 0] [0 0 0]</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="nextStage()">다음 단계 →</button>
+            </div>
+        </div>
+
+        <!-- Stage 2: 나만의 필터 -->
+        <div class="stage-container" id="stage2">
+            <h2 style="color: #334155; margin-bottom: 20px;">2️⃣ 나만의 필터 만들기</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">3×3 필터를 직접 만들어 이미지를 변환해보세요!</p>
+
+            <div class="custom-filter">
+                <div class="filter-grid-section">
+                    <div>
+                        <h3 style="color: #334155; margin-top: 0;">필터 값 입력</h3>
+                        <div class="filter-grid" id="filterGrid">
+                            <!-- 9개의 입력칸이 JS로 생성됨 -->
+                        </div>
+                        <div class="normalization">
+                            <input type="checkbox" id="normalize" checked>
+                            <label for="normalize">자동 정규화</label>
+                        </div>
+                    </div>
+                    <div class="image-preview">
+                        <h3>필터 적용 결과</h3>
+                        <div class="canvas-container">
+                            <canvas id="canvas2-filtered" width="240" height="240"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-info">
+                    <div class="info-box">
+                        <strong>💡 팁:</strong> -2 ~ 2 범위의 숫자를 입력하세요. 더 큰 숫자는 더 극단적인 효과를 만듭니다!
+                    </div>
+                    <div class="info-box">
+                        <strong>🎯 미션:</strong> "가장 웃기거나 이상한 필터를 만들어보세요!" 톱3는 명예의 전당에 올라갑니다.
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStage()">← 이전 단계</button>
+                <button class="btn-primary" onclick="nextStage()">다음 단계 →</button>
+            </div>
+        </div>
+
+        <!-- Stage 3: 추리 게임 -->
+        <div class="stage-container" id="stage3">
+            <h2 style="color: #334155; margin-bottom: 20px;">3️⃣ 필터 추리 게임</h2>
+            <p style="color: #64748b; margin-bottom: 20px;">변환된 이미지를 보고 어떤 필터가 적용되었을까요? 맞춰보세요!</p>
+
+            <div class="quiz-section">
+                <div class="quiz-image">
+                    <h3>🔍 이 이미지는 어떤 필터로 변환되었을까?</h3>
+                    <canvas id="canvas3-quiz" width="240" height="240"></canvas>
+                </div>
+
+                <div class="quiz-choices" id="quizChoices">
+                    <!-- 선택지가 JS로 생성됨 -->
+                </div>
+
+                <div class="result-message" id="resultMessage"></div>
+
+                <div class="rank-board" id="rankBoard">
+                    <h4>🏆 명예의 전당 (TOP 3 창의적인 필터)</h4>
+                    <div class="rank-item">
+                        <span class="rank-num">1위</span>
+                        <span>가장 황당한 필터 | 참가자 A</span>
+                    </div>
+                    <div class="rank-item">
+                        <span class="rank-num">2위</span>
+                        <span>가장 재미있는 필터 | 참가자 B</span>
+                    </div>
+                    <div class="rank-item">
+                        <span class="rank-num">3위</span>
+                        <span>가장 독창적인 필터 | 참가자 C</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="prevStage()">← 이전 단계</button>
+                <button class="btn-primary" onclick="resetAll()">🔄 처음부터</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 이미지 생성 함수
+        function createTestImage(canvas) {
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 배경
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, w, h);
+
+            // 그라데이션 원
+            const gradient = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, w/2);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(w/2, h/2, w/3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 사각형
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(w * 0.2, h * 0.2, w * 0.2, w * 0.2);
+
+            // 삼각형
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.moveTo(w * 0.75, h * 0.2);
+            ctx.lineTo(w * 0.95, h * 0.5);
+            ctx.lineTo(w * 0.55, h * 0.5);
+            ctx.fill();
+
+            // 격자
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * w / 4, h * 0.6);
+                ctx.lineTo(i * w / 4, h);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(0, h * 0.6 + i * (h * 0.4) / 4);
+                ctx.lineTo(w, h * 0.6 + i * (h * 0.4) / 4);
+                ctx.stroke();
+            }
+        }
+
+        // Convolution 연산
+        function applyConvolution(canvas, kernel, normalize = true) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            const w = canvas.width;
+            const h = canvas.height;
+
+            const output = new Uint8ClampedArray(data.length);
+            output.set(data);
+
+            const kernelSize = 3;
+            const offset = Math.floor(kernelSize / 2);
+            const kernelSum = kernel.flat().reduce((a, b) => a + b, 0);
+            const divisor = normalize && kernelSum !== 0 ? kernelSum : 1;
+
+            for (let y = offset; y < h - offset; y++) {
+                for (let x = offset; x < w - offset; x++) {
+                    let r = 0, g = 0, b = 0;
+
+                    for (let ky = 0; ky < kernelSize; ky++) {
+                        for (let kx = 0; kx < kernelSize; kx++) {
+                            const px = x + kx - offset;
+                            const py = y + ky - offset;
+                            const idx = (py * w + px) * 4;
+                            const weight = kernel[ky][kx];
+
+                            r += data[idx] * weight;
+                            g += data[idx + 1] * weight;
+                            b += data[idx + 2] * weight;
+                        }
+                    }
+
+                    const outIdx = (y * w + x) * 4;
+                    output[outIdx] = Math.min(255, Math.max(0, r / divisor));
+                    output[outIdx + 1] = Math.min(255, Math.max(0, g / divisor));
+                    output[outIdx + 2] = Math.min(255, Math.max(0, b / divisor));
+                }
+            }
+
+            const outputImageData = new ImageData(output, w, h);
+            ctx.putImageData(outputImageData, 0, 0);
+        }
+
+        // 필터 정의
+        const filters = {
+            blur: [[1, 2, 1], [2, 4, 2], [1, 2, 1]],
+            sharpen: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]],
+            edge: [[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]],
+            boost: [[0, 0, 0], [0, 2, 0], [0, 0, 0]]
+        };
+
+        let currentStage = 1;
+        let currentFilter = 'blur';
+        let customKernel = [[0, 0, 0], [0, 1, 0], [0, 0, 0]];
+        let quizFilter = null;
+
+        // Stage 1 초기화
+        function initStage1() {
+            const canvas1Original = document.getElementById('canvas1-original');
+            const canvas1Filtered = document.getElementById('canvas1-filtered');
+
+            createTestImage(canvas1Original);
+            createTestImage(canvas1Filtered);
+
+            applyConvolution(canvas1Filtered, filters.blur, true);
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+
+                    createTestImage(canvas1Filtered);
+                    applyConvolution(canvas1Filtered, filters[currentFilter], true);
+                });
+            });
+        }
+
+        // Stage 2 초기화
+        function initStage2() {
+            const filterGrid = document.getElementById('filterGrid');
+            filterGrid.innerHTML = '';
+
+            for (let i = 0; i < 9; i++) {
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'filter-input';
+                input.value = customKernel[Math.floor(i / 3)][i % 3];
+                input.min = '-2';
+                input.max = '2';
+                input.addEventListener('input', updateCustomFilter);
+                filterGrid.appendChild(input);
+            }
+
+            updateCustomFilter();
+        }
+
+        function updateCustomFilter() {
+            const inputs = document.querySelectorAll('.filter-input');
+            for (let i = 0; i < 9; i++) {
+                customKernel[Math.floor(i / 3)][i % 3] = parseFloat(inputs[i].value) || 0;
+            }
+
+            const canvas2Filtered = document.getElementById('canvas2-filtered');
+            createTestImage(canvas2Filtered);
+            const normalize = document.getElementById('normalize').checked;
+            applyConvolution(canvas2Filtered, customKernel, normalize);
+        }
+
+        // Stage 3 초기화
+        function initStage3() {
+            const filterNames = Object.keys(filters);
+            quizFilter = filterNames[Math.floor(Math.random() * filterNames.length)];
+
+            const canvas3Quiz = document.getElementById('canvas3-quiz');
+            createTestImage(canvas3Quiz);
+            applyConvolution(canvas3Quiz, filters[quizFilter], true);
+
+            const quizChoices = document.getElementById('quizChoices');
+            quizChoices.innerHTML = '';
+
+            const choices = ['blur', 'sharpen', 'edge', 'boost'];
+            const shuffled = choices.sort(() => Math.random() - 0.5);
+
+            shuffled.forEach((choice, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerHTML = `<div>${['🌫️', '✨', '🔍', '💪'][['blur', 'sharpen', 'edge', 'boost'].indexOf(choice)]}</div>
+                    <div><strong>${['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(choice)]}</strong></div>
+                    <div class="formula-display">${getFilterFormula(choice)}</div>`;
+                btn.addEventListener('click', () => selectAnswer(choice));
+                quizChoices.appendChild(btn);
+            });
+        }
+
+        function getFilterFormula(filter) {
+            const formulas = {
+                blur: '[1 2 1] [2 4 2] [1 2 1] ÷ 16',
+                sharpen: '[0 -1 0] [-1 5 -1] [0 -1 0]',
+                edge: '[-1 -1 -1] [-1 8 -1] [-1 -1 -1]',
+                boost: '[0 0 0] [0 2 0] [0 0 0]'
+            };
+            return formulas[filter] || '';
+        }
+
+        function selectAnswer(choice) {
+            const resultMessage = document.getElementById('resultMessage');
+            const isCorrect = choice === quizFilter;
+
+            if (isCorrect) {
+                resultMessage.textContent = '🎉 정답입니다! 이 필터는 ' +
+                    (['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(quizFilter)]) +
+                    ' 필터입니다.';
+                resultMessage.className = 'result-message show correct';
+            } else {
+                resultMessage.textContent = '❌ 틀렸어요. 다시 도전해보세요!';
+                resultMessage.className = 'result-message show incorrect';
+            }
+
+            document.querySelectorAll('.choice-btn').forEach(btn => {
+                if (btn.textContent.includes(['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(choice)])) {
+                    btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+            });
+        }
+
+        // Stage 네비게이션
+        function goToStage(stage) {
+            document.querySelectorAll('.stage-container').forEach(s => s.classList.remove('active'));
+            document.getElementById('stage' + stage).classList.add('active');
+
+            document.querySelectorAll('.progress-dot').forEach((dot, idx) => {
+                dot.classList.remove('active', 'done');
+                if (idx < stage - 1) dot.classList.add('done');
+                if (idx === stage - 1) dot.classList.add('active');
+            });
+
+            currentStage = stage;
+
+            if (stage === 1) initStage1();
+            if (stage === 2) initStage2();
+            if (stage === 3) initStage3();
+        }
+
+        function nextStage() {
+            if (currentStage < 3) goToStage(currentStage + 1);
+        }
+
+        function prevStage() {
+            if (currentStage > 1) goToStage(currentStage - 1);
+        }
+
+        function resetAll() {
+            goToStage(1);
+        }
+
+        // 초기화
+        window.addEventListener('load', () => goToStage(1));
+    </script>
+</body>
+</html>
