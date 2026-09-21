@@ -392,7 +392,7 @@
                         <button class="preset-btn" onclick="loadSampleImage1('animal')">🦁 동물</button>
                         <button class="preset-btn" onclick="loadSampleImage1('face')">🎵 음악노트</button>
                         <button class="preset-btn" onclick="loadSampleImage1('pattern')">⭐ 별</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('meme')">☀️ 해</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('meme')">⛵ 배</button>
                     </div>
                     <div class="webcam-buttons">
                         <button class="btn-primary" id="startWebcam" onclick="startWebcam()">📷 웹캠 켜기</button>
@@ -420,7 +420,7 @@
                         <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 동물</button>
                         <button class="preset-btn" onclick="loadSampleImage('face')">🎶 음표들</button>
                         <button class="preset-btn" onclick="loadSampleImage('pattern')">🌙 달</button>
-                        <button class="preset-btn" onclick="loadSampleImage('meme')">🌈 무지개</button>
+                        <button class="preset-btn" onclick="loadSampleImage('meme')">🌊 바다</button>
                     </div>
                     <div class="hint-box">
                         <strong>💡 팁:</strong> 같은 크기의 이미지를 사용하면 더 좋은 결과가 나옵니다!
@@ -632,22 +632,39 @@
                 ctx.arc(360, 100, 6, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'meme') {
-                // 하늘 배경
-                ctx.fillStyle = '#87ceeb';
+                // 바다 배경
+                ctx.fillStyle = '#1e90ff';
                 ctx.fillRect(0, 0, 400, 300);
 
-                // 무지개 (정상적인 호 형태)
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-                const rainbowCenterX = 200;
-                const rainbowCenterY = 280;
-                const startRadius = 120;
-
-                for (let i = 0; i < colors.length; i++) {
-                    ctx.strokeStyle = colors[i];
-                    ctx.lineWidth = 18;
+                // 파도 (물결 패턴)
+                ctx.strokeStyle = '#0047ab';
+                ctx.lineWidth = 3;
+                for (let y = 80; y < 300; y += 40) {
                     ctx.beginPath();
-                    const radius = startRadius - i * 16;
-                    ctx.arc(rainbowCenterX, rainbowCenterY, radius, Math.PI, 0, false);
+                    for (let x = 0; x <= 400; x += 30) {
+                        const offsetY = Math.sin(x / 30) * 10;
+                        if (x === 0) {
+                            ctx.moveTo(x, y + offsetY);
+                        } else {
+                            ctx.lineTo(x, y + offsetY);
+                        }
+                    }
+                    ctx.stroke();
+                }
+
+                // 더 진한 파도 (하단)
+                ctx.strokeStyle = '#00308e';
+                ctx.lineWidth = 2;
+                for (let y = 100; y < 300; y += 50) {
+                    ctx.beginPath();
+                    for (let x = 0; x <= 400; x += 25) {
+                        const offsetY = Math.sin((x + y) / 25) * 8;
+                        if (x === 0) {
+                            ctx.moveTo(x, y + offsetY);
+                        } else {
+                            ctx.lineTo(x, y + offsetY);
+                        }
+                    }
                     ctx.stroke();
                 }
             }
@@ -749,26 +766,64 @@
                     ctx.fill();
                 }
             } else if (type === 'meme') {
-                // 웃는 얼굴 (노란색, 왼쪽 상단)
-                ctx.fillStyle = '#ffeb3b';
+                // 하늘 배경
+                ctx.fillStyle = '#87ceeb';
+                ctx.fillRect(0, 0, 400, 300);
+
+                // 배 (선체)
+                ctx.fillStyle = '#8b4513';
                 ctx.beginPath();
-                ctx.arc(70, 70, 50, 0, Math.PI * 2);
+                ctx.ellipse(200, 220, 80, 40, 0, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 눈
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(55, 55, 7, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(85, 55, 7, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 큰 웃음
+                // 배의 검은 테두리
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(70, 80, 25, 0, Math.PI);
+                ctx.ellipse(200, 220, 80, 40, 0, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // 마스트 (돛대)
+                ctx.strokeStyle = '#8b7355';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(200, 220);
+                ctx.lineTo(200, 80);
+                ctx.stroke();
+
+                // 돛 (큰 흰색 삼각형)
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(200, 100);
+                ctx.lineTo(280, 200);
+                ctx.lineTo(200, 200);
+                ctx.fill();
+
+                // 돛 테두리
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(200, 100);
+                ctx.lineTo(280, 200);
+                ctx.lineTo(200, 200);
+                ctx.lineTo(200, 100);
+                ctx.stroke();
+
+                // 작은 돛
+                ctx.fillStyle = '#f0f0f0';
+                ctx.beginPath();
+                ctx.moveTo(200, 120);
+                ctx.lineTo(240, 200);
+                ctx.lineTo(200, 200);
+                ctx.fill();
+
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(200, 120);
+                ctx.lineTo(240, 200);
+                ctx.lineTo(200, 200);
+                ctx.lineTo(200, 120);
                 ctx.stroke();
             }
 
