@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI의 눈으로 세상 보기 — 사물 인식 체험</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f8fafc;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 980px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #0f766e; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    .title-row { display: flex; justify-content: center; align-items: center; gap: 14px; position: relative; }
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .help-btn {
+        position: absolute; right: 0;
+        background: #0f766e; color: white; border: none;
+        border-radius: 8px; padding: 8px 16px; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+        font-family: inherit;
+    }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .help-detail {
+        display: none;
+        background: #f0fdfa;
+        border: 1px solid #99f6e4;
+        border-radius: 10px;
+        padding: 14px 18px;
+        font-size: 0.82rem;
+        color: #115e59;
+        line-height: 1.6;
+    }
+    .help-detail.shown { display: block; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .intro-box { background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #155e75; }
+    .intro-box p { margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box b { color: #155e75; }
+
+    .btn-row { display: flex; gap: 10px; justify-content: center; }
+    .btn {
+        border: none; border-radius: 8px; padding: 11px 20px; font-weight: 700;
+        font-size: 0.88rem; cursor: pointer; color: white; font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-upload { background: #0f766e; }
+    .btn-webcam { background: #db2777; }
+    .btn-stop { background: #64748b; }
+    .btn-sample { background: #7c3aed; }
+    input[type="file"] { display: none; }
+
+    .preview-wrap {
+        position: relative;
+        margin-top: 18px;
+        min-height: 220px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+    .preview-placeholder { color: #94a3b8; font-size: 0.9rem; text-align: center; }
+    #previewCanvas { max-width: 100%; display: none; }
+    #videoEl { display: none; }
+
+    .status-line { text-align: center; font-size: 0.82rem; color: #64748b; margin-top: 10px; font-weight: 700; }
+    .status-line.ready { color: #16a34a; }
+    .status-line.error { color: #dc2626; }
+
+    .result-list { margin-top: 16px; }
+    .result-list h4 { font-size: 0.88rem; margin: 0 0 8px; color: #334155; }
+    .result-item { margin-bottom: 10px; }
+    .result-row { display: flex; justify-content: space-between; font-size: 0.84rem; margin-bottom: 3px; }
+    .result-row .name { font-weight: 700; color: #1e293b; }
+    .result-row .pct { color: #0f766e; font-weight: 700; }
+    .result-bar-bg { background: #e2e8f0; border-radius: 999px; height: 10px; overflow: hidden; }
+    .result-bar-fill { background: linear-gradient(90deg,#0f766e,#14b8a6); height: 100%; border-radius: 999px; }
+    .result-empty { color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 10px; }
+
+    .layer-section h3 { font-size: 0.95rem; color: #334155; margin: 0 0 4px; }
+    .layer-note { font-size: 0.78rem; color: #64748b; line-height: 1.6; margin: 0 0 14px; }
+    .layer-note b { color: #b45309; }
+    .layer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .layer-cell { text-align: center; }
+    .layer-cell canvas { width: 100%; max-width: 130px; border-radius: 6px; border: 1px solid #e2e8f0; background: #000; }
+    .layer-cell .tier { font-size: 0.68rem; color: #94a3b8; margin-top: 6px; }
+    .layer-cell .label { font-size: 0.74rem; color: #334155; font-weight: 700; margin-top: 2px; }
+    .layer-empty { grid-column: 1 / -1; color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 20px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #0f766e; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) { .layer-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="convolution-visualizer.html">← 합성곱(Convolution) 시각화로</a>
+    <div class="title-row">
+        <h1>AI의 눈으로 세상 보기 — 사물 인식 체험</h1>
+        <button class="help-btn" id="btnHelp">❓ 도움말</button>
+    </div>
+    <p class="subtitle">이미지 분류 AI가 사진 속 사물을 어떻게 알아보는지 체험해보세요!</p>
+
+    <div class="help-detail" id="helpDetail">
+        <b>사물 인식(분류)</b> 부분은 실제로 브라우저에서 동작하는 TensorFlow.js 공식 사전학습 모델인 <b>MobileNet</b>을 사용합니다. 1,000가지 사물 중 어떤 것에 가장 가까운지 확률(%)로 알려줍니다.<br><br>
+        아래 <b>"CNN이 이미지를 보는 방식"</b> 패널은 실제 MobileNet 내부의 88개 층 활성화 값을 그대로 보여주는 것이 <b>아니라</b>, 컨볼루션 신경망(CNN)이 층을 지나며 이미지를 어떻게 점점 더 복잡한 특징(엣지 → 질감 → 형태)으로 바꾸어 가는지를 간단한 컨볼루션 필터로 <b>개념적으로 재현</b>한 것입니다. 실제 모델은 이런 필터를 사람이 정하지 않고 학습을 통해 스스로 찾아냅니다.
+    </div>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>MobileNet이란?</h3>
+            <p>MobileNet은 스마트폰처럼 성능이 제한된 기기에서도 빠르게 동작하도록 설계된 <b>이미지 분류용 CNN(합성곱 신경망)</b>입니다. 수백만 장의 사진으로 학습되어, 사진 속 물체가 1,000가지 종류 중 무엇에 가장 가까운지 확률로 알려줍니다.</p>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px; flex-wrap:wrap;">
+            <button class="btn btn-upload" id="btnUpload">📷 이미지 업로드</button>
+            <button class="btn btn-webcam" id="btnWebcam">📹 웹캠 시작</button>
+            <button class="btn btn-stop" id="btnStop" style="display:none;">⏹ 중지</button>
+            <button class="btn btn-sample" id="btnSample">🖼️ 샘플 이미지</button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="preview-wrap" id="previewWrap">
+            <p class="preview-placeholder" id="previewPlaceholder">이미지를 업로드하거나<br>웹캠 또는 샘플 이미지를 사용해보세요!</p>
+            <canvas id="previewCanvas"></canvas>
+            <video id="videoEl" autoplay playsinline muted></video>
+        </div>
+        <p class="status-line" id="statusLine">모델을 불러오는 중...</p>
+
+        <div class="result-list">
+            <h4>🔎 분류 결과 (상위 5개)</h4>
+            <div id="resultList"><p class="result-empty">이미지를 업로드하거나 웹캠·샘플 이미지를 사용해주세요.</p></div>
+        </div>
+    </div>
+
+    <div class="card layer-section">
+        <h3>🧠 CNN이 이미지를 보는 방식</h3>
+        <p class="layer-note"><b>실제 MobileNet의 내부 값이 아닌 개념적 재현입니다.</b> 실제 MobileNet은 88개의 층을 거치며 특징을 뽑아내는데, 그중 대표적인 8단계를 흉내내어 저수준(엣지) → 중간(질감) → 고수준(형태) 특징으로 갈수록 무엇이 강조되는지 보여줍니다.</p>
+        <div class="layer-grid" id="layerGrid"><p class="layer-empty">이미지를 먼저 불러와 주세요.</p></div>
+    </div>
+
+    <div class="nav-links">
+        <a href="convolution-visualizer.html">← 합성곱(Convolution) 시각화로</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js"></script>
+<script>
+    const statusLine = document.getElementById('statusLine');
+    const previewCanvas = document.getElementById('previewCanvas');
+    const pctx = previewCanvas.getContext('2d');
+    const videoEl = document.getElementById('videoEl');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+
+    let model = null;
+    let webcamStream = null;
+    let webcamLoopId = null;
+
+    // ---- 3x3 커널 (컨볼루션 필터 체험 도구와 동일한 정의) ----
+    const KERNELS = {
+        edgeH: [-1,-1,-1, 0,0,0, 1,1,1],
+        edgeV: [-1,0,1, -1,0,1, -1,0,1],
+        blur: [1,1,1, 1,1,1, 1,1,1],
+        sharpen: [0,-1,0, -1,5,-1, 0,-1,0],
+        laplacian: [0,1,0, 1,-4,1, 0,1,0],
+        emboss: [-2,-1,0, -1,1,1, 0,1,2],
+    };
+
+    const LAYER_STAGES = [
+        { label: '입력 (그레이스케일)', tier: '저수준 · 1층 부근', type: 'gray' },
+        { label: '가로 엣지 검출', tier: '저수준 · 1층 부근', type: 'kernel', k: 'edgeH' },
+        { label: '세로 엣지 검출', tier: '저수준 · 1층 부근', type: 'kernel', k: 'edgeV' },
+        { label: '엣지 결합(경계선)', tier: '저수준 · 10층 부근', type: 'edgeMag' },
+        { label: '평균 블러(질감 뭉치기)', tier: '중간층 · 30층 부근', type: 'kernel', k: 'blur' },
+        { label: '샤프닝(강조된 특징)', tier: '중간층 · 40층 부근', type: 'kernel', k: 'sharpen' },
+        { label: '라플라시안(윤곽/형태)', tier: '고수준 · 60층 부근', type: 'kernel', k: 'laplacian' },
+        { label: '엠보싱(복합 패턴)', tier: '고수준 · 80층 이상', type: 'kernel', k: 'emboss' },
+    ];
+
+    function clampG(gray, w, h, x, y) {
+        x = Math.max(0, Math.min(w - 1, x));
+        y = Math.max(0, Math.min(h - 1, y));
+        return gray[y * w + x];
+    }
+
+    function convGray(gray, w, h, kernel) {
+        let kernelSum = kernel.reduce((s, v) => s + v, 0);
+        if (Math.abs(kernelSum) < 1e-6) kernelSum = 1;
+        const out = new Float64Array(w * h);
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                let sum = 0, ki = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        sum += clampG(gray, w, h, x + dx, y + dy) * kernel[ki++];
+                    }
+                }
+                out[y * w + x] = Math.max(0, Math.min(255, sum / kernelSum));
+            }
+        }
+        return out;
+    }
+
+    function edgeMagnitude(gray, w, h) {
+        const gh = convGray(gray, w, h, KERNELS.edgeH);
+        const gv = convGray(gray, w, h, KERNELS.edgeV);
+        const out = new Float64Array(w * h);
+        for (let i = 0; i < w * h; i++) out[i] = Math.min(255, Math.sqrt(gh[i] * gh[i] + gv[i] * gv[i]));
+        return out;
+    }
+
+    function grayscaleFromCanvas(canvas) {
+        const w = canvas.width, h = canvas.height;
+        const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const gray = new Float64Array(w * h);
+        for (let i = 0; i < w * h; i++) {
+            gray[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+        }
+        return gray;
+    }
+
+    function drawGrayToCanvas(canvas, gray, w, h) {
+        canvas.width = w; canvas.height = h;
+        const imgData = new ImageData(w, h);
+        for (let i = 0; i < w * h; i++) {
+            const v = Math.round(gray[i]);
+            imgData.data[i * 4] = v; imgData.data[i * 4 + 1] = v; imgData.data[i * 4 + 2] = v; imgData.data[i * 4 + 3] = 255;
+        }
+        canvas.getContext('2d').putImageData(imgData, 0, 0);
+    }
+
+    function renderLayerViz(sourceCanvas) {
+        const MAX_DIM = 96;
+        const scale = Math.min(1, MAX_DIM / Math.max(sourceCanvas.width, sourceCanvas.height));
+        const w = Math.max(1, Math.round(sourceCanvas.width * scale));
+        const h = Math.max(1, Math.round(sourceCanvas.height * scale));
+        const small = document.createElement('canvas');
+        small.width = w; small.height = h;
+        small.getContext('2d').drawImage(sourceCanvas, 0, 0, w, h);
+        const gray = grayscaleFromCanvas(small);
+
+        const grid = document.getElementById('layerGrid');
+        grid.innerHTML = '';
+        LAYER_STAGES.forEach((stage, i) => {
+            let out;
+            if (stage.type === 'gray') out = gray;
+            else if (stage.type === 'edgeMag') out = edgeMagnitude(gray, w, h);
+            else out = convGray(gray, w, h, KERNELS[stage.k]);
+
+            const cell = document.createElement('div');
+            cell.className = 'layer-cell';
+            const canvas = document.createElement('canvas');
+            cell.appendChild(canvas);
+            const tierEl = document.createElement('div');
+            tierEl.className = 'tier';
+            tierEl.textContent = `${i + 1}/8 · ${stage.tier}`;
+            cell.appendChild(tierEl);
+            const labelEl = document.createElement('div');
+            labelEl.className = 'label';
+            labelEl.textContent = stage.label;
+            cell.appendChild(labelEl);
+            grid.appendChild(cell);
+
+            drawGrayToCanvas(canvas, out, w, h);
+        });
+    }
+
+    async function loadModel() {
+        if (typeof tf === 'undefined' || typeof mobilenet === 'undefined') {
+            statusLine.textContent = '네트워크 문제로 AI 모델 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해 주세요.';
+            statusLine.className = 'status-line error';
+            return;
+        }
+        try {
+            model = await mobilenet.load({ version: 1, alpha: 1.0 });
+            statusLine.textContent = '✓ 모델 로드 완료! 이미지를 업로드하거나 웹캠·샘플 이미지를 사용해 보세요.';
+            statusLine.className = 'status-line ready';
+        } catch (err) {
+            statusLine.textContent = '모델 다운로드에 실패했습니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    }
+    loadModel();
+
+    document.getElementById('btnHelp').addEventListener('click', () => {
+        document.getElementById('helpDetail').classList.toggle('shown');
+    });
+
+    document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) loadImageFile(e.target.files[0]);
+    });
+
+    function loadImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        stopWebcam();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => { showImageOnCanvas(img); runClassification(img); };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function showImageOnCanvas(imgOrVideo) {
+        const naturalW = imgOrVideo.naturalWidth || imgOrVideo.videoWidth;
+        const naturalH = imgOrVideo.naturalHeight || imgOrVideo.videoHeight;
+        const maxDim = 420;
+        const scale = Math.min(1, maxDim / naturalW, maxDim / naturalH);
+        previewCanvas.width = Math.round(naturalW * scale);
+        previewCanvas.height = Math.round(naturalH * scale);
+        pctx.drawImage(imgOrVideo, 0, 0, previewCanvas.width, previewCanvas.height);
+        previewCanvas.style.display = 'block';
+        previewPlaceholder.style.display = 'none';
+    }
+
+    function renderResults(predictions) {
+        const list = document.getElementById('resultList');
+        if (!predictions || predictions.length === 0) {
+            list.innerHTML = '<p class="result-empty">분류 결과가 없습니다.</p>';
+            return;
+        }
+        list.innerHTML = predictions.map(p => {
+            const pct = (p.probability * 100).toFixed(1);
+            return `<div class="result-item">
+                <div class="result-row"><span class="name">${p.className}</span><span class="pct">${pct}%</span></div>
+                <div class="result-bar-bg"><div class="result-bar-fill" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('');
+    }
+
+    async function runClassification(source) {
+        showImageOnCanvas(source);
+        renderLayerViz(previewCanvas);
+        if (!model) { statusLine.textContent = '모델이 아직 로드되지 않았습니다.'; return; }
+        try {
+            const predictions = await model.classify(previewCanvas, 5);
+            renderResults(predictions);
+        } catch (err) {
+            statusLine.textContent = '분류 중 오류가 발생했습니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    }
+
+    document.getElementById('btnWebcam').addEventListener('click', async () => {
+        if (!model) { statusLine.textContent = '모델이 아직 로드되지 않았습니다.'; return; }
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoEl.srcObject = webcamStream;
+            await videoEl.play();
+            previewPlaceholder.style.display = 'none';
+            previewCanvas.style.display = 'block';
+            document.getElementById('btnStop').style.display = 'inline-block';
+            webcamLoop();
+        } catch (err) {
+            statusLine.textContent = '웹캠에 접근할 수 없습니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    });
+
+    let webcamFrameCount = 0;
+    async function webcamLoop() {
+        if (!webcamStream) return;
+        showImageOnCanvas(videoEl);
+        if (webcamFrameCount % 15 === 0) renderLayerViz(previewCanvas);
+        if (model && webcamFrameCount % 15 === 0) {
+            try { renderResults(await model.classify(previewCanvas, 5)); } catch (e) { /* skip a bad frame */ }
+        }
+        webcamFrameCount++;
+        webcamLoopId = requestAnimationFrame(webcamLoop);
+    }
+
+    function stopWebcam() {
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(t => t.stop());
+            webcamStream = null;
+        }
+        if (webcamLoopId) { cancelAnimationFrame(webcamLoopId); webcamLoopId = null; }
+        webcamFrameCount = 0;
+        document.getElementById('btnStop').style.display = 'none';
+    }
+    document.getElementById('btnStop').addEventListener('click', stopWebcam);
+
+    // ---- 샘플 이미지 (네트워크 없이도 항상 동작하는 합성 이미지) ----
+    function makeSampleImage() {
+        const c = document.createElement('canvas');
+        c.width = 224; c.height = 224;
+        const cx = c.getContext('2d');
+        cx.fillStyle = '#87ceeb'; cx.fillRect(0, 0, 224, 224);
+        cx.fillStyle = '#8b5a2b'; cx.fillRect(0, 160, 224, 64);
+        cx.fillStyle = '#dc2626'; cx.beginPath(); cx.arc(112, 110, 46, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#16a34a'; cx.beginPath(); cx.arc(70, 90, 20, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = '#facc15'; cx.beginPath(); cx.arc(160, 70, 16, 0, Math.PI * 2); cx.fill();
+        return c;
+    }
+    document.getElementById('btnSample').addEventListener('click', () => {
+        stopWebcam();
+        const sample = makeSampleImage();
+        const img = new Image();
+        img.onload = () => { showImageOnCanvas(img); runClassification(img); };
+        img.src = sample.toDataURL();
+    });
+</script>
+</body>
+</html>
