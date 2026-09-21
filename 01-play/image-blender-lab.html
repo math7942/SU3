@@ -724,33 +724,6 @@
                     ctx.lineTo(380, staffTop + i * staffSpacing);
                     ctx.stroke();
                 }
-
-                // 오선지 위에 음표 하나 배치 (3번째 줄 위)
-                const noteX = 100;
-                const noteY = 120;
-
-                // 음표 헤드 (타원, 약간 기울임)
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.ellipse(noteX, noteY, 15, 18, -0.2, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 음표 줄기 (stem)
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(noteX + 15, noteY - 5);
-                ctx.lineTo(noteX + 15, noteY - 60);
-                ctx.stroke();
-
-                // 음표 깃발 (flag)
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.moveTo(noteX + 15, noteY - 60);
-                ctx.lineTo(noteX + 15, noteY - 45);
-                ctx.quadraticCurveTo(noteX + 30, noteY - 50, noteX + 40, noteY - 60);
-                ctx.lineTo(noteX + 15, noteY - 60);
-                ctx.fill();
             } else if (type === 'pattern') {
                 // 별들
                 ctx.fillStyle = '#001a4d';
