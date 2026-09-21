@@ -390,7 +390,7 @@
                     </label>
                     <div class="preset-buttons">
                         <button class="preset-btn" onclick="loadSampleImage1('animal')">🦁 동물</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('face')">👤 얼굴</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('face')">🎵 음악노트</button>
                         <button class="preset-btn" onclick="loadSampleImage1('pattern')">⭐ 별</button>
                         <button class="preset-btn" onclick="loadSampleImage1('meme')">😂 밈</button>
                     </div>
@@ -418,7 +418,7 @@
                     </label>
                     <div class="preset-buttons">
                         <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 동물</button>
-                        <button class="preset-btn" onclick="loadSampleImage('face')">👤 얼굴</button>
+                        <button class="preset-btn" onclick="loadSampleImage('face')">🎶 음표들</button>
                         <button class="preset-btn" onclick="loadSampleImage('pattern')">🌙 달</button>
                         <button class="preset-btn" onclick="loadSampleImage('meme')">😂 밈</button>
                     </div>
@@ -561,27 +561,42 @@
                 ctx.arc(200, 150, 5, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
-                // 얼굴 그리기
-                ctx.fillStyle = '#f4a460';
-                ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
-                ctx.fill();
+                // 여러 음표들이 흩어져 있는 배경
+                ctx.fillStyle = '#f5f5f5';
+                ctx.fillRect(0, 0, 400, 300);
 
-                // 눈
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(175, 120, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(225, 120, 10, 0, Math.PI * 2);
-                ctx.fill();
+                // 음표 그리기 함수
+                function drawNote(x, y, size) {
+                    ctx.fillStyle = '#000';
+                    // 음표 헤드
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, size * 1.2, size * 1.5, 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 음표 줄기
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = size * 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x + size, y - size * 1.5);
+                    ctx.lineTo(x + size, y - size * 4);
+                    ctx.stroke();
+                }
 
-                // 입
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(200, 160, 20, 0, Math.PI);
-                ctx.stroke();
+                // 여러 음표 배치
+                const notes = [
+                    { x: 60, y: 80, size: 8 },
+                    { x: 120, y: 60, size: 6 },
+                    { x: 180, y: 100, size: 7 },
+                    { x: 240, y: 70, size: 8 },
+                    { x: 300, y: 90, size: 7 },
+                    { x: 350, y: 110, size: 6 },
+                    { x: 90, y: 180, size: 7 },
+                    { x: 200, y: 160, size: 8 },
+                    { x: 310, y: 190, size: 6 },
+                    { x: 150, y: 240, size: 7 },
+                    { x: 280, y: 220, size: 8 },
+                ];
+
+                notes.forEach(note => drawNote(note.x, note.y, note.size));
             } else if (type === 'pattern') {
                 // 달만 있는 밤 하늘
                 ctx.fillStyle = '#001a4d';
@@ -662,30 +677,40 @@
                 ctx.arc(200, 150, 5, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
-                ctx.fillStyle = '#f4a460';
-                ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
-                ctx.fill();
-
+                // 큰 음악 노트
+                // 음표 헤드 (노트 헤드)
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(175, 120, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(225, 120, 10, 0, Math.PI * 2);
+                ctx.ellipse(150, 200, 25, 30, 0.3, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 음표 줄기 (stem)
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 6;
                 ctx.beginPath();
-                ctx.arc(200, 160, 20, 0, Math.PI);
+                ctx.moveTo(175, 170);
+                ctx.lineTo(175, 80);
                 ctx.stroke();
+
+                // 음표 깃발 (flag)
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.moveTo(175, 80);
+                ctx.quadraticCurveTo(220, 85, 200, 110);
+                ctx.quadraticCurveTo(210, 95, 175, 95);
+                ctx.fill();
+
+                // 추가 깃발
+                ctx.beginPath();
+                ctx.moveTo(175, 100);
+                ctx.quadraticCurveTo(220, 105, 200, 130);
+                ctx.quadraticCurveTo(210, 120, 175, 120);
+                ctx.fill();
             } else if (type === 'pattern') {
-                // 별과 달 (배경만)
+                // 별들
                 ctx.fillStyle = '#001a4d';
                 ctx.fillRect(0, 0, 400, 300);
 
-                // 별들
                 ctx.fillStyle = '#fff';
                 for (let i = 0; i < 50; i++) {
                     const x = Math.random() * 400;
