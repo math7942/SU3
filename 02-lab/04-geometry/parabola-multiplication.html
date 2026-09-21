@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포물선으로 곱셈을 계산한다고?</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #fffbeb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #b45309; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #78716c; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #92400e; }
+
+    .intro-box { background: #fffbeb; border: 2px solid #f59e0b; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #92400e; }
+    .intro-box p { margin: 0 0 6px; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #92400e; }
+
+    .sim-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .sim-canvas-wrap { flex: 1 1 340px; min-width: 280px; }
+    #plotCanvas { width: 100%; max-width: 420px; display: block; margin: 0 auto; touch-action: none; cursor: grab; }
+    .sim-controls { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: 14px; }
+
+    .slider-row label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 4px; }
+    .slider-row .badge { background: #f59e0b; color: white; padding: 1px 9px; border-radius: 999px; font-size: 0.8rem; }
+    .slider-row input[type="range"] { width: 100%; }
+
+    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #475569; font-weight: 700; background: #fef3c7; border-radius: 8px; padding: 8px 10px; }
+
+    .readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .readout-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; text-align: center; }
+    .readout-cell .k { font-size: 0.7rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.05rem; font-weight: 900; color: #1e293b; }
+    .result-cell { grid-column: 1 / -1; background: #fef3c7; border: 2px solid #f59e0b; }
+    .result-cell .v { color: #92400e; font-size: 1.3rem; }
+    .warn-line { font-size: 0.78rem; color: #dc2626; font-weight: 700; text-align: center; min-height: 1.2em; }
+
+    .think { width: 100%; min-height: 70px; border: 1px solid #d6d3d1; border-radius: 8px; padding: 10px; font-family: inherit; font-size: 0.85rem; resize: vertical; }
+
+    .reveal-btn {
+        background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; border-radius: 8px;
+        padding: 9px 16px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit;
+    }
+    .reveal-content { display: none; margin-top: 10px; padding: 14px 16px; background: #fafaf9; border-radius: 8px; border-left: 3px solid #f59e0b; font-size: 0.85rem; line-height: 1.7; color: #334155; }
+    .reveal-content.shown { display: block; }
+    .step { margin-bottom: 10px; }
+    .step:last-child { margin-bottom: 0; }
+    .step .tag { font-weight: 700; color: #92400e; }
+    .formula { font-family: 'Cambria Math', 'Times New Roman', serif; font-style: italic; }
+
+    .extend-list { display: flex; flex-direction: column; gap: 14px; }
+    .extend-item { border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; }
+    .extend-item h4 { margin: 0 0 6px; font-size: 0.88rem; color: #1e293b; }
+    .extend-item p { margin: 0; font-size: 0.82rem; color: #57534e; line-height: 1.6; }
+    .extend-item .hint-btn { margin-top: 8px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #b45309; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 기하 실험실로 돌아가기</a>
+    <h1>포물선으로 곱셈을 계산한다고?</h1>
+    <p class="subtitle">y = x² 위의 두 점을 실로 이으면, 그 실이 y축과 만나는 값이 항상 두 수의 곱이 됩니다.</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>🟨 수학문화관에서 발견한 신기한 교구</h3>
+            <p>포물선 y = x² 모양의 판에 여러 개의 실이 걸려 있는 교구입니다. 실의 왼쪽 끝을 원점에서 왼쪽으로 b칸 이동한 위치의 포물선 위 점에, 오른쪽 끝을 원점에서 오른쪽으로 a칸 이동한 위치의 포물선 위 점에 고정하면, 팽팽하게 당겨진 실이 세로축(y축)과 만나는 눈금이 <b>항상 a × b</b>가 됩니다.</p>
+            <p>예를 들어 왼쪽으로 3칸, 오른쪽으로 4칸에 실을 걸면 y축과 만나는 지점은 정확히 <b>12(=3×4)</b>입니다. 아래에서 직접 슬라이더를 움직이며 확인해 보세요.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔬 시뮬레이션 — 직접 확인해 보기</h2>
+        <div class="sim-layout">
+            <div class="sim-canvas-wrap">
+                <canvas id="plotCanvas" width="420" height="520"></canvas>
+                <p class="warn-line" id="warnLine"></p>
+            </div>
+            <div class="sim-controls">
+                <div class="slider-row">
+                    <label>오른쪽 점의 위치 <span>a = <span class="badge" id="aBadge">4</span></span></label>
+                    <input type="range" id="aSlider" min="-10" max="10" step="0.5" value="4">
+                </div>
+                <div class="slider-row">
+                    <label>왼쪽으로 이동한 칸수 <span>b = <span class="badge" id="bBadge">3</span></span></label>
+                    <input type="range" id="bSlider" min="-10" max="10" step="0.5" value="3">
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="sqrtMode">
+                    <label for="sqrtMode" style="margin:0; cursor:pointer;">🔗 제곱근 모드 (b = a로 고정)</label>
+                </div>
+                <div class="readout-grid">
+                    <div class="readout-cell"><div class="k">점 A (오른쪽)</div><div class="v" id="pointA">(4, 16)</div></div>
+                    <div class="readout-cell"><div class="k">점 B (왼쪽)</div><div class="v" id="pointB">(−3, 9)</div></div>
+                    <div class="readout-cell"><div class="k">실의 기울기</div><div class="v" id="slopeVal">1</div></div>
+                    <div class="readout-cell"><div class="k">y축과 만나는 점</div><div class="v" id="interceptVal">(0, 12)</div></div>
+                    <div class="readout-cell result-cell"><div class="k">a × b</div><div class="v" id="productVal">4 × 3 = 12</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🤔 탐구하기 — 왜 항상 a × b가 될까?</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.6;">직접 손으로 유도해 보고, 아래 단계별 풀이를 하나씩 열어 확인해 보세요. 지금 슬라이더에 설정된 a, b 값으로 실제 숫자를 대입해서 보여줍니다.</p>
+        <textarea class="think" placeholder="1. 두 점 A, B의 좌표를 각각 적어보고, 2. 두 점을 지나는 직선의 기울기를 구해보고, 3. 직선의 방정식을 세워 x=0을 대입해 보세요."></textarea>
+        <div id="stepsWrap" style="margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <div class="extend-list">
+            <div class="extend-item">
+                <h4>1. 두 음수의 곱도 계산할 수 있을까요?</h4>
+                <p>슬라이더 a를 음수 쪽으로 옮겨서 점 A를 원점의 왼쪽에 두고, b도 음수로 만들어(즉 점 B를 원점의 오른쪽에 두고) 실험해 보세요. 예를 들어 a = −3, b = −4로 두면 어떤 값이 나오나요? (−3)×(−4) = 12와 비교해 보세요.</p>
+                <button class="reveal-btn hint-btn" data-target="hintNeg">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintNeg">
+                    <p>공식은 항상 <span class="formula">y절편 = a × b</span>입니다. a와 b에 어떤 부호를 넣어도(점이 어느 쪽에 있어도) 이 공식은 그대로 성립합니다. a=−3, b=−4를 넣으면 점 A는 (−3, 9), 점 B는 (4, 16)이 되고, 실을 이으면 y절편은 (−3)×(−4)=12가 됩니다 — 직접 슬라이더로 확인해 보세요!</p>
+                </div>
+            </div>
+            <div class="extend-item">
+                <h4>2. 25의 제곱근을 계산하려면 실을 어디에 걸어야 할까요?</h4>
+                <p>"제곱근 모드"를 켜면 b가 자동으로 a와 같아집니다. 이때 실은 항상 수평이 되고, y절편은 a²(=a×a)이 됩니다. y절편이 25가 되도록 a를 조절하면, 그 a값이 바로 √25입니다.</p>
+                <button class="reveal-btn hint-btn" data-target="hintSqrt">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintSqrt">
+                    <p>제곱근 모드에서 a=b이면 y절편 = a×b = a×a = a²입니다. 슬라이더를 움직여 y절편이 25가 되게 하면 a=5(또는 a=−5)가 되는 것을 확인할 수 있습니다. 즉 y=25인 수평인 실이 포물선과 만나는 점의 x좌표가 바로 ±√25 = ±5입니다.</p>
+                </div>
+            </div>
+            <div class="extend-item">
+                <h4>3. 포물선을 이용하여 다른 곱셈을 계산해 봅시다</h4>
+                <p>7 × 8, 6 × 0.5, (−2) × 9 등 자신만의 곱셈식을 정하고, 슬라이더로 직접 확인해 보세요. 계산기로 미리 답을 구한 뒤, 시뮬레이션의 y절편과 일치하는지 비교해 봅시다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 기하 실험실로 돌아가기</a>
+        <a href="../index.html">수학실험 전체 목록으로 →</a>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('plotCanvas');
+    const ctx = canvas.getContext('2d');
+    const aSlider = document.getElementById('aSlider');
+    const bSlider = document.getElementById('bSlider');
+    const sqrtMode = document.getElementById('sqrtMode');
+    const aBadge = document.getElementById('aBadge');
+    const bBadge = document.getElementById('bBadge');
+    const warnLine = document.getElementById('warnLine');
+
+    // 좌표계: x는 [-11,11], y는 [-6,108] (a,b가 -10~10 범위이므로 a^2 최대 100)
+    const X_MIN = -11, X_MAX = 11, Y_MIN = -6, Y_MAX = 108;
+
+    function worldToScreen(x, y, w, h) {
+        const sx = (w - 40) / (X_MAX - X_MIN);
+        const sy = (h - 40) / (Y_MAX - Y_MIN);
+        const ox = 20 - X_MIN * sx;
+        const oy = h - 20 + Y_MIN * sy;
+        return [ox + x * sx, oy - y * sy];
+    }
+    function screenToWorldX(px, w) {
+        const sx = (w - 40) / (X_MAX - X_MIN);
+        const ox = 20 - X_MIN * sx;
+        return (px - ox) / sx;
+    }
+
+    function fmt(n) {
+        const r = Math.round(n * 100) / 100;
+        return Number.isInteger(r) ? String(r) : r.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+    }
+
+    function getAB() {
+        let a = parseFloat(aSlider.value);
+        let b = parseFloat(bSlider.value);
+        if (sqrtMode.checked) { b = a; bSlider.value = a; }
+        return { a, b };
+    }
+
+    function drawScene() {
+        const w = canvas.width, h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const { a, b } = getAB();
+        aBadge.textContent = fmt(a);
+        bBadge.textContent = fmt(b);
+
+        // 축
+        ctx.strokeStyle = '#d6d3d1'; ctx.lineWidth = 1;
+        const [ox, oy] = worldToScreen(0, 0, w, h);
+        ctx.beginPath(); ctx.moveTo(20, oy); ctx.lineTo(w - 20, oy); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ox, h - 20); ctx.lineTo(ox, 20); ctx.stroke();
+
+        // y축 눈금 (20 단위)
+        ctx.fillStyle = '#a8a29e'; ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
+        for (let yv = 0; yv <= 100; yv += 20) {
+            const [, py] = worldToScreen(0, yv, w, h);
+            ctx.fillText(yv, ox - 5, py + 3);
+        }
+        // x축 눈금 (5 단위)
+        ctx.textAlign = 'center';
+        for (let xv = -10; xv <= 10; xv += 5) {
+            const [px] = worldToScreen(xv, 0, w, h);
+            ctx.fillText(xv, px, oy + 12);
+        }
+
+        // 포물선 y = x^2
+        ctx.beginPath();
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2;
+        for (let xv = X_MIN; xv <= X_MAX; xv += 0.1) {
+            const yv = xv * xv;
+            if (yv > Y_MAX) continue;
+            const [px, py] = worldToScreen(xv, yv, w, h);
+            if (xv === X_MIN) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        const pA = [a, a * a];
+        const pB = [-b, b * b];
+        const degenerate = Math.abs(a + b) < 1e-6;
+
+        if (!degenerate) {
+            // 실(직선) — 캔버스 좌우 끝까지 연장
+            const slope = a - b;
+            const intercept = a * b;
+            const lineAt = (xv) => slope * xv + intercept;
+            const [lx, ly] = worldToScreen(X_MIN, lineAt(X_MIN), w, h);
+            const [rx, ry] = worldToScreen(X_MAX, lineAt(X_MAX), w, h);
+            ctx.beginPath();
+            ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+            ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // y절편 점
+            if (intercept >= Y_MIN && intercept <= Y_MAX) {
+                const [ix, iy] = worldToScreen(0, intercept, w, h);
+                ctx.beginPath(); ctx.arc(ix, iy, 6, 0, 7);
+                ctx.fillStyle = '#f59e0b'; ctx.fill();
+                ctx.strokeStyle = '#92400e'; ctx.lineWidth = 1.5; ctx.stroke();
+            }
+            warnLine.textContent = '';
+        } else {
+            warnLine.textContent = '⚠️ a = −b이면 두 점이 같아져서 실을 걸 수 없어요. 슬라이더를 조금 움직여 보세요.';
+        }
+
+        // 점 A, B
+        function drawPoint(pt, color, label) {
+            if (pt[1] > Y_MAX) return;
+            const [px, py] = worldToScreen(pt[0], pt[1], w, h);
+            ctx.beginPath(); ctx.arc(px, py, 6, 0, 7);
+            ctx.fillStyle = color; ctx.fill();
+            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.fillStyle = '#1e293b'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(label, px + 9, py - 6);
+        }
+        drawPoint(pA, '#2563eb', `A(${fmt(a)}, ${fmt(a * a)})`);
+        drawPoint(pB, '#16a34a', `B(${fmt(-b)}, ${fmt(b * b)})`);
+
+        updateReadouts(a, b, degenerate);
+    }
+
+    function updateReadouts(a, b, degenerate) {
+        document.getElementById('pointA').textContent = `(${fmt(a)}, ${fmt(a * a)})`;
+        document.getElementById('pointB').textContent = `(${fmt(-b)}, ${fmt(b * b)})`;
+        if (degenerate) {
+            document.getElementById('slopeVal').textContent = '정의 안 됨';
+            document.getElementById('interceptVal').textContent = '—';
+        } else {
+            document.getElementById('slopeVal').textContent = fmt(a - b);
+            document.getElementById('interceptVal').textContent = `(0, ${fmt(a * b)})`;
+        }
+        document.getElementById('productVal').textContent = `${fmt(a)} × ${fmt(b)} = ${fmt(a * b)}`;
+        renderSteps(a, b);
+    }
+
+    // ---- 드래그 상호작용 ----
+    let dragging = null; // 'A' | 'B' | null
+    function pickPoint(mx, my, w, h) {
+        const { a, b } = getAB();
+        const [ax, ay] = worldToScreen(a, a * a, w, h);
+        const [bx, by] = worldToScreen(-b, b * b, w, h);
+        const dA = Math.hypot(mx - ax, my - ay);
+        const dB = Math.hypot(mx - bx, my - by);
+        if (dA < 16 && dA <= dB) return 'A';
+        if (dB < 16) return 'B';
+        return null;
+    }
+    function canvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        return [cx * (canvas.width / rect.width), cy * (canvas.height / rect.height)];
+    }
+    canvas.addEventListener('mousedown', (e) => {
+        const [mx, my] = canvasPos(e);
+        dragging = pickPoint(mx, my, canvas.width, canvas.height);
+        if (dragging) canvas.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const [mx] = canvasPos(e);
+        let wx = screenToWorldX(mx, canvas.width);
+        wx = Math.max(-10, Math.min(10, Math.round(wx * 2) / 2));
+        if (dragging === 'A') { aSlider.value = wx; if (sqrtMode.checked) bSlider.value = wx; }
+        else { bSlider.value = -wx; if (sqrtMode.checked) aSlider.value = -wx; }
+        drawScene();
+    });
+    window.addEventListener('mouseup', () => { dragging = null; canvas.style.cursor = 'grab'; });
+
+    aSlider.addEventListener('input', drawScene);
+    bSlider.addEventListener('input', drawScene);
+    sqrtMode.addEventListener('change', () => { if (sqrtMode.checked) { bSlider.value = aSlider.value; bSlider.disabled = true; } else { bSlider.disabled = false; } drawScene(); });
+
+    // ---- 단계별 유도 (현재 a,b 값을 대입해서 실시간으로 갱신) ----
+    function renderSteps(a, b) {
+        const wrap = document.getElementById('stepsWrap');
+        const fa = fmt(a), fb = fmt(b);
+        const steps = [
+            {
+                tag: '1단계 · 두 점 설정',
+                html: `포물선 위에 점 A(a, a²)와 점 B(−b, b²)를 잡습니다. 지금 값으로는 A(${fa}, ${fmt(a*a)}), B(${fmt(-b)}, ${fmt(b*b)}) 입니다.`
+            },
+            {
+                tag: '2단계 · 기울기 구하기',
+                html: `기울기 = (a² − b²) / (a − (−b)) = (a² − b²) / (a + b). 분자를 합차공식으로 인수분해하면 (a+b)(a−b) / (a+b) = <b>a − b</b>. 지금 값: (${fa} − ${fb}) = ${fmt(a-b)}.`
+            },
+            {
+                tag: '3단계 · 직선의 방정식',
+                html: `기울기 (a−b)이고 점 A(a, a²)를 지나는 직선: y − a² = (a−b)(x−a). 전개하면 y = (a−b)x − a² + ab + a² = (a−b)x + ab.`
+            },
+            {
+                tag: '4단계 · y절편(x=0) 확인',
+                html: `x = 0을 대입하면 y = ${fa}×0을 대입한 것과 같으므로 y = a×b. 지금 값: y = ${fa} × ${fb} = <b>${fmt(a*b)}</b>. 이것이 바로 실이 y축과 만나는 지점입니다!`
+            },
+        ];
+        wrap.innerHTML = steps.map((s, i) => `
+            <div>
+                <button class="reveal-btn" data-step="${i}">👉 ${s.tag} 보기</button>
+                <div class="reveal-content" id="stepContent${i}"><div class="step"><span class="tag">${s.tag}</span><br>${s.html}</div></div>
+            </div>
+        `).join('');
+        wrap.querySelectorAll('button[data-step]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('stepContent' + btn.dataset.step).classList.toggle('shown');
+            });
+        });
+    }
+
+    // ---- 힌트 토글 (더 탐구해보기 섹션) ----
+    document.querySelectorAll('.hint-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById(btn.dataset.target).classList.toggle('shown');
+        });
+    });
+
+    drawScene();
+</script>
+</body>
+</html>
