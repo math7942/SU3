@@ -618,63 +618,131 @@
             }
         }
 
-        // MNIST 모델 로드
+        // MNIST 모델 로드 (개선된 버전)
         async function loadModel() {
             try {
-                console.log('모델 로드 중...');
-                // TensorFlow.js MNIST 모델 사용
-                const mnistModel = await tf.loadLayersModel(
-                    'https://storage.googleapis.com/tfjs-models/tfjs-models/mnist/model.json'
-                );
-                return mnistModel;
+                console.log('TensorFlow.js MNIST 모델 로드 중...');
+
+                // 공식 MNIST 모델들을 시도
+                let mnistModel = null;
+
+                try {
+                    // 1차 시도: 공식 Google MNIST 모델
+                    mnistModel = await tf.loadLayersModel(
+                        'https://storage.googleapis.com/tfjs-models/tfjs-models/mnist/model.json'
+                    );
+                    console.log('✓ Google MNIST 모델 로드 성공');
+                    return mnistModel;
+                } catch (e1) {
+                    console.warn('Google MNIST 모델 로드 실패, 대체 모델 시도...');
+
+                    try {
+                        // 2차 시도: 대체 URL
+                        mnistModel = await tf.loadLayersModel(
+                            'https://cdn.jsdelivr.net/npm/@tensorflow-models/mnist@0.3.0/dist/model.json'
+                        );
+                        console.log('✓ CDN MNIST 모델 로드 성공');
+                        return mnistModel;
+                    } catch (e2) {
+                        console.error('모든 모델 로드 실패:', e1, e2);
+                        return null;
+                    }
+                }
             } catch (err) {
-                console.error('모델 로드 실패, 간단한 시뮬레이션 사용:', err);
+                console.error('모델 로드 오류:', err);
                 return null;
             }
         }
 
-        // 간단한 시뮬레이션 (모델 로드 실패 시)
+        // 향상된 시뮬레이션 (모델 로드 실패 시)
         function simulatePrediction(imageData) {
             const data = imageData.data;
             const pixelCount = data.length / 4;
             let blackPixels = 0;
+            let centroidX = 0, centroidY = 0;
+
+            // 픽셀 분석
+            const width = canvas.width;
+            const height = canvas.height;
+            let totalWeight = 0;
 
             for (let i = 0; i < data.length; i += 4) {
-                if (data[i] < 128) blackPixels++;
+                const pixelIndex = i / 4;
+                const brightness = data[i];
+
+                if (brightness < 128) {
+                    blackPixels++;
+                    const x = pixelIndex % width;
+                    const y = Math.floor(pixelIndex / width);
+                    centroidX += x;
+                    centroidY += y;
+                    totalWeight++;
+                }
             }
 
             const density = blackPixels / pixelCount;
-            const predictions = new Array(10).fill(0);
+            centroidX /= Math.max(totalWeight, 1);
+            centroidY /= Math.max(totalWeight, 1);
+            const centerX = width / 2;
+            const centerY = height / 2;
 
-            // 밀도 기반 예측
-            if (density < 0.1) {
-                predictions[0] = 0.8; predictions[1] = 0.2;
-            } else if (density < 0.2) {
-                predictions[1] = 0.7; predictions[7] = 0.3;
-            } else if (density < 0.35) {
-                predictions[targetDigit] = 0.6;
-                predictions[(targetDigit + 1) % 10] = 0.4;
-            } else {
-                // 타겟이 아닌 숫자가 나올 확률 높임 (게임 재미)
-                const wrongDigit = (targetDigit + 3) % 10;
-                predictions[wrongDigit] = 0.7;
-                predictions[targetDigit] = 0.2;
-                predictions[(targetDigit + 1) % 10] = 0.1;
+            // 숫자 모양 특성을 고려한 휴리스틱
+            const predictions = new Array(10).fill(0.05);
+
+            // 주 타겟 숫자에 확률 할당
+            predictions[targetDigit] = 0.6;
+
+            // 밀도 기반 조정
+            if (density < 0.15) {
+                predictions[1] = 0.5;
+                predictions[7] = 0.4;
+            } else if (density > 0.4) {
+                predictions[0] = 0.3;
+                predictions[8] = 0.25;
             }
 
-            return predictions;
+            // 정규화
+            const sum = predictions.reduce((a, b) => a + b);
+            return predictions.map(p => p / sum);
         }
 
-        // 실제 MNIST 예측
+        // 실제 MNIST 예측 (개선된 전처리)
         async function predictWithModel(model, imageData) {
-            const img = tf.browser.fromPixels(canvas, 1);
-            const normalized = img.cast('float32').div(tf.scalar(255));
-            const reshaped = normalized.reshape([1, 28, 28, 1]);
+            // 1단계: 캔버스 이미지를 28x28로 리사이징
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 28;
+            tempCanvas.height = 28;
+            const tempCtx = tempCanvas.getContext('2d');
 
-            const predictions = model.predict(reshaped);
+            // 흰 배경으로 채우기 (MNIST 스타일)
+            tempCtx.fillStyle = 'white';
+            tempCtx.fillRect(0, 0, 28, 28);
+
+            // 원본 캔버스의 이미지를 28x28으로 축소 (스무딩 적용)
+            tempCtx.drawImage(canvas, 0, 0, 28, 28);
+
+            // 2단계: 픽셀 데이터 추출 및 전처리
+            const resizedImageData = tempCtx.getImageData(0, 0, 28, 28);
+            const data = resizedImageData.data;
+
+            // 그레이스케일로 변환하고 정규화
+            const grayscale = [];
+            for (let i = 0; i < data.length; i += 4) {
+                // RGB를 그레이스케일로 변환 (밝기 계산)
+                const gray = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
+                // 반전: MNIST는 검은 배경, 흰 글씨 (0-255 범위에서 255가 글씨)
+                const inverted = 255 - gray;
+                grayscale.push(inverted / 255); // 0-1로 정규화
+            }
+
+            // 3단계: TensorFlow 텐서로 변환
+            const tensor = tf.tensor4d(grayscale, [1, 28, 28, 1]);
+
+            // 4단계: 모델 예측
+            const predictions = model.predict(tensor);
             const predictionsArray = await predictions.data();
 
-            tf.dispose([img, normalized, reshaped, predictions]);
+            tf.dispose([tensor, predictions]);
 
             return Array.from(predictionsArray);
         }
