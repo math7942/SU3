@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOLO 객체 탐지 체험하기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f8fafc;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #4f46e5; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    .title-row { display: flex; justify-content: center; align-items: center; gap: 14px; position: relative; }
+    h1 { font-size: 1.5rem; margin: 0; text-align: center; }
+    .help-btn {
+        position: absolute; right: 0;
+        background: #4338ca; color: white; border: none;
+        border-radius: 8px; padding: 8px 16px; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+        font-family: inherit;
+    }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .help-detail {
+        display: none;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        border-radius: 10px;
+        padding: 14px 18px;
+        font-size: 0.82rem;
+        color: #3730a3;
+        line-height: 1.6;
+    }
+    .help-detail.shown { display: block; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .intro-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #1e3a8a; }
+    .intro-box p { margin: 0; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box b { color: #1e3a8a; }
+
+    .btn-row { display: flex; gap: 10px; justify-content: center; }
+    .btn {
+        border: none; border-radius: 8px; padding: 11px 20px; font-weight: 700;
+        font-size: 0.88rem; cursor: pointer; color: white; font-family: inherit;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn-upload { background: #2563eb; }
+    .btn-webcam { background: #db2777; }
+    .btn-stop { background: #64748b; }
+    input[type="file"] { display: none; }
+
+    .threshold-row { margin-top: 18px; }
+    .threshold-label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    .threshold-badge { background: #2563eb; color: white; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; }
+    #thresholdSlider { width: 100%; }
+    .threshold-note { font-size: 0.78rem; color: #64748b; margin-top: 8px; line-height: 1.6; }
+    .threshold-note b { color: #1e293b; }
+
+    .preview-wrap {
+        position: relative;
+        margin-top: 18px;
+        min-height: 240px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+    .preview-placeholder { color: #94a3b8; font-size: 0.9rem; text-align: center; }
+    #detectCanvas { max-width: 100%; display: none; }
+    #videoEl { display: none; }
+
+    .status-line { text-align: center; font-size: 0.82rem; color: #64748b; margin-top: 10px; font-weight: 700; }
+    .status-line.ready { color: #16a34a; }
+    .status-line.error { color: #dc2626; }
+
+    .stats-row { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+    .stat-box {
+        flex: 1 1 140px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+    }
+    .stat-box .v { font-size: 1.4rem; font-weight: 900; color: #1e3a8a; }
+    .stat-box .k { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+
+    .detail-list { margin-top: 14px; }
+    .detail-list h4 { font-size: 0.88rem; margin: 0 0 8px; color: #334155; }
+    .detail-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 12px; border-radius: 8px; background: #f8fafc; margin-bottom: 6px; font-size: 0.85rem;
+    }
+    .detail-item .swatch { width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; display: inline-block; }
+    .detail-empty { color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 10px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #4338ca; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <div class="title-row">
+        <h1>YOLO 객체 탐지 체험하기</h1>
+        <button class="help-btn" id="btnHelp">❓ 도움말</button>
+    </div>
+    <p class="subtitle">실시간 객체 탐지 기술을 직접 체험해보세요!</p>
+
+    <div class="help-detail" id="helpDetail">
+        이 도구는 실제 YOLO 대신, 브라우저에서 안정적으로 불러올 수 있는 TensorFlow.js 공식 사전학습 모델인 <b>COCO-SSD</b>를 사용합니다. YOLO처럼 이미지를 한 번만 훑어 물체의 위치와 종류를 동시에 예측하는 "1단계(single-shot) 탐지" 방식이라는 점은 같습니다. 총 80가지 사물(사람, 자동차, 자전거, 동물 등)을 인식할 수 있습니다.
+    </div>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>YOLO란 무엇인가요?</h3>
+            <p>YOLO (You Only Look Once)는 이미지를 격자로 나누고, 각 셀에서 객체의 위치와 종류를 <b>한 번에</b> 예측하는 혁신적인 객체 탐지 기술입니다. 기존 방법들과 달리 이미지를 여러 번 스캔할 필요가 없어 실시간 처리가 가능합니다!</p>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px;">
+            <button class="btn btn-upload" id="btnUpload">📷 이미지 업로드</button>
+            <button class="btn btn-webcam" id="btnWebcam">📹 웹캠 시작</button>
+            <button class="btn btn-stop" id="btnStop" style="display:none;">⏹ 중지</button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="threshold-row">
+            <div class="threshold-label">
+                <span>🎯 탐지 신뢰도 임계값</span>
+                <span class="threshold-badge" id="thresholdBadge">25%</span>
+            </div>
+            <input type="range" id="thresholdSlider" min="1" max="90" value="25">
+            <p class="threshold-note"><b>신뢰도(Confidence)</b>란 AI가 "이것이 특정 객체다"라고 확신하는 정도입니다. 값을 낮추면 더 많은 객체를 탐지하지만 오탐지가 늘고, 높이면 확실한 것만 표시하지만 놓치는 객체가 생깁니다.</p>
+        </div>
+
+        <div class="preview-wrap" id="previewWrap">
+            <p class="preview-placeholder" id="previewPlaceholder">이미지를 업로드하거나<br>웹캠을 시작해보세요!</p>
+            <canvas id="detectCanvas"></canvas>
+            <video id="videoEl" autoplay playsinline muted></video>
+        </div>
+        <p class="status-line" id="statusLine">모델을 불러오는 중...</p>
+
+        <div class="stats-row">
+            <div class="stat-box"><div class="v" id="statTotal">0</div><div class="k">총 탐지된 객체</div></div>
+            <div class="stat-box"><div class="v" id="statClasses">0</div><div class="k">서로 다른 클래스</div></div>
+            <div class="stat-box"><div class="v" id="statAvg">0%</div><div class="k">평균 정확도</div></div>
+        </div>
+
+        <div class="detail-list">
+            <h4>상세 탐지 목록</h4>
+            <div id="detailList"><p class="detail-empty">이미지를 업로드하거나 웹캠을 시작해주세요.</p></div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="ai-upscaler.html">← AI 기반 이미지 업스케일러로</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+    const statusLine = document.getElementById('statusLine');
+    const detectCanvas = document.getElementById('detectCanvas');
+    const ctx = detectCanvas.getContext('2d');
+    const videoEl = document.getElementById('videoEl');
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+    const thresholdBadge = document.getElementById('thresholdBadge');
+
+    let model = null;
+    let webcamStream = null;
+    let webcamLoopId = null;
+    let lastImageEl = null;
+
+    const CLASS_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+    function colorForClass(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+        return CLASS_COLORS[hash % CLASS_COLORS.length];
+    }
+
+    async function loadModel() {
+        if (typeof tf === 'undefined' || typeof cocoSsd === 'undefined') {
+            statusLine.textContent = '네트워크 문제로 AI 모델 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하거나 잠시 후 다시 시도해 주세요.';
+            statusLine.className = 'status-line error';
+            return;
+        }
+        try {
+            model = await cocoSsd.load();
+            statusLine.textContent = '✓ 모델 로드 완료! 이미지를 업로드하거나 웹캠을 시작해 보세요.';
+            statusLine.className = 'status-line ready';
+        } catch (err) {
+            statusLine.textContent = '모델 다운로드에 실패했습니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    }
+    loadModel();
+
+    thresholdSlider.addEventListener('input', () => {
+        thresholdBadge.textContent = thresholdSlider.value + '%';
+        if (lastImageEl) runDetection(lastImageEl);
+    });
+
+    document.getElementById('btnHelp').addEventListener('click', () => {
+        document.getElementById('helpDetail').classList.toggle('shown');
+    });
+
+    document.getElementById('btnUpload').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) loadImageFile(e.target.files[0]);
+    });
+
+    function loadImageFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        stopWebcam();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => { lastImageEl = img; showImageOnCanvas(img); runDetection(img); };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function showImageOnCanvas(imgOrVideo) {
+        const naturalW = imgOrVideo.naturalWidth || imgOrVideo.videoWidth;
+        const naturalH = imgOrVideo.naturalHeight || imgOrVideo.videoHeight;
+        const maxDim = 480;
+        const scale = Math.min(1, maxDim / naturalW, maxDim / naturalH);
+        detectCanvas.width = Math.round(naturalW * scale);
+        detectCanvas.height = Math.round(naturalH * scale);
+        ctx.drawImage(imgOrVideo, 0, 0, detectCanvas.width, detectCanvas.height);
+        detectCanvas.style.display = 'block';
+        previewPlaceholder.style.display = 'none';
+    }
+
+    function drawBoxes(predictions) {
+        predictions.forEach(p => {
+            const [x, y, w, h] = p.bbox;
+            const color = colorForClass(p.class);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, h);
+            const label = `${p.class} ${(p.score * 100).toFixed(0)}%`;
+            ctx.font = 'bold 13px sans-serif';
+            const textW = ctx.measureText(label).width;
+            ctx.fillStyle = color;
+            ctx.fillRect(x, Math.max(0, y - 18), textW + 8, 18);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(label, x + 4, Math.max(12, y - 5));
+        });
+    }
+
+    function renderResults(predictions) {
+        document.getElementById('statTotal').textContent = predictions.length;
+        const uniqueClasses = new Set(predictions.map(p => p.class));
+        document.getElementById('statClasses').textContent = uniqueClasses.size;
+        const avg = predictions.length ? predictions.reduce((s, p) => s + p.score, 0) / predictions.length * 100 : 0;
+        document.getElementById('statAvg').textContent = avg.toFixed(0) + '%';
+
+        const list = document.getElementById('detailList');
+        if (predictions.length === 0) {
+            list.innerHTML = '<p class="detail-empty">탐지된 객체가 없습니다. 신뢰도 임계값을 낮춰 보세요.</p>';
+            return;
+        }
+        list.innerHTML = predictions.map(p =>
+            `<div class="detail-item"><span><span class="swatch" style="background:${colorForClass(p.class)}"></span>${p.class}</span><span>${(p.score * 100).toFixed(1)}%</span></div>`
+        ).join('');
+    }
+
+    async function runDetection(source) {
+        if (!model) { statusLine.textContent = '모델이 아직 로드되지 않았습니다.'; return; }
+        showImageOnCanvas(source);
+        const minScore = parseInt(thresholdSlider.value) / 100;
+        const predictions = (await model.detect(detectCanvas, 20)).filter(p => p.score >= minScore);
+        drawBoxes(predictions);
+        renderResults(predictions);
+    }
+
+    document.getElementById('btnWebcam').addEventListener('click', async () => {
+        if (!model) { statusLine.textContent = '모델이 아직 로드되지 않았습니다.'; return; }
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoEl.srcObject = webcamStream;
+            await videoEl.play();
+            previewPlaceholder.style.display = 'none';
+            detectCanvas.style.display = 'block';
+            document.getElementById('btnStop').style.display = 'inline-block';
+            webcamLoop();
+        } catch (err) {
+            statusLine.textContent = '웹캠에 접근할 수 없습니다: ' + err.message;
+            statusLine.className = 'status-line error';
+        }
+    });
+
+    async function webcamLoop() {
+        if (!webcamStream) return;
+        showImageOnCanvas(videoEl);
+        const minScore = parseInt(thresholdSlider.value) / 100;
+        const predictions = (await model.detect(detectCanvas, 20)).filter(p => p.score >= minScore);
+        drawBoxes(predictions);
+        renderResults(predictions);
+        webcamLoopId = requestAnimationFrame(webcamLoop);
+    }
+
+    function stopWebcam() {
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(t => t.stop());
+            webcamStream = null;
+        }
+        if (webcamLoopId) { cancelAnimationFrame(webcamLoopId); webcamLoopId = null; }
+        document.getElementById('btnStop').style.display = 'none';
+    }
+    document.getElementById('btnStop').addEventListener('click', stopWebcam);
+</script>
+</body>
+</html>
