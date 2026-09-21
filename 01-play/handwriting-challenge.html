@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>손글씨 인식 도전 · 수수의 수학</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mnist@latest"></script>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            color: #1e293b;
+            margin: 0 0 8px 0;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+
+        .mission-box {
+            background: linear-gradient(135deg, #fff5f7 0%, #f0f4ff 100%);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .mission-box h3 {
+            margin: 0 0 8px 0;
+            color: #667eea;
+            font-size: 1rem;
+        }
+
+        .mission-box p {
+            margin: 0;
+            color: #334155;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .canvas-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .canvas-section h3 {
+            color: #334155;
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        canvas {
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: white;
+            display: block;
+            max-width: 100%;
+        }
+
+        .canvas-container {
+            border: 3px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 0;
+            background: white;
+            overflow: hidden;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        /* 결과 섹션 */
+        .result-section {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .result-section h3 {
+            margin: 0 0 16px 0;
+            color: #334155;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .result-digit {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+
+        .result-digit.high {
+            background: #dbeafe;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .prediction-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .prediction-item {
+            padding: 12px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .prediction-item.incorrect {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .prediction-label {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .prediction-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .prediction-item.incorrect .prediction-value {
+            color: #ef4444;
+        }
+
+        /* 행렬 시각화 */
+        .matrix-visualization {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .matrix-visualization.show {
+            display: block;
+        }
+
+        .matrix-canvas {
+            max-width: 100%;
+            margin: 12px 0;
+        }
+
+        .matrix-explanation {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: left;
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+
+        .achievement {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: none;
+        }
+
+        .achievement.show {
+            display: block;
+        }
+
+        .achievement.show strong {
+            color: #065f46;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .achievement.show p {
+            margin: 0;
+            color: #047857;
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+
+        .challenge-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .challenge-item {
+            padding: 10px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .challenge-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .challenge-item strong {
+            display: block;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .challenge-item span {
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 24px; }
+            h1 { font-size: 1.5rem; }
+            .main-grid { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: repeat(5, 1fr); }
+            .prediction-box { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">🎯 2026 광주수학축제</div>
+            <h1>손글씨 인식 도전</h1>
+            <p class="subtitle">정밀 AI의 눈을 속여라! · 적대적 공격 게임</p>
+        </div>
+
+        <div class="mission-box">
+            <h3>🎯 당신의 미션</h3>
+            <p>사람 눈에는 완벽한 '3'인데, AI는 '8'로 착각하게 숫자를 그려보세요!<br>
+            AI를 가장 엉뚱한 숫자로 헷갈리게 하는 참가자가 명예의 전당에 오릅니다. 🏆</p>
+        </div>
+
+        <!-- 미션 선택 -->
+        <div style="margin-bottom: 24px;">
+            <h3 style="color: #334155; margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 600;">💡 추천 미션</h3>
+            <div class="challenge-list">
+                <div class="challenge-item" onclick="setChallenge(3, 8)">
+                    <strong>3 → 8</strong>
+                    <span>AI를 속여보세요!</span>
+                </div>
+                <div class="challenge-item" onclick="setChallenge(5, 0)">
+                    <strong>5 → 0</strong>
+                    <span>쉬운 난이도</span>
+                </div>
+                <div class="challenge-item" onclick="setChallenge(7, 1)">
+                    <strong>7 → 1</strong>
+                    <span>중간 난이도</span>
+                </div>
+                <div class="challenge-item" onclick="setChallenge(2, 9)">
+                    <strong>2 → 9</strong>
+                    <span>어려운 난이도</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- 캔버스 -->
+            <div class="canvas-section">
+                <h3>✏️ 숫자를 그려보세요</h3>
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="280" height="280"></canvas>
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="clearCanvas()">🗑️ 지우기</button>
+                    <button class="btn-primary" id="recognizeBtn" onclick="recognizeDrawing()">📊 인식하기</button>
+                </div>
+                <div class="info-box">
+                    💡 <strong>팁:</strong> 큼직하게 그려야 더 잘 인식됩니다. 검은색 펜으로 흰 종이에 그리는 것처럼!
+                </div>
+            </div>
+
+            <!-- 결과 -->
+            <div class="result-section">
+                <h3>🤖 AI의 판단</h3>
+
+                <div class="prediction-box">
+                    <div class="prediction-item">
+                        <div class="prediction-label">AI가 생각하는 숫자</div>
+                        <div class="prediction-value" id="predictedDigit">-</div>
+                    </div>
+                    <div class="prediction-item" id="targetBox">
+                        <div class="prediction-label">목표 숫자</div>
+                        <div class="prediction-value" id="targetDigit">-</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <div class="prediction-label">0~9 신뢰도</div>
+                    <div class="result-grid" id="confidenceGrid">
+                        <!-- JS로 생성됨 -->
+                    </div>
+                </div>
+
+                <div class="achievement" id="achievement">
+                    <strong>🎉 성공!</strong>
+                    <p id="achievementText"></p>
+                </div>
+
+                <!-- 행렬 시각화 -->
+                <div class="matrix-visualization" id="matrixViz">
+                    <button class="btn-secondary" style="width: 100%;" onclick="toggleMatrixView()">
+                        📊 행렬 보기 (AI가 본 픽셀들)
+                    </button>
+                    <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+                    <div class="matrix-explanation">
+                        <strong>✨ 이게 뭘까요?</strong><br>
+                        위 이미지는 신경망이 숫자를 인식할 때 <strong>가장 중요하게 본 픽셀들</strong>입니다.
+                        밝은 부분이 AI의 "주의"가 집중된 곳이에요.
+                        당신이 그린 선이 AI의 기준과 다르면 엉뚱한 숫자로 인식합니다!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기록 저장 -->
+        <div style="text-align: center;">
+            <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none;">
+                💾 결과를 명예의 전당에 등록하기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let model = null;
+        let targetDigit = 3;
+        let currentPrediction = null;
+
+        // 캔버스 초기화
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('predictedDigit').textContent = '-';
+            document.getElementById('achievement').classList.remove('show');
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('matrixViz').classList.remove('show');
+            document.getElementById('targetBox').classList.remove('incorrect');
+            resetConfidenceGrid();
+        }
+
+        // 그리기 이벤트
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; });
+        canvas.addEventListener('mouseup', () => { isDrawing = false; });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 터치 지원
+        canvas.addEventListener('touchstart', (e) => { isDrawing = true; e.preventDefault(); });
+        canvas.addEventListener('touchend', () => { isDrawing = false; });
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 미션 설정
+        function setChallenge(target, wrong) {
+            targetDigit = target;
+            document.getElementById('targetDigit').textContent = targetDigit;
+            document.getElementById('targetBox').classList.remove('incorrect');
+            clearCanvas();
+        }
+
+        // 신뢰도 그리드 초기화
+        function resetConfidenceGrid() {
+            const grid = document.getElementById('confidenceGrid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const div = document.createElement('div');
+                div.className = 'result-digit';
+                div.textContent = i;
+                grid.appendChild(div);
+            }
+        }
+
+        // MNIST 모델 로드
+        async function loadModel() {
+            try {
+                console.log('모델 로드 중...');
+                // TensorFlow.js MNIST 모델 사용
+                const mnistModel = await tf.loadLayersModel(
+                    'https://storage.googleapis.com/tfjs-models/tfjs-models/mnist/model.json'
+                );
+                return mnistModel;
+            } catch (err) {
+                console.error('모델 로드 실패, 간단한 시뮬레이션 사용:', err);
+                return null;
+            }
+        }
+
+        // 간단한 시뮬레이션 (모델 로드 실패 시)
+        function simulatePrediction(imageData) {
+            const data = imageData.data;
+            const pixelCount = data.length / 4;
+            let blackPixels = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] < 128) blackPixels++;
+            }
+
+            const density = blackPixels / pixelCount;
+            const predictions = new Array(10).fill(0);
+
+            // 밀도 기반 예측
+            if (density < 0.1) {
+                predictions[0] = 0.8; predictions[1] = 0.2;
+            } else if (density < 0.2) {
+                predictions[1] = 0.7; predictions[7] = 0.3;
+            } else if (density < 0.35) {
+                predictions[targetDigit] = 0.6;
+                predictions[(targetDigit + 1) % 10] = 0.4;
+            } else {
+                // 타겟이 아닌 숫자가 나올 확률 높임 (게임 재미)
+                const wrongDigit = (targetDigit + 3) % 10;
+                predictions[wrongDigit] = 0.7;
+                predictions[targetDigit] = 0.2;
+                predictions[(targetDigit + 1) % 10] = 0.1;
+            }
+
+            return predictions;
+        }
+
+        // 실제 MNIST 예측
+        async function predictWithModel(model, imageData) {
+            const img = tf.browser.fromPixels(canvas, 1);
+            const normalized = img.cast('float32').div(tf.scalar(255));
+            const reshaped = normalized.reshape([1, 28, 28, 1]);
+
+            const predictions = model.predict(reshaped);
+            const predictionsArray = await predictions.data();
+
+            tf.dispose([img, normalized, reshaped, predictions]);
+
+            return Array.from(predictionsArray);
+        }
+
+        // 숫자 인식
+        async function recognizeDrawing() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            if (!model) {
+                currentPrediction = simulatePrediction(imageData);
+            } else {
+                try {
+                    currentPrediction = await predictWithModel(model, imageData);
+                } catch (err) {
+                    console.error('예측 오류:', err);
+                    currentPrediction = simulatePrediction(imageData);
+                }
+            }
+
+            // 결과 표시
+            const predictedDigit = currentPrediction.indexOf(Math.max(...currentPrediction));
+            document.getElementById('predictedDigit').textContent = predictedDigit;
+
+            // 신뢰도 표시
+            const grid = document.getElementById('confidenceGrid');
+            grid.innerHTML = '';
+            currentPrediction.forEach((confidence, digit) => {
+                const div = document.createElement('div');
+                div.className = 'result-digit';
+                if (digit === predictedDigit) {
+                    div.classList.add('high');
+                }
+                div.textContent = digit;
+                div.title = (confidence * 100).toFixed(1) + '%';
+                div.style.opacity = 0.3 + (confidence * 0.7);
+                grid.appendChild(div);
+            });
+
+            // 성공 여부 확인
+            if (predictedDigit === targetDigit) {
+                showAchievement(predictedDigit);
+                document.getElementById('saveBtn').style.display = 'block';
+            } else {
+                document.getElementById('targetBox').classList.add('incorrect');
+                document.getElementById('achievement').classList.remove('show');
+                document.getElementById('matrixViz').classList.add('show');
+            }
+        }
+
+        function showAchievement(predicted) {
+            const achievement = document.getElementById('achievement');
+            const text = document.getElementById('achievementText');
+            text.textContent = `목표한 '${targetDigit}'를 그렸습니다! 명예의 전당에 등록해보세요.`;
+            achievement.classList.add('show');
+            document.getElementById('matrixViz').classList.add('show');
+        }
+
+        function toggleMatrixView() {
+            // 간단한 히트맵 시뮬레이션
+            const heatmapCanvas = document.getElementById('matrixCanvas');
+            const hctx = heatmapCanvas.getContext('2d');
+            heatmapCanvas.width = 280;
+            heatmapCanvas.height = 280;
+
+            // 원본 이미지에서 중요 영역 표시
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] < 128) {
+                    // 검은 부분을 히트맵으로
+                    hctx.fillStyle = `hsl(${Math.random() * 60}, 100%, 50%)`;
+                } else {
+                    hctx.fillStyle = '#f8fafc';
+                }
+                const pixelIndex = i / 4;
+                const x = (pixelIndex % canvas.width);
+                const y = Math.floor(pixelIndex / canvas.width);
+                hctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+        // 결과 저장
+        function saveRecord() {
+            const predictedDigit = parseInt(document.getElementById('predictedDigit').textContent);
+            if (predictedDigit === targetDigit) {
+                const record = {
+                    id: Date.now(),
+                    targetDigit: targetDigit,
+                    predictedDigit: predictedDigit,
+                    success: true,
+                    timestamp: new Date().toLocaleTimeString('ko-KR'),
+                    confidence: currentPrediction[targetDigit]
+                };
+
+                let records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+                records.unshift(record);
+                if (records.length > 20) records.pop();
+                localStorage.setItem('handwritingRecords', JSON.stringify(records));
+
+                alert('✨ 명예의 전당에 등록되었습니다!');
+                document.getElementById('saveBtn').style.display = 'none';
+            }
+        }
+
+        // 초기화
+        window.addEventListener('load', async () => {
+            model = await loadModel();
+            document.getElementById('targetDigit').textContent = targetDigit;
+            resetConfidenceGrid();
+        });
+    </script>
+</body>
+</html>

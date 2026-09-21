@@ -465,6 +465,9 @@
                 <button class="btn-primary" id="downloadBtn" onclick="downloadResult()" disabled>
                     💾 결과 다운로드
                 </button>
+                <button class="btn-secondary" id="saveHallBtn" onclick="saveToHallOfFame()" style="display: none;">
+                    🏆 명예의 전당 등록
+                </button>
                 <button class="btn-secondary" onclick="resetAll()">🔄 초기화</button>
             </div>
         </div>
@@ -625,6 +628,7 @@
 
             ctx.globalAlpha = 1;
             document.getElementById('downloadBtn').disabled = false;
+            document.getElementById('saveHallBtn').style.display = 'block';
         }
 
         // 결과 다운로드
@@ -634,6 +638,26 @@
             link.href = canvas.toDataURL('image/png');
             link.download = '행렬연금술_' + new Date().getTime() + '.png';
             link.click();
+        }
+
+        // 명예의 전당에 등록
+        function saveToHallOfFame() {
+            const alpha = parseInt(document.getElementById('alphaSlider').value);
+            const record = {
+                id: Date.now(),
+                alpha: alpha,
+                beta: 100 - alpha,
+                timestamp: new Date().toLocaleTimeString('ko-KR'),
+                description: `${alpha}% : ${100 - alpha}% 블렌딩`
+            };
+
+            let records = JSON.parse(localStorage.getItem('blendRecords')) || [];
+            records.unshift(record);
+            if (records.length > 20) records.pop();
+            localStorage.setItem('blendRecords', JSON.stringify(records));
+
+            alert('✨ 명예의 전당에 등록되었습니다!');
+            document.getElementById('saveHallBtn').style.display = 'none';
         }
 
         // 초기화
