@@ -665,20 +665,16 @@
                 ctx.arc(60, 60, 30, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 무지개 (위쪽 절반, 화면 안에 완전히 포함)
+                // 무지개 (완전히 화면에 포함)
                 const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
 
                 for (let i = 0; i < colors.length; i++) {
                     ctx.strokeStyle = colors[i];
-                    ctx.lineWidth = 22;
+                    ctx.lineWidth = 20;
                     ctx.beginPath();
-                    ctx.arc(200, 200, 120 - i * 16, 0, Math.PI, false);
+                    ctx.arc(200, 145, 95 - i * 13, 0.3, Math.PI - 0.3, false);
                     ctx.stroke();
                 }
-
-                // 무지개 하단 흰색 밴드
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(0, 200, 400, 30);
             }
 
             const image = new Image();
