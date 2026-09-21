@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>손글씨 인식 도전 · 수수의 수학</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mnist@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.20.0/tf.min.js"></script>
     <style>
         * { box-sizing: border-box; }
 
@@ -618,40 +617,39 @@
             }
         }
 
-        // MNIST 모델 로드 (개선된 버전)
+        // 안정적인 10-Digit MNIST 모델 주소들 (방화벽 대비용 3개)
+        const modelUrls = [
+            'https://raw.githubusercontent.com/bensonruan/MNIST-Digit-Recognition/master/models/model.json',
+            'https://cdn.jsdelivr.net/gh/bensonruan/MNIST-Digit-Recognition@master/models/model.json',
+            'https://raw.githubusercontent.com/tsu-nera/tfjs-mnist-study/master/model/model.json'
+        ];
+
         async function loadModel() {
-            try {
-                console.log('TensorFlow.js MNIST 모델 로드 중...');
-
-                // 공식 MNIST 모델들을 시도
-                let mnistModel = null;
-
-                try {
-                    // 1차 시도: 공식 Google MNIST 모델
-                    mnistModel = await tf.loadLayersModel(
-                        'https://storage.googleapis.com/tfjs-models/tfjs-models/mnist/model.json'
-                    );
-                    console.log('✓ Google MNIST 모델 로드 성공');
-                    return mnistModel;
-                } catch (e1) {
-                    console.warn('Google MNIST 모델 로드 실패, 대체 모델 시도...');
-
-                    try {
-                        // 2차 시도: 대체 URL
-                        mnistModel = await tf.loadLayersModel(
-                            'https://cdn.jsdelivr.net/npm/@tensorflow-models/mnist@0.3.0/dist/model.json'
-                        );
-                        console.log('✓ CDN MNIST 모델 로드 성공');
-                        return mnistModel;
-                    } catch (e2) {
-                        console.error('모든 모델 로드 실패:', e1, e2);
-                        return null;
-                    }
-                }
-            } catch (err) {
-                console.error('모델 로드 오류:', err);
+            if (typeof tf === 'undefined') {
+                console.error('TensorFlow.js 라이브러리가 로드되지 않았습니다.');
                 return null;
             }
+
+            let lastError = "";
+            for (let url of modelUrls) {
+                try {
+                    let mnistModel = await tf.loadLayersModel(url);
+
+                    tf.tidy(() => {
+                        try { mnistModel.predict(tf.zeros([1, 28, 28, 1])); }
+                        catch(e) { mnistModel.predict(tf.zeros([1, 784])); }
+                    });
+
+                    console.log('✓ 정밀 CNN 모델 탑재 완료!');
+                    return mnistModel;
+                } catch (error) {
+                    lastError = error.message;
+                    console.warn(`모델 로드 실패 (${url}):`, error);
+                }
+            }
+
+            console.error('모든 모델 로드 실패:', lastError);
+            return null;
         }
 
         // 향상된 시뮬레이션 (모델 로드 실패 시)
@@ -781,20 +779,17 @@
             const probabilities = tf.tidy(() => {
                 let img = tf.browser.fromPixels(processedCanvas, 1).toFloat();
                 img = tf.scalar(255.0).sub(img).div(tf.scalar(255.0));
-                
+
                 let pred;
                 try {
                     pred = model.predict(img.expandDims(0));
                 } catch (e) {
                     pred = model.predict(img.reshape([1, 784]));
                 }
-                return pred;
+                return pred.dataSync();
             });
 
-            const result = await probabilities.data();
-            const resultArray = Array.from(result);
-            tf.dispose(probabilities);
-            return resultArray;
+            return Array.from(probabilities);
         }
 
 
