@@ -279,34 +279,105 @@
     function drawRest(parts, x, midY) {
         parts.push(`<path d="M ${x - 2} ${midY - 7} q 5 3 0 7 q -5 3 0 7" stroke="#94a3b8" stroke-width="1.3" fill="none" stroke-linecap="round"/>`);
     }
-    function renderClef(parts, entries, yFn, staffTop, staffBottom, startX, stepX) {
-        entries.forEach((entry, i) => {
-            const x = startX + i * stepX;
-            if (typeof entry[0] === 'number') { drawRest(parts, x, (staffTop + staffBottom) / 2); return; }
-            const pitches = Array.isArray(entry[0]) ? entry[0] : [entry[0]];
-            const ys = pitches.map(yFn);
-            pitches.forEach((p, idx) => {
-                drawLedgers(parts, x, ys[idx], staffTop, staffBottom);
-                parts.push(`<ellipse cx="${x}" cy="${ys[idx]}" rx="3.2" ry="2.5" fill="#5b21b6"/>`);
-                if (p.includes('#')) parts.push(`<text x="${x - 9}" y="${ys[idx] + 3}" font-size="7" fill="#5b21b6">♯</text>`);
-            });
-            const stemUp = (ys.reduce((a, b) => a + b, 0) / ys.length) > (staffTop + staffBottom) / 2;
-            const sx = x + (stemUp ? 3 : -3);
-            const sy1 = stemUp ? Math.min(...ys) : Math.max(...ys);
-            const sy2 = stemUp ? sy1 - 16 : sy1 + 16;
-            parts.push(`<line x1="${sx}" y1="${sy1}" x2="${sx}" y2="${sy2}" stroke="#5b21b6" stroke-width="1"/>`);
+    const STEM_LEN = 16;
+    const CLEF_FONTS = "'Noto Music','Segoe UI Symbol','Apple Symbols',serif";
+    function drawFlags(parts, sx, sy2, stemUp, count) {
+        for (let k = 0; k < count; k++) {
+            const y0 = sy2 + (stemUp ? k * 3.5 : -k * 3.5);
+            const y1 = y0 + (stemUp ? 6 : -6);
+            const cx = sx + 4.5;
+            const cy = y0 + (stemUp ? 3 : -3);
+            parts.push(`<path d="M ${sx} ${y0} Q ${cx} ${cy} ${sx + 3.5} ${y1}" stroke="#5b21b6" stroke-width="1.2" fill="none" stroke-linecap="round"/>`);
+        }
+    }
+    function renderNoteGroup(parts, group, midY) {
+        // group: consecutive non-rest note/chord items sharing one beam (or a single note)
+        // 오선의 가운데 줄에서 가장 멀리 떨어진 음표가 대(stem) 방향을 결정 (표준 기보법 규칙)
+        let allYs = [];
+        group.forEach(it => allYs.push(...it.ys));
+        const aboveDist = midY - Math.min(...allYs);
+        const belowDist = Math.max(...allYs) - midY;
+        const stemUp = belowDist >= aboveDist;
+
+        if (group.length === 1) {
+            const it = group[0];
+            const sx = it.x + (stemUp ? 3 : -3);
+            const sy1 = stemUp ? Math.min(...it.ys) : Math.max(...it.ys);
+            const sy2 = stemUp ? sy1 - STEM_LEN : sy1 + STEM_LEN;
+            if (it.duration !== 4) {
+                parts.push(`<line x1="${sx}" y1="${sy1}" x2="${sx}" y2="${sy2}" stroke="#5b21b6" stroke-width="1"/>`);
+                drawFlags(parts, sx, sy2, stemUp, it.duration === 16 ? 2 : 1);
+            } else {
+                parts.push(`<line x1="${sx}" y1="${sy1}" x2="${sx}" y2="${sy2}" stroke="#5b21b6" stroke-width="1"/>`);
+            }
+            return;
+        }
+
+        const stemXs = group.map(it => it.x + (stemUp ? 3 : -3));
+        const stemTips = group.map(it => stemUp ? Math.min(...it.ys) : Math.max(...it.ys));
+        const beamY = stemUp ? Math.min(...stemTips) - STEM_LEN : Math.max(...stemTips) + STEM_LEN;
+        group.forEach((it, idx) => {
+            parts.push(`<line x1="${stemXs[idx]}" y1="${stemTips[idx]}" x2="${stemXs[idx]}" y2="${beamY}" stroke="#5b21b6" stroke-width="1"/>`);
         });
+        parts.push(`<line x1="${stemXs[0]}" y1="${beamY}" x2="${stemXs[stemXs.length - 1]}" y2="${beamY}" stroke="#5b21b6" stroke-width="2.2"/>`);
+        // secondary (16분음표) beam under consecutive 16th runs
+        const secondY = beamY + (stemUp ? 3 : -3);
+        let k = 0;
+        while (k < group.length) {
+            if (group[k].duration === 16) {
+                let m = k;
+                while (m + 1 < group.length && group[m + 1].duration === 16) m++;
+                if (m > k) {
+                    parts.push(`<line x1="${stemXs[k]}" y1="${secondY}" x2="${stemXs[m]}" y2="${secondY}" stroke="#5b21b6" stroke-width="2.2"/>`);
+                } else {
+                    const neighbor = k > 0 ? stemXs[k - 1] : stemXs[k + 1];
+                    const stubX = stemXs[k] + (neighbor - stemXs[k]) * 0.4;
+                    parts.push(`<line x1="${stemXs[k]}" y1="${secondY}" x2="${stubX}" y2="${secondY}" stroke="#5b21b6" stroke-width="2.2"/>`);
+                }
+                k = m + 1;
+            } else k++;
+        }
+    }
+    function renderClef(parts, entries, yFn, staffTop, staffBottom, startX, stepX) {
+        const midY = (staffTop + staffBottom) / 2;
+        const items = entries.map((entry, i) => {
+            const x = startX + i * stepX;
+            if (typeof entry[0] === 'number') return { x, rest: true };
+            const pitches = Array.isArray(entry[0]) ? entry[0] : [entry[0]];
+            return { x, rest: false, pitches, ys: pitches.map(yFn), duration: entry[1] };
+        });
+        // noteheads / accidentals / rests
+        items.forEach(it => {
+            if (it.rest) { drawRest(parts, it.x, midY); return; }
+            it.pitches.forEach((p, idx) => {
+                drawLedgers(parts, it.x, it.ys[idx], staffTop, staffBottom);
+                parts.push(`<ellipse cx="${it.x}" cy="${it.ys[idx]}" rx="3.2" ry="2.5" fill="#5b21b6"/>`);
+                if (p.includes('#')) parts.push(`<text x="${it.x - 9}" y="${it.ys[idx] + 3}" font-size="7" fill="#5b21b6">♯</text>`);
+            });
+        });
+        // stems/beams/flags: only consecutive 8분음표/16분음표 beam together; 4분음표는 항상 혼자
+        let i = 0;
+        while (i < items.length) {
+            if (items[i].rest) { i++; continue; }
+            if (items[i].duration === 4) { renderNoteGroup(parts, [items[i]], midY); i++; continue; }
+            let j = i;
+            while (j + 1 < items.length && !items[j + 1].rest && items[j + 1].duration !== 4) j++;
+            renderNoteGroup(parts, items.slice(i, j + 1), midY);
+            i = j + 1;
+        }
     }
     function renderMiniStaffSVG(measureData) {
-        const w = 64, h = 132;
+        const w = 76, h = 132;
         const treble = (measureData && measureData.treble) || [];
         const bass = (measureData && measureData.bass) || [];
         const n = Math.max(treble.length, bass.length, 1);
-        const stepX = (w - 14) / Math.max(1, n - 1);
-        const startX = 7;
+        const startX = 17;
+        const stepX = (w - startX - 7) / Math.max(1, n - 1);
         const parts = [];
         for (let i = 0; i < 5; i++) parts.push(`<line x1="2" y1="${i * 8 + TREBLE_TOP}" x2="${w - 2}" y2="${i * 8 + TREBLE_TOP}" stroke="#94a3b8" stroke-width="0.7"/>`);
         for (let i = 0; i < 5; i++) parts.push(`<line x1="2" y1="${i * 8 + BASS_TOP}" x2="${w - 2}" y2="${i * 8 + BASS_TOP}" stroke="#94a3b8" stroke-width="0.7"/>`);
+        parts.push(`<text x="3" y="${TREBLE_BOTTOM_Y - 3}" font-size="27" font-family="${CLEF_FONTS}" fill="#5b21b6">𝄞</text>`);
+        parts.push(`<text x="4" y="${BASS_TOP + 13}" font-size="15" font-family="${CLEF_FONTS}" fill="#5b21b6">𝄢</text>`);
         renderClef(parts, treble, trebleY, TREBLE_TOP, TREBLE_BOTTOM_Y, startX, stepX);
         renderClef(parts, bass, bassY, BASS_TOP, BASS_BOTTOM_Y, startX, stepX);
         return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${parts.join('')}</svg>`;
