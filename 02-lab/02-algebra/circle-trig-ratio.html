@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원에서 삼각비</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef2ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 940px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #4338ca; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #3730a3; }
+
+    .intro-box { background: #eef2ff; border: 2px solid #6366f1; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #3730a3; }
+    .intro-box p { margin: 0 0 6px; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #3730a3; }
+
+    .sim-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .sim-canvas-wrap { flex: 1 1 380px; min-width: 320px; display: flex; justify-content: center; }
+    #circleCanvas { display: block; touch-action: none; cursor: grab; max-width: 100%; height: auto; }
+    .sim-controls { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: 14px; }
+
+    .slider-row label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 4px; }
+    .slider-row .badge { background: #6366f1; color: white; padding: 1px 9px; border-radius: 999px; font-size: 0.8rem; }
+    .slider-row input[type="range"] { width: 100%; }
+
+    .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #475569; font-weight: 700; background: #e0e7ff; border-radius: 8px; padding: 8px 10px; }
+
+    .readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .readout-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; text-align: center; }
+    .readout-cell .k { font-size: 0.7rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.05rem; font-weight: 900; color: #1e293b; }
+    .result-cell { grid-column: 1 / -1; background: #e0e7ff; border: 2px solid #6366f1; }
+    .result-cell .v { color: #3730a3; font-size: 1.15rem; }
+
+    .reveal-btn {
+        background: #e0e7ff; color: #3730a3; border: 1px solid #6366f1; border-radius: 8px;
+        padding: 9px 16px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit;
+    }
+    .reveal-content { display: none; margin-top: 10px; padding: 14px 16px; background: #fafaf9; border-radius: 8px; border-left: 3px solid #6366f1; font-size: 0.85rem; line-height: 1.7; color: #334155; }
+    .reveal-content.shown { display: block; }
+    .step { margin-bottom: 10px; }
+    .step:last-child { margin-bottom: 0; }
+    .step .tag { font-weight: 700; color: #3730a3; }
+
+    .extend-list { display: flex; flex-direction: column; gap: 14px; }
+    .extend-item { border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; }
+    .extend-item h4 { margin: 0 0 6px; font-size: 0.88rem; color: #1e293b; }
+    .extend-item p { margin: 0; font-size: 0.82rem; color: #57534e; line-height: 1.6; }
+    .extend-item .hint-btn { margin-top: 8px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #4338ca; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 대수 실험실로 돌아가기</a>
+    <h1>원에서 삼각비</h1>
+    <p class="subtitle">원 위의 점을 움직이면, 가로·세로 화살표가 가리키는 값은 어떻게 변할까요?</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>🔵 원 위를 따라 손잡이를 움직여 보세요</h3>
+            <p>반지름이 1인 원 위에 점 P가 있습니다. 손잡이(또는 각도 슬라이더)를 움직여 P를 원을 따라 돌려 보세요.</p>
+            <p>가로 화살표와 세로 화살표가 각각 가리키는 눈금을 관찰하세요. <b>그 값은 각각 무엇을 나타낼까요?</b> 점 P의 좌표와 비교하며 규칙을 찾아보세요.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔬 시뮬레이션 — 직접 확인해 보기</h2>
+        <div class="sim-layout">
+            <div class="sim-canvas-wrap">
+                <canvas id="circleCanvas" width="460" height="460"></canvas>
+            </div>
+            <div class="sim-controls">
+                <div class="slider-row">
+                    <label>각도 <span>θ = <span class="badge" id="angleBadge">40°</span></span></label>
+                    <input type="range" id="angleSlider" min="0" max="360" step="1" value="40">
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="periodicMode">
+                    <label for="periodicMode" style="margin:0; cursor:pointer;">🔄 360˚ 넘게 돌리기 (주기성 탐구)</label>
+                </div>
+                <div class="readout-grid">
+                    <div class="readout-cell"><div class="k">점 P의 좌표</div><div class="v" id="pointVal">(0.77, 0.64)</div></div>
+                    <div class="readout-cell"><div class="k">반지름(빗변)</div><div class="v">1</div></div>
+                    <div class="readout-cell"><div class="k">가로 화살표 값</div><div class="v" id="hArrowVal">0.77</div></div>
+                    <div class="readout-cell"><div class="k">세로 화살표 값</div><div class="v" id="vArrowVal">0.64</div></div>
+                </div>
+                <div class="reveal-row" style="margin-top:4px;">
+                    <button class="reveal-btn" id="btnCheckAnswer">🔍 이 값이 무엇을 나타내는지 확인하기</button>
+                    <div class="reveal-content" id="answerReveal">
+                        <div class="readout-grid">
+                            <div class="readout-cell result-cell"><div class="k">cos θ (가로 화살표 값)</div><div class="v" id="cosVal">0.77</div></div>
+                            <div class="readout-cell result-cell"><div class="k">sin θ (세로 화살표 값)</div><div class="v" id="sinVal">0.64</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🤔 탐구하기 — 왜 가로 화살표가 cos θ, 세로 화살표가 sin θ일까?</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.6;">직접 손으로 생각해 보고, 아래 단계별 풀이를 하나씩 열어 확인해 보세요. 지금 슬라이더에 설정된 각도 값으로 실제 숫자를 대입해서 보여줍니다.</p>
+        <textarea style="width:100%; min-height:70px; border:1px solid #d6d3d1; border-radius:8px; padding:10px; font-family:inherit; font-size:0.85rem; resize:vertical;" placeholder="원 위의 점 P, 그 점에서 x축(0˚ 방향 반지름) 위에 내린 수선의 발 Q, 원의 중심 O로 만들어지는 직각삼각형을 생각하며 sin θ, cos θ의 정의를 적어보세요."></textarea>
+        <div id="stepsWrap" style="margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <div class="extend-list">
+            <div class="extend-item">
+                <h4>1. 특수각에서는 값이 어떻게 될까요?</h4>
+                <p>슬라이더를 0°, 30°, 45°, 60°, 90°로 맞춰보고, 가로·세로 화살표 값을 예상한 뒤 확인해 보세요.</p>
+                <button class="reveal-btn hint-btn" data-target="hintSpecial">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintSpecial">
+                    <p>0°에서는 P가 (1,0)이라 cos 0°=1, sin 0°=0. 90°에서는 P가 (0,1)이라 cos 90°=0, sin 90°=1. 45°에서는 대칭이라 cos 45°=sin 45°≈0.71(=√2/2)로 서로 같습니다.</p>
+                </div>
+            </div>
+            <div class="extend-item">
+                <h4>2. 90°를 넘어가면 화살표 값의 부호는 어떻게 될까요?</h4>
+                <p>슬라이더를 100°, 200°, 300°로 옮겨 보며 가로·세로 화살표가 눈금의 양(+)/음(−) 어느 쪽을 가리키는지 관찰해 보세요. 점 P가 원의 어느 부분(사분면)에 있는지와 관련이 있을까요?</p>
+                <button class="reveal-btn hint-btn" data-target="hintSign">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintSign">
+                    <p>P가 왼쪽 반원(90°~270°)에 있으면 x좌표가 음수이므로 cos θ &lt; 0이고, 아래쪽 반원(180°~360°)에 있으면 y좌표가 음수이므로 sin θ &lt; 0입니다. 예를 들어 200°는 왼쪽 아래(3사분면)라 cos θ, sin θ 모두 음수입니다.</p>
+                </div>
+            </div>
+            <div class="extend-item">
+                <h4>3. 360°를 넘어서 계속 돌리면 어떻게 될까요?</h4>
+                <p>"360˚ 넘게 돌리기"를 켜고 슬라이더를 끝까지 움직여 보세요. 예를 들어 θ=40°일 때와 θ=400°일 때 화살표 값을 비교해 보세요.</p>
+                <button class="reveal-btn hint-btn" data-target="hintPeriod">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintPeriod">
+                    <p>400° = 360° + 40°이므로 한 바퀴를 꽉 채우고 다시 40° 만큼 더 돈 것과 같아, 점 P는 40°일 때와 정확히 같은 자리로 돌아옵니다. 그래서 sin θ, cos θ의 값도 40°일 때와 똑같습니다. 이처럼 360°마다 값이 반복되는 성질을 <b>주기성</b>이라고 하고, 사인·코사인 함수를 <b>주기함수</b>라고 부릅니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 대수 실험실로 돌아가기</a>
+        <a href="../index.html">수학실험 전체 목록으로 →</a>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('circleCanvas');
+    const ctx = canvas.getContext('2d');
+    const angleSlider = document.getElementById('angleSlider');
+    const periodicMode = document.getElementById('periodicMode');
+    const angleBadge = document.getElementById('angleBadge');
+
+    const CX = 230, CY = 230;       // 캔버스 중심 픽셀
+    const R = 150;                  // 원의 반지름(픽셀) = 실세계 반지름 1
+    const RULER_GAP = 34;           // 원 테두리와 눈금자 사이 간격
+    const RULER_LEN = R;            // 눈금자 절반 길이(= -1~0 또는 0~1)
+
+    function fmt(n) {
+        const r = Math.round(n * 100) / 100;
+        return (Object.is(r, -0) ? 0 : r).toFixed(2);
+    }
+
+    function worldToPx(x, y) {
+        return [CX + x * R, CY - y * R];
+    }
+
+    function getAngleDeg() {
+        return parseFloat(angleSlider.value);
+    }
+
+    function drawRuler(orientation, side) {
+        // orientation: 'h' (가로, cos 눈금) | 'v' (세로, sin 눈금)
+        // side: 'top'|'bottom' for h, 'left'|'right' for v
+        ctx.strokeStyle = '#c7d2fe'; ctx.fillStyle = '#6366f1';
+        ctx.lineWidth = 1;
+        ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+        if (orientation === 'h') {
+            const y = side === 'top' ? CY - R - RULER_GAP : CY + R + RULER_GAP;
+            ctx.beginPath(); ctx.moveTo(CX - RULER_LEN, y); ctx.lineTo(CX + RULER_LEN, y); ctx.stroke();
+            for (let v = -1; v <= 1.001; v += 0.2) {
+                const x = CX + v * R;
+                ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x, y + 4); ctx.stroke();
+                ctx.fillStyle = '#4338ca';
+                ctx.fillText(fmt(v).replace(/\.00$/, ''), x, y + (side === 'top' ? -12 : 12));
+            }
+            ctx.fillStyle = '#3730a3'; ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('cos', CX - RULER_LEN - 16, y);
+        } else {
+            const x = side === 'left' ? CX - R - RULER_GAP : CX + R + RULER_GAP;
+            ctx.beginPath(); ctx.moveTo(x, CY - RULER_LEN); ctx.lineTo(x, CY + RULER_LEN); ctx.stroke();
+            ctx.textAlign = side === 'left' ? 'right' : 'left';
+            for (let v = -1; v <= 1.001; v += 0.2) {
+                const y = CY - v * R;
+                ctx.beginPath(); ctx.moveTo(x - 4, y); ctx.lineTo(x + 4, y); ctx.stroke();
+                ctx.fillStyle = '#4338ca';
+                ctx.fillText(fmt(v).replace(/\.00$/, ''), x + (side === 'left' ? -8 : 8), y);
+            }
+            ctx.fillStyle = '#3730a3'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('sin', x, CY - RULER_LEN - 14);
+        }
+    }
+
+    function drawArrow(orientation, side, value) {
+        ctx.fillStyle = '#f59e0b'; ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1;
+        if (orientation === 'h') {
+            const y = side === 'top' ? CY - R - RULER_GAP : CY + R + RULER_GAP;
+            const x = CX + value * R;
+            const dir = side === 'top' ? 1 : -1;
+            ctx.beginPath();
+            ctx.moveTo(x, y + dir * 9); ctx.lineTo(x - 5, y + dir * 1); ctx.lineTo(x + 5, y + dir * 1);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        } else {
+            const x = side === 'left' ? CX - R - RULER_GAP : CX + R + RULER_GAP;
+            const y = CY - value * R;
+            const dir = side === 'left' ? 1 : -1;
+            ctx.beginPath();
+            ctx.moveTo(x + dir * 9, y); ctx.lineTo(x + dir * 1, y - 5); ctx.lineTo(x + dir * 1, y + 5);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+    }
+
+    function drawScene() {
+        const deg = getAngleDeg();
+        const rad = deg * Math.PI / 180;
+        const x = Math.cos(rad), y = Math.sin(rad);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 눈금자 4개 (위/아래 = cos, 좌/우 = sin)
+        drawRuler('h', 'top'); drawRuler('h', 'bottom');
+        drawRuler('v', 'left'); drawRuler('v', 'right');
+
+        // 원
+        ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2);
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 2; ctx.stroke();
+
+        // 10도 간격 눈금, 30도 간격 숫자
+        ctx.font = '9px sans-serif'; ctx.fillStyle = '#94a3b8';
+        for (let d = 0; d < 360; d += 10) {
+            const r = d * Math.PI / 180;
+            const [tx1, ty1] = worldToPx(Math.cos(r) * 1.0, Math.sin(r) * 1.0);
+            const [tx2, ty2] = worldToPx(Math.cos(r) * 0.96, Math.sin(r) * 0.96);
+            ctx.beginPath(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
+            ctx.moveTo(tx1, ty1); ctx.lineTo(tx2, ty2); ctx.stroke();
+            if (d % 30 === 0) {
+                const [lx, ly] = worldToPx(Math.cos(r) * 1.14, Math.sin(r) * 1.14);
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(d + '°', lx, ly);
+            }
+        }
+
+        // 축
+        ctx.strokeStyle = '#d6d3d1'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(CX - R, CY); ctx.lineTo(CX + R, CY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(CX, CY - R); ctx.lineTo(CX, CY + R); ctx.stroke();
+
+        const [px, py] = worldToPx(x, y);
+        const [qx, qy] = worldToPx(x, 0);
+
+        // 각 θ 호
+        ctx.beginPath();
+        ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 2;
+        ctx.arc(CX, CY, 26, -rad, 0, rad > 0);
+        ctx.stroke();
+
+        // 직각삼각형: O - Q - P
+        ctx.beginPath();
+        ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+        ctx.moveTo(CX, CY); ctx.lineTo(qx, qy); ctx.lineTo(px, py);
+        ctx.stroke(); ctx.setLineDash([]);
+        // 직각 표시
+        if (Math.abs(x) > 0.02) {
+            const s = 7 * (x > 0 ? -1 : 1);
+            const t = y > 0 ? -1 : 1;
+            ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(qx + s, qy); ctx.lineTo(qx + s, qy + t * 7); ctx.lineTo(qx, qy + t * 7);
+            ctx.stroke();
+        }
+
+        // 반지름(빗변) OP
+        ctx.beginPath();
+        ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.5;
+        ctx.moveTo(CX, CY); ctx.lineTo(px, py);
+        ctx.stroke();
+
+        // 점 P, O, Q
+        function dot(px, py, color, r) { ctx.beginPath(); ctx.arc(px, py, r, 0, 7); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1; ctx.stroke(); }
+        dot(CX, CY, '#1e293b', 3);
+        dot(qx, qy, '#94a3b8', 3);
+        dot(px, py, '#dc2626', 7);
+        ctx.fillStyle = '#1e293b'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(`P(${fmt(x)}, ${fmt(y)})`, px + 10, py - 8);
+
+        // 화살표 표시자
+        drawArrow('h', 'top', x); drawArrow('h', 'bottom', x);
+        drawArrow('v', 'left', y); drawArrow('v', 'right', y);
+
+        updateReadouts(deg, x, y);
+    }
+
+    function updateReadouts(deg, x, y) {
+        angleBadge.textContent = Math.round(deg) + '°';
+        document.getElementById('pointVal').textContent = `(${fmt(x)}, ${fmt(y)})`;
+        document.getElementById('hArrowVal').textContent = fmt(x);
+        document.getElementById('vArrowVal').textContent = fmt(y);
+        document.getElementById('cosVal').textContent = fmt(x);
+        document.getElementById('sinVal').textContent = fmt(y);
+        renderSteps(deg, x, y);
+    }
+
+    // ---- 드래그 상호작용 ----
+    let dragging = false;
+    function canvasPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        return [cx * (canvas.width / rect.width), cy * (canvas.height / rect.height)];
+    }
+    function angleFromPos(mx, my) {
+        let deg = Math.atan2(-(my - CY), mx - CX) * 180 / Math.PI;
+        if (deg < 0) deg += 360;
+        return deg;
+    }
+    canvas.addEventListener('mousedown', (e) => { dragging = true; canvas.style.cursor = 'grabbing'; updateFromMouse(e); });
+    window.addEventListener('mousemove', (e) => { if (dragging) updateFromMouse(e); });
+    window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
+    function updateFromMouse(e) {
+        const [mx, my] = canvasPos(e);
+        let deg = Math.round(angleFromPos(mx, my));
+        if (periodicMode.checked) {
+            // 현재 슬라이더 값과 가장 가까운 등가 각도로 맞춰 연속적으로 돌 수 있게 함
+            const cur = parseFloat(angleSlider.value);
+            const base = Math.round((cur - deg) / 360) * 360;
+            deg = deg + base;
+        }
+        angleSlider.value = Math.max(parseFloat(angleSlider.min), Math.min(parseFloat(angleSlider.max), deg));
+        drawScene();
+    }
+
+    angleSlider.addEventListener('input', drawScene);
+    periodicMode.addEventListener('change', () => {
+        if (periodicMode.checked) {
+            angleSlider.min = -360; angleSlider.max = 720;
+        } else {
+            let v = ((parseFloat(angleSlider.value) % 360) + 360) % 360;
+            angleSlider.min = 0; angleSlider.max = 360;
+            angleSlider.value = v;
+        }
+        drawScene();
+    });
+
+    // ---- 단계별 유도 ----
+    function renderSteps(deg, x, y) {
+        const wrap = document.getElementById('stepsWrap');
+        const steps = [
+            {
+                tag: '1단계 · 직각삼각형 만들기',
+                html: `원 위의 점 P, P에서 x축(0° 방향 반지름)에 내린 수선의 발 Q, 원의 중심 O를 이으면 직각삼각형 OQP가 만들어집니다. 빗변 OP의 길이는 원의 반지름과 같으므로 <b>1</b>입니다.`
+            },
+            {
+                tag: '2단계 · 삼각비의 정의 떠올리기',
+                html: `직각삼각형에서 sin θ = (높이) / (빗변), cos θ = (밑변) / (빗변) 으로 정의합니다. 여기서 밑변 OQ의 길이는 P의 x좌표의 절댓값, 높이 QP의 길이는 P의 y좌표의 절댓값과 같습니다.`
+            },
+            {
+                tag: '3단계 · 반지름이 1이라는 점 활용하기',
+                html: `빗변의 길이가 1이므로, sin θ = (높이)/1 = 높이, cos θ = (밑변)/1 = 밑변이 되어 분수가 사라집니다. 즉 sin θ와 cos θ는 각각 P의 y좌표, x좌표와 정확히 같아집니다(부호까지 포함).`
+            },
+            {
+                tag: '4단계 · 지금 각도로 확인',
+                html: `θ = ${Math.round(deg)}°일 때 P(${fmt(x)}, ${fmt(y)})이므로, <b>cos ${Math.round(deg)}° = ${fmt(x)}</b>(가로 화살표 값), <b>sin ${Math.round(deg)}° = ${fmt(y)}</b>(세로 화살표 값)입니다.`
+            },
+        ];
+        wrap.innerHTML = steps.map((s, i) => `
+            <div>
+                <button class="reveal-btn" data-step="${i}">👉 ${s.tag} 보기</button>
+                <div class="reveal-content" id="stepContent${i}"><div class="step"><span class="tag">${s.tag}</span><br>${s.html}</div></div>
+            </div>
+        `).join('');
+        wrap.querySelectorAll('button[data-step]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('stepContent' + btn.dataset.step).classList.toggle('shown');
+            });
+        });
+    }
+
+    document.getElementById('btnCheckAnswer').addEventListener('click', () => {
+        document.getElementById('answerReveal').classList.toggle('shown');
+    });
+    document.querySelectorAll('.hint-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById(btn.dataset.target).classList.toggle('shown');
+        });
+    });
+
+    drawScene();
+</script>
+</body>
+</html>
