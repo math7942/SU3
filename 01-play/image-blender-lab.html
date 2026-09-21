@@ -535,30 +535,30 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                // 사자 (배경용 대형)
+                // 사자 (배경용 - 우측 하단)
                 ctx.fillStyle = '#fdb813';
                 ctx.beginPath();
-                ctx.arc(200, 200, 100, 0, Math.PI * 2);
+                ctx.arc(320, 220, 85, 0, Math.PI * 2);
                 ctx.fill();
 
                 // 갈기
                 ctx.fillStyle = '#f5a623';
                 for (let i = 0; i < 12; i++) {
                     const angle = (i / 12) * Math.PI * 2;
-                    const x = 200 + Math.cos(angle) * 100;
-                    const y = 200 + Math.sin(angle) * 100;
+                    const x = 320 + Math.cos(angle) * 85;
+                    const y = 220 + Math.sin(angle) * 85;
                     ctx.beginPath();
-                    ctx.arc(x, y, 25, 0, Math.PI * 2);
+                    ctx.arc(x, y, 22, 0, Math.PI * 2);
                     ctx.fill();
                 }
 
-                // 눈
-                ctx.fillStyle = '#000';
+                // 눈 (약간 흐릿하게)
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                 ctx.beginPath();
-                ctx.arc(180, 180, 12, 0, Math.PI * 2);
+                ctx.arc(305, 205, 10, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(220, 180, 12, 0, Math.PI * 2);
+                ctx.arc(335, 205, 10, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
                 // 해바라기 (배경용)
@@ -628,32 +628,45 @@
                 ctx.arc(360, 100, 6, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'meme') {
-                // 무지개 (배경용)
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-                const centerY = 200;
-
-                for (let i = 0; i < colors.length; i++) {
-                    ctx.strokeStyle = colors[i];
-                    ctx.lineWidth = 25;
-                    ctx.beginPath();
-                    ctx.arc(200, centerY + 50, 120 - i * 15, 0, Math.PI);
-                    ctx.stroke();
-                }
-
-                // 해
-                ctx.fillStyle = '#ffeb3b';
-                ctx.beginPath();
-                ctx.arc(80, 80, 40, 0, Math.PI * 2);
-                ctx.fill();
+                // 하늘 배경
+                ctx.fillStyle = '#87ceeb';
+                ctx.fillRect(0, 0, 400, 300);
 
                 // 구름
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(300, 90, 25, 0, Math.PI * 2);
+                ctx.arc(80, 60, 20, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(330, 90, 30, 0, Math.PI * 2);
+                ctx.arc(100, 70, 25, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.beginPath();
+                ctx.arc(310, 80, 18, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(330, 90, 22, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 해
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(60, 60, 30, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 무지개 (위쪽 절반, 화면 안에 완전히 포함)
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+
+                for (let i = 0; i < colors.length; i++) {
+                    ctx.strokeStyle = colors[i];
+                    ctx.lineWidth = 22;
+                    ctx.beginPath();
+                    ctx.arc(200, 200, 120 - i * 16, 0, Math.PI, false);
+                    ctx.stroke();
+                }
+
+                // 무지개 하단 흰색 밴드
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 200, 400, 30);
             }
 
             const image = new Image();
@@ -676,52 +689,81 @@
                 // 고양이 얼굴
                 ctx.fillStyle = '#ffa500';
                 ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
+                ctx.arc(200, 150, 65, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 귀
+                // 귀 (삼각형)
                 ctx.fillStyle = '#ff8c00';
                 ctx.beginPath();
-                ctx.moveTo(140, 95);
-                ctx.lineTo(130, 40);
-                ctx.lineTo(150, 80);
+                ctx.moveTo(145, 100);
+                ctx.lineTo(125, 50);
+                ctx.lineTo(155, 95);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.moveTo(260, 95);
-                ctx.lineTo(270, 40);
-                ctx.lineTo(250, 80);
+                ctx.moveTo(255, 100);
+                ctx.lineTo(275, 50);
+                ctx.lineTo(245, 95);
+                ctx.fill();
+
+                // 귀 안쪽
+                ctx.fillStyle = '#ffb347';
+                ctx.beginPath();
+                ctx.moveTo(145, 95);
+                ctx.lineTo(135, 65);
+                ctx.lineTo(150, 90);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(255, 95);
+                ctx.lineTo(265, 65);
+                ctx.lineTo(250, 90);
                 ctx.fill();
 
                 // 눈
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(170, 130, 15, 0, Math.PI * 2);
+                ctx.arc(170, 130, 14, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(230, 130, 15, 0, Math.PI * 2);
+                ctx.arc(230, 130, 14, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(170, 135, 8, 0, Math.PI * 2);
+                ctx.arc(170, 130, 8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(230, 135, 8, 0, Math.PI * 2);
+                ctx.arc(230, 130, 8, 0, Math.PI * 2);
                 ctx.fill();
 
                 // 코
                 ctx.fillStyle = '#ff69b4';
                 ctx.beginPath();
-                ctx.arc(200, 160, 6, 0, Math.PI * 2);
+                ctx.arc(200, 160, 7, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 입
+                // 입과 수염
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(200, 160);
                 ctx.lineTo(200, 175);
                 ctx.stroke();
+
+                // 수염
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1.5;
+                for (let i = -2; i <= 2; i++) {
+                    if (i !== 0) {
+                        ctx.beginPath();
+                        ctx.moveTo(200, 155 + i * 3);
+                        ctx.lineTo(160, 155 + i * 3);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(200, 155 + i * 3);
+                        ctx.lineTo(240, 155 + i * 3);
+                        ctx.stroke();
+                    }
+                }
             } else if (type === 'face') {
                 // 사람 얼굴
                 ctx.fillStyle = '#f4a460';
