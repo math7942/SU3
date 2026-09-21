@@ -391,7 +391,7 @@
                     <div class="preset-buttons">
                         <button class="preset-btn" onclick="loadSampleImage1('animal')">🦁 동물</button>
                         <button class="preset-btn" onclick="loadSampleImage1('face')">👤 얼굴</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">🎨 패턴</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">⭐ 별</button>
                         <button class="preset-btn" onclick="loadSampleImage1('meme')">😂 밈</button>
                     </div>
                     <div class="webcam-buttons">
@@ -419,7 +419,7 @@
                     <div class="preset-buttons">
                         <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 동물</button>
                         <button class="preset-btn" onclick="loadSampleImage('face')">👤 얼굴</button>
-                        <button class="preset-btn" onclick="loadSampleImage('pattern')">🎨 패턴</button>
+                        <button class="preset-btn" onclick="loadSampleImage('pattern')">🌙 달</button>
                         <button class="preset-btn" onclick="loadSampleImage('meme')">😂 밈</button>
                     </div>
                     <div class="hint-box">
@@ -583,23 +583,23 @@
                 ctx.arc(200, 160, 20, 0, Math.PI);
                 ctx.stroke();
             } else if (type === 'pattern') {
-                // 기하학 패턴
-                ctx.fillStyle = '#667eea';
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 10; j++) {
-                        if ((i + j) % 2 === 0) {
-                            ctx.fillRect(i * 40, j * 30, 40, 30);
-                        }
-                    }
-                }
+                // 달만 있는 밤 하늘
+                ctx.fillStyle = '#001a4d';
+                ctx.fillRect(0, 0, 400, 300);
 
-                // 원형 그라데이션
-                const gradient = ctx.createRadialGradient(200, 150, 10, 200, 150, 100);
-                gradient.addColorStop(0, 'rgba(255, 192, 203, 0.5)');
-                gradient.addColorStop(1, 'rgba(255, 20, 147, 0.8)');
-                ctx.fillStyle = gradient;
+                // 달
+                ctx.fillStyle = '#fffacd';
                 ctx.beginPath();
-                ctx.arc(200, 150, 100, 0, Math.PI * 2);
+                ctx.arc(350, 80, 40, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 달 크레이터
+                ctx.fillStyle = '#e0e0c0';
+                ctx.beginPath();
+                ctx.arc(330, 70, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(360, 100, 6, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'meme') {
                 // 하늘 배경
@@ -681,22 +681,20 @@
                 ctx.arc(200, 160, 20, 0, Math.PI);
                 ctx.stroke();
             } else if (type === 'pattern') {
-                ctx.fillStyle = '#667eea';
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 10; j++) {
-                        if ((i + j) % 2 === 0) {
-                            ctx.fillRect(i * 40, j * 30, 40, 30);
-                        }
-                    }
-                }
+                // 별과 달 (배경만)
+                ctx.fillStyle = '#001a4d';
+                ctx.fillRect(0, 0, 400, 300);
 
-                const gradient = ctx.createRadialGradient(200, 150, 10, 200, 150, 100);
-                gradient.addColorStop(0, 'rgba(255, 192, 203, 0.5)');
-                gradient.addColorStop(1, 'rgba(255, 20, 147, 0.8)');
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(200, 150, 100, 0, Math.PI * 2);
-                ctx.fill();
+                // 별들
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 50; i++) {
+                    const x = Math.random() * 400;
+                    const y = Math.random() * 300;
+                    const size = Math.random() * 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             } else if (type === 'meme') {
                 // 웃는 얼굴 (노란색, 왼쪽 상단)
                 ctx.fillStyle = '#ffeb3b';
