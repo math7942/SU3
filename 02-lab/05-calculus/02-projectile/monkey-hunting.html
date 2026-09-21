@@ -17,7 +17,7 @@
         flex-direction: column;
         align-items: center;
     }
-    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .container { width: 100%; max-width: 1180px; display: flex; flex-direction: column; gap: 16px; }
     .back-link { font-size: 0.85rem; color: #0369a1; text-decoration: none; font-weight: 700; }
     .back-link:hover { text-decoration: underline; }
 
@@ -33,23 +33,24 @@
     .intro-box p:last-child { margin-bottom: 0; }
     .intro-box b { color: #0369a1; }
 
-    .sim-layout { display: flex; gap: 20px; flex-wrap: wrap; }
-    .sim-canvas-wrap { flex: 1 1 380px; min-width: 280px; }
-    #sceneCanvas { display: block; margin: 0 auto; max-width: 100%; height: auto; border: 1px solid #e0f2fe; border-radius: 8px; background: linear-gradient(#e0f2fe, #f8fafc 70%); }
-    .result-banner { text-align: center; font-weight: 900; font-size: 1rem; min-height: 1.6em; margin-top: 8px; border-radius: 8px; padding: 6px; }
+    .sim-layout { display: flex; flex-direction: column; gap: 18px; }
+    .sim-canvas-wrap { width: 100%; }
+    #sceneCanvas { display: block; margin: 0 auto; width: 100%; max-width: 100%; height: auto; border: 1px solid #e0f2fe; border-radius: 8px; background: linear-gradient(#e0f2fe, #f8fafc 70%); }
+    .result-banner { text-align: center; font-weight: 900; font-size: 1.05rem; min-height: 1.6em; margin-top: 10px; border-radius: 8px; padding: 10px; }
     .result-banner.hit { background: #dcfce7; color: #15803d; }
     .result-banner.miss { background: #fee2e2; color: #b91c1c; }
-    .drop-readout { display: flex; justify-content: center; gap: 18px; font-size: 0.78rem; color: #475569; margin-top: 4px; min-height: 1.2em; }
+    .drop-readout { display: flex; justify-content: center; gap: 18px; font-size: 0.86rem; color: #475569; margin-top: 6px; min-height: 1.2em; }
     .drop-readout b { color: #0369a1; }
 
-    .sim-controls { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: 14px; }
+    .sim-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; align-items: end; }
+    .sim-controls .full { grid-column: 1 / -1; }
     .slider-row label { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 4px; }
     .slider-row .badge { background: #0ea5e9; color: white; padding: 1px 9px; border-radius: 999px; font-size: 0.8rem; }
     .slider-row input[type="range"] { width: 100%; }
 
     .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn {
-        border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; font-size: 0.85rem;
+        border: none; border-radius: 8px; padding: 12px 18px; font-weight: 700; font-size: 0.92rem;
         cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
     }
     .btn-fire { background: #0ea5e9; }
@@ -57,6 +58,7 @@
     .btn-reset { background: #64748b; }
 
     .toggle-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #475569; font-weight: 700; background: #e0f2fe; border-radius: 8px; padding: 8px 10px; }
+    @media (max-width: 640px) { .sim-controls { grid-template-columns: 1fr; } }
 
     .readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
     .readout-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; text-align: center; }
@@ -115,13 +117,13 @@
         <h2>🔬 시뮬레이션 — 직접 쏴 보기</h2>
         <div class="sim-layout">
             <div class="sim-canvas-wrap">
-                <canvas id="sceneCanvas" width="520" height="340"></canvas>
+                <canvas id="sceneCanvas" width="1040" height="480"></canvas>
                 <p class="result-banner" id="resultBanner"></p>
                 <p class="drop-readout" id="dropReadout"></p>
 
                 <div class="graph-wrap">
                     <h4>📈 낙하 거리 그래프 — 두 곡선이 겹쳐 보이나요?</h4>
-                    <canvas id="graphCanvas" width="480" height="170"></canvas>
+                    <canvas id="graphCanvas" width="1040" height="220"></canvas>
                     <div class="graph-legend">
                         <span><span class="legend-swatch monkey"></span>🐒 원숭이가 원래 자리에서 떨어진 거리</span>
                         <span><span class="legend-swatch bullet"></span>🔫 총알이 조준선보다 아래로 처진 거리</span>
@@ -137,19 +139,19 @@
                     <label>조준 각도 <span>θ = <span class="badge" id="angleBadge">35</span>°</span></label>
                     <input type="range" id="angleSlider" min="15" max="50" step="1" value="35">
                 </div>
-                <div class="toggle-row">
+                <div class="toggle-row full">
                     <input type="checkbox" id="overlayToggle" checked>
                     <label for="overlayToggle" style="margin:0; cursor:pointer;">📐 조준선 & 낙하 화살표 겹쳐 보기</label>
                 </div>
-                <div class="btn-row">
+                <div class="btn-row full">
                     <button class="btn btn-fire" id="btnFire">🔫 발사!</button>
                     <button class="btn btn-reset" id="btnReset">↺ 다시 조준</button>
                 </div>
-                <div class="readout-grid">
+                <div class="readout-grid full">
                     <div class="readout-cell"><div class="k">원숭이 높이 Y₀</div><div class="v" id="y0Val">?</div></div>
                     <div class="readout-cell"><div class="k">경과 시간 t</div><div class="v" id="tVal">0.00초</div></div>
                 </div>
-                <p style="font-size:0.78rem; color:#78716c; margin:2px 0 0; line-height:1.6;">원숭이는 총알이 발사되는 것과 <b>동시에</b> 낙하를 시작합니다. 나무까지의 거리는 항상 8m로 고정되어 있습니다.</p>
+                <p class="full" style="font-size:0.78rem; color:#78716c; margin:2px 0 0; line-height:1.6;">원숭이는 총알이 발사되는 것과 <b>동시에</b> 낙하를 시작합니다. 나무까지의 거리는 항상 8m로 고정되어 있습니다.</p>
             </div>
         </div>
     </div>
@@ -261,24 +263,24 @@
         const [, groundY] = worldToScreen(0, 0, w, h);
         ctx.fillStyle = '#dcfce7';
         ctx.fillRect(0, groundY, w, h - groundY);
-        ctx.strokeStyle = '#86efac'; ctx.lineWidth = 2;
+        ctx.strokeStyle = '#86efac'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(w, groundY); ctx.stroke();
         // 거리 눈금
-        ctx.font = '9px sans-serif'; ctx.fillStyle = '#78716c'; ctx.textAlign = 'center';
+        ctx.font = '17px sans-serif'; ctx.fillStyle = '#78716c'; ctx.textAlign = 'center';
         for (let xv = 0; xv <= 9; xv++) {
             const [px] = worldToScreen(xv, 0, w, h);
-            ctx.fillText(xv + 'm', px, groundY + 12);
+            ctx.fillText(xv + 'm', px, groundY + 22);
         }
     }
 
     function drawTreeAndMonkey(w, h, Y0, monkeyY) {
         const [tx, groundY] = worldToScreen(X0, 0, w, h);
         const [, topY] = worldToScreen(X0, Y0, w, h);
-        ctx.strokeStyle = '#92400e'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        ctx.strokeStyle = '#92400e'; ctx.lineWidth = 10; ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(tx, groundY); ctx.lineTo(tx, topY); ctx.stroke();
         const [, my] = worldToScreen(X0, monkeyY, w, h);
-        ctx.font = '22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🐒', tx, my - 4);
+        ctx.font = '42px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🐒', tx, my - 8);
     }
 
     function drawHunter(w, h, theta) {
@@ -289,20 +291,20 @@
         ctx.translate(hx, hy);
         ctx.rotate(-theta);
         ctx.fillStyle = '#334155';
-        ctx.fillRect(0, -4, 26, 8);
+        ctx.fillRect(0, -8, 52, 16);
         ctx.restore();
-        ctx.beginPath(); ctx.arc(hx, hy, 8, 0, 7);
+        ctx.beginPath(); ctx.arc(hx, hy, 16, 0, 7);
         ctx.fillStyle = '#1e293b'; ctx.fill();
-        ctx.font = '22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🧍', hx - 2, hy + 16);
+        ctx.font = '42px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('🧍', hx - 4, hy + 32);
     }
 
     function drawAimLine(w, h, theta, Y0) {
         const [x1, y1] = worldToScreen(0.15, 0.35, w, h);
         const [x2, y2] = worldToScreen(X0, Y0, w, h);
         ctx.save();
-        ctx.setLineDash([5, 4]);
-        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
+        ctx.setLineDash([10, 8]);
+        ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
         ctx.restore();
     }
@@ -312,15 +314,15 @@
         const [px, py1] = worldToScreen(x, yFrom, w, h);
         const [, py2] = worldToScreen(x, yTo, w, h);
         ctx.save();
-        ctx.strokeStyle = '#dc2626'; ctx.fillStyle = '#dc2626'; ctx.lineWidth = 1.6;
-        ctx.setLineDash([3, 2]);
+        ctx.strokeStyle = '#dc2626'; ctx.fillStyle = '#dc2626'; ctx.lineWidth = 3.2;
+        ctx.setLineDash([6, 4]);
         ctx.beginPath(); ctx.moveTo(px, py1); ctx.lineTo(px, py2); ctx.stroke();
         ctx.setLineDash([]);
         ctx.beginPath();
-        ctx.moveTo(px, py2); ctx.lineTo(px - 3, py2 - 6); ctx.lineTo(px + 3, py2 - 6); ctx.closePath();
+        ctx.moveTo(px, py2); ctx.lineTo(px - 6, py2 - 12); ctx.lineTo(px + 6, py2 - 12); ctx.closePath();
         ctx.fill();
-        ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText(label, px + 6, (py1 + py2) / 2);
+        ctx.font = 'bold 19px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(label, px + 12, (py1 + py2) / 2);
         ctx.restore();
     }
 
@@ -353,7 +355,7 @@
         ctx.fillStyle = '#0ea5e9';
         trail.forEach(p => {
             const [px, py] = worldToScreen(p.x, Math.max(p.y, -0.3), w, h);
-            ctx.beginPath(); ctx.arc(px, py, 3, 0, 7); ctx.fill();
+            ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill();
         });
 
         // 낙하 화살표 (조준선 대비 총알, 원래 자리 대비 원숭이)
@@ -364,7 +366,7 @@
         }
 
         const [bpx, bpy] = worldToScreen(bx, by, w, h);
-        ctx.beginPath(); ctx.arc(bpx, bpy, 5, 0, 7);
+        ctx.beginPath(); ctx.arc(bpx, bpy, 10, 0, 7);
         ctx.fillStyle = '#0369a1'; ctx.fill();
 
         drawHunter(w, h, theta);
@@ -381,26 +383,26 @@
     }
 
     function drawGraphAxes(w, h, padL, padB, padT, padR) {
-        gctx.strokeStyle = '#d6d3d1'; gctx.lineWidth = 1;
+        gctx.strokeStyle = '#d6d3d1'; gctx.lineWidth = 2;
         gctx.beginPath(); gctx.moveTo(padL, padT); gctx.lineTo(padL, h - padB); gctx.lineTo(w - padR, h - padB); gctx.stroke();
-        gctx.font = '9px sans-serif'; gctx.fillStyle = '#78716c'; gctx.textAlign = 'center';
-        gctx.fillText('시간 t (초)', (padL + w - padR) / 2, h - 6);
-        gctx.save(); gctx.translate(10, (padT + h - padB) / 2); gctx.rotate(-Math.PI / 2);
+        gctx.font = '16px sans-serif'; gctx.fillStyle = '#78716c'; gctx.textAlign = 'center';
+        gctx.fillText('시간 t (초)', (padL + w - padR) / 2, h - 8);
+        gctx.save(); gctx.translate(18, (padT + h - padB) / 2); gctx.rotate(-Math.PI / 2);
         gctx.fillText('낙하 거리 (m)', 0, 0); gctx.restore();
     }
 
     function drawGraphEmpty() {
         const w = graphCanvas.width, h = graphCanvas.height;
         gctx.clearRect(0, 0, w, h);
-        drawGraphAxes(w, h, 34, 22, 10, 10);
-        gctx.fillStyle = '#a8a29e'; gctx.font = '11px sans-serif'; gctx.textAlign = 'center';
-        gctx.fillText('발사하면 여기에 그래프가 그려집니다', (34 + w - 10) / 2, (10 + h - 22) / 2);
+        drawGraphAxes(w, h, 56, 36, 16, 16);
+        gctx.fillStyle = '#a8a29e'; gctx.font = '18px sans-serif'; gctx.textAlign = 'center';
+        gctx.fillText('발사하면 여기에 그래프가 그려집니다', (56 + w - 16) / 2, (16 + h - 36) / 2);
     }
 
     function drawGraph(tCurrent, tEnd) {
         const w = graphCanvas.width, h = graphCanvas.height;
         gctx.clearRect(0, 0, w, h);
-        const padL = 34, padB = 22, padT = 10, padR = 10;
+        const padL = 56, padB = 36, padT = 16, padR = 16;
         const maxDrop = 0.5 * G * tEnd * tEnd;
         function toXY(t) {
             const px = padL + (t / tEnd) * (w - padL - padR);
@@ -423,12 +425,12 @@
             gctx.stroke();
             gctx.setLineDash([]);
         }
-        curve('#f59e0b', null, 4);
-        curve('#0ea5e9', [4, 3], 2);
+        curve('#f59e0b', null, 7);
+        curve('#0ea5e9', [7, 5], 3.5);
 
         // 현재 지점 표시
         const [cx, cy] = toXY(tCurrent);
-        gctx.beginPath(); gctx.arc(cx, cy, 4, 0, 7); gctx.fillStyle = '#1e293b'; gctx.fill();
+        gctx.beginPath(); gctx.arc(cx, cy, 7, 0, 7); gctx.fillStyle = '#1e293b'; gctx.fill();
     }
 
     function resetSim() {
