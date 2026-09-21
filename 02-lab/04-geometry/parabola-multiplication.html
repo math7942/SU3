@@ -287,11 +287,11 @@
                 lastLabelPy = py;
             }
         });
-        // x축 눈금 (정수마다 이미 못으로 표시되므로 5 단위 레이블만)
-        ctx.textAlign = 'center';
-        for (let xv = -10; xv <= 10; xv += 5) {
+        // x축 눈금 — 정수마다 모두 표시
+        ctx.textAlign = 'center'; ctx.font = '8px sans-serif'; ctx.fillStyle = '#78716c';
+        for (let xv = -10; xv <= 10; xv++) {
             const [px] = worldToScreen(xv, 0, w, h);
-            ctx.fillText(xv, px, oy + 12);
+            ctx.fillText(xv, px, oy + 11);
         }
 
         // 포물선 y = x^2
