@@ -705,30 +705,34 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                // 밝은 해 ☀️
+                // 밝은 해 ☀️ (오른쪽 상단에 작게)
                 // 배경 (하늘색)
                 ctx.fillStyle = '#87ceeb';
                 ctx.fillRect(0, 0, 400, 300);
 
-                // 해 (태양)
-                const sunGradient = ctx.createRadialGradient(200, 150, 20, 200, 150, 70);
+                // 해 (태양) - 작은 크기, 오른쪽 상단
+                const sunX = 330;
+                const sunY = 70;
+                const sunRadius = 35;
+
+                const sunGradient = ctx.createRadialGradient(sunX, sunY, 10, sunX, sunY, sunRadius);
                 sunGradient.addColorStop(0, '#ffeb3b');
                 sunGradient.addColorStop(0.8, '#fdd835');
                 sunGradient.addColorStop(1, '#fb8c00');
                 ctx.fillStyle = sunGradient;
                 ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
+                ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 햇빛 광선
+                // 햇빛 광선 (작은 해에 맞게 조정)
                 ctx.strokeStyle = '#ffb300';
-                ctx.lineWidth = 6;
+                ctx.lineWidth = 4;
                 for (let i = 0; i < 8; i++) {
                     const angle = (i / 8) * Math.PI * 2;
-                    const x1 = 200 + Math.cos(angle) * 90;
-                    const y1 = 150 + Math.sin(angle) * 90;
-                    const x2 = 200 + Math.cos(angle) * 130;
-                    const y2 = 150 + Math.sin(angle) * 130;
+                    const x1 = sunX + Math.cos(angle) * 55;
+                    const y1 = sunY + Math.sin(angle) * 55;
+                    const x2 = sunX + Math.cos(angle) * 80;
+                    const y2 = sunY + Math.sin(angle) * 80;
                     ctx.beginPath();
                     ctx.moveTo(x1, y1);
                     ctx.lineTo(x2, y2);
@@ -738,13 +742,13 @@
                 // 해의 중심 하이라이트
                 ctx.fillStyle = '#ffeb3b';
                 ctx.beginPath();
-                ctx.arc(200, 150, 50, 0, Math.PI * 2);
+                ctx.arc(sunX, sunY, 25, 0, Math.PI * 2);
                 ctx.fill();
 
                 // 해의 윤기
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.beginPath();
-                ctx.arc(170, 115, 25, 0, Math.PI * 2);
+                ctx.arc(sunX - 15, sunY - 15, 12, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
                 // 오선지 배경
