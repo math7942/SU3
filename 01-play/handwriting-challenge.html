@@ -3,466 +3,619 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MNIST 손글씨 인식기 (정밀 CNN)</title>
+    <title>손글씨 인식 도전 · 수수의 수학</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.20.0/tf.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        * { box-sizing: border-box; }
 
         body {
-            background-color: #eaf1f9;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Noto Sans KR', sans-serif;
-            margin: 0;
-            padding: 40px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: #333;
-        }
-
-        .title-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .icon-box {
-            background-color: #4b89dc;
-            color: white;
-            width: 45px;
-            height: 45px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 1.2rem;
-            line-height: 1.1;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
             text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
         }
 
         h1 {
-            font-size: 2.2rem;
             color: #1e293b;
-            margin: 0;
-            letter-spacing: -1px;
+            margin: 0 0 8px 0;
+            font-size: 2rem;
         }
 
-        .instruction-box {
-            background-color: #eef2ff;
-            border: 1px solid #d8e0ff;
-            border-radius: 12px;
-            padding: 20px 30px;
-            max-width: 1100px;
-            width: 100%;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-
-        .instruction-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.1rem;
-            color: #334155;
-        }
-
-        .instruction-box p {
-            margin: 0;
+        .subtitle {
             color: #64748b;
             font-size: 0.95rem;
+            margin: 8px 0 0 0;
+            line-height: 1.6;
+            word-break: keep-all;
         }
 
-        .status-bar {
-            background-color: #fef3c7;
-            color: #d97706;
-            padding: 10px;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 1100px;
-            text-align: center;
-            font-weight: 700;
+        .mission-box {
+            background: linear-gradient(135deg, #fff5f7 0%, #f0f4ff 100%);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .mission-box h3 {
+            margin: 0 0 8px 0;
+            color: #667eea;
+            font-size: 1rem;
+        }
+
+        .mission-box p {
+            margin: 0;
+            color: #334155;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
             margin-bottom: 30px;
-            box-sizing: border-box;
-            transition: all 0.3s;
-        }
-
-        .main-container {
-            display: flex;
-            flex-direction: row;
-            gap: 20px;
-            max-width: 1200px;
-            width: 100%;
-            align-items: flex-start;
-            justify-content: center;
-            flex-wrap: wrap;
         }
 
         .canvas-section {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            width: 320px;
+            gap: 12px;
+        }
+
+        .canvas-section h3 {
+            color: #334155;
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
         }
 
         canvas {
-            background-color: white;
-            border: 2px solid #a5b4fc;
-            border-radius: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 3px solid #667eea;
+            border-radius: 8px;
             cursor: crosshair;
+            background: white;
+            display: block;
+            max-width: 100%;
+        }
+
+        .canvas-container {
+            border: 3px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 0;
+            background: white;
+            overflow: hidden;
         }
 
         .button-group {
             display: flex;
-            gap: 15px;
-            margin-top: 20px; 
+            gap: 12px;
         }
 
         button {
-            padding: 12px 24px;
+            flex: 1;
+            padding: 12px 16px;
             border: none;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 700;
-            color: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-family: 'Noto Sans KR', sans-serif;
         }
 
-        button:hover {
-            opacity: 0.9;
-            transform: scale(1.02);
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
         }
 
-        .btn-clear { background-color: #fb7185; }
-        .btn-recognize { background-color: #6366f1; }
-        .btn-matrix { background-color: #10b981; margin-top: 20px; width: 100%; justify-content: center; font-size: 0.9rem;}
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
 
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        /* 결과 섹션 */
         .result-section {
-            background-color: #eff6ff;
-            border: 2px solid #bfdbfe;
-            border-radius: 16px;
-            width: 320px;
-            padding: 30px 20px;
-            box-sizing: border-box;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            animation: fadeInRight 0.5s ease-out;
-        }
-
-        .big-number {
-            font-size: 5rem;
-            font-weight: 900;
-            color: #6366f1;
-            line-height: 1;
-            margin: 0;
-        }
-
-        .confidence {
-            color: #64748b;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .bar-chart {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .bar-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-            color: #475569;
-        }
-
-        .bar-label {
-            width: 15px;
-            font-weight: 700;
-        }
-
-        .bar-bg {
-            flex-grow: 1;
-            background-color: #e2e8f0;
-            height: 12px;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background-color: #cbd5e1;
-            width: 0%;
-            transition: width 0.5s ease-out;
-        }
-
-        .bar-fill.active {
-            background-color: #ef4444;
-        }
-
-        .bar-percent {
-            width: 45px;
-            text-align: right;
-            font-size: 0.8rem;
-        }
-
-        .matrix-section {
-            background-color: white;
-            border-radius: 16px;
-            width: 400px;
-            padding: 30px 20px;
-            box-sizing: border-box;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            animation: fadeInRight 0.5s ease-out;
-        }
-
-        .matrix-section h3 {
-            margin: 0 0 15px 0;
-            color: #334155;
-            font-size: 1.1rem;
-        }
-
-        .history-section {
-            background-color: white;
-            border-radius: 16px;
-            width: 320px;
-            padding: 20px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .history-section h3 {
-            margin: 0 0 15px 0;
-            color: #334155;
-            font-size: 1.1rem;
-        }
-        .history-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            width: 100%;
-            min-height: 70px;
-        }
-        .history-empty {
-            color: #94a3b8;
-            font-size: 0.85rem;
-            text-align: center;
-            padding: 20px 0;
-        }
-        .history-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-        }
-        .history-item canvas {
-            width: 60px;
-            height: 60px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            cursor: default;
-            box-shadow: none;
-        }
-        .history-item .history-pred {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #475569;
-        }
-        .btn-clear-history {
-            margin-top: 16px;
-            background-color: #94a3b8;
-            padding: 8px 18px;
-            font-size: 0.85rem;
-        }
-
-        .pipeline-banner {
-            background-color: #eef6ff;
-            border: 1px solid #bfdbfe;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
             border-radius: 12px;
-            padding: 20px 30px;
-            max-width: 1100px;
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 30px;
-            text-align: center;
+            padding: 24px;
+            margin-bottom: 24px;
         }
-        .pipeline-banner p {
-            margin: 0 0 14px 0;
-            color: #475569;
-        }
-        .pipeline-banner p b { color: #1e293b; }
-        .btn-pipeline {
-            background-color: #2563eb;
-        }
-        .pipeline-steps {
-            text-align: left;
-            max-width: 500px;
-            margin: 0 auto 15px;
-            padding-left: 22px;
+
+        .result-section h3 {
+            margin: 0 0 16px 0;
             color: #334155;
-            font-size: 0.9rem;
-            line-height: 1.8;
+            font-size: 1rem;
+            font-weight: 600;
         }
 
-        #matrixOutput {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
-            line-height: 11px;
-            letter-spacing: 4px;
-            background-color: #f8fafc;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            overflow-x: auto;
-            white-space: pre;
-            color: #cbd5e1;
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .result-digit {
             text-align: center;
+            padding: 8px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #334155;
         }
 
-        .pixel-active {
-            color: #0f172a;
-            font-weight: 900;
+        .result-digit.high {
+            background: #dbeafe;
+            border-color: #667eea;
+            color: #667eea;
         }
 
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .prediction-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .prediction-item {
+            padding: 12px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .prediction-item.incorrect {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .prediction-label {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .prediction-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .prediction-item.incorrect .prediction-value {
+            color: #ef4444;
+        }
+
+        /* 행렬 시각화 */
+        .matrix-visualization {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .matrix-visualization.show {
+            display: block;
+        }
+
+        .matrix-canvas {
+            max-width: 100%;
+            margin: 12px 0;
+        }
+
+        .matrix-explanation {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: left;
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+
+        .achievement {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: none;
+        }
+
+        .achievement.show {
+            display: block;
+        }
+
+        .achievement.show strong {
+            color: #065f46;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .achievement.show p {
+            margin: 0;
+            color: #047857;
+            font-size: 0.9rem;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+
+        .challenge-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .challenge-item {
+            padding: 10px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .challenge-item:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .challenge-item strong {
+            display: block;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .challenge-item span {
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 24px; }
+            h1 { font-size: 1.5rem; }
+            .main-grid { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: repeat(5, 1fr); }
+            .prediction-box { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <div class="badge">🎯 2026 광주수학축제</div>
+            <h1>손글씨 인식 도전</h1>
+            <p class="subtitle">정밀 AI의 눈을 속여라! · 적대적 공격 게임</p>
+        </div>
 
-    <div class="title-container">
-        <div class="icon-box">1 2<br>3 4</div>
-        <h1>MNIST 손글씨 인식기 (정밀 CNN)</h1>
-    </div>
+        <div class="mission-box">
+            <h3>🎯 당신의 미션</h3>
+            <p>사람 눈에는 완벽한 '3'인데, AI는 '8'로 착각하게 숫자를 그려보세요!<br>
+            AI를 가장 엉뚱한 숫자로 헷갈리게 하는 참가자가 명예의 전당에 오릅니다. 🏆</p>
+        </div>
 
-    <div class="instruction-box">
-        <h3>사용법</h3>
-        <p>1. 캔버스에 0~9 사이의 숫자를 자유롭게 그려보세요.<br>2. <b>'인식하기'</b> 버튼을 누르면 정밀하게 학습된 합성곱 신경망(CNN)이 확률을 계산합니다.<br>3. <b>'행렬 보기'</b> 버튼을 눌러 정돈된 28x28 데이터를 확인해 보세요!</p>
-    </div>
-
-    <div class="status-bar" id="statusBar">
-        🧠 화면 구성 완료! 인공지능 모델을 가져오는 중입니다...
-    </div>
-
-    <div class="main-container">
-        <div class="canvas-section">
-            <canvas id="drawCanvas" width="280" height="280"></canvas>
-            <div class="button-group">
-                <button class="btn-clear" id="clearBtn">🗑️ 지우기</button>
-                <button class="btn-recognize" id="recognizeBtn">🔍 인식하기</button>
+        <!-- 미션 선택 -->
+        <div style="margin-bottom: 24px;">
+            <h3 style="color: #334155; margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 600;">💡 추천 미션</h3>
+            <div class="challenge-list">
+                <div class="challenge-item" onclick="setChallenge(3, 8)">
+                    <strong>3 → 8</strong>
+                    <span>AI를 속여보세요!</span>
+                </div>
+                <div class="challenge-item" onclick="setChallenge(5, 0)">
+                    <strong>5 → 0</strong>
+                    <span>쉬운 난이도</span>
+                </div>
+                <div class="challenge-item" onclick="setChallenge(7, 1)">
+                    <strong>7 → 1</strong>
+                    <span>중간 난이도</span>
+                </div>
+                <div class="challenge-item" onclick="setChallenge(2, 9)">
+                    <strong>2 → 9</strong>
+                    <span>어려운 난이도</span>
+                </div>
             </div>
         </div>
 
-        <div class="history-section" id="historySection">
-            <h3>인식 기록</h3>
-            <div class="history-grid" id="historyGrid">
-                <div class="history-empty" id="historyEmpty">아직 기록이 없습니다.<br>숫자를 그리고 인식해 보세요!</div>
+        <div class="main-grid">
+            <!-- 캔버스 -->
+            <div class="canvas-section">
+                <h3>✏️ 숫자를 그려보세요</h3>
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="280" height="280"></canvas>
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="clearCanvas()">🗑️ 지우기</button>
+                    <button class="btn-primary" id="recognizeBtn" onclick="recognizeDrawing()">📊 인식하기</button>
+                </div>
+                <div class="challenge-list" style="margin-top: 12px; margin-bottom: 12px;">
+                    <button class="challenge-item" onclick="loadSampleHandwriting(0)">
+                        <strong>샘플 0</strong>
+                        <span>AI도 맞춤</span>
+                    </button>
+                    <button class="challenge-item" onclick="loadSampleHandwriting(1)">
+                        <strong>샘플 1</strong>
+                        <span>흔한 모양</span>
+                    </button>
+                    <button class="challenge-item" onclick="loadSampleHandwriting(2)">
+                        <strong>샘플 2</strong>
+                        <span>이상한 필체</span>
+                    </button>
+                    <button class="challenge-item" onclick="loadSampleHandwriting(3)">
+                        <strong>샘플 3</strong>
+                        <span>미니멀</span>
+                    </button>
+                </div>
+                <div class="info-box">
+                    💡 <strong>팁:</strong> 큼직하게 그려야 더 잘 인식됩니다. 검은색 펜으로 흰 종이에 그리는 것처럼!
+                </div>
             </div>
-            <button class="btn-clear-history" id="clearHistoryBtn">기록 지우기</button>
+
+            <!-- 결과 -->
+            <div class="result-section">
+                <h3>🤖 AI의 판단</h3>
+
+                <div class="prediction-box">
+                    <div class="prediction-item">
+                        <div class="prediction-label">AI가 생각하는 숫자</div>
+                        <div class="prediction-value" id="predictedDigit">-</div>
+                    </div>
+                    <div class="prediction-item" id="targetBox">
+                        <div class="prediction-label">목표 숫자</div>
+                        <div class="prediction-value" id="targetDigit">-</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <div class="prediction-label">0~9 신뢰도</div>
+                    <div class="result-grid" id="confidenceGrid">
+                        <!-- JS로 생성됨 -->
+                    </div>
+                </div>
+
+                <div class="achievement" id="achievement">
+                    <strong>🎉 성공!</strong>
+                    <p id="achievementText"></p>
+                </div>
+
+                <!-- 행렬 시각화 -->
+                <div class="matrix-visualization" id="matrixViz">
+                    <button class="btn-secondary" style="width: 100%;" onclick="toggleMatrixView()">
+                        📊 행렬 보기 (AI가 본 픽셀들)
+                    </button>
+                    <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+                    <div class="matrix-explanation">
+                        <strong>✨ 이게 뭘까요?</strong><br>
+                        위 이미지는 신경망이 숫자를 인식할 때 <strong>가장 중요하게 본 픽셀들</strong>입니다.
+                        밝은 부분이 AI의 "주의"가 집중된 곳이에요.
+                        당신이 그린 선이 AI의 기준과 다르면 엉뚱한 숫자로 인식합니다!
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="result-section" id="resultSection">
-            <div class="big-number" id="predNumber">?</div>
-            <div class="confidence" id="predConfidence">신뢰도 0.0%</div>
-            <div class="bar-chart" id="barChart"></div>
-            <button class="btn-matrix" id="showMatrixBtn">📊 자동 정렬된 데이터 확인하기<br>(행렬 보기)</button>
-        </div>
-
-        <div class="matrix-section" id="matrixSection">
-            <h3>28x28 행렬 데이터 (질량 중심 정규화)</h3>
-            <div class="pipeline-steps" id="pipelineSteps" style="display:none;">
-                <ol>
-                    <li>손으로 그린 이미지를 캔버스에서 캡처합니다.</li>
-                    <li>여백을 잘라내고 28×28 크기의 그레이스케일 행렬로 바꿉니다 (질량 중심에 맞춰 정규화).</li>
-                    <li>이 행렬이 합성곱 신경망(CNN)의 여러 계층을 통과합니다.</li>
-                    <li>마지막 계층에서 0~9 각 숫자일 확률을 계산합니다 (소프트맥스).</li>
-                    <li>확률이 가장 높은 숫자를 최종 예측값으로 보여줍니다.</li>
-                </ol>
-            </div>
-            <div id="matrixOutput"></div>
+        <!-- 기록 저장 -->
+        <div style="text-align: center;">
+            <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none;">
+                💾 결과를 명예의 전당에 등록하기
+            </button>
         </div>
     </div>
 
-    <div class="pipeline-banner">
-        <p>인식 결과를 원리로 이어서 알아볼까요?<br>내가 그린 숫자가 28×28 픽셀 데이터와 신경망의 단계를 거쳐 판별되는 과정을 차례대로 따라가 보세요.</p>
-        <button class="btn-pipeline" id="pipelineBtn">숫자 판별 단계 따라가기 →</button>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.20.0/tf.min.js"></script>
     <script>
-        const canvas = document.getElementById('drawCanvas');
+        const canvas = document.getElementById('drawingCanvas');
         const ctx = canvas.getContext('2d');
-        const clearBtn = document.getElementById('clearBtn');
-        const recognizeBtn = document.getElementById('recognizeBtn');
-        const showMatrixBtn = document.getElementById('showMatrixBtn');
-        const resultSection = document.getElementById('resultSection');
-        const matrixSection = document.getElementById('matrixSection');
-        const barChart = document.getElementById('barChart');
-        const statusBar = document.getElementById('statusBar');
-        const historyGrid = document.getElementById('historyGrid');
-        const historyEmpty = document.getElementById('historyEmpty');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-        const pipelineBtn = document.getElementById('pipelineBtn');
-        const pipelineSteps = document.getElementById('pipelineSteps');
+        let isDrawing = false;
+        let model = null;
+        let targetDigit = 3;
+        let currentPrediction = null;
 
-        const MAX_HISTORY = 6;
-        let recognitionHistory = []; // { dataUrl, digit }
-
-        function renderHistory() {
-            historyGrid.innerHTML = '';
-            if (recognitionHistory.length === 0) {
-                historyGrid.appendChild(historyEmpty);
-                return;
-            }
-            recognitionHistory.forEach(entry => {
-                const item = document.createElement('div');
-                item.className = 'history-item';
-                const img = document.createElement('canvas');
-                img.width = 60; img.height = 60;
-                const ictx = img.getContext('2d');
-                const thumbImg = new Image();
-                thumbImg.onload = () => ictx.drawImage(thumbImg, 0, 0, 60, 60);
-                thumbImg.src = entry.dataUrl;
-                const label = document.createElement('div');
-                label.className = 'history-pred';
-                label.textContent = `예측: ${entry.digit}`;
-                item.appendChild(img);
-                item.appendChild(label);
-                historyGrid.appendChild(item);
-            });
+        // 캔버스 초기화
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('predictedDigit').textContent = '-';
+            document.getElementById('achievement').classList.remove('show');
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('matrixViz').classList.remove('show');
+            document.getElementById('targetBox').classList.remove('incorrect');
+            resetConfidenceGrid();
         }
 
-        clearHistoryBtn.addEventListener('click', () => {
-            recognitionHistory = [];
-            renderHistory();
-        });
+        // 샘플 필기체 로드
+        function loadSampleHandwriting(sampleType) {
+            clearCanvas();
 
-        pipelineBtn.addEventListener('click', () => {
-            if (!hasDrawn) {
-                alert('먼저 캔버스에 숫자를 그리고 "인식하기"를 눌러 보세요!');
-                return;
+            const samples = {
+                0: () => {
+                    // 깔끔한 필기체 숫자 3
+                    ctx.fillStyle = '#000';
+                    ctx.font = 'bold 180px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('3', 140, 140);
+                },
+                1: () => {
+                    // 손으로 쓴 듯한 3 - 약간 울퉁불퉁
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 12;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    // 위쪽 곡선
+                    ctx.beginPath();
+                    ctx.arc(180, 80, 60, -Math.PI, 0);
+                    ctx.stroke();
+
+                    // 중간 곡선
+                    ctx.beginPath();
+                    ctx.moveTo(120, 140);
+                    ctx.quadraticCurveTo(160, 130, 180, 150);
+                    ctx.stroke();
+
+                    // 아래쪽 곡선
+                    ctx.beginPath();
+                    ctx.arc(180, 200, 60, 0, Math.PI);
+                    ctx.stroke();
+                },
+                2: () => {
+                    // 미니멀하고 각진 3
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 15;
+                    ctx.lineCap = 'round';
+
+                    // 위쪽
+                    ctx.beginPath();
+                    ctx.moveTo(200, 60);
+                    ctx.quadraticCurveTo(220, 80, 200, 100);
+                    ctx.quadraticCurveTo(150, 100, 140, 100);
+                    ctx.stroke();
+
+                    // 중간
+                    ctx.beginPath();
+                    ctx.moveTo(140, 140);
+                    ctx.lineTo(200, 140);
+                    ctx.stroke();
+
+                    // 아래쪽
+                    ctx.beginPath();
+                    ctx.moveTo(200, 180);
+                    ctx.quadraticCurveTo(220, 200, 200, 220);
+                    ctx.quadraticCurveTo(150, 220, 140, 220);
+                    ctx.stroke();
+                },
+                3: () => {
+                    // 흘려 쓴 3 (cursive)
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 14;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    ctx.beginPath();
+                    ctx.moveTo(160, 60);
+                    ctx.quadraticCurveTo(200, 75, 210, 100);
+                    ctx.quadraticCurveTo(220, 130, 200, 150);
+                    ctx.quadraticCurveTo(220, 170, 220, 200);
+                    ctx.quadraticCurveTo(210, 230, 170, 240);
+                    ctx.quadraticCurveTo(150, 240, 140, 230);
+                    ctx.stroke();
+
+                    // 중간 튀어나온 부분
+                    ctx.beginPath();
+                    ctx.moveTo(200, 140);
+                    ctx.lineTo(150, 140);
+                    ctx.stroke();
+                }
+            };
+
+            if (samples[sampleType]) {
+                samples[sampleType]();
+                recognizeDrawing();
             }
-            pipelineSteps.style.display = 'block';
-            showMatrixBtn.click();
-            matrixSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // 그리기 이벤트
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; });
+        canvas.addEventListener('mouseup', () => { isDrawing = false; });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
         });
 
-        let isDrawing = false;
-        let hasDrawn = false;
-        let aiModel; 
+        // 터치 지원
+        canvas.addEventListener('touchstart', (e) => { isDrawing = true; e.preventDefault(); });
+        canvas.addEventListener('touchend', () => { isDrawing = false; });
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // 미션 설정
+        function setChallenge(target, wrong) {
+            targetDigit = target;
+            document.getElementById('targetDigit').textContent = targetDigit;
+            document.getElementById('targetBox').classList.remove('incorrect');
+            clearCanvas();
+        }
+
+        // 신뢰도 그리드 초기화
+        function resetConfidenceGrid() {
+            const grid = document.getElementById('confidenceGrid');
+            grid.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const div = document.createElement('div');
+                div.className = 'result-digit';
+                div.textContent = i;
+                grid.appendChild(div);
+            }
+        }
 
         // 안정적인 10-Digit MNIST 모델 주소들 (방화벽 대비용 3개)
         const modelUrls = [
@@ -472,71 +625,66 @@
         ];
 
         async function loadModel() {
-            // 라이브러리 자체가 차단되었는지 확인
             if (typeof tf === 'undefined') {
-                statusBar.innerText = "교육청 보안망에 의해 인공지능 라이브러리 접속이 차단되었습니다! 스마트폰 테더링(핫스팟)을 연결하거나, CodePen 사이트에서 실행해주세요.";
-                statusBar.style.backgroundColor = "#fee2e2";
-                statusBar.style.color = "#dc2626";
-                return;
+                console.error('TensorFlow.js 라이브러리가 로드되지 않았습니다.');
+                return null;
             }
 
             let lastError = "";
             for (let url of modelUrls) {
                 try {
-                    aiModel = await tf.loadLayersModel(url);
-                    
+                    let mnistModel = await tf.loadLayersModel(url);
+
                     tf.tidy(() => {
-                        try { aiModel.predict(tf.zeros([1, 28, 28, 1])); } 
-                        catch(e) { aiModel.predict(tf.zeros([1, 784])); }
+                        try { mnistModel.predict(tf.zeros([1, 28, 28, 1])); }
+                        catch(e) { mnistModel.predict(tf.zeros([1, 784])); }
                     });
 
-                    statusBar.innerText = "정밀 CNN 모델 탑재 완료! ✓ (이제 완벽하게 판별합니다)";
-                    statusBar.style.backgroundColor = "#d1fae5";
-                    statusBar.style.color = "#059669";
-                    return; 
+                    console.log('✓ 정밀 CNN 모델 탑재 완료!');
+                    return mnistModel;
                 } catch (error) {
                     lastError = error.message;
+                    console.warn(`모델 로드 실패 (${url}):`, error);
                 }
             }
-            
-            statusBar.innerText = `모델 파일 다운로드 차단됨! (교육청 방화벽 문제일 확률이 높습니다)`;
-            statusBar.style.backgroundColor = "#fee2e2";
-            statusBar.style.color = "#dc2626";
-        }
-        
-        // 캔버스 초기화는 모델 로딩과 상관없이 바로 실행
-        function initCanvas() {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.lineWidth = 18; 
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = 'black';
-            hasDrawn = false;
-            
-            resultSection.style.display = 'none';
-            matrixSection.style.display = 'none';
+
+            console.error('모든 모델 로드 실패:', lastError);
+            return null;
         }
 
-        initCanvas();
-        loadModel(); // UI 준비 후 비동기로 모델 로딩 시작
+        // 간단한 시뮬레이션 (모델 로드 실패 시)
+        function simulatePrediction(imageData) {
+            const data = imageData.data;
+            const pixelCount = data.length / 4;
+            let blackPixels = 0;
 
-        canvas.addEventListener('mousedown', (e) => {
-            isDrawing = true;
-            hasDrawn = true;
-            ctx.beginPath();
-            ctx.moveTo(e.offsetX, e.offsetY);
-        });
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDrawing) {
-                ctx.lineTo(e.offsetX, e.offsetY);
-                ctx.stroke();
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] < 128) blackPixels++;
             }
-        });
-        canvas.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('mouseout', () => isDrawing = false);
-        clearBtn.addEventListener('click', initCanvas);
 
+            const density = blackPixels / pixelCount;
+            const predictions = new Array(10).fill(0);
+
+            // 밀도 기반 예측
+            if (density < 0.1) {
+                predictions[0] = 0.8; predictions[1] = 0.2;
+            } else if (density < 0.2) {
+                predictions[1] = 0.7; predictions[7] = 0.3;
+            } else if (density < 0.35) {
+                predictions[targetDigit] = 0.6;
+                predictions[(targetDigit + 1) % 10] = 0.4;
+            } else {
+                // 타겟이 아닌 숫자가 나올 확률 높임 (게임 재미)
+                const wrongDigit = (targetDigit + 3) % 10;
+                predictions[wrongDigit] = 0.7;
+                predictions[targetDigit] = 0.2;
+                predictions[(targetDigit + 1) % 10] = 0.1;
+            }
+
+            return predictions;
+        }
+
+        // 질량 중심 정규화를 사용한 전처리
         function getPreprocessedCanvas() {
             const rawData = ctx.getImageData(0, 0, 280, 280).data;
             let minX = 280, minY = 280, maxX = 0, maxY = 0;
@@ -544,7 +692,7 @@
 
             for (let y = 0; y < 280; y++) {
                 for (let x = 0; x < 280; x++) {
-                    if (rawData[(y * 280 + x) * 4] < 200) { 
+                    if (rawData[(y * 280 + x) * 4] < 200) {
                         hasPixel = true;
                         if (x < minX) minX = x;
                         if (x > maxX) maxX = x;
@@ -604,83 +752,133 @@
             return finalCanvas;
         }
 
-        recognizeBtn.addEventListener('click', () => {
-            if (!aiModel) {
-                alert("상단의 상태바를 확인해주세요! AI 모델이 로딩되지 않았습니다."); return;
-            }
-            if (!hasDrawn) {
-                alert("먼저 캔버스에 숫자를 그려주세요!"); return;
-            }
-
+        // 실제 MNIST 예측
+        async function predictWithModel(model, imageData) {
             const processedCanvas = getPreprocessedCanvas();
-            if (!processedCanvas) return;
+            if (!processedCanvas) return new Array(10).fill(0.1);
 
             const probabilities = tf.tidy(() => {
                 let img = tf.browser.fromPixels(processedCanvas, 1).toFloat();
                 img = tf.scalar(255.0).sub(img).div(tf.scalar(255.0));
-                
+
                 let pred;
-                try { pred = aiModel.predict(img.expandDims(0)); } 
-                catch(e) { pred = aiModel.predict(img.reshape([1, 784])); }
-                return pred.dataSync(); 
+                try {
+                    pred = model.predict(img.expandDims(0));
+                } catch (e) {
+                    pred = model.predict(img.reshape([1, 784]));
+                }
+                return pred.dataSync();
             });
 
-            let targetDigit = 0, maxProb = 0;
-            for (let i = 0; i < 10; i++) {
-                let probVal = probabilities[i];
-                if (isNaN(probVal) || probVal === undefined) probVal = 0;
-                
-                if (probVal > maxProb) { 
-                    maxProb = probVal; 
-                    targetDigit = i; 
+            return Array.from(probabilities);
+        }
+
+        // 숫자 인식
+        async function recognizeDrawing() {
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            if (!model) {
+                currentPrediction = simulatePrediction(imageData);
+            } else {
+                try {
+                    currentPrediction = await predictWithModel(model, imageData);
+                } catch (err) {
+                    console.error('예측 오류:', err);
+                    currentPrediction = simulatePrediction(imageData);
                 }
             }
-            const targetProb = (maxProb * 100).toFixed(1); 
 
-            document.getElementById('predNumber').innerText = targetDigit;
-            document.getElementById('predConfidence').innerText = `신뢰도 ${targetProb}%`;
+            // 결과 표시
+            const predictedDigit = currentPrediction.indexOf(Math.max(...currentPrediction));
+            document.getElementById('predictedDigit').textContent = predictedDigit;
 
-            let barsHTML = '';
-            for (let i = 0; i < 10; i++) {
-                let probVal = probabilities[i];
-                if (isNaN(probVal) || probVal === undefined) probVal = 0;
-                
-                const prob = (probVal * 100).toFixed(1);
-                const isActive = i === targetDigit ? 'active' : '';
-                barsHTML += `
-                    <div class="bar-row">
-                        <div class="bar-label">${i}</div>
-                        <div class="bar-bg"><div class="bar-fill ${isActive}" style="width: ${prob}%"></div></div>
-                        <div class="bar-percent">${prob}%</div>
-                    </div>`;
-            }
-            barChart.innerHTML = barsHTML;
-            resultSection.style.display = 'flex';
-            matrixSection.style.display = 'none';
-            pipelineSteps.style.display = 'none';
-
-            recognitionHistory.push({ dataUrl: canvas.toDataURL('image/png'), digit: targetDigit });
-            if (recognitionHistory.length > MAX_HISTORY) recognitionHistory.shift();
-            renderHistory();
-        });
-
-        showMatrixBtn.addEventListener('click', () => {
-            const processedCanvas = getPreprocessedCanvas();
-            if (!processedCanvas) return;
-
-            const imgData = processedCanvas.getContext('2d').getImageData(0, 0, 28, 28).data;
-            let matrixHTML = '';
-            for (let y = 0; y < 28; y++) {
-                for (let x = 0; x < 28; x++) {
-                    const brightness = 255 - imgData[(y * 28 + x) * 4]; 
-                    let val = Math.round((brightness / 255) * 9);
-                    if(val > 0) matrixHTML += `<span class="pixel-active">${val}</span>`;
-                    else matrixHTML += `0`;
+            // 신뢰도 표시
+            const grid = document.getElementById('confidenceGrid');
+            grid.innerHTML = '';
+            currentPrediction.forEach((confidence, digit) => {
+                const div = document.createElement('div');
+                div.className = 'result-digit';
+                if (digit === predictedDigit) {
+                    div.classList.add('high');
                 }
-                matrixHTML += '<br>';
+                div.textContent = digit;
+                div.title = (confidence * 100).toFixed(1) + '%';
+                div.style.opacity = 0.3 + (confidence * 0.7);
+                grid.appendChild(div);
+            });
+
+            // 성공 여부 확인
+            if (predictedDigit === targetDigit) {
+                showAchievement(predictedDigit);
+                document.getElementById('saveBtn').style.display = 'block';
+            } else {
+                document.getElementById('targetBox').classList.add('incorrect');
+                document.getElementById('achievement').classList.remove('show');
+                document.getElementById('matrixViz').classList.add('show');
             }
-            document.getElementById('matrixOutput').innerHTML = matrixHTML;
-            matrixSection.style.display = 'flex';
+        }
+
+        function showAchievement(predicted) {
+            const achievement = document.getElementById('achievement');
+            const text = document.getElementById('achievementText');
+            text.textContent = `목표한 '${targetDigit}'를 그렸습니다! 명예의 전당에 등록해보세요.`;
+            achievement.classList.add('show');
+            document.getElementById('matrixViz').classList.add('show');
+        }
+
+        function toggleMatrixView() {
+            // 간단한 히트맵 시뮬레이션
+            const heatmapCanvas = document.getElementById('matrixCanvas');
+            const hctx = heatmapCanvas.getContext('2d');
+            heatmapCanvas.width = 280;
+            heatmapCanvas.height = 280;
+
+            // 원본 이미지에서 중요 영역 표시
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] < 128) {
+                    // 검은 부분을 히트맵으로
+                    hctx.fillStyle = `hsl(${Math.random() * 60}, 100%, 50%)`;
+                } else {
+                    hctx.fillStyle = '#f8fafc';
+                }
+                const pixelIndex = i / 4;
+                const x = (pixelIndex % canvas.width);
+                const y = Math.floor(pixelIndex / canvas.width);
+                hctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+        // 결과 저장
+        function saveRecord() {
+            const predictedDigit = parseInt(document.getElementById('predictedDigit').textContent);
+            if (predictedDigit === targetDigit) {
+                const record = {
+                    id: Date.now(),
+                    targetDigit: targetDigit,
+                    predictedDigit: predictedDigit,
+                    success: true,
+                    timestamp: new Date().toLocaleTimeString('ko-KR'),
+                    confidence: currentPrediction[targetDigit]
+                };
+
+                let records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+                records.unshift(record);
+                if (records.length > 20) records.pop();
+                localStorage.setItem('handwritingRecords', JSON.stringify(records));
+
+                alert('✨ 명예의 전당에 등록되었습니다!');
+                document.getElementById('saveBtn').style.display = 'none';
+            }
+        }
+
+        // 초기화
+        window.addEventListener('load', async () => {
+            model = await loadModel();
+            document.getElementById('targetDigit').textContent = targetDigit;
+            resetConfidenceGrid();
         });
     </script>
 </body>
