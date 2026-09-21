@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>손글씨 인식 도전 · 수수의 수학</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mnist@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/3.20.0/tf.min.js"></script>
     <style>
         * { box-sizing: border-box; }
 
@@ -618,19 +617,39 @@
             }
         }
 
-        // MNIST 모델 로드
+        // 안정적인 10-Digit MNIST 모델 주소들 (방화벽 대비용 3개)
+        const modelUrls = [
+            'https://raw.githubusercontent.com/bensonruan/MNIST-Digit-Recognition/master/models/model.json',
+            'https://cdn.jsdelivr.net/gh/bensonruan/MNIST-Digit-Recognition@master/models/model.json',
+            'https://raw.githubusercontent.com/tsu-nera/tfjs-mnist-study/master/model/model.json'
+        ];
+
         async function loadModel() {
-            try {
-                console.log('모델 로드 중...');
-                // TensorFlow.js MNIST 모델 사용
-                const mnistModel = await tf.loadLayersModel(
-                    'https://storage.googleapis.com/tfjs-models/tfjs-models/mnist/model.json'
-                );
-                return mnistModel;
-            } catch (err) {
-                console.error('모델 로드 실패, 간단한 시뮬레이션 사용:', err);
+            if (typeof tf === 'undefined') {
+                console.error('TensorFlow.js 라이브러리가 로드되지 않았습니다.');
                 return null;
             }
+
+            let lastError = "";
+            for (let url of modelUrls) {
+                try {
+                    let mnistModel = await tf.loadLayersModel(url);
+
+                    tf.tidy(() => {
+                        try { mnistModel.predict(tf.zeros([1, 28, 28, 1])); }
+                        catch(e) { mnistModel.predict(tf.zeros([1, 784])); }
+                    });
+
+                    console.log('✓ 정밀 CNN 모델 탑재 완료!');
+                    return mnistModel;
+                } catch (error) {
+                    lastError = error.message;
+                    console.warn(`모델 로드 실패 (${url}):`, error);
+                }
+            }
+
+            console.error('모든 모델 로드 실패:', lastError);
+            return null;
         }
 
         // 간단한 시뮬레이션 (모델 로드 실패 시)
@@ -665,18 +684,93 @@
             return predictions;
         }
 
+        // 질량 중심 정규화를 사용한 전처리
+        function getPreprocessedCanvas() {
+            const rawData = ctx.getImageData(0, 0, 280, 280).data;
+            let minX = 280, minY = 280, maxX = 0, maxY = 0;
+            let hasPixel = false;
+
+            for (let y = 0; y < 280; y++) {
+                for (let x = 0; x < 280; x++) {
+                    if (rawData[(y * 280 + x) * 4] < 200) {
+                        hasPixel = true;
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+
+            if (!hasPixel) return null;
+
+            const w = maxX - minX + 1;
+            const h = maxY - minY + 1;
+
+            const scale = 20.0 / Math.max(w, h);
+            const scaledW = Math.round(w * scale);
+            const scaledH = Math.round(h * scale);
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = scaledW;
+            tempCanvas.height = scaledH;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.fillStyle = 'white';
+            tCtx.fillRect(0, 0, scaledW, scaledH);
+            tCtx.imageSmoothingEnabled = true;
+            tCtx.imageSmoothingQuality = 'high';
+            tCtx.drawImage(canvas, minX, minY, w, h, 0, 0, scaledW, scaledH);
+
+            const imgData = tCtx.getImageData(0, 0, scaledW, scaledH).data;
+            let sumX = 0, sumY = 0, totalWeight = 0;
+            for (let y = 0; y < scaledH; y++) {
+                for (let x = 0; x < scaledW; x++) {
+                    let weight = 255 - imgData[(y * scaledW + x) * 4];
+                    if (weight > 0) {
+                        sumX += x * weight;
+                        sumY += y * weight;
+                        totalWeight += weight;
+                    }
+                }
+            }
+
+            let cx = totalWeight > 0 ? sumX / totalWeight : scaledW / 2;
+            let cy = totalWeight > 0 ? sumY / totalWeight : scaledH / 2;
+
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = 28;
+            finalCanvas.height = 28;
+            const finalCtx = finalCanvas.getContext('2d');
+            finalCtx.fillStyle = 'white';
+            finalCtx.fillRect(0, 0, 28, 28);
+
+            let dx = Math.round(14 - cx);
+            let dy = Math.round(14 - cy);
+
+            finalCtx.drawImage(tempCanvas, 0, 0, scaledW, scaledH, dx, dy, scaledW, scaledH);
+
+            return finalCanvas;
+        }
+
         // 실제 MNIST 예측
         async function predictWithModel(model, imageData) {
-            const img = tf.browser.fromPixels(canvas, 1);
-            const normalized = img.cast('float32').div(tf.scalar(255));
-            const reshaped = normalized.reshape([1, 28, 28, 1]);
+            const processedCanvas = getPreprocessedCanvas();
+            if (!processedCanvas) return new Array(10).fill(0.1);
 
-            const predictions = model.predict(reshaped);
-            const predictionsArray = await predictions.data();
+            const probabilities = tf.tidy(() => {
+                let img = tf.browser.fromPixels(processedCanvas, 1).toFloat();
+                img = tf.scalar(255.0).sub(img).div(tf.scalar(255.0));
 
-            tf.dispose([img, normalized, reshaped, predictions]);
+                let pred;
+                try {
+                    pred = model.predict(img.expandDims(0));
+                } catch (e) {
+                    pred = model.predict(img.reshape([1, 784]));
+                }
+                return pred.dataSync();
+            });
 
-            return Array.from(predictionsArray);
+            return Array.from(probabilities);
         }
 
         // 숫자 인식
