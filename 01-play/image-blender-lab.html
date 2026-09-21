@@ -757,16 +757,18 @@
                 ctx.lineTo(200, 175);
                 ctx.stroke();
 
-                // 수염 (간단한 2개)
+                // 수염 (작은 사선)
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 1;
+                // 왼쪽 수염
                 ctx.beginPath();
-                ctx.moveTo(200, 155);
-                ctx.lineTo(150, 145);
+                ctx.moveTo(200, 158);
+                ctx.lineTo(170, 152);
                 ctx.stroke();
+                // 오른쪽 수염
                 ctx.beginPath();
-                ctx.moveTo(200, 155);
-                ctx.lineTo(250, 145);
+                ctx.moveTo(200, 158);
+                ctx.lineTo(230, 152);
                 ctx.stroke();
             } else if (type === 'face') {
                 // 사람 얼굴
