@@ -690,28 +690,72 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                ctx.fillStyle = '#fdb813';
+                // 호랑이 얼굴
+                ctx.fillStyle = '#ff8c42';
                 ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.arc(200, 150, 70, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#f5a623';
+                // 호랑이 줄무늬
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 4;
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(150 + i * 20, 100);
+                    ctx.lineTo(160 + i * 20, 120);
+                    ctx.stroke();
+                }
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(150 + i * 20, 180);
+                    ctx.lineTo(160 + i * 20, 160);
+                    ctx.stroke();
+                }
+
+                // 눈
+                ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(200, 150, 60, 0, Math.PI * 2);
+                ctx.arc(175, 130, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(225, 130, 12, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 동공
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(180, 130, 8, 0, Math.PI * 2);
+                ctx.arc(175, 130, 7, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(220, 130, 8, 0, Math.PI * 2);
+                ctx.arc(225, 130, 7, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 코
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(200, 150, 5, 0, Math.PI * 2);
+                ctx.arc(200, 155, 6, 0, Math.PI * 2);
                 ctx.fill();
+
+                // 입
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(200, 155);
+                ctx.lineTo(200, 170);
+                ctx.stroke();
+
+                // 수염
+                for (let i = 1; i <= 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(200, 160 - i * 5);
+                    ctx.lineTo(165, 160 - i * 5);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(200, 160 - i * 5);
+                    ctx.lineTo(235, 160 - i * 5);
+                    ctx.stroke();
+                }
             } else if (type === 'face') {
                 // 오선지 배경
                 ctx.fillStyle = '#fff';
