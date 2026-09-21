@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>포물선으로 곱셈을 계산한다고?</title>
+<title>포물선에 실을 걸어 곱셈하기</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
     * { box-sizing: border-box; }
@@ -80,14 +80,14 @@
 
 <div class="container">
     <a class="back-link" href="index.html">← 기하 실험실로 돌아가기</a>
-    <h1>포물선으로 곱셈을 계산한다고?</h1>
-    <p class="subtitle">y = x² 위의 두 점을 실로 이으면, 그 실이 y축과 만나는 값이 항상 두 수의 곱이 됩니다.</p>
+    <h1>포물선에 실을 걸어 곱셈하기</h1>
+    <p class="subtitle">포물선 y = x² 위의 정수 점마다 실을 걸 수 있는 판이 있다고 생각해 보세요.</p>
 
     <div class="card">
         <div class="intro-box">
-            <h3>🟨 수학문화관에서 발견한 신기한 교구</h3>
-            <p>포물선 y = x² 모양의 판에 여러 개의 실이 걸려 있는 교구입니다. 실의 왼쪽 끝을 원점에서 왼쪽으로 b칸 이동한 위치의 포물선 위 점에, 오른쪽 끝을 원점에서 오른쪽으로 a칸 이동한 위치의 포물선 위 점에 고정하면, 팽팽하게 당겨진 실이 세로축(y축)과 만나는 눈금이 <b>항상 a × b</b>가 됩니다.</p>
-            <p>예를 들어 왼쪽으로 3칸, 오른쪽으로 4칸에 실을 걸면 y축과 만나는 지점은 정확히 <b>12(=3×4)</b>입니다. 아래에서 직접 슬라이더를 움직이며 확인해 보세요.</p>
+            <h3>🟨 포물선 곱셈판 — 정수 점에 실을 걸어보세요</h3>
+            <p>아래 그래프의 포물선 위에는 정수 위치마다 못(점)이 박혀 있습니다. 왼쪽으로 b칸, 오른쪽으로 a칸 이동한 못을 골라 실로 팽팽하게 연결하면, 그 실이 세로축(y축)과 만나는 눈금이 <b>항상 a × b</b>가 됩니다.</p>
+            <p>먼저 슬라이더로 두 점(못)을 골라 보고, 준비되면 "실 걸기"를 눌러 실제로 어떤 값이 나오는지 확인해 보세요.</p>
         </div>
     </div>
 
@@ -100,12 +100,16 @@
             </div>
             <div class="sim-controls">
                 <div class="slider-row">
-                    <label>오른쪽 점의 위치 <span>a = <span class="badge" id="aBadge">4</span></span></label>
-                    <input type="range" id="aSlider" min="-10" max="10" step="0.5" value="4">
+                    <label>오른쪽 못의 위치 <span>a = <span class="badge" id="aBadge">4</span></span></label>
+                    <input type="range" id="aSlider" min="-10" max="10" step="1" value="4">
                 </div>
                 <div class="slider-row">
                     <label>왼쪽으로 이동한 칸수 <span>b = <span class="badge" id="bBadge">3</span></span></label>
-                    <input type="range" id="bSlider" min="-10" max="10" step="0.5" value="3">
+                    <input type="range" id="bSlider" min="-10" max="10" step="1" value="3">
+                </div>
+                <div class="toggle-row" id="hangRow" style="background:#fee2e2;">
+                    <input type="checkbox" id="hangString">
+                    <label for="hangString" style="margin:0; cursor:pointer;">🧵 실 걸기 (두 점을 실로 연결해서 y축 값 확인하기)</label>
                 </div>
                 <div class="toggle-row">
                     <input type="checkbox" id="sqrtMode">
@@ -114,8 +118,8 @@
                 <div class="readout-grid">
                     <div class="readout-cell"><div class="k">점 A (오른쪽)</div><div class="v" id="pointA">(4, 16)</div></div>
                     <div class="readout-cell"><div class="k">점 B (왼쪽)</div><div class="v" id="pointB">(−3, 9)</div></div>
-                    <div class="readout-cell"><div class="k">실의 기울기</div><div class="v" id="slopeVal">1</div></div>
-                    <div class="readout-cell"><div class="k">y축과 만나는 점</div><div class="v" id="interceptVal">(0, 12)</div></div>
+                    <div class="readout-cell"><div class="k">실의 기울기</div><div class="v" id="slopeVal">?</div></div>
+                    <div class="readout-cell"><div class="k">y축과 만나는 점</div><div class="v" id="interceptVal">?</div></div>
                     <div class="readout-cell result-cell"><div class="k">a × b</div><div class="v" id="productVal">4 × 3 = 12</div></div>
                 </div>
             </div>
@@ -150,7 +154,7 @@
             </div>
             <div class="extend-item">
                 <h4>3. 포물선을 이용하여 다른 곱셈을 계산해 봅시다</h4>
-                <p>7 × 8, 6 × 0.5, (−2) × 9 등 자신만의 곱셈식을 정하고, 슬라이더로 직접 확인해 보세요. 계산기로 미리 답을 구한 뒤, 시뮬레이션의 y절편과 일치하는지 비교해 봅시다.</p>
+                <p>7 × 8, 6 × 9, (−2) × 9 등 자신만의 곱셈식을 정하고, 슬라이더로 못을 고른 뒤 실을 걸어 직접 확인해 보세요. 계산기로 미리 답을 구한 뒤, 시뮬레이션의 y절편과 일치하는지 비교해 봅시다.</p>
             </div>
         </div>
     </div>
@@ -167,6 +171,7 @@
     const aSlider = document.getElementById('aSlider');
     const bSlider = document.getElementById('bSlider');
     const sqrtMode = document.getElementById('sqrtMode');
+    const hangString = document.getElementById('hangString');
     const aBadge = document.getElementById('aBadge');
     const bBadge = document.getElementById('bBadge');
     const warnLine = document.getElementById('warnLine');
@@ -237,35 +242,54 @@
         }
         ctx.stroke();
 
+        // 정수 점마다 박힌 못 — 포물선 위 점과 x축까지 내려오는 실 자국
+        for (let xv = -10; xv <= 10; xv++) {
+            const yv = xv * xv;
+            if (yv > Y_MAX) continue;
+            const [px, py] = worldToScreen(xv, yv, w, h);
+            const [, axisY] = worldToScreen(xv, 0, w, h);
+            ctx.beginPath();
+            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+            ctx.moveTo(px, py); ctx.lineTo(px, axisY);
+            ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); ctx.arc(px, py, 2.5, 0, 7);
+            ctx.fillStyle = '#94a3b8'; ctx.fill();
+        }
+
         const pA = [a, a * a];
         const pB = [-b, b * b];
         const degenerate = Math.abs(a + b) < 1e-6;
+        const hung = hangString.checked;
 
-        if (!degenerate) {
-            // 실(직선) — 캔버스 좌우 끝까지 연장
-            const slope = a - b;
-            const intercept = a * b;
-            const lineAt = (xv) => slope * xv + intercept;
-            const [lx, ly] = worldToScreen(X_MIN, lineAt(X_MIN), w, h);
-            const [rx, ry] = worldToScreen(X_MAX, lineAt(X_MAX), w, h);
-            ctx.beginPath();
-            ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
-            ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
-            ctx.stroke(); ctx.setLineDash([]);
+        if (hung) {
+            if (!degenerate) {
+                // 실(직선) — 캔버스 좌우 끝까지 연장
+                const slope = a - b;
+                const intercept = a * b;
+                const lineAt = (xv) => slope * xv + intercept;
+                const [lx, ly] = worldToScreen(X_MIN, lineAt(X_MIN), w, h);
+                const [rx, ry] = worldToScreen(X_MAX, lineAt(X_MAX), w, h);
+                ctx.beginPath();
+                ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+                ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
+                ctx.stroke(); ctx.setLineDash([]);
 
-            // y절편 점
-            if (intercept >= Y_MIN && intercept <= Y_MAX) {
-                const [ix, iy] = worldToScreen(0, intercept, w, h);
-                ctx.beginPath(); ctx.arc(ix, iy, 6, 0, 7);
-                ctx.fillStyle = '#f59e0b'; ctx.fill();
-                ctx.strokeStyle = '#92400e'; ctx.lineWidth = 1.5; ctx.stroke();
+                // y절편 점
+                if (intercept >= Y_MIN && intercept <= Y_MAX) {
+                    const [ix, iy] = worldToScreen(0, intercept, w, h);
+                    ctx.beginPath(); ctx.arc(ix, iy, 6, 0, 7);
+                    ctx.fillStyle = '#f59e0b'; ctx.fill();
+                    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 1.5; ctx.stroke();
+                }
+                warnLine.textContent = '';
+            } else {
+                warnLine.textContent = '⚠️ a = −b이면 두 점이 같아져서 실을 걸 수 없어요. 슬라이더를 조금 움직여 보세요.';
             }
-            warnLine.textContent = '';
         } else {
-            warnLine.textContent = '⚠️ a = −b이면 두 점이 같아져서 실을 걸 수 없어요. 슬라이더를 조금 움직여 보세요.';
+            warnLine.textContent = '';
         }
 
-        // 점 A, B
+        // 점 A, B (고른 못은 크고 진하게 표시)
         function drawPoint(pt, color, label) {
             if (pt[1] > Y_MAX) return;
             const [px, py] = worldToScreen(pt[0], pt[1], w, h);
@@ -278,13 +302,16 @@
         drawPoint(pA, '#2563eb', `A(${fmt(a)}, ${fmt(a * a)})`);
         drawPoint(pB, '#16a34a', `B(${fmt(-b)}, ${fmt(b * b)})`);
 
-        updateReadouts(a, b, degenerate);
+        updateReadouts(a, b, degenerate, hung);
     }
 
-    function updateReadouts(a, b, degenerate) {
+    function updateReadouts(a, b, degenerate, hung) {
         document.getElementById('pointA').textContent = `(${fmt(a)}, ${fmt(a * a)})`;
         document.getElementById('pointB').textContent = `(${fmt(-b)}, ${fmt(b * b)})`;
-        if (degenerate) {
+        if (!hung) {
+            document.getElementById('slopeVal').textContent = '?';
+            document.getElementById('interceptVal').textContent = '실을 걸어보세요';
+        } else if (degenerate) {
             document.getElementById('slopeVal').textContent = '정의 안 됨';
             document.getElementById('interceptVal').textContent = '—';
         } else {
@@ -322,7 +349,7 @@
         if (!dragging) return;
         const [mx] = canvasPos(e);
         let wx = screenToWorldX(mx, canvas.width);
-        wx = Math.max(-10, Math.min(10, Math.round(wx * 2) / 2));
+        wx = Math.max(-10, Math.min(10, Math.round(wx)));
         if (dragging === 'A') { aSlider.value = wx; if (sqrtMode.checked) bSlider.value = wx; }
         else { bSlider.value = -wx; if (sqrtMode.checked) aSlider.value = -wx; }
         drawScene();
@@ -331,7 +358,12 @@
 
     aSlider.addEventListener('input', drawScene);
     bSlider.addEventListener('input', drawScene);
-    sqrtMode.addEventListener('change', () => { if (sqrtMode.checked) { bSlider.value = aSlider.value; bSlider.disabled = true; } else { bSlider.disabled = false; } drawScene(); });
+    hangString.addEventListener('change', drawScene);
+    sqrtMode.addEventListener('change', () => {
+        if (sqrtMode.checked) { bSlider.value = aSlider.value; bSlider.disabled = true; hangString.checked = true; hangString.disabled = true; }
+        else { bSlider.disabled = false; hangString.disabled = false; }
+        drawScene();
+    });
 
     // ---- 단계별 유도 (현재 a,b 값을 대입해서 실시간으로 갱신) ----
     function renderSteps(a, b) {
