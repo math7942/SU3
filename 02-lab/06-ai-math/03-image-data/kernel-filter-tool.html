@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>컨볼루션 필터 체험 도구</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%);
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 0 0 40px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .topbar {
+        width: 100%;
+        background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+        color: white;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .topbar h1 { font-size: 1.3rem; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .topbar .sub { font-size: 0.78rem; opacity: 0.9; margin-top: 2px; }
+    .link-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.5);
+        color: white; text-decoration: none;
+        padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; text-align: center;
+    }
+    .link-btn:hover { background: rgba(255,255,255,0.32); }
+    .back-link { font-size: 0.78rem; color: white; text-decoration: none; opacity: 0.85; display: block; margin-bottom: 4px; }
+
+    .layout { width: 100%; max-width: 1100px; display: flex; gap: 20px; padding: 24px 20px 0; flex-wrap: wrap; }
+    .sidebar { flex: 0 0 280px; display: flex; flex-direction: column; gap: 16px; }
+    .main { flex: 1 1 480px; min-width: 300px; display: flex; flex-direction: column; gap: 20px; }
+
+    .panel { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .panel h3 { margin: 0 0 12px; font-size: 0.88rem; color: #0c4a6e; display: flex; align-items: center; gap: 6px; }
+
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 16px; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; color: white; font-family: inherit; width: 100%;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-select { background: #0ea5e9; }
+    .btn-apply { background: #0284c7; margin-top: 14px; }
+    input[type="file"] { display: none; }
+
+    select#filterSelect {
+        width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.85rem;
+    }
+    .filter-desc { font-size: 0.78rem; color: #475569; background: #f0f9ff; border-radius: 8px; padding: 10px 12px; margin-top: 10px; line-height: 1.6; }
+
+    .kernel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
+    .kernel-cell {
+        aspect-ratio: 1; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center;
+        font-family: monospace; font-weight: 700; font-size: 0.85rem; padding: 0;
+    }
+    .kernel-cell.center { background: #e0f2fe; border-color: #0ea5e9; }
+    .kernel-cell:disabled { background: #f8fafc; color: #334155; }
+    .kernel-cell:not(:disabled) { background: #fff; color: #0c4a6e; }
+
+    .guide-box { font-size: 0.8rem; color: #475569; line-height: 1.9; }
+    .guide-box ol { margin: 0; padding-left: 18px; }
+
+    .canvas-box {
+        border: 1px solid #e2e8f0; border-radius: 10px; min-height: 220px;
+        display: flex; align-items: center; justify-content: center; background: #f8fafc; overflow: hidden;
+    }
+    .canvas-box canvas { max-width: 100%; max-height: 320px; display: none; }
+    .canvas-box .ph { color: #94a3b8; font-size: 0.85rem; }
+
+    .nav-links { width: 100%; max-width: 1100px; display: flex; justify-content: space-between; font-size: 0.85rem; padding: 24px 20px 0; }
+    .nav-links a { color: #0284c7; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div>
+        <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+        <h1>🎨 컨볼루션 필터 체험 도구</h1>
+        <div class="sub">이미지에 다양한 필터를 적용하여 컨볼루션의 원리를 이해해보세요!</div>
+    </div>
+    <a class="link-btn" href="convolution-visualizer.html">컨볼루션 계산 체험<br>사이트 이동 →</a>
+</div>
+
+<div class="layout">
+    <div class="sidebar">
+        <div class="panel">
+            <h3>📁 이미지 업로드</h3>
+            <button class="btn btn-select" id="btnSelect">🖼️ 이미지 선택하기</button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="panel">
+            <h3>필터 선택</h3>
+            <select id="filterSelect">
+                <option value="identity">항등 필터 - 원본 유지</option>
+                <option value="blur">평균 블러</option>
+                <option value="edgeH">엣지 (가로)</option>
+                <option value="edgeV">엣지 (세로)</option>
+                <option value="sharpen">샤프닝</option>
+                <option value="laplacian">라플라시안</option>
+                <option value="emboss">엠보싱</option>
+                <option value="custom">커스텀 (직접 입력)</option>
+            </select>
+            <div class="filter-desc" id="filterDesc">항등 필터는 원본 이미지를 그대로 유지합니다. 컨볼루션의 기본 원리를 이해하는 데 도움이 됩니다.</div>
+        </div>
+
+        <div class="panel">
+            <h3>적용될 커널 행렬</h3>
+            <div class="kernel-grid" id="kernelGrid"></div>
+        </div>
+
+        <button class="btn btn-apply" id="btnApply" disabled>✨ 필터 적용하기</button>
+
+        <div class="panel guide-box">
+            <h3 style="margin-bottom:8px;">💡 사용 가이드</h3>
+            <ol>
+                <li>먼저 이미지를 업로드하세요</li>
+                <li>다양한 필터를 선택해보세요</li>
+                <li>커널 행렬을 확인해보세요</li>
+                <li>커스텀 모드에서 직접 편집해보세요</li>
+                <li>원본과 결과를 비교해보세요</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="panel">
+            <h3>📷 원본 이미지</h3>
+            <div class="canvas-box" id="origBox"><p class="ph">이미지를 업로드해 주세요</p><canvas id="origCanvas"></canvas></div>
+        </div>
+        <div class="panel">
+            <h3>✨ 필터 적용 결과</h3>
+            <div class="canvas-box" id="resultBox"><p class="ph">필터를 적용하면 결과가 표시됩니다</p><canvas id="resultCanvas"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="nav-links">
+    <a href="style-transfer-studio.html">← AI 스타일 변환 스튜디오로</a>
+    <a href="convolution-visualizer.html">컨볼루션 계산 체험으로 →</a>
+</div>
+
+<script>
+    const FILTERS = {
+        identity: { k: [0,0,0, 0,1,0, 0,0,0], desc: '항등 필터는 원본 이미지를 그대로 유지합니다. 컨볼루션의 기본 원리를 이해하는 데 도움이 됩니다.' },
+        blur:     { k: [1,1,1, 1,1,1, 1,1,1], desc: '평균 블러는 주변 9개 픽셀의 평균값으로 바꿔 이미지를 부드럽게 만듭니다.' },
+        edgeH:    { k: [-1,-1,-1, 0,0,0, 1,1,1], desc: '가로 방향 밝기 변화(수평 경계)를 강조해서 찾아냅니다.' },
+        edgeV:    { k: [-1,0,1, -1,0,1, -1,0,1], desc: '세로 방향 밝기 변화(수직 경계)를 강조해서 찾아냅니다.' },
+        sharpen:  { k: [0,-1,0, -1,5,-1, 0,-1,0], desc: '중심 픽셀을 강조하고 주변과의 차이를 키워 윤곽을 또렷하게 만듭니다.' },
+        laplacian:{ k: [0,1,0, 1,-4,1, 0,1,0], desc: '모든 방향의 밝기 변화를 한 번에 찾아내는 대표적인 경계(엣지) 검출 커널입니다.' },
+        emboss:   { k: [-2,-1,0, -1,1,1, 0,1,2], desc: '한쪽 방향으로 힘을 준 것처럼 이미지에 입체감(돋을새김) 효과를 줍니다.' },
+        custom:   { k: [0,0,0, 0,1,0, 0,0,0], desc: '커널 값을 직접 입력해서 나만의 필터를 만들어 보세요.' },
+    };
+
+    const kernelGrid = document.getElementById('kernelGrid');
+    const filterSelect = document.getElementById('filterSelect');
+    const filterDesc = document.getElementById('filterDesc');
+    let currentKernel = FILTERS.identity.k.slice();
+
+    function renderKernelGrid(editable) {
+        kernelGrid.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const inp = document.createElement('input');
+            inp.className = 'kernel-cell' + (i === 4 ? ' center' : '');
+            inp.type = 'text';
+            inp.inputMode = 'decimal';
+            inp.value = currentKernel[i];
+            inp.disabled = !editable;
+            if (editable) {
+                inp.addEventListener('input', () => {
+                    const v = parseFloat(inp.value);
+                    currentKernel[i] = isNaN(v) ? 0 : v;
+                });
+            }
+            kernelGrid.appendChild(inp);
+        }
+    }
+    renderKernelGrid(false);
+
+    filterSelect.addEventListener('change', () => {
+        const f = FILTERS[filterSelect.value];
+        currentKernel = f.k.slice();
+        filterDesc.textContent = f.desc;
+        renderKernelGrid(filterSelect.value === 'custom');
+    });
+
+    // ---- 업로드 ----
+    const fileInput = document.getElementById('fileInput');
+    document.getElementById('btnSelect').addEventListener('click', () => fileInput.click());
+    let workCanvas = null;
+    const MAX_WORK_DIM = 220;
+
+    fileInput.addEventListener('change', (e) => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+    function loadFile(file) {
+        if (!file.type.startsWith('image/')) { alert('이미지 파일을 선택해 주세요.'); return; }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, MAX_WORK_DIM / img.naturalWidth, MAX_WORK_DIM / img.naturalHeight);
+                workCanvas = document.createElement('canvas');
+                workCanvas.width = Math.max(3, Math.round(img.naturalWidth * scale));
+                workCanvas.height = Math.max(3, Math.round(img.naturalHeight * scale));
+                workCanvas.getContext('2d').drawImage(img, 0, 0, workCanvas.width, workCanvas.height);
+                showOnCanvas('origCanvas', 'origBox', workCanvas);
+                document.getElementById('btnApply').disabled = false;
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function showOnCanvas(canvasId, boxId, srcCanvas) {
+        const c = document.getElementById(canvasId);
+        c.width = srcCanvas.width; c.height = srcCanvas.height;
+        c.getContext('2d').drawImage(srcCanvas, 0, 0);
+        const DISPLAY_DIM = 260;
+        const dispScale = Math.max(1, DISPLAY_DIM / Math.max(srcCanvas.width, srcCanvas.height));
+        c.style.width = Math.round(srcCanvas.width * dispScale) + 'px';
+        c.style.height = Math.round(srcCanvas.height * dispScale) + 'px';
+        c.style.imageRendering = dispScale > 1 ? 'pixelated' : 'auto';
+        c.style.display = 'block';
+        document.querySelector('#' + boxId + ' .ph').style.display = 'none';
+    }
+
+    // ---- 컨볼루션 연산 ----
+    function clampPx(data, w, h, x, y, c) {
+        x = Math.max(0, Math.min(w - 1, x));
+        y = Math.max(0, Math.min(h - 1, y));
+        return data[(y * w + x) * 4 + c];
+    }
+
+    function applyConvolution(srcCanvas, kernel) {
+        const w = srcCanvas.width, h = srcCanvas.height;
+        const src = srcCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+        const out = new Uint8ClampedArray(src.length);
+        let kernelSum = kernel.reduce((s, v) => s + v, 0);
+        if (Math.abs(kernelSum) < 1e-6) kernelSum = 1;
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                for (let c = 0; c < 3; c++) {
+                    let sum = 0, ki = 0;
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            sum += clampPx(src, w, h, x + dx, y + dy, c) * kernel[ki++];
+                        }
+                    }
+                    out[(y * w + x) * 4 + c] = Math.max(0, Math.min(255, sum / kernelSum));
+                }
+                out[(y * w + x) * 4 + 3] = 255;
+            }
+        }
+        return new ImageData(out, w, h);
+    }
+
+    document.getElementById('btnApply').addEventListener('click', () => {
+        if (!workCanvas) return;
+        const result = applyConvolution(workCanvas, currentKernel);
+        const rc = document.getElementById('resultCanvas');
+        rc.width = result.width; rc.height = result.height;
+        rc.getContext('2d').putImageData(result, 0, 0);
+        const DISPLAY_DIM = 260;
+        const dispScale = Math.max(1, DISPLAY_DIM / Math.max(result.width, result.height));
+        rc.style.width = Math.round(result.width * dispScale) + 'px';
+        rc.style.height = Math.round(result.height * dispScale) + 'px';
+        rc.style.imageRendering = dispScale > 1 ? 'pixelated' : 'auto';
+        rc.style.display = 'block';
+        document.querySelector('#resultBox .ph').style.display = 'none';
+    });
+</script>
+</body>
+</html>
