@@ -380,7 +380,7 @@
                     <img id="img1" style="display: none;">
                     <div id="placeholder1" style="color: #94a3b8; text-align: center;">
                         <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
-                        이미지를 업로드하거나 웹캠을 사용하세요
+                        이미지를 업로드하거나 샘플을 선택하세요
                     </div>
                 </div>
                 <div class="upload-area">
@@ -388,6 +388,12 @@
                         📁 파일 업로드
                         <input type="file" id="file1" accept="image/*">
                     </label>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="loadSampleImage1('animal')">🦁 동물</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('face')">👤 얼굴</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">🎨 패턴</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('meme')">😂 밈</button>
+                    </div>
                     <div class="webcam-buttons">
                         <button class="btn-primary" id="startWebcam" onclick="startWebcam()">📷 웹캠 켜기</button>
                         <button class="btn-secondary" id="captureWebcam" onclick="captureWebcam()" style="display: none;">✓ 촬영</button>
@@ -628,6 +634,102 @@
             image.src = canvas.toDataURL();
         }
 
+        // 이미지 1용 샘플 이미지 로드
+        function loadSampleImage1(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+
+            if (type === 'animal') {
+                ctx.fillStyle = '#fdb813';
+                ctx.beginPath();
+                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#f5a623';
+                ctx.beginPath();
+                ctx.arc(200, 150, 60, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(180, 130, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(220, 130, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(200, 150, 5, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (type === 'face') {
+                ctx.fillStyle = '#f4a460';
+                ctx.beginPath();
+                ctx.arc(200, 150, 70, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(175, 120, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(225, 120, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(200, 160, 20, 0, Math.PI);
+                ctx.stroke();
+            } else if (type === 'pattern') {
+                ctx.fillStyle = '#667eea';
+                for (let i = 0; i < 10; i++) {
+                    for (let j = 0; j < 10; j++) {
+                        if ((i + j) % 2 === 0) {
+                            ctx.fillRect(i * 40, j * 30, 40, 30);
+                        }
+                    }
+                }
+
+                const gradient = ctx.createRadialGradient(200, 150, 10, 200, 150, 100);
+                gradient.addColorStop(0, 'rgba(255, 192, 203, 0.5)');
+                gradient.addColorStop(1, 'rgba(255, 20, 147, 0.8)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(200, 150, 100, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (type === 'meme') {
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(170, 120, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(230, 120, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(200, 160, 30, 0, Math.PI);
+                ctx.stroke();
+            }
+
+            const image = new Image();
+            image.onload = () => {
+                img1 = image;
+                displayImage(image, 'container1', 'img1', 'placeholder1');
+                updateBlend();
+            };
+            image.src = canvas.toDataURL();
+        }
+
         // 웹캠 함수들
         async function startWebcam() {
             try {
@@ -643,7 +745,22 @@
                 webcamActive = true;
                 canvasStream = stream;
             } catch (err) {
-                const errorMsg = `웹캠 접근 오류: ${err.name}\n\n${err.message}\n\n해결방법:\n1. 브라우저 권한 설정 확인\n2. HTTPS 연결 확인\n3. 대신 파일을 업로드해주세요`;
+                let errorMsg = `웹캠 접근 오류\n\n`;
+
+                if (err.name === 'NotFoundError') {
+                    errorMsg += `이 환경에서는 카메라를 사용할 수 없습니다.\n\n`;
+                    errorMsg += `대신 다음 방법을 사용하세요:\n`;
+                    errorMsg += `• 샘플 이미지 버튼으로 빠르게 시작\n`;
+                    errorMsg += `• 파일 업로드로 원하는 이미지 사용`;
+                } else if (err.name === 'NotAllowedError') {
+                    errorMsg += `카메라 접근 권한을 거부했습니다.\n\n`;
+                    errorMsg += `브라우저 권한 설정을 확인하거나\n`;
+                    errorMsg += `파일 업로드 또는 샘플 이미지를 사용해주세요.`;
+                } else {
+                    errorMsg += `${err.name}: ${err.message}\n\n`;
+                    errorMsg += `파일 업로드 또는 샘플 이미지를 사용해주세요.`;
+                }
+
                 alert(errorMsg);
                 console.error('웹캠 에러:', err);
             }
