@@ -72,6 +72,8 @@
     .measure-cell .val { color: #7c3aed; font-weight: 900; margin-top: 2px; }
     .measure-cell .val.empty { color: #c4b5fd; }
     .measure-cell svg { display: block; margin: 2px auto 0; }
+    .measure-num { font-size: 0.62rem; color: #a855f7; margin-top: 2px; }
+    .ref-table td .measure-num { color: #94a3b8; }
     .part-label { font-size: 0.78rem; font-weight: 700; color: #5b21b6; margin: 10px 0 4px; }
     .progress-line { text-align: center; font-size: 0.82rem; color: #475569; font-weight: 700; margin-top: 10px; }
 
@@ -135,7 +137,7 @@
             <p>미리 작곡해 둔 짧은 음악 조각들이 표에 담겨 있습니다. 주사위 2개를 던져 나온 눈의 합으로, 16마디 전체를 채워 나만의 곡을 완성해 보세요.</p>
             <p><b>여러 번 굴려 보면서, 어떤 합이 자주 나오고 어떤 합이 드문지 관찰해 보세요.</b> 그리고 아무렇게나 골라도 곡이 이상하게 들리지 않는 이유도 함께 생각해 보세요.</p>
         </div>
-        <p class="note-line">🎵 실제 모차르트의 K.516f 악보 음표를 그대로 재현한 것은 아닙니다. 이 도구는 5음 음계(펜타토닉)로 176개의 짧은 음악 조각을 자동 생성해서, 어떤 조합으로 이어 붙여도 자연스럽게 들리도록 만들었습니다 — "여러 조각이 서로 잘 어울리도록 미리 설계한다"는 원곡의 핵심 아이디어는 그대로 살렸습니다.</p>
+        <p class="note-line">🎵 실제 모차르트의 K.516f 마디 배치표(제1부·제2부)와 176개 마디의 실제 음표(높은음자리표·낮은음자리표)를 그대로 사용합니다. 그래서 예를 들어 1마디에서 합이 4가 나오면 항상 원곡의 69번 마디가 그대로 연주됩니다.</p>
     </div>
 
     <div class="card">
@@ -227,66 +229,87 @@
     </div>
 </div>
 
+<script src="mozart-notes-data.js"></script>
 <script>
-    // ---- 결정론적 의사난수 (mulberry32): 같은 (마디, 합)에는 항상 같은 음악 조각을 생성 ----
-    function mulberry32(seed) {
-        return function () {
-            seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-            let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-        };
-    }
-
-    // 5음 음계(펜타토닉) — 어떤 순서로 이어붙여도 어색하지 않게 들리는 성질을 이용
-    const PENTATONIC = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5'];
-    const NOTE_FREQ = { C4: 261.63, D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.00, C5: 523.25, D5: 587.33, E5: 659.25 };
-
-    function generateMotif(position, sum) {
-        const rng = mulberry32(position * 100 + sum);
-        const notes = [];
-        for (let i = 0; i < 4; i++) notes.push(PENTATONIC[Math.floor(rng() * PENTATONIC.length)]);
-        // 각 부(Theil)의 마지막 마디(8, 16)는 으뜸음(C)으로 끝나 종지감을 준다
-        if (position === 8 || position === 16) notes[3] = 'C4';
-        return notes;
-    }
-
+    // ---- 실제 모차르트 표에서 (마디 자리, 주사위 합) -> 원곡 마디 번호 -> 음표 ----
     const TABLE = {};
     for (let p = 1; p <= 16; p++) {
         TABLE[p] = {};
-        for (let s = 2; s <= 12; s++) TABLE[p][s] = generateMotif(p, s);
+        const part = p <= 8 ? MOZART_TABLES.first : MOZART_TABLES.second;
+        const col = p <= 8 ? p - 1 : p - 9;
+        for (let s = 2; s <= 12; s++) {
+            const measureNum = part[s - 2][col];
+            TABLE[p][s] = { measureNum, notes: MOZART_NOTES[measureNum] };
+        }
     }
 
-    // ---- 미니 악보(오선보) 그리기 ----
+    // ---- 음이름 -> 오선보 위치 / 주파수 ----
     const NATURAL_INDEX = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
-    function noteStepIndex(note) {
-        return parseInt(note.slice(1)) * 7 + NATURAL_INDEX[note[0]];
+    const SEMITONE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    function parsePitch(p) {
+        const sharp = p.includes('#');
+        const letter = p[0].toUpperCase();
+        const octave = parseInt(p.slice(sharp ? 2 : 1));
+        return { letter, sharp, octave };
     }
-    const REF_STEP = noteStepIndex('E4'); // 오선보 맨 아래 줄
-    function noteY(note) {
-        return 32 - (noteStepIndex(note) - REF_STEP) * 4;
+    function noteStepIndex(p) {
+        const { letter, octave } = parsePitch(p);
+        return octave * 7 + NATURAL_INDEX[letter];
     }
-    function renderMiniStaffSVG(notes) {
-        const w = 58, h = 48;
-        let svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">`;
-        for (let i = 0; i < 5; i++) {
-            const y = i * 8 + 6;
-            svg += `<line x1="2" y1="${y}" x2="${w - 2}" y2="${y}" stroke="#94a3b8" stroke-width="0.7"/>`;
+    function noteFreq(p) {
+        const { letter, sharp, octave } = parsePitch(p);
+        const semitoneAbs = octave * 12 + SEMITONE[letter] + (sharp ? 1 : 0);
+        return 440 * Math.pow(2, (semitoneAbs - (4 * 12 + 9)) / 12); // A4 = 440Hz 기준
+    }
+
+    // ---- 미니 악보(그랜드 스태프: 높은음자리표 + 낮은음자리표) 그리기 ----
+    const TREBLE_BOTTOM_Y = 60, BASS_BOTTOM_Y = 116; // 오프셋 20 포함
+    const TREBLE_REF = noteStepIndex('E4'), BASS_REF = noteStepIndex('G2');
+    const TREBLE_TOP = 28, BASS_TOP = 84;
+    function trebleY(p) { return TREBLE_BOTTOM_Y - (noteStepIndex(p) - TREBLE_REF) * 4; }
+    function bassY(p) { return BASS_BOTTOM_Y - (noteStepIndex(p) - BASS_REF) * 4; }
+
+    function drawLedgers(parts, x, y, staffTop, staffBottom) {
+        if (y < staffTop - 1) {
+            for (let ly = staffTop - 8; ly >= y - 1; ly -= 8) parts.push(`<line x1="${x - 5}" y1="${ly}" x2="${x + 5}" y2="${ly}" stroke="#94a3b8" stroke-width="0.7"/>`);
+        } else if (y > staffBottom + 1) {
+            for (let ly = staffBottom + 8; ly <= y + 1; ly += 8) parts.push(`<line x1="${x - 5}" y1="${ly}" x2="${x + 5}" y2="${ly}" stroke="#94a3b8" stroke-width="0.7"/>`);
         }
-        const stepX = (w - 14) / Math.max(1, notes.length - 1);
-        notes.forEach((n, i) => {
-            const x = 8 + i * stepX;
-            const y = noteY(n) + 6;
-            if (y > 38 || y < 6) {
-                svg += `<line x1="${x - 5}" y1="${y}" x2="${x + 5}" y2="${y}" stroke="#5b21b6" stroke-width="0.7"/>`;
-            }
-            const stemUp = y > 22;
-            const stemY2 = stemUp ? y - 18 : y + 18;
-            svg += `<line x1="${x + (stemUp ? 3.6 : -3.6)}" y1="${y}" x2="${x + (stemUp ? 3.6 : -3.6)}" y2="${stemY2}" stroke="#5b21b6" stroke-width="1"/>`;
-            svg += `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="2.8" fill="#5b21b6"/>`;
+    }
+    function drawRest(parts, x, midY) {
+        parts.push(`<path d="M ${x - 2} ${midY - 7} q 5 3 0 7 q -5 3 0 7" stroke="#94a3b8" stroke-width="1.3" fill="none" stroke-linecap="round"/>`);
+    }
+    function renderClef(parts, entries, yFn, staffTop, staffBottom, startX, stepX) {
+        entries.forEach((entry, i) => {
+            const x = startX + i * stepX;
+            if (typeof entry[0] === 'number') { drawRest(parts, x, (staffTop + staffBottom) / 2); return; }
+            const pitches = Array.isArray(entry[0]) ? entry[0] : [entry[0]];
+            const ys = pitches.map(yFn);
+            pitches.forEach((p, idx) => {
+                drawLedgers(parts, x, ys[idx], staffTop, staffBottom);
+                parts.push(`<ellipse cx="${x}" cy="${ys[idx]}" rx="3.2" ry="2.5" fill="#5b21b6"/>`);
+                if (p.includes('#')) parts.push(`<text x="${x - 9}" y="${ys[idx] + 3}" font-size="7" fill="#5b21b6">♯</text>`);
+            });
+            const stemUp = (ys.reduce((a, b) => a + b, 0) / ys.length) > (staffTop + staffBottom) / 2;
+            const sx = x + (stemUp ? 3 : -3);
+            const sy1 = stemUp ? Math.min(...ys) : Math.max(...ys);
+            const sy2 = stemUp ? sy1 - 16 : sy1 + 16;
+            parts.push(`<line x1="${sx}" y1="${sy1}" x2="${sx}" y2="${sy2}" stroke="#5b21b6" stroke-width="1"/>`);
         });
-        svg += `</svg>`;
-        return svg;
+    }
+    function renderMiniStaffSVG(measureData) {
+        const w = 64, h = 132;
+        const treble = (measureData && measureData.treble) || [];
+        const bass = (measureData && measureData.bass) || [];
+        const n = Math.max(treble.length, bass.length, 1);
+        const stepX = (w - 14) / Math.max(1, n - 1);
+        const startX = 7;
+        const parts = [];
+        for (let i = 0; i < 5; i++) parts.push(`<line x1="2" y1="${i * 8 + TREBLE_TOP}" x2="${w - 2}" y2="${i * 8 + TREBLE_TOP}" stroke="#94a3b8" stroke-width="0.7"/>`);
+        for (let i = 0; i < 5; i++) parts.push(`<line x1="2" y1="${i * 8 + BASS_TOP}" x2="${w - 2}" y2="${i * 8 + BASS_TOP}" stroke="#94a3b8" stroke-width="0.7"/>`);
+        renderClef(parts, treble, trebleY, TREBLE_TOP, TREBLE_BOTTOM_Y, startX, stepX);
+        renderClef(parts, bass, bassY, BASS_TOP, BASS_BOTTOM_Y, startX, stepX);
+        return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">${parts.join('')}</svg>`;
     }
 
     function renderRefTables() {
@@ -296,7 +319,8 @@
             for (let s = 2; s <= 12; s++) {
                 html += `<tr><td class="sum-label">${s}</td>`;
                 for (let i = start; i < start + 8; i++) {
-                    html += `<td id="ref-${i}-${s}">${renderMiniStaffSVG(TABLE[i][s])}</td>`;
+                    const { measureNum, notes } = TABLE[i][s];
+                    html += `<td id="ref-${i}-${s}">${renderMiniStaffSVG(notes)}<div class="measure-num">#${measureNum}</div></td>`;
                 }
                 html += '</tr>';
             }
@@ -330,7 +354,8 @@
                 const cell = document.createElement('div');
                 cell.className = 'measure-cell' + (chosen[i] !== undefined ? ' filled' : '') + (i === currentPosition ? ' current' : '');
                 if (chosen[i] !== undefined) {
-                    cell.innerHTML = `<div class="idx">${i}마디 · 합 ${chosen[i]}</div>${renderMiniStaffSVG(TABLE[i][chosen[i]])}`;
+                    const { measureNum, notes } = TABLE[i][chosen[i]];
+                    cell.innerHTML = `<div class="idx">${i}마디 · 합 ${chosen[i]}</div>${renderMiniStaffSVG(notes)}<div class="measure-num">원곡 #${measureNum}</div>`;
                 } else {
                     cell.innerHTML = `<div class="idx">${i}마디</div><div class="val empty">—</div>`;
                 }
@@ -402,17 +427,33 @@
         osc.start(startTime);
         osc.stop(startTime + duration);
     }
+    const BEAT_SEC = 0.4; // 4분음표 1개의 길이
+    function durationSec(denom) { return (4 / denom) * BEAT_SEC; }
+
+    function scheduleVoice(ctx, entries, startTime) {
+        let t = startTime;
+        entries.forEach(entry => {
+            if (typeof entry[0] === 'number') { t += durationSec(entry[0]); return; }
+            const dur = durationSec(entry[1]);
+            const pitches = Array.isArray(entry[0]) ? entry[0] : [entry[0]];
+            pitches.forEach(p => playNote(ctx, noteFreq(p), t, dur));
+            t += dur;
+        });
+        return t;
+    }
+
     function playComposition() {
         if (Object.keys(chosen).length < 16) return;
         try {
             const ctx = ensureAudioCtx();
-            const noteDur = 0.3;
             let t = ctx.currentTime + 0.08;
             for (let p = 1; p <= 16; p++) {
-                const notes = TABLE[p][chosen[p]];
-                notes.forEach(n => { playNote(ctx, NOTE_FREQ[n], t, noteDur); t += noteDur; });
+                const { notes } = TABLE[p][chosen[p]];
+                const tTreble = scheduleVoice(ctx, notes.treble || [], t);
+                const tBass = scheduleVoice(ctx, notes.bass || [], t);
+                t = Math.max(tTreble, tBass);
             }
-            document.getElementById('statusLine').textContent = '♪ 재생 중 — 16마디, 총 ' + (16 * 4) + '개 음을 연주합니다.';
+            document.getElementById('statusLine').textContent = '♪ 재생 중 — 실제 모차르트 K.516f 음표로 16마디를 연주합니다.';
             setTimeout(() => { document.getElementById('statusLine').textContent = ''; }, (t - ctx.currentTime + 0.5) * 1000);
         } catch (e) {
             document.getElementById('statusLine').textContent = '이 브라우저에서는 오디오 재생을 지원하지 않습니다: ' + e.message;
