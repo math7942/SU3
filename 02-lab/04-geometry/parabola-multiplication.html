@@ -177,7 +177,7 @@
     const warnLine = document.getElementById('warnLine');
 
     // 좌표계: x는 [-11,11], y는 [-6,108] (a,b가 -10~10 범위이므로 a^2 최대 100)
-    const X_MIN = -11, X_MAX = 11, Y_MIN = -6, Y_MAX = 108;
+    const X_MIN = -11, X_MAX = 11, Y_MIN = -20, Y_MAX = 108;
 
     function worldToScreen(x, y, w, h) {
         const sx = (w - 40) / (X_MAX - X_MIN);
@@ -261,27 +261,41 @@
         const degenerate = Math.abs(a + b) < 1e-6;
         const hung = hangString.checked;
 
+        function dropWithWeight(pt) {
+            const [px1, py1] = worldToScreen(pt[0], pt[1], w, h);
+            const [px2, py2] = worldToScreen(pt[0], Y_MIN, w, h);
+            ctx.beginPath();
+            ctx.strokeStyle = '#78716c'; ctx.lineWidth = 1.5;
+            ctx.moveTo(px1, py1); ctx.lineTo(px2, py2);
+            ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(px2, py2, 4, 6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e293b'; ctx.fill();
+        }
+
         if (hung) {
             if (!degenerate) {
-                // 실(직선) — 캔버스 좌우 끝까지 연장
-                const slope = a - b;
                 const intercept = a * b;
-                const lineAt = (xv) => slope * xv + intercept;
-                const [lx, ly] = worldToScreen(X_MIN, lineAt(X_MIN), w, h);
-                const [rx, ry] = worldToScreen(X_MAX, lineAt(X_MAX), w, h);
+                // 실(직선) — 두 점 A, B 사이만 팽팽하게 이은 실선 (캔버스 끝까지 연장하지 않음)
+                const [ax, ay] = worldToScreen(pA[0], pA[1], w, h);
+                const [bx, by] = worldToScreen(pB[0], pB[1], w, h);
                 ctx.beginPath();
-                ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
-                ctx.moveTo(lx, ly); ctx.lineTo(rx, ry);
-                ctx.stroke(); ctx.setLineDash([]);
+                ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.5;
+                ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+                ctx.stroke();
 
-                // y절편 점
-                if (intercept >= Y_MIN && intercept <= Y_MAX) {
+                // 두 점에서 중력 방향(수직 아래)으로 실이 이어져 추(무게)가 매달린 모습
+                dropWithWeight(pA);
+                dropWithWeight(pB);
+
+                // y절편 점 — 실이 실제로 y축을 가로지르는 경우(0이 두 점의 x좌표 사이일 때)에만 표시
+                const crossesAxis = Math.min(pA[0], pB[0]) <= 0 && Math.max(pA[0], pB[0]) >= 0;
+                if (crossesAxis && intercept >= Y_MIN && intercept <= Y_MAX) {
                     const [ix, iy] = worldToScreen(0, intercept, w, h);
                     ctx.beginPath(); ctx.arc(ix, iy, 6, 0, 7);
                     ctx.fillStyle = '#f59e0b'; ctx.fill();
                     ctx.strokeStyle = '#92400e'; ctx.lineWidth = 1.5; ctx.stroke();
                 }
-                warnLine.textContent = '';
+                warnLine.textContent = crossesAxis ? '' : 'ℹ️ 두 점이 같은 쪽에 있어서 실이 y축을 가로지르지 않아요 — 계산값은 여전히 유효해요.';
             } else {
                 warnLine.textContent = '⚠️ a = −b이면 두 점이 같아져서 실을 걸 수 없어요. 슬라이더를 조금 움직여 보세요.';
             }
