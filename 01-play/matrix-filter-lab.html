@@ -526,6 +526,7 @@
                     <div class="info-box">
                         <strong>🎯 미션:</strong> "가장 웃기거나 이상한 필터를 만들어보세요!" 톱3는 명예의 전당에 올라갑니다.
                     </div>
+                    <button class="btn-primary" style="width: 100%; margin-top: 12px;" onclick="saveCustomFilter()">💾 이 필터 저장하기 (명예의 전당에 올릴 수 있어요!)</button>
                 </div>
             </div>
 
@@ -553,18 +554,11 @@
                 <div class="result-message" id="resultMessage"></div>
 
                 <div class="rank-board" id="rankBoard">
-                    <h4>🏆 명예의 전당 (TOP 3 창의적인 필터)</h4>
-                    <div class="rank-item">
-                        <span class="rank-num">1위</span>
-                        <span>가장 황당한 필터 | 참가자 A</span>
-                    </div>
-                    <div class="rank-item">
-                        <span class="rank-num">2위</span>
-                        <span>가장 재미있는 필터 | 참가자 B</span>
-                    </div>
-                    <div class="rank-item">
-                        <span class="rank-num">3위</span>
-                        <span>가장 독창적인 필터 | 참가자 C</span>
+                    <h4>🏆 명예의 전당 (최근 TOP 3)</h4>
+                    <div id="rankContent">
+                        <div class="rank-item" style="color: #94a3b8; text-align: center; padding: 20px;">
+                            아직 저장된 필터가 없습니다. Stage 2에서 필터를 만들고 저장해보세요!
+                        </div>
                     </div>
                 </div>
             </div>
@@ -680,6 +674,66 @@
         let currentFilter = 'blur';
         let customKernel = [[0, 0, 0], [0, 1, 0], [0, 0, 0]];
         let quizFilter = null;
+        let savedFilters = [];
+
+        // localStorage에서 저장된 필터 로드
+        function loadSavedFilters() {
+            const saved = localStorage.getItem('matrixFilterHallOfFame');
+            if (saved) {
+                savedFilters = JSON.parse(saved);
+            }
+        }
+
+        // 필터 저장 및 순위 업데이트
+        function saveCustomFilter() {
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            const filterStr = customKernel.flat().join(',');
+
+            const entry = {
+                kernel: customKernel.map(row => [...row]),
+                timestamp: timestamp,
+                id: Date.now()
+            };
+
+            savedFilters.unshift(entry);
+            if (savedFilters.length > 10) {
+                savedFilters.pop();
+            }
+
+            localStorage.setItem('matrixFilterHallOfFame', JSON.stringify(savedFilters));
+            updateRankBoard();
+
+            // 피드백
+            alert('✨ 필터가 명예의 전당에 저장되었습니다!');
+        }
+
+        // 명예의 전당 업데이트
+        function updateRankBoard() {
+            const rankContent = document.getElementById('rankContent');
+            rankContent.innerHTML = '';
+
+            if (savedFilters.length === 0) {
+                rankContent.innerHTML = '<div class="rank-item" style="color: #94a3b8; text-align: center; padding: 20px;">아직 저장된 필터가 없습니다.</div>';
+                return;
+            }
+
+            const topFilters = savedFilters.slice(0, 3);
+            topFilters.forEach((filter, idx) => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const kernelStr = filter.kernel.map(row => `[${row.join(' ')}]`).join(' ');
+
+                const item = document.createElement('div');
+                item.className = 'rank-item';
+                item.innerHTML = `
+                    <span class="rank-num">${medals[idx]}</span>
+                    <div style="flex: 1;">
+                        <div><strong>${kernelStr}</strong></div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">${filter.timestamp}</div>
+                    </div>
+                `;
+                rankContent.appendChild(item);
+            });
+        }
 
         // Stage 1 초기화
         function initStage1() {
@@ -758,6 +812,10 @@
                 btn.addEventListener('click', () => selectAnswer(choice));
                 quizChoices.appendChild(btn);
             });
+
+            // 명예의 전당 표시
+            updateRankBoard();
+            document.getElementById('rankBoard').classList.add('show');
         }
 
         function getFilterFormula(filter) {
@@ -822,7 +880,10 @@
         }
 
         // 초기화
-        window.addEventListener('load', () => goToStage(1));
+        window.addEventListener('load', () => {
+            loadSavedFilters();
+            goToStage(1);
+        });
     </script>
 </body>
 </html>
