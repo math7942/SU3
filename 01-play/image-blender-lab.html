@@ -389,10 +389,10 @@
                         <input type="file" id="file1" accept="image/*">
                     </label>
                     <div class="preset-buttons">
-                        <button class="preset-btn" onclick="loadSampleImage1('animal')">🦁 동물</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('face')">👤 얼굴</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">🎨 패턴</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('meme')">😂 밈</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('animal')">😺 고양이</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('face')">👤 사람</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">🤖 로봇</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('meme')">😄 웃음</button>
                     </div>
                     <div class="webcam-buttons">
                         <button class="btn-primary" id="startWebcam" onclick="startWebcam()">📷 웹캠 켜기</button>
@@ -417,10 +417,10 @@
                         <input type="file" id="file2" accept="image/*">
                     </label>
                     <div class="preset-buttons">
-                        <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 동물</button>
-                        <button class="preset-btn" onclick="loadSampleImage('face')">👤 얼굴</button>
-                        <button class="preset-btn" onclick="loadSampleImage('pattern')">🎨 패턴</button>
-                        <button class="preset-btn" onclick="loadSampleImage('meme')">😂 밈</button>
+                        <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 사자</button>
+                        <button class="preset-btn" onclick="loadSampleImage('face')">🌻 해바라기</button>
+                        <button class="preset-btn" onclick="loadSampleImage('pattern')">🌙 밤하늘</button>
+                        <button class="preset-btn" onclick="loadSampleImage('meme')">🌈 무지개</button>
                     </div>
                     <div class="hint-box">
                         <strong>💡 팁:</strong> 같은 크기의 이미지를 사용하면 더 좋은 결과가 나옵니다!
@@ -527,7 +527,7 @@
             }
         });
 
-        // 샘플 이미지 로드
+        // 샘플 이미지 로드 (배경/동물 중심)
         function loadSampleImage(type) {
             const canvas = document.createElement('canvas');
             canvas.width = 400;
@@ -535,94 +535,125 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                // 간단한 사자 그리기
+                // 사자 (배경용 대형)
                 ctx.fillStyle = '#fdb813';
                 ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.arc(200, 200, 100, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 갈기
                 ctx.fillStyle = '#f5a623';
-                ctx.beginPath();
-                ctx.arc(200, 150, 60, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 눈
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(180, 130, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(220, 130, 8, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 코
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(200, 150, 5, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (type === 'face') {
-                // 얼굴 그리기
-                ctx.fillStyle = '#f4a460';
-                ctx.beginPath();
-                ctx.arc(200, 150, 70, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 눈
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(175, 120, 10, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(225, 120, 10, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 입
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(200, 160, 20, 0, Math.PI);
-                ctx.stroke();
-            } else if (type === 'pattern') {
-                // 기하학 패턴
-                ctx.fillStyle = '#667eea';
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 10; j++) {
-                        if ((i + j) % 2 === 0) {
-                            ctx.fillRect(i * 40, j * 30, 40, 30);
-                        }
-                    }
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2;
+                    const x = 200 + Math.cos(angle) * 100;
+                    const y = 200 + Math.sin(angle) * 100;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 25, 0, Math.PI * 2);
+                    ctx.fill();
                 }
 
-                // 원형 그라데이션
-                const gradient = ctx.createRadialGradient(200, 150, 10, 200, 150, 100);
-                gradient.addColorStop(0, 'rgba(255, 192, 203, 0.5)');
-                gradient.addColorStop(1, 'rgba(255, 20, 147, 0.8)');
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(200, 150, 100, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (type === 'meme') {
-                // 웃는 얼굴
-                ctx.fillStyle = '#ffeb3b';
-                ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
-                ctx.fill();
-
                 // 눈
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(170, 120, 12, 0, Math.PI * 2);
+                ctx.arc(180, 180, 12, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(230, 120, 12, 0, Math.PI * 2);
+                ctx.arc(220, 180, 12, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (type === 'face') {
+                // 해바라기 (배경용)
+                // 꽃잎
+                ctx.fillStyle = '#ffd700';
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const x = 200 + Math.cos(angle) * 80;
+                    const y = 150 + Math.sin(angle) * 80;
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, 30, 50, angle, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 꽃 중심
+                ctx.fillStyle = '#8b4513';
+                ctx.beginPath();
+                ctx.arc(200, 150, 40, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 입 (웃음)
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 4;
+                // 꽃 무늬
+                ctx.fillStyle = '#654321';
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2;
+                    const x = 200 + Math.cos(angle) * 20;
+                    const y = 150 + Math.sin(angle) * 20;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 줄기
+                ctx.strokeStyle = '#228b22';
+                ctx.lineWidth = 15;
                 ctx.beginPath();
-                ctx.arc(200, 160, 30, 0, Math.PI);
+                ctx.moveTo(200, 190);
+                ctx.lineTo(200, 300);
                 ctx.stroke();
+            } else if (type === 'pattern') {
+                // 우주/밤하늘 (배경용)
+                ctx.fillStyle = '#001a4d';
+                ctx.fillRect(0, 0, 400, 300);
+
+                // 별들
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 50; i++) {
+                    const x = Math.random() * 400;
+                    const y = Math.random() * 300;
+                    const size = Math.random() * 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // 달
+                ctx.fillStyle = '#fffacd';
+                ctx.beginPath();
+                ctx.arc(350, 80, 40, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 달 크레이터
+                ctx.fillStyle = '#e0e0c0';
+                ctx.beginPath();
+                ctx.arc(330, 70, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(360, 100, 6, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (type === 'meme') {
+                // 무지개 (배경용)
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+                const centerY = 200;
+
+                for (let i = 0; i < colors.length; i++) {
+                    ctx.strokeStyle = colors[i];
+                    ctx.lineWidth = 25;
+                    ctx.beginPath();
+                    ctx.arc(200, centerY + 50, 120 - i * 15, 0, Math.PI);
+                    ctx.stroke();
+                }
+
+                // 해
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(80, 80, 40, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 구름
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(300, 90, 25, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(330, 90, 30, 0, Math.PI * 2);
+                ctx.fill();
             }
 
             const image = new Image();
@@ -634,7 +665,7 @@
             image.src = canvas.toDataURL();
         }
 
-        // 이미지 1용 샘플 이미지 로드
+        // 이미지 1용 샘플 이미지 로드 (얼굴 중심)
         function loadSampleImage1(type) {
             const canvas = document.createElement('canvas');
             canvas.width = 400;
@@ -642,82 +673,143 @@
             const ctx = canvas.getContext('2d');
 
             if (type === 'animal') {
-                ctx.fillStyle = '#fdb813';
+                // 고양이 얼굴
+                ctx.fillStyle = '#ffa500';
                 ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.arc(200, 150, 70, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#f5a623';
+                // 귀
+                ctx.fillStyle = '#ff8c00';
                 ctx.beginPath();
-                ctx.arc(200, 150, 60, 0, Math.PI * 2);
+                ctx.moveTo(140, 95);
+                ctx.lineTo(130, 40);
+                ctx.lineTo(150, 80);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(260, 95);
+                ctx.lineTo(270, 40);
+                ctx.lineTo(250, 80);
+                ctx.fill();
+
+                // 눈
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(170, 130, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(230, 130, 15, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(180, 130, 8, 0, Math.PI * 2);
+                ctx.arc(170, 135, 8, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(220, 130, 8, 0, Math.PI * 2);
+                ctx.arc(230, 135, 8, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#000';
+                // 코
+                ctx.fillStyle = '#ff69b4';
                 ctx.beginPath();
-                ctx.arc(200, 150, 5, 0, Math.PI * 2);
+                ctx.arc(200, 160, 6, 0, Math.PI * 2);
                 ctx.fill();
+
+                // 입
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(200, 160);
+                ctx.lineTo(200, 175);
+                ctx.stroke();
             } else if (type === 'face') {
+                // 사람 얼굴
                 ctx.fillStyle = '#f4a460';
                 ctx.beginPath();
                 ctx.arc(200, 150, 70, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#000';
+                // 눈
+                ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(175, 120, 10, 0, Math.PI * 2);
+                ctx.arc(175, 125, 12, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(225, 120, 10, 0, Math.PI * 2);
+                ctx.arc(225, 125, 12, 0, Math.PI * 2);
                 ctx.fill();
 
+                ctx.fillStyle = '#8b4513';
+                ctx.beginPath();
+                ctx.arc(175, 125, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(225, 125, 7, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 입
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(200, 160, 20, 0, Math.PI);
+                ctx.arc(200, 165, 25, 0, Math.PI);
+                ctx.stroke();
+
+                // 코
+                ctx.beginPath();
+                ctx.moveTo(200, 140);
+                ctx.lineTo(200, 155);
                 ctx.stroke();
             } else if (type === 'pattern') {
-                ctx.fillStyle = '#667eea';
-                for (let i = 0; i < 10; i++) {
-                    for (let j = 0; j < 10; j++) {
-                        if ((i + j) % 2 === 0) {
-                            ctx.fillRect(i * 40, j * 30, 40, 30);
-                        }
-                    }
-                }
-
-                const gradient = ctx.createRadialGradient(200, 150, 10, 200, 150, 100);
-                gradient.addColorStop(0, 'rgba(255, 192, 203, 0.5)');
-                gradient.addColorStop(1, 'rgba(255, 20, 147, 0.8)');
-                ctx.fillStyle = gradient;
+                // 로봇/마스크 얼굴
+                ctx.fillStyle = '#c0c0c0';
                 ctx.beginPath();
-                ctx.arc(200, 150, 100, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (type === 'meme') {
-                ctx.fillStyle = '#ffeb3b';
-                ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.arc(200, 150, 70, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 선글라스 같은 눈
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(170, 120, 12, 0, Math.PI * 2);
+                ctx.arc(170, 130, 15, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(230, 120, 12, 0, Math.PI * 2);
+                ctx.arc(230, 130, 15, 0, Math.PI * 2);
                 ctx.fill();
 
+                ctx.fillStyle = '#4da6ff';
+                ctx.beginPath();
+                ctx.arc(170, 130, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(230, 130, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 입
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(180, 170);
+                ctx.lineTo(220, 170);
+                ctx.stroke();
+            } else if (type === 'meme') {
+                // 웃는 얼굴 (노란색)
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath();
+                ctx.arc(200, 150, 70, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 눈
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(175, 125, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(225, 125, 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 큰 웃음
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 4;
                 ctx.beginPath();
-                ctx.arc(200, 160, 30, 0, Math.PI);
+                ctx.arc(200, 160, 35, 0, Math.PI);
                 ctx.stroke();
             }
 
