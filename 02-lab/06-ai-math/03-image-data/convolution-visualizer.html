@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>합성곱(Convolution) 시각화</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background: #f5f3ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 30px 16px;
+        color: #1e1b4b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 14px; }
+    .back-link { font-size: 0.85rem; color: #7c3aed; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    .title-row { display: flex; justify-content: center; align-items: center; gap: 14px; position: relative; flex-wrap: wrap; }
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #6d28d9; font-size: 0.82rem; margin: 0; width: 100%; }
+    .next-btn {
+        position: absolute; right: 0; top: 0;
+        background: #7c3aed; color: white; border: none; border-radius: 8px;
+        padding: 8px 16px; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-decoration: none;
+    }
+
+    .mode-tabs { display: flex; justify-content: center; gap: 8px; }
+    .mode-tab {
+        border: 1px solid #ddd6fe; background: white; color: #6d28d9; border-radius: 8px;
+        padding: 7px 18px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit;
+    }
+    .mode-tab.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+
+    .cols { display: flex; gap: 14px; flex-wrap: wrap; }
+    .col { flex: 1 1 300px; min-width: 280px; display: flex; flex-direction: column; gap: 12px; }
+    .panel { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .panel h3 { margin: 0 0 10px; font-size: 0.85rem; color: #4c1d95; }
+
+    .select-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .select-row > div { flex: 1; min-width: 110px; }
+    .select-row label { display: block; font-size: 0.72rem; color: #6b7280; margin-bottom: 3px; }
+    .select-row select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ddd6fe; font-family: inherit; font-size: 0.8rem; }
+
+    .grid-caption { font-size: 0.75rem; color: #6b7280; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+    .zoom-btns { display: flex; gap: 4px; }
+    .zoom-btns button { border: 1px solid #ddd6fe; background: white; border-radius: 4px; width: 22px; height: 22px; cursor: pointer; font-weight: 700; }
+
+    #inputGridWrap { overflow: auto; max-height: 340px; }
+    #inputGrid { display: inline-grid; gap: 1px; background: #1e1b4b; padding: 1px; border-radius: 4px; }
+    .in-cell {
+        width: 26px; height: 26px; background: #ede9fe; color: #4c1d95;
+        display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700;
+        font-family: monospace;
+    }
+    .in-cell.pad { background: #fca5a5; color: #7f1d1d; }
+    .in-cell.window { outline: 2px solid #f59e0b; outline-offset: -2px; background: #fde68a; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+        flex: 1; border: none; border-radius: 8px; padding: 8px; font-weight: 700; font-size: 0.8rem;
+        cursor: pointer; color: white; font-family: inherit;
+    }
+    .btn-random { background: #8b5cf6; }
+    .btn-reset { background: #a1a1aa; }
+
+    .kernel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 10px; }
+    .kernel-cell {
+        aspect-ratio: 1; border-radius: 6px; background: #ede9fe; color: #4c1d95; border: 1px solid #ddd6fe;
+        display: flex; align-items: center; justify-content: center; font-family: monospace; font-weight: 700; font-size: 0.78rem;
+    }
+    .preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+    .preset-btn {
+        border: 1px solid #ddd6fe; background: #f9fafb; border-radius: 6px; padding: 6px 4px;
+        font-size: 0.72rem; font-weight: 700; color: #4c1d95; cursor: pointer; font-family: inherit;
+    }
+    .preset-btn.active { background: #7c3aed; color: white; border-color: #7c3aed; }
+
+    .playback-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; }
+    .play-btn {
+        border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;
+        background: #7c3aed; color: white; font-size: 1rem; display: flex; align-items: center; justify-content: center;
+    }
+    .play-btn.secondary { background: #ede9fe; color: #4c1d95; width: 34px; height: 34px; }
+    .speed-row { text-align: center; font-size: 0.75rem; color: #6b7280; }
+    #speedSlider { width: 100%; }
+
+    .compute-box { background: #f5f3ff; border-radius: 8px; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 0.76rem; color: #4c1d95; }
+    .compute-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
+    .compute-grid div { text-align: center; }
+    .compute-sum { text-align: center; font-weight: 900; border-top: 1px dashed #ddd6fe; padding-top: 6px; }
+    .compute-final { text-align: center; font-weight: 900; color: #7c3aed; font-size: 0.92rem; margin-top: 6px; }
+
+    #outputGrid { display: inline-grid; gap: 1px; background: #1e1b4b; padding: 1px; border-radius: 4px; }
+    .out-cell {
+        width: 26px; height: 26px; background: #fff; color: #1e1b4b;
+        display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; font-family: monospace;
+    }
+    .out-cell.done { background: #ddd6fe; }
+    .out-cell.current { background: #f59e0b; color: white; }
+    .out-cell.unset { color: #cbd5e1; }
+
+    .check-row { display: flex; gap: 14px; font-size: 0.78rem; color: #4c1d95; margin: 10px 0; flex-wrap: wrap; }
+    .check-row label { display: flex; align-items: center; gap: 5px; }
+
+    .btn-csv { background: #059669; margin-top: 6px; }
+
+    .info-box {
+        background: white; border-radius: 12px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        font-size: 0.8rem; color: #4c1d95; line-height: 1.7;
+    }
+    .info-box ol { margin: 6px 0 0; padding-left: 20px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #7c3aed; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← Ⅲ. 이미지 데이터 처리로 돌아가기</a>
+    <div class="title-row">
+        <h1>합성곱(Convolution) 시각화</h1>
+        <a class="next-btn" href="index.html">다음 단계 →</a>
+    </div>
+    <p class="subtitle">커널이 이미지를 순회하며 계산하는 과정을 체험하세요</p>
+
+    <div class="mode-tabs">
+        <button class="mode-tab" id="tabVector">벡터 모드</button>
+        <button class="mode-tab active" id="tabMatrix">행렬 모드</button>
+    </div>
+
+    <div class="cols">
+        <div class="col">
+            <div class="panel">
+                <h3>🎨 입력</h3>
+                <div class="select-row">
+                    <div><label>입력 크기</label><select id="sizeSelect"><option>5</option><option selected>9</option><option>11</option></select></div>
+                    <div><label>샘플 선택</label><select id="sampleSelect">
+                        <option value="gaussian">가우시안</option>
+                        <option value="checker">체크무늬</option>
+                        <option value="gradient">그라디언트</option>
+                        <option value="random">무작위</option>
+                    </select></div>
+                </div>
+                <div class="grid-caption">
+                    <span id="inputCaption">입력 행렬 [9×9]</span>
+                    <div class="zoom-btns"><button id="zoomOut">−</button><button id="zoomIn">+</button></div>
+                </div>
+                <div id="inputGridWrap"><div id="inputGrid"></div></div>
+                <div class="btn-row">
+                    <button class="btn btn-random" id="btnRandom">🎲 무작위</button>
+                    <button class="btn btn-reset" id="btnReset">↺ 리셋</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="panel">
+                <h3>🔍 커널 & 연산</h3>
+                <label style="font-size:0.72rem; color:#6b7280;">커널 크기: 3×3</label>
+                <div class="kernel-grid" id="kernelGrid"></div>
+                <div class="preset-grid">
+                    <button class="preset-btn" data-k="identity">항등</button>
+                    <button class="preset-btn active" data-k="blur">평균 블러</button>
+                    <button class="preset-btn" data-k="edgeH">엣지(가로)</button>
+                    <button class="preset-btn" data-k="edgeV">엣지(세로)</button>
+                    <button class="preset-btn" data-k="sharpen">샤프닝</button>
+                    <button class="preset-btn" data-k="laplacian">라플라시안</button>
+                    <button class="preset-btn" data-k="emboss">엠보싱</button>
+                </div>
+
+                <div class="playback-row">
+                    <button class="play-btn secondary" id="btnStepBack">⏮</button>
+                    <button class="play-btn" id="btnPlay">▶</button>
+                    <button class="play-btn secondary" id="btnStepFwd">⏭</button>
+                </div>
+                <div class="speed-row">재생 속도: <span id="speedLabel">1.0×</span><br><input type="range" id="speedSlider" min="0.5" max="4" step="0.5" value="1"></div>
+
+                <div class="compute-box">
+                    <div style="text-align:center; font-weight:700; margin-bottom:6px;">현재 계산 (입력 × 커널 = ?)</div>
+                    <div class="compute-grid" id="computeGrid"></div>
+                    <div class="compute-sum" id="computeSum"></div>
+                    <div class="compute-final" id="computeFinal"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="panel">
+                <h3>⚙️ 출력 & 설정</h3>
+                <div class="select-row">
+                    <div><label>패딩</label><select id="paddingSelect"><option value="0">0 패딩</option><option value="1">1 패딩</option></select></div>
+                    <div><label>스트라이드</label><select id="strideSelect"><option value="1">1</option><option value="2">2</option></select></div>
+                </div>
+                <div class="grid-caption"><span id="outputCaption">출력 행렬 [ ]</span></div>
+                <div id="inputGridWrap2" style="overflow:auto; max-height:260px;"><div id="outputGrid"></div></div>
+
+                <div class="check-row">
+                    <label><input type="checkbox" id="chkDivide" checked>커널 합으로 나누기</label>
+                    <label><input type="checkbox" id="chkClip" checked>0-255로 클리핑</label>
+                </div>
+                <button class="btn btn-csv" id="btnCsv">💾 CSV 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <b>🎯 패딩을 눈으로 확인해요</b>
+        <ol>
+            <li>커널이 테두리 밖을 나갈 수 없어서, 패딩이 없으면 가장자리 픽셀은 계산에서 덜 사용됩니다.</li>
+            <li>패딩은 입력 주변에 안 보이는 값(0)을 채워 커널이 가장자리 픽셀도 중심으로 계산하게 합니다.</li>
+            <li>왼쪽 입력 행렬의 점선 테두리가 패딩 칸입니다. 재생 버튼으로 커널이 어떻게 이동하는지 확인해 보세요.</li>
+        </ol>
+    </div>
+
+    <div class="nav-links">
+        <a href="kernel-filter-tool.html">← 컨볼루션 필터 체험 도구로</a>
+        <a href="index.html">Ⅲ단원 목록으로 →</a>
+    </div>
+</div>
+
+<script>
+    const KERNELS = {
+        identity: [0,0,0, 0,1,0, 0,0,0],
+        blur: [1,1,1, 1,1,1, 1,1,1],
+        edgeH: [-1,-1,-1, 0,0,0, 1,1,1],
+        edgeV: [-1,0,1, -1,0,1, -1,0,1],
+        sharpen: [0,-1,0, -1,5,-1, 0,-1,0],
+        laplacian: [0,1,0, 1,-4,1, 0,1,0],
+        emboss: [-2,-1,0, -1,1,1, 0,1,2],
+    };
+
+    let N = 9;
+    let inputMat = [];
+    let kernel = KERNELS.blur.slice();
+    let padding = 0, stride = 1;
+    let cellPx = 26;
+    let outRows = 0, outCols = 0;
+    let stepIndex = 0; // 0-based index into row-major output positions
+    let playing = false, playTimer = null;
+    let viewMode = 'matrix';
+
+    function generateSample(type, n) {
+        const m = [];
+        for (let r = 0; r < n; r++) {
+            const row = [];
+            for (let c = 0; c < n; c++) {
+                let v;
+                if (type === 'gaussian') {
+                    const cx = (n - 1) / 2, cy = (n - 1) / 2;
+                    const d2 = (r - cy) ** 2 + (c - cx) ** 2;
+                    v = Math.round(255 * Math.exp(-d2 / (2 * (n / 3) ** 2)));
+                } else if (type === 'checker') {
+                    v = (Math.floor(r / 2) + Math.floor(c / 2)) % 2 === 0 ? 220 : 30;
+                } else if (type === 'gradient') {
+                    v = Math.round((c / (n - 1)) * 255);
+                } else {
+                    v = Math.floor(Math.random() * 256);
+                }
+                row.push(v);
+            }
+            m.push(row);
+        }
+        return m;
+    }
+
+    function setN(n) {
+        N = n;
+        inputMat = generateSample(document.getElementById('sampleSelect').value, N);
+        recomputeAll();
+    }
+
+    function recomputeAll() {
+        outRows = Math.floor((N + 2 * padding - 3) / stride) + 1;
+        outCols = outRows;
+        stepIndex = 0;
+        document.getElementById('inputCaption').textContent = `입력 행렬 [${N}×${N}${padding ? ' → 패딩 ' + (N + 2 * padding) + '×' + (N + 2 * padding) : ''}]`;
+        document.getElementById('outputCaption').textContent = `출력 행렬 [ ${outRows}×${outCols} ]`;
+        renderInputGrid();
+        renderOutputGrid();
+        renderCompute();
+    }
+
+    function paddedGet(r, c) {
+        const rr = r - padding, cc = c - padding;
+        if (rr < 0 || cc < 0 || rr >= N || cc >= N) return 0;
+        return inputMat[rr][cc];
+    }
+
+    function outputPos(idx) {
+        const row = Math.floor(idx / outCols), col = idx % outCols;
+        return { row, col };
+    }
+
+    function computeCell(row, col) {
+        const baseR = row * stride, baseC = col * stride;
+        const kernelSum = kernel.reduce((s, v) => s + v, 0);
+        const divide = document.getElementById('chkDivide').checked;
+        const clip = document.getElementById('chkClip').checked;
+        let sum = 0;
+        const terms = [];
+        let ki = 0;
+        for (let dy = 0; dy < 3; dy++) {
+            for (let dx = 0; dx < 3; dx++) {
+                const val = paddedGet(baseR + dy, baseC + dx);
+                const k = kernel[ki++];
+                terms.push([val, k]);
+                sum += val * k;
+            }
+        }
+        let result = sum;
+        let divided = null;
+        if (divide && Math.abs(kernelSum) > 1e-6) { divided = sum / kernelSum; result = divided; }
+        let finalVal = Math.round(result);
+        if (clip) finalVal = Math.max(0, Math.min(255, finalVal));
+        return { terms, sum, kernelSum, divided, finalVal };
+    }
+
+    function renderInputGrid() {
+        const total = N + 2 * padding;
+        const grid = document.getElementById('inputGrid');
+        grid.style.gridTemplateColumns = `repeat(${total}, ${cellPx}px)`;
+        grid.innerHTML = '';
+        const { row: curRow, col: curCol } = outputPos(stepIndex);
+        const baseR = curRow * stride, baseC = curCol * stride;
+        for (let r = 0; r < total; r++) {
+            for (let c = 0; c < total; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'in-cell';
+                cell.style.width = cellPx + 'px'; cell.style.height = cellPx + 'px';
+                const isPad = r < padding || c < padding || r >= padding + N || c >= padding + N;
+                if (isPad) cell.classList.add('pad');
+                const inWindow = r >= baseR && r < baseR + 3 && c >= baseC && c < baseC + 3;
+                if (inWindow) cell.classList.add('window');
+                cell.textContent = paddedGet(r, c);
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    function renderOutputGrid() {
+        const grid = document.getElementById('outputGrid');
+        grid.style.gridTemplateColumns = `repeat(${outCols}, ${cellPx}px)`;
+        grid.innerHTML = '';
+        for (let i = 0; i < outRows * outCols; i++) {
+            const { row, col } = outputPos(i);
+            const cell = document.createElement('div');
+            cell.className = 'out-cell';
+            cell.style.width = cellPx + 'px'; cell.style.height = cellPx + 'px';
+            if (i < stepIndex) { cell.classList.add('done'); cell.textContent = computeCell(row, col).finalVal; }
+            else if (i === stepIndex) { cell.classList.add('current'); cell.textContent = computeCell(row, col).finalVal; }
+            else { cell.classList.add('unset'); cell.textContent = '?'; }
+            grid.appendChild(cell);
+        }
+    }
+
+    function renderCompute() {
+        const { row, col } = outputPos(stepIndex);
+        const { terms, sum, kernelSum, divided, finalVal } = computeCell(row, col);
+        const computeGrid = document.getElementById('computeGrid');
+        if (viewMode === 'matrix') {
+            computeGrid.style.display = 'grid';
+            computeGrid.innerHTML = terms.map(([v, k]) => `<div>${v} × ${k}<br>= ${(v * k).toFixed(1)}</div>`).join('');
+        } else {
+            computeGrid.style.display = 'block';
+            computeGrid.innerHTML = '<div>' + terms.map(([v, k]) => `${v}×${k}`).join(' + ') + '</div>';
+        }
+        let sumLine = `합계 = ${sum.toFixed(1)}`;
+        if (divided !== null) sumLine += ` ÷ ${kernelSum} = ${divided.toFixed(1)}`;
+        document.getElementById('computeSum').textContent = sumLine;
+        document.getElementById('computeFinal').textContent = `최종 출력값: ${finalVal}`;
+    }
+
+    function goToStep(i) {
+        const total = outRows * outCols;
+        stepIndex = Math.max(0, Math.min(total - 1, i));
+        renderInputGrid();
+        renderOutputGrid();
+        renderCompute();
+    }
+
+    document.getElementById('sizeSelect').addEventListener('change', (e) => setN(parseInt(e.target.value)));
+    document.getElementById('sampleSelect').addEventListener('change', () => { inputMat = generateSample(document.getElementById('sampleSelect').value, N); recomputeAll(); });
+    document.getElementById('btnRandom').addEventListener('click', () => { inputMat = generateSample('random', N); recomputeAll(); });
+    document.getElementById('btnReset').addEventListener('click', () => { inputMat = generateSample(document.getElementById('sampleSelect').value, N); recomputeAll(); });
+
+    document.getElementById('zoomIn').addEventListener('click', () => { cellPx = Math.min(40, cellPx + 4); renderInputGrid(); renderOutputGrid(); });
+    document.getElementById('zoomOut').addEventListener('click', () => { cellPx = Math.max(14, cellPx - 4); renderInputGrid(); renderOutputGrid(); });
+
+    function renderKernelGrid() {
+        const g = document.getElementById('kernelGrid');
+        g.innerHTML = kernel.map(v => `<div class="kernel-cell">${v}</div>`).join('');
+    }
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            kernel = KERNELS[btn.dataset.k].slice();
+            renderKernelGrid();
+            goToStep(stepIndex);
+        });
+    });
+
+    document.getElementById('paddingSelect').addEventListener('change', (e) => { padding = parseInt(e.target.value); recomputeAll(); });
+    document.getElementById('strideSelect').addEventListener('change', (e) => { stride = parseInt(e.target.value); recomputeAll(); });
+    document.getElementById('chkDivide').addEventListener('change', () => goToStep(stepIndex));
+    document.getElementById('chkClip').addEventListener('change', () => goToStep(stepIndex));
+
+    document.getElementById('btnStepFwd').addEventListener('click', () => goToStep(stepIndex + 1));
+    document.getElementById('btnStepBack').addEventListener('click', () => goToStep(stepIndex - 1));
+
+    const speedSlider = document.getElementById('speedSlider');
+    speedSlider.addEventListener('input', () => { document.getElementById('speedLabel').textContent = parseFloat(speedSlider.value).toFixed(1) + '×'; if (playing) { stopPlay(); startPlay(); } });
+
+    function startPlay() {
+        playing = true;
+        document.getElementById('btnPlay').textContent = '⏸';
+        const interval = Math.max(80, 700 / parseFloat(speedSlider.value));
+        playTimer = setInterval(() => {
+            const total = outRows * outCols;
+            if (stepIndex >= total - 1) { stopPlay(); return; }
+            goToStep(stepIndex + 1);
+        }, interval);
+    }
+    function stopPlay() {
+        playing = false;
+        document.getElementById('btnPlay').textContent = '▶';
+        if (playTimer) { clearInterval(playTimer); playTimer = null; }
+    }
+    document.getElementById('btnPlay').addEventListener('click', () => { playing ? stopPlay() : startPlay(); });
+
+    document.getElementById('tabVector').addEventListener('click', () => { viewMode = 'vector'; document.getElementById('tabVector').classList.add('active'); document.getElementById('tabMatrix').classList.remove('active'); renderCompute(); });
+    document.getElementById('tabMatrix').addEventListener('click', () => { viewMode = 'matrix'; document.getElementById('tabMatrix').classList.add('active'); document.getElementById('tabVector').classList.remove('active'); renderCompute(); });
+
+    document.getElementById('btnCsv').addEventListener('click', () => {
+        let csv = '';
+        for (let r = 0; r < outRows; r++) {
+            const row = [];
+            for (let c = 0; c < outCols; c++) row.push(computeCell(r, c).finalVal);
+            csv += row.join(',') + '\n';
+        }
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'convolution_output.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    renderKernelGrid();
+    setN(9);
+</script>
+</body>
+</html>
