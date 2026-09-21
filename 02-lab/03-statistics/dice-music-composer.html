@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주사위로 음악 작곡하기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #faf5ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #6d28d9; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #5b21b6; }
+
+    .intro-box { background: #faf5ff; border: 2px solid #a855f7; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #5b21b6; }
+    .intro-box p { margin: 0 0 6px; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #5b21b6; }
+
+    .note-line { font-size: 0.76rem; color: #a16207; background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 12px; line-height: 1.6; }
+
+    .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 11px 20px; font-weight: 700;
+        font-size: 0.88rem; cursor: pointer; color: white; font-family: inherit;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.88; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-roll { background: #6d28d9; }
+    .btn-all { background: #a855f7; }
+    .btn-reset { background: #94a3b8; }
+    .btn-play { background: #059669; }
+    .btn-hist { background: #db2777; }
+
+    .dice-row { display: flex; justify-content: center; align-items: center; gap: 14px; margin: 16px 0; }
+    .die {
+        width: 52px; height: 52px; border-radius: 10px; background: #fff; border: 2px solid #6d28d9;
+        display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; color: #5b21b6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .dice-plus { font-size: 1.3rem; font-weight: 900; color: #94a3b8; }
+    .dice-eq { font-size: 1.3rem; font-weight: 900; color: #94a3b8; }
+    .dice-sum { min-width: 52px; height: 52px; border-radius: 10px; background: #6d28d9; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; }
+
+    .position-line { text-align: center; font-size: 0.85rem; color: #475569; font-weight: 700; }
+    .position-line .cur { color: #6d28d9; }
+
+    .measure-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin-top: 14px; }
+    .measure-cell {
+        border: 1px solid #e9d5ff; border-radius: 8px; padding: 8px 4px; text-align: center; background: #faf5ff;
+        font-size: 0.72rem;
+    }
+    .measure-cell.filled { background: #ede9fe; border-color: #a855f7; }
+    .measure-cell.current { outline: 2px solid #6d28d9; }
+    .measure-cell .idx { font-weight: 700; color: #5b21b6; }
+    .measure-cell .val { color: #7c3aed; font-weight: 900; margin-top: 2px; }
+    .measure-cell .val.empty { color: #c4b5fd; }
+    .part-label { font-size: 0.78rem; font-weight: 700; color: #5b21b6; margin: 10px 0 4px; }
+
+    .hist-wrap { display: flex; align-items: flex-end; gap: 6px; height: 160px; margin-top: 14px; padding: 0 4px; }
+    .hist-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+    .hist-bar { width: 100%; background: #a855f7; border-radius: 4px 4px 0 0; position: relative; }
+    .hist-bar .theo-mark { position: absolute; left: -3px; right: -3px; height: 2px; background: #059669; }
+    .hist-label { font-size: 0.68rem; color: #64748b; margin-top: 4px; }
+    .hist-count { font-size: 0.68rem; color: #7c3aed; font-weight: 700; }
+    .hist-legend { display: flex; justify-content: center; gap: 16px; font-size: 0.72rem; color: #475569; margin-top: 6px; }
+    .hist-legend span { display: flex; align-items: center; gap: 4px; }
+    .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    .ways-table { border-collapse: collapse; margin: 10px auto; font-size: 0.78rem; }
+    .ways-table th, .ways-table td { border: 1px solid #e9d5ff; padding: 4px 8px; text-align: center; }
+    .ways-table th { background: #f3e8ff; color: #5b21b6; }
+
+    .reveal-btn {
+        background: #f3e8ff; color: #5b21b6; border: 1px solid #a855f7; border-radius: 8px;
+        padding: 9px 16px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit;
+    }
+    .reveal-content { display: none; margin-top: 10px; padding: 14px 16px; background: #fafaf9; border-radius: 8px; border-left: 3px solid #a855f7; font-size: 0.85rem; line-height: 1.7; color: #334155; }
+    .reveal-content.shown { display: block; }
+    .step { margin-bottom: 10px; }
+    .step:last-child { margin-bottom: 0; }
+    .step .tag { font-weight: 700; color: #5b21b6; }
+
+    .extend-list { display: flex; flex-direction: column; gap: 14px; }
+    .extend-item { border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; }
+    .extend-item h4 { margin: 0 0 6px; font-size: 0.88rem; color: #1e293b; }
+    .extend-item p { margin: 0; font-size: 0.82rem; color: #57534e; line-height: 1.6; }
+    .extend-item .hint-btn { margin-top: 8px; }
+
+    .status-line { text-align: center; font-size: 0.8rem; color: #7c3aed; font-weight: 700; min-height: 1.2em; margin-top: 6px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #6d28d9; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) { .measure-grid { grid-template-columns: repeat(4, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 확률과 통계 실험실로 돌아가기</a>
+    <h1>주사위로 음악 작곡하기</h1>
+    <p class="subtitle">18세기에 유행한 "음악 주사위 놀이"를 직접 해보며, 그 안에 숨은 확률과 조합을 찾아봅니다.</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>🎲 주사위로 정말 곡을 만들 수 있을까?</h3>
+            <p>미리 작곡해 둔 짧은 음악 조각들이 표에 담겨 있습니다. 주사위 2개를 던져 나온 눈의 합으로, 16마디 전체를 채워 나만의 곡을 완성해 보세요.</p>
+            <p><b>여러 번 굴려 보면서, 어떤 합이 자주 나오고 어떤 합이 드문지 관찰해 보세요.</b> 그리고 아무렇게나 골라도 곡이 이상하게 들리지 않는 이유도 함께 생각해 보세요.</p>
+        </div>
+        <p class="note-line">🎵 실제 모차르트의 K.516f 악보 음표를 그대로 재현한 것은 아닙니다. 이 도구는 5음 음계(펜타토닉)로 176개의 짧은 음악 조각을 자동 생성해서, 어떤 조합으로 이어 붙여도 자연스럽게 들리도록 만들었습니다 — "여러 조각이 서로 잘 어울리도록 미리 설계한다"는 원곡의 핵심 아이디어는 그대로 살렸습니다.</p>
+    </div>
+
+    <div class="card">
+        <h2>🎼 작곡 시뮬레이터</h2>
+        <p class="position-line">지금 채울 마디: <span class="cur" id="curPosLabel">1 / 16</span></p>
+        <div class="dice-row">
+            <div class="die" id="die1">?</div>
+            <span class="dice-plus">+</span>
+            <div class="die" id="die2">?</div>
+            <span class="dice-eq">=</span>
+            <div class="dice-sum" id="diceSum">?</div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-roll" id="btnRoll">🎲 주사위 굴리기</button>
+            <button class="btn btn-all" id="btnRollAll">⏩ 남은 마디 한번에 굴리기</button>
+            <button class="btn btn-reset" id="btnReset">↺ 처음부터</button>
+        </div>
+
+        <div class="part-label">제1부 Erster Theil (1~8마디)</div>
+        <div class="measure-grid" id="grid1"></div>
+        <div class="part-label">제2부 Zweiter Theil (9~16마디)</div>
+        <div class="measure-grid" id="grid2"></div>
+
+        <div class="btn-row" style="margin-top:16px;">
+            <button class="btn btn-play" id="btnPlay" disabled>▶ 완성한 곡 재생하기</button>
+        </div>
+        <p class="status-line" id="statusLine"></p>
+    </div>
+
+    <div class="card">
+        <h2>📊 주사위 합의 분포 탐구하기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.6;">두 주사위의 합(2~12) 중 어떤 값이 더 자주 나올까요? 많이 굴려서 직접 확인해 보세요.</p>
+        <div class="btn-row">
+            <button class="btn btn-hist" id="btnHist100">🎲 100번 굴려서 분포 보기</button>
+            <button class="btn btn-hist" id="btnHist1000">🎲 1000번 굴려서 분포 보기</button>
+        </div>
+        <div class="hist-wrap" id="histWrap"></div>
+        <div class="hist-legend">
+            <span><span class="swatch" style="background:#a855f7;"></span>실제로 나온 횟수</span>
+            <span><span class="swatch" style="background:#059669;"></span>이론적으로 기대되는 횟수</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🤔 탐구하기 — 176이라는 숫자는 어디서 나왔을까?</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.6;">직접 손으로 계산해 보고, 아래 단계별 풀이를 하나씩 열어 확인해 보세요.</p>
+        <div id="stepsWrap" style="margin-top:12px; display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <div class="extend-list">
+            <div class="extend-item">
+                <h4>1. 7이 정말 가장 많이 나올까요?</h4>
+                <p>위 분포 탐구에서 100번, 1000번 굴려 보고 7이 나온 횟수를 다른 합과 비교해 보세요. 굴리는 횟수가 늘어날수록 실제 비율이 이론적 확률(6/36=1/6)에 더 가까워지는지도 확인해 보세요.</p>
+            </div>
+            <div class="extend-item">
+                <h4>2. 2와 12는 왜 가장 드물게 나올까요?</h4>
+                <p>합이 2가 되려면 두 주사위가 모두 1이 나와야 하는 단 한 가지 경우(1+1)뿐입니다. 합이 12도 마찬가지로 (6+6) 한 가지뿐이죠. 그래서 극단적인 합일수록 나오기 어렵습니다.</p>
+                <button class="reveal-btn hint-btn" data-target="hintExtreme">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintExtreme">
+                    <p>합이 7이 되는 경우는 (1,6),(2,5),(3,4),(4,3),(5,2),(6,1)로 6가지나 되지만, 합이 2가 되는 경우는 (1,1) 단 1가지뿐입니다. 경우의 수가 많을수록 확률이 높아지므로, 가운데 값(7)에 가까울수록 자주 나오는 것입니다.</p>
+                </div>
+            </div>
+            <div class="extend-item">
+                <h4>3. 내가 만든 곡과 친구가 만든 곡이 완전히 같을 확률은?</h4>
+                <p>16마디를 모두 무작위로 채운다면, 나올 수 있는 서로 다른 곡의 가짓수는 얼마나 될까요? 친구와 같은 곡이 나올 확률을 계산해 보세요.</p>
+                <button class="reveal-btn hint-btn" data-target="hintCollision">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintCollision">
+                    <p id="collisionText">계산 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 확률과 통계 실험실로 돌아가기</a>
+        <a href="../index.html">수학실험 전체 목록으로 →</a>
+    </div>
+</div>
+
+<script>
+    // ---- 결정론적 의사난수 (mulberry32): 같은 (마디, 합)에는 항상 같은 음악 조각을 생성 ----
+    function mulberry32(seed) {
+        return function () {
+            seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+            let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    // 5음 음계(펜타토닉) — 어떤 순서로 이어붙여도 어색하지 않게 들리는 성질을 이용
+    const PENTATONIC = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5'];
+    const NOTE_FREQ = { C4: 261.63, D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.00, C5: 523.25, D5: 587.33, E5: 659.25 };
+
+    function generateMotif(position, sum) {
+        const rng = mulberry32(position * 100 + sum);
+        const notes = [];
+        for (let i = 0; i < 4; i++) notes.push(PENTATONIC[Math.floor(rng() * PENTATONIC.length)]);
+        // 각 부(Theil)의 마지막 마디(8, 16)는 으뜸음(C)으로 끝나 종지감을 준다
+        if (position === 8 || position === 16) notes[3] = 'C4';
+        return notes;
+    }
+
+    const TABLE = {};
+    for (let p = 1; p <= 16; p++) {
+        TABLE[p] = {};
+        for (let s = 2; s <= 12; s++) TABLE[p][s] = generateMotif(p, s);
+    }
+
+    // ---- 시뮬레이터 상태 ----
+    let currentPosition = 1;
+    const chosen = {}; // position -> sum
+
+    function rollTwoDice() {
+        return [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+    }
+
+    function renderGrids() {
+        for (const [gridId, start] of [['grid1', 1], ['grid2', 9]]) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+            for (let i = start; i < start + 8; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'measure-cell' + (chosen[i] !== undefined ? ' filled' : '') + (i === currentPosition ? ' current' : '');
+                const val = chosen[i] !== undefined ? chosen[i] : '—';
+                cell.innerHTML = `<div class="idx">${i}마디</div><div class="val${chosen[i] === undefined ? ' empty' : ''}">${val}</div>`;
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    function updateControls() {
+        const done = currentPosition > 16;
+        document.getElementById('btnRoll').disabled = done;
+        document.getElementById('btnRollAll').disabled = done;
+        document.getElementById('curPosLabel').textContent = done ? '완성!' : `${currentPosition} / 16`;
+        document.getElementById('btnPlay').disabled = Object.keys(chosen).length < 16;
+        document.getElementById('collisionText').textContent =
+            `가능한 서로 다른 곡의 가짓수는 11^16 = ${formatBig(TOTAL_COMBINATIONS)}가지입니다. 친구와 똑같은 곡이 나올 확률은 1/${formatBig(TOTAL_COMBINATIONS)}로, 사실상 0에 가깝습니다.`;
+    }
+
+    function rollDice() {
+        if (currentPosition > 16) return;
+        const [d1, d2] = rollTwoDice();
+        const sum = d1 + d2;
+        document.getElementById('die1').textContent = d1;
+        document.getElementById('die2').textContent = d2;
+        document.getElementById('diceSum').textContent = sum;
+        chosen[currentPosition] = sum;
+        currentPosition++;
+        renderGrids();
+        updateControls();
+    }
+
+    function rollAllRemaining() {
+        while (currentPosition <= 16) rollDice();
+    }
+
+    function resetAll() {
+        currentPosition = 1;
+        for (const k in chosen) delete chosen[k];
+        document.getElementById('die1').textContent = '?';
+        document.getElementById('die2').textContent = '?';
+        document.getElementById('diceSum').textContent = '?';
+        document.getElementById('statusLine').textContent = '';
+        renderGrids();
+        updateControls();
+    }
+
+    document.getElementById('btnRoll').addEventListener('click', rollDice);
+    document.getElementById('btnRollAll').addEventListener('click', rollAllRemaining);
+    document.getElementById('btnReset').addEventListener('click', resetAll);
+
+    // ---- Web Audio 재생 ----
+    let audioCtx = null;
+    function ensureAudioCtx() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+    function playNote(ctx, freq, startTime, duration) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.linearRampToValueAtTime(0.22, startTime + 0.02);
+        gain.gain.linearRampToValueAtTime(0.0001, startTime + duration - 0.02);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+    }
+    function playComposition() {
+        if (Object.keys(chosen).length < 16) return;
+        try {
+            const ctx = ensureAudioCtx();
+            const noteDur = 0.3;
+            let t = ctx.currentTime + 0.08;
+            for (let p = 1; p <= 16; p++) {
+                const notes = TABLE[p][chosen[p]];
+                notes.forEach(n => { playNote(ctx, NOTE_FREQ[n], t, noteDur); t += noteDur; });
+            }
+            document.getElementById('statusLine').textContent = '♪ 재생 중 — 16마디, 총 ' + (16 * 4) + '개 음을 연주합니다.';
+            setTimeout(() => { document.getElementById('statusLine').textContent = ''; }, (t - ctx.currentTime + 0.5) * 1000);
+        } catch (e) {
+            document.getElementById('statusLine').textContent = '이 브라우저에서는 오디오 재생을 지원하지 않습니다: ' + e.message;
+        }
+    }
+    document.getElementById('btnPlay').addEventListener('click', playComposition);
+
+    // ---- 분포 탐구 (히스토그램) ----
+    const WAYS = {};
+    for (let s = 2; s <= 12; s++) WAYS[s] = 0;
+    for (let i = 1; i <= 6; i++) for (let j = 1; j <= 6; j++) WAYS[i + j]++;
+
+    function bulkRoll(n) {
+        const counts = {};
+        for (let s = 2; s <= 12; s++) counts[s] = 0;
+        for (let i = 0; i < n; i++) {
+            const [d1, d2] = rollTwoDice();
+            counts[d1 + d2]++;
+        }
+        return counts;
+    }
+
+    function renderHistogram(counts, n) {
+        const wrap = document.getElementById('histWrap');
+        wrap.innerHTML = '';
+        const maxCount = Math.max(...Object.values(counts), ...Object.keys(WAYS).map(s => Math.round(WAYS[s] / 36 * n)));
+        for (let s = 2; s <= 12; s++) {
+            const col = document.createElement('div');
+            col.className = 'hist-col';
+            const barH = maxCount > 0 ? Math.round((counts[s] / maxCount) * 130) : 0;
+            const theoCount = WAYS[s] / 36 * n;
+            const theoH = maxCount > 0 ? Math.round((theoCount / maxCount) * 130) : 0;
+            col.innerHTML = `
+                <div class="hist-count">${counts[s]}</div>
+                <div class="hist-bar" style="height:${barH}px;"><div class="theo-mark" style="bottom:${theoH - barH}px;"></div></div>
+                <div class="hist-label">${s}</div>
+            `;
+            wrap.appendChild(col);
+        }
+    }
+
+    document.getElementById('btnHist100').addEventListener('click', () => renderHistogram(bulkRoll(100), 100));
+    document.getElementById('btnHist1000').addEventListener('click', () => renderHistogram(bulkRoll(1000), 1000));
+
+    // ---- 176 = 16 x 11 단계별 유도 ----
+    const TOTAL_COMBINATIONS = (11n ** 16n);
+    function formatBig(n) {
+        return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function buildWaysTableHtml() {
+        let rows = '';
+        for (let s = 2; s <= 12; s++) {
+            rows += `<tr><td>${s}</td><td>${WAYS[s]}</td><td>${(WAYS[s] / 36 * 100).toFixed(1)}%</td></tr>`;
+        }
+        return `<table class="ways-table"><tr><th>합</th><th>경우의 수</th><th>확률</th></tr>${rows}</table>`;
+    }
+
+    function renderSteps() {
+        const wrap = document.getElementById('stepsWrap');
+        const steps = [
+            {
+                tag: '1단계 · 곡의 구조',
+                html: `실제 모차르트의 주사위 작곡은 제1부(Erster Theil) 8마디 + 제2부(Zweiter Theil) 8마디, 모두 <b>16마디</b>로 이루어져 있습니다.`
+            },
+            {
+                tag: '2단계 · 각 마디의 후보 개수',
+                html: `두 주사위의 합은 2부터 12까지, 모두 <b>11가지</b> 값이 나올 수 있습니다. 각 마디 자리마다 이 11가지 합 각각에 대응하는 음악 조각을 하나씩 미리 준비해 둡니다.`
+            },
+            {
+                tag: '3단계 · 곱의 법칙',
+                html: `마디 자리는 16개, 각 자리마다 후보는 11개이므로, 필요한 음악 조각의 총 개수는 16 × 11 = <b>176개</b>입니다. 이것이 176이라는 숫자의 정체입니다.`
+            },
+            {
+                tag: '4단계 · 만들 수 있는 곡의 가짓수',
+                html: `반대로, 이 176개의 조각으로 만들 수 있는 서로 다른 곡은 각 마디에서 11가지 중 하나씩 고르는 것이므로 11 × 11 × ... × 11 (16번) = 11<sup>16</sup> = <b>${formatBig(TOTAL_COMBINATIONS)}가지</b>입니다. 176개의 조각만 작곡했을 뿐인데, 이렇게 많은 곡을 만들 수 있는 것이죠.`
+            },
+        ];
+        wrap.innerHTML = buildWaysTableHtml() + steps.map((s, i) => `
+            <div>
+                <button class="reveal-btn" data-step="${i}">👉 ${s.tag} 보기</button>
+                <div class="reveal-content" id="stepContent${i}"><div class="step"><span class="tag">${s.tag}</span><br>${s.html}</div></div>
+            </div>
+        `).join('');
+        wrap.querySelectorAll('button[data-step]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('stepContent' + btn.dataset.step).classList.toggle('shown');
+            });
+        });
+    }
+
+    document.querySelectorAll('.hint-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById(btn.dataset.target).classList.toggle('shown');
+        });
+    });
+
+    renderGrids();
+    updateControls();
+    renderSteps();
+</script>
+</body>
+</html>
