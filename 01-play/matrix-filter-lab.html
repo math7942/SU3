@@ -496,8 +496,8 @@
 
         <!-- Stage 2: 나만의 필터 -->
         <div class="stage-container" id="stage2">
-            <h2 style="color: #334155; margin-bottom: 20px;">2️⃣ 나만의 필터 만들기</h2>
-            <p style="color: #64748b; margin-bottom: 20px;">3×3 필터를 직접 만들어 이미지를 변환해보세요!</p>
+            <h2 style="color: #334155; margin-bottom: 20px;">2️⃣ 필터 조정하기 <span id="filterName"></span></h2>
+            <p style="color: #64748b; margin-bottom: 20px;" id="filterDescription"></p>
 
             <div class="custom-filter">
                 <div class="filter-grid-section">
@@ -751,6 +751,9 @@
                     btn.classList.add('active');
                     currentFilter = btn.dataset.filter;
 
+                    // 선택된 필터의 커널을 customKernel에 로드
+                    customKernel = JSON.parse(JSON.stringify(filters[currentFilter]));
+
                     createTestImage(canvas1Filtered);
                     applyConvolution(canvas1Filtered, filters[currentFilter], currentFilter !== 'boost');
                 });
@@ -762,13 +765,46 @@
             const filterGrid = document.getElementById('filterGrid');
             filterGrid.innerHTML = '';
 
+            
+            // 필터 정보 정의
+            const filterInfo = {
+                blur: { name: "🌫️ 블러", desc: "이미지를 흐릿하게 만듭니다. 값을 크게 할수록 더 흐려집니다." },
+                sharpen: { name: "✨ 선명화", desc: "이미지를 더 선명하고 또렷하게 만듭니다. 중앙값을 크게 하면 더 강한 효과가 나타납니다." },
+                edge: { name: "🔍 엣지감지", desc: "이미지의 경계선을 강조합니다. 중앙값을 크게 하면 더 뚜렷한 윤곽이 보입니다." },
+                boost: { name: "💪 색감부스트", desc: "이미지를 밝게 만듭니다. 중앙값을 높일수록 더 밝아집니다." }
+            };
+            
+            const info = filterInfo[currentFilter] || { name: "필터", desc: "필터를 조정하세요." };
+            document.getElementById("filterName").textContent = info.name;
+            document.getElementById("filterDescription").textContent = info.desc;
+            
+            // 필터 종류에 따라 입력 범위 결정
+            let minVal = -2, maxVal = 2;
+            let shouldNormalize = true;
+
+            if (currentFilter === 'blur') {
+                minVal = 0; maxVal = 8; shouldNormalize = true;
+            } else if (currentFilter === 'sharpen') {
+                minVal = -8; maxVal = 8; shouldNormalize = true;
+            } else if (currentFilter === 'edge') {
+                minVal = -8; maxVal = 8; shouldNormalize = true;
+            } else if (currentFilter === 'boost') {
+                minVal = 0; maxVal = 10; shouldNormalize = false;
+            }
+
+            // 정규화 체크박스 설정
+            const normalizeCheckbox = document.getElementById('normalize');
+            if (normalizeCheckbox) {
+                normalizeCheckbox.checked = shouldNormalize;
+            }
+
             for (let i = 0; i < 9; i++) {
                 const input = document.createElement('input');
                 input.type = 'number';
                 input.className = 'filter-input';
                 input.value = customKernel[Math.floor(i / 3)][i % 3];
-                input.min = '-2';
-                input.max = '2';
+                input.min = minVal;
+                input.max = maxVal;
                 input.addEventListener('input', updateCustomFilter);
                 filterGrid.appendChild(input);
             }
@@ -784,7 +820,11 @@
 
             const canvas2Filtered = document.getElementById('canvas2-filtered');
             createTestImage(canvas2Filtered);
-            const normalize = document.getElementById('normalize').checked;
+            let normalize = document.getElementById('normalize').checked;
+            // boost 필터는 정규화하지 않음
+            if (currentFilter === 'boost') {
+                normalize = false;
+            }
             applyConvolution(canvas2Filtered, customKernel, normalize);
         }
 
