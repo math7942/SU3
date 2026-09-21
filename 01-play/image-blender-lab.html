@@ -602,27 +602,24 @@
                 ctx.arc(200, 150, 100, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'meme') {
-                // 웃는 얼굴
-                ctx.fillStyle = '#ffeb3b';
-                ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
-                ctx.fill();
+                // 하늘 배경
+                ctx.fillStyle = '#87ceeb';
+                ctx.fillRect(0, 0, 400, 300);
 
-                // 눈
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(170, 120, 12, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(230, 120, 12, 0, Math.PI * 2);
-                ctx.fill();
+                // 무지개 (정상적인 호 형태)
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+                const rainbowCenterX = 200;
+                const rainbowCenterY = 280;
+                const startRadius = 120;
 
-                // 입 (웃음)
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(200, 160, 30, 0, Math.PI);
-                ctx.stroke();
+                for (let i = 0; i < colors.length; i++) {
+                    ctx.strokeStyle = colors[i];
+                    ctx.lineWidth = 18;
+                    ctx.beginPath();
+                    const radius = startRadius - i * 16;
+                    ctx.arc(rainbowCenterX, rainbowCenterY, radius, Math.PI, 0, false);
+                    ctx.stroke();
+                }
             }
 
             const image = new Image();
@@ -701,23 +698,26 @@
                 ctx.arc(200, 150, 100, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'meme') {
+                // 웃는 얼굴 (노란색, 왼쪽 상단)
                 ctx.fillStyle = '#ffeb3b';
                 ctx.beginPath();
-                ctx.arc(200, 150, 80, 0, Math.PI * 2);
+                ctx.arc(70, 70, 50, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 눈
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(170, 120, 12, 0, Math.PI * 2);
+                ctx.arc(55, 55, 7, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(230, 120, 12, 0, Math.PI * 2);
+                ctx.arc(85, 55, 7, 0, Math.PI * 2);
                 ctx.fill();
 
+                // 큰 웃음
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(200, 160, 30, 0, Math.PI);
+                ctx.arc(70, 80, 25, 0, Math.PI);
                 ctx.stroke();
             }
 
