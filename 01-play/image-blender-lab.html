@@ -391,7 +391,7 @@
                     <div class="preset-buttons">
                         <button class="preset-btn" onclick="loadSampleImage1('animal')">😺 고양이</button>
                         <button class="preset-btn" onclick="loadSampleImage1('face')">👤 사람</button>
-                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">🤖 로봇</button>
+                        <button class="preset-btn" onclick="loadSampleImage1('pattern')">⭐ 별과 달</button>
                         <button class="preset-btn" onclick="loadSampleImage1('meme')">😄 웃음</button>
                     </div>
                     <div class="webcam-buttons">
@@ -419,7 +419,7 @@
                     <div class="preset-buttons">
                         <button class="preset-btn" onclick="loadSampleImage('animal')">🦁 사자</button>
                         <button class="preset-btn" onclick="loadSampleImage('face')">🌻 해바라기</button>
-                        <button class="preset-btn" onclick="loadSampleImage('pattern')">🌙 밤하늘</button>
+                        <button class="preset-btn" onclick="loadSampleImage('pattern')">⬛ 검은 밤</button>
                         <button class="preset-btn" onclick="loadSampleImage('meme')">🌈 무지개</button>
                     </div>
                     <div class="hint-box">
@@ -610,10 +610,7 @@
                 ctx.ellipse(cx + 30, cy + 120, 20, 40, 0.3, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'pattern') {
-                // 우주/밤하늘 (배경용)
-                ctx.fillStyle = '#001a4d';
-                ctx.fillRect(0, 0, 400, 300);
-
+                // 별과 달만 (배경 없음)
                 // 별들
                 ctx.fillStyle = '#fff';
                 for (let i = 0; i < 50; i++) {
@@ -811,31 +808,9 @@
                 ctx.lineTo(200, 120);
                 ctx.stroke();
             } else if (type === 'pattern') {
-                // 깜깜한 밤 하늘
+                // 검은색만 있는 밤 하늘
                 ctx.fillStyle = '#000814';
                 ctx.fillRect(0, 0, 400, 300);
-
-                // 별들 (여러 개, 밝기 다양)
-                ctx.fillStyle = '#fff';
-                const stars = [
-                    {x: 50, y: 40, size: 1.5},
-                    {x: 120, y: 60, size: 1},
-                    {x: 180, y: 30, size: 2},
-                    {x: 280, y: 50, size: 1},
-                    {x: 350, y: 70, size: 1.5},
-                    {x: 70, y: 150, size: 1},
-                    {x: 200, y: 120, size: 1.5},
-                    {x: 320, y: 160, size: 1},
-                    {x: 100, y: 240, size: 1.5},
-                    {x: 260, y: 220, size: 1},
-                    {x: 350, y: 240, size: 2},
-                ];
-
-                stars.forEach(star => {
-                    ctx.beginPath();
-                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                    ctx.fill();
-                });
             } else if (type === 'meme') {
                 // 웃는 얼굴 (노란색)
                 ctx.fillStyle = '#ffeb3b';
