@@ -561,51 +561,57 @@
                 ctx.arc(200, 150, 5, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
-                // 여러 음표들이 흩어져 있는 배경
-                ctx.fillStyle = '#f5f5f5';
+                // 밝은 배경
+                ctx.fillStyle = '#f9f9f9';
                 ctx.fillRect(0, 0, 400, 300);
 
-                // 음표 그리기 함수
-                function drawNote(x, y, size) {
-                    // 음표 헤드 (검은 원)
+                // 음표 그리기 함수 (제대로 된 음표 모양)
+                function drawNote(x, y, scale) {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.scale(scale, scale);
+
+                    // 음표 헤드 (타원, 기울임)
                     ctx.fillStyle = '#000';
                     ctx.beginPath();
-                    ctx.arc(x, y, size * 4, 0, Math.PI * 2);
+                    ctx.ellipse(0, 0, 12, 14, -0.25, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // 음표 줄기 (수직선)
+                    // 음표 줄기 (stem)
                     ctx.strokeStyle = '#000';
-                    ctx.lineWidth = size * 1.5;
+                    ctx.lineWidth = 2.5;
                     ctx.beginPath();
-                    ctx.moveTo(x + size * 4, y - size * 3);
-                    ctx.lineTo(x + size * 4, y - size * 10);
+                    ctx.moveTo(12, -8);
+                    ctx.lineTo(12, -50);
                     ctx.stroke();
 
-                    // 음표 깃발 (삼각형)
+                    // 음표 깃발 (flag) - 매끄러운 곡선
                     ctx.fillStyle = '#000';
                     ctx.beginPath();
-                    ctx.moveTo(x + size * 4, y - size * 10);
-                    ctx.lineTo(x + size * 8, y - size * 8);
-                    ctx.lineTo(x + size * 4, y - size * 6);
+                    ctx.moveTo(12, -50);
+                    ctx.bezierCurveTo(25, -48, 28, -40, 12, -35);
                     ctx.fill();
+
+                    ctx.restore();
                 }
 
-                // 여러 음표 배치
+                // 여러 음표 배치 (악보처럼 배치)
                 const notes = [
-                    { x: 50, y: 60, size: 1.2 },
-                    { x: 120, y: 50, size: 1 },
-                    { x: 180, y: 80, size: 1.1 },
-                    { x: 250, y: 55, size: 1.2 },
-                    { x: 320, y: 75, size: 1 },
-                    { x: 370, y: 95, size: 0.9 },
-                    { x: 80, y: 150, size: 1.1 },
-                    { x: 200, y: 130, size: 1.2 },
-                    { x: 310, y: 160, size: 1 },
-                    { x: 140, y: 210, size: 1.1 },
-                    { x: 280, y: 190, size: 1.2 },
+                    { x: 40, y: 80, scale: 1 },
+                    { x: 90, y: 100, scale: 0.9 },
+                    { x: 140, y: 70, scale: 1.1 },
+                    { x: 190, y: 90, scale: 1 },
+                    { x: 240, y: 110, scale: 0.95 },
+                    { x: 290, y: 75, scale: 1.05 },
+                    { x: 340, y: 95, scale: 1 },
+                    { x: 60, y: 160, scale: 1.05 },
+                    { x: 120, y: 180, scale: 0.95 },
+                    { x: 200, y: 150, scale: 1.1 },
+                    { x: 280, y: 170, scale: 1 },
+                    { x: 340, y: 190, scale: 0.9 },
                 ];
 
-                notes.forEach(note => drawNote(note.x, note.y, note.size));
+                notes.forEach(note => drawNote(note.x, note.y, note.scale));
             } else if (type === 'pattern') {
                 // 달만 있는 밤 하늘
                 ctx.fillStyle = '#001a4d';
@@ -686,27 +692,47 @@
                 ctx.arc(200, 150, 5, 0, Math.PI * 2);
                 ctx.fill();
             } else if (type === 'face') {
-                // 큰 음악 노트
-                // 음표 헤드 (큰 검은 원)
+                // 오선지 배경
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, 400, 300);
+
+                // 5줄 오선지 그리기
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                const staffTop = 80;
+                const staffSpacing = 20;
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(20, staffTop + i * staffSpacing);
+                    ctx.lineTo(380, staffTop + i * staffSpacing);
+                    ctx.stroke();
+                }
+
+                // 오선지 위에 음표 하나 배치 (3번째 줄 위)
+                const noteX = 100;
+                const noteY = 120;
+
+                // 음표 헤드 (타원, 약간 기울임)
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(160, 220, 35, 0, Math.PI * 2);
+                ctx.ellipse(noteX, noteY, 15, 18, -0.2, 0, Math.PI * 2);
                 ctx.fill();
 
-                // 음표 줄기 (stem) - 오른쪽 위로
+                // 음표 줄기 (stem)
                 ctx.strokeStyle = '#000';
-                ctx.lineWidth = 7;
+                ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.moveTo(195, 190);
-                ctx.lineTo(195, 70);
+                ctx.moveTo(noteX + 15, noteY - 5);
+                ctx.lineTo(noteX + 15, noteY - 60);
                 ctx.stroke();
 
-                // 음표 깃발 (flag) - 큰 검은 삼각형
+                // 음표 깃발 (flag)
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.moveTo(195, 70);
-                ctx.lineTo(260, 95);
-                ctx.lineTo(195, 120);
+                ctx.moveTo(noteX + 15, noteY - 60);
+                ctx.lineTo(noteX + 15, noteY - 45);
+                ctx.quadraticCurveTo(noteX + 30, noteY - 50, noteX + 40, noteY - 60);
+                ctx.lineTo(noteX + 15, noteY - 60);
                 ctx.fill();
             } else if (type === 'pattern') {
                 // 별들
