@@ -212,6 +212,14 @@
             letter-spacing: 2px;
         }
 
+        .kernel-display-content pre {
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            font-weight: 600;
+            color: #667eea;
+            line-height: 1.8;
+        }
+
         .filter-slider-wrapper {
             padding: 0 12px 12px 12px;
             display: none;
@@ -942,7 +950,16 @@
 
         // 큰 커널 디스플레이용 포맷
         function formatKernelForDisplay(kernel, filterName) {
-            const rows = kernel.map(row => '[' + row.join(' ') + ']');
+            // 최대 자릿수 계산
+            const allNumbers = kernel.flat();
+            const maxWidth = Math.max(...allNumbers.map(n => String(n).length));
+
+            // 숫자를 오른쪽 정렬로 패딩
+            const padNumber = (num) => String(num).padStart(maxWidth, ' ');
+
+            // 각 행 포맷
+            const rows = kernel.map(row => '[' + row.map(padNumber).join('  ') + ']');
+
             const normalizations = {
                 blur: ' ÷ 64',
                 sharpen: '',
@@ -950,7 +967,7 @@
                 boost: ' ÷ 1'
             };
             const norm = normalizations[filterName] || '';
-            return rows.join('<br>') + (norm ? '<br>' + norm : '');
+            return '<pre style="margin: 0;">' + rows.join('\n') + (norm ? '\n' + norm : '') + '</pre>';
         }
 
         // Stage 2 초기화
