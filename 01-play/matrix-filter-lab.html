@@ -109,6 +109,13 @@
             align-items: start;
         }
 
+        .wizard-controls {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+            align-items: start;
+        }
+
         .image-preview {
             display: flex;
             flex-direction: column;
@@ -181,6 +188,28 @@
             color: #64748b;
             margin-top: 4px;
             word-break: break-all;
+            display: none;
+        }
+
+        .kernel-display {
+            border: 3px solid #667eea;
+            background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 100%);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kernel-display-content {
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            font-weight: 600;
+            color: #667eea;
+            line-height: 1.8;
+            letter-spacing: 2px;
         }
 
         .filter-slider-wrapper {
@@ -522,38 +551,43 @@
                     </div>
                 </div>
 
-                <div class="filter-buttons">
-                    <button class="filter-btn active" data-filter="blur">
-                        <div>🌫️ 블러 (흐릿함)</div>
-                        <div class="filter-formula">[4 8 4] [8 16 8] [4 8 4] ÷ 64</div>
-                    </button>
-                    <div class="filter-slider-wrapper">
-                        <input type="range" class="filter-slider" data-filter="blur" min="0" max="8" value="4">
-                        <span class="filter-value" id="value-blur">4</span>
+                <div class="wizard-controls">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" data-filter="blur">
+                            <div>🌫️ 블러 (흐릿함)</div>
+                            <div class="filter-formula">[4 8 4] [8 16 8] [4 8 4] ÷ 64</div>
+                        </button>
+                        <div class="filter-slider-wrapper">
+                            <input type="range" class="filter-slider" data-filter="blur" min="0" max="8" value="4">
+                            <span class="filter-value" id="value-blur">4</span>
+                        </div>
+                        <button class="filter-btn" data-filter="sharpen">
+                            <div>✨ 선명화 (또렷함)</div>
+                            <div class="filter-formula">[0 -1 0] [-1 5 -1] [0 -1 0]</div>
+                        </button>
+                        <div class="filter-slider-wrapper">
+                            <input type="range" class="filter-slider" data-filter="sharpen" min="-8" max="8" value="2">
+                            <span class="filter-value" id="value-sharpen">2</span>
+                        </div>
+                        <button class="filter-btn" data-filter="edge">
+                            <div>🔍 엣지감지 (윤곽)</div>
+                            <div class="filter-formula">[-1 -1 -1] [-1 8 -1] [-1 -1 -1]</div>
+                        </button>
+                        <div class="filter-slider-wrapper">
+                            <input type="range" class="filter-slider" data-filter="edge" min="-8" max="8" value="4">
+                            <span class="filter-value" id="value-edge">4</span>
+                        </div>
+                        <button class="filter-btn" data-filter="boost">
+                            <div>💪 색감 부스트 (생생함)</div>
+                            <div class="filter-formula">[0 0 0] [0 5 0] [0 0 0] ÷ 1</div>
+                        </button>
+                        <div class="filter-slider-wrapper">
+                            <input type="range" class="filter-slider" data-filter="boost" min="0" max="10" value="5">
+                            <span class="filter-value" id="value-boost">5</span>
+                        </div>
                     </div>
-                    <button class="filter-btn" data-filter="sharpen">
-                        <div>✨ 선명화 (또렷함)</div>
-                        <div class="filter-formula">[0 -1 0] [-1 5 -1] [0 -1 0]</div>
-                    </button>
-                    <div class="filter-slider-wrapper">
-                        <input type="range" class="filter-slider" data-filter="sharpen" min="-8" max="8" value="2">
-                        <span class="filter-value" id="value-sharpen">2</span>
-                    </div>
-                    <button class="filter-btn" data-filter="edge">
-                        <div>🔍 엣지감지 (윤곽)</div>
-                        <div class="filter-formula">[-1 -1 -1] [-1 8 -1] [-1 -1 -1]</div>
-                    </button>
-                    <div class="filter-slider-wrapper">
-                        <input type="range" class="filter-slider" data-filter="edge" min="-8" max="8" value="4">
-                        <span class="filter-value" id="value-edge">4</span>
-                    </div>
-                    <button class="filter-btn" data-filter="boost">
-                        <div>💪 색감 부스트 (생생함)</div>
-                        <div class="filter-formula">[0 0 0] [0 5 0] [0 0 0] ÷ 1</div>
-                    </button>
-                    <div class="filter-slider-wrapper">
-                        <input type="range" class="filter-slider" data-filter="boost" min="0" max="10" value="5">
-                        <span class="filter-value" id="value-boost">5</span>
+                    <div class="kernel-display">
+                        <div class="kernel-display-content" id="kernelDisplay">[4 8 4]<br>[8 16 8]<br>[4 8 4] ÷ 64</div>
                     </div>
                 </div>
             </div>
@@ -823,6 +857,12 @@
                     // 선택된 필터의 커널을 customKernel에 로드
                     customKernel = JSON.parse(JSON.stringify(filters[currentFilter]));
 
+                    // 큰 커널 디스플레이 업데이트
+                    const kernelDisplay = document.getElementById('kernelDisplay');
+                    if (kernelDisplay) {
+                        kernelDisplay.innerHTML = formatKernelForDisplay(filters[currentFilter], currentFilter);
+                    }
+
                     createTestImage(canvas1Filtered);
                     applyConvolution(canvas1Filtered, filters[currentFilter], currentFilter !== 'boost');
                 });
@@ -840,13 +880,19 @@
                     // 필터 커널 조정
                     let adjustedKernel = adjustFilterKernel(filterName, sliderValue);
 
-                    // 커널 공식 업데이트
+                    // 커널 공식 업데이트 (작은 버전)
                     const activeBtn = document.querySelector(`.filter-btn[data-filter="${filterName}"]`);
                     if (activeBtn) {
                         const formulaDiv = activeBtn.querySelector('.filter-formula');
                         if (formulaDiv) {
                             formulaDiv.textContent = formatKernel(adjustedKernel, filterName);
                         }
+                    }
+
+                    // 큰 커널 디스플레이 업데이트
+                    const kernelDisplay = document.getElementById('kernelDisplay');
+                    if (kernelDisplay) {
+                        kernelDisplay.innerHTML = formatKernelForDisplay(adjustedKernel, filterName);
                     }
 
                     // 미리보기 업데이트
@@ -892,6 +938,19 @@
                 boost: ' ÷ 1'
             };
             return kernelStr + (normalizations[filterName] || '');
+        }
+
+        // 큰 커널 디스플레이용 포맷
+        function formatKernelForDisplay(kernel, filterName) {
+            const rows = kernel.map(row => '[' + row.join(' ') + ']');
+            const normalizations = {
+                blur: ' ÷ 64',
+                sharpen: '',
+                edge: '',
+                boost: ' ÷ 1'
+            };
+            const norm = normalizations[filterName] || '';
+            return rows.join('<br>') + (norm ? '<br>' + norm : '');
         }
 
         // Stage 2 초기화
