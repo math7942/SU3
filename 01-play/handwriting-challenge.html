@@ -481,14 +481,15 @@
                 <!-- 행렬 시각화 -->
                 <div class="matrix-visualization" id="matrixViz">
                     <button class="btn-secondary" style="width: 100%;" onclick="toggleMatrixView()">
-                        📊 행렬 보기 (AI가 본 픽셀들)
+                        📊 행렬 보기 (내가 그린 선의 밀도)
                     </button>
                     <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
                     <div class="matrix-explanation">
                         <strong>✨ 이게 뭘까요?</strong><br>
-                        위 이미지는 신경망이 숫자를 인식할 때 <strong>가장 중요하게 본 픽셀들</strong>입니다.
-                        밝은 부분이 AI의 "주의"가 집중된 곳이에요.
-                        당신이 그린 선이 AI의 기준과 다르면 엉뚱한 숫자로 인식합니다!
+                        위 이미지는 <strong>당신이 그린 선이 얼마나 겹치고 두꺼운지</strong>를 보여주는 그림이에요.
+                        밝고 진한 색(빨강)일수록 선이 겹치거나 두껍게 그려진 곳이고, 파랑에 가까울수록 얇게 스친 곳이에요.
+                        실제 AI가 내부적으로 어디에 "주의"를 기울였는지 보여주는 것은 아니지만,
+                        선이 뭉친 부분과 얇은 부분이 AI의 판단을 헷갈리게 만드는 힌트가 될 수 있어요!
                     </div>
                 </div>
             </div>
