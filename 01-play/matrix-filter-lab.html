@@ -1303,7 +1303,7 @@
             if (stage2SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
             }
-            addNoise(stage4CipherCanvas, 0.3);  // 약한 노이즈로 숫자가 긴가민가하게 보임
+            addNoise(stage4CipherCanvas, 0.7);  // 강한 노이즈로 숫자가 거의 안 보임
             stage4FilteredOnce = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // 3단계: 두 필터 모두 적용된 상태 (암호화 상태 - 필터 2 포함)
@@ -1542,24 +1542,36 @@
 
             // 폭죽 입자 생성
             const particles = [];
-            for (let i = 0; i < 50; i++) {
-                particles.push({
-                    x: w / 2,
-                    y: h / 2,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8 - 2,
-                    life: 1,
-                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
-                });
-            }
+
+            const createNewParticles = () => {
+                for (let i = 0; i < 50; i++) {
+                    particles.push({
+                        x: w / 2,
+                        y: h / 2,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8 - 2,
+                        life: 1,
+                        color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                    });
+                }
+            };
+
+            createNewParticles();
 
             let animationId;
+            let frameCount = 0;
             const animate = () => {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                 ctx.fillRect(0, 0, w, h);
 
-                let hasParticles = false;
-                particles.forEach(p => {
+                // 매 15 프레임마다 새로운 폭죽 입자 생성
+                frameCount++;
+                if (frameCount % 15 === 0) {
+                    createNewParticles();
+                }
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
                     if (p.life > 0) {
                         p.x += p.vx;
                         p.y += p.vy;
@@ -1571,16 +1583,13 @@
                         ctx.beginPath();
                         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
                         ctx.fill();
-                        hasParticles = true;
+                    } else {
+                        particles.splice(i, 1);
                     }
-                });
+                }
                 ctx.globalAlpha = 1;
 
-                if (hasParticles) {
-                    animationId = requestAnimationFrame(animate);
-                } else {
-                    cancelAnimationFrame(animationId);
-                }
+                animationId = requestAnimationFrame(animate);
             };
 
             animate();
