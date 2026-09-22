@@ -97,80 +97,83 @@
         }
 
         .festival-header {
-            text-align: center;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
             margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
+            overflow: hidden;
         }
 
         .festival-title {
-            color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             font-size: 1.1rem;
             font-weight: 700;
-            margin: 0 0 15px 0;
+            padding: 15px 20px;
+            margin: 0;
             letter-spacing: 0.5px;
+            text-align: center;
         }
 
         .challenge-grid {
             display: grid;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 0;
         }
 
         .challenge-item {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: flex-start;
             gap: 15px;
-            font-size: 0.9rem;
+            padding: 15px 20px;
             color: #475569;
+            border-bottom: 1px solid #e2e8f0;
+            padding-left: 30px;
+        }
+
+        .challenge-item:last-of-type {
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .challenge-number {
-            background: #f1f5f9;
-            color: #667eea;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
+            background: #dbeafe;
+            color: #0369a1;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 1rem;
             flex-shrink: 0;
-        }
-
-        .challenge-item.current .challenge-number {
-            background: #667eea;
-            color: white;
+            margin-top: 2px;
         }
 
         .challenge-text {
-            flex: 1;
-            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
         }
 
         .stage-badge {
-            background: #dbeafe;
-            color: #0369a1;
-            padding: 2px 8px;
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 4px 10px;
             border-radius: 4px;
             font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .challenge-item.current .stage-badge {
-            background: #fecaca;
-            color: #991b1b;
+            font-weight: 500;
+            display: inline-block;
         }
 
         .hall-of-fame {
-            text-align: center;
+            padding: 15px 20px;
+            padding-left: 30px;
             color: #64748b;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 600;
-            padding-top: 10px;
-            border-top: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         /* Stage 1: 필터 마법사 */
@@ -696,19 +699,25 @@
                 <div class="festival-title">🎊 2026 광주수학축제</div>
                 <div class="challenge-grid">
                     <div class="challenge-item">
-                        <div class="challenge-number">6</div>
-                        <div class="challenge-text">손글씨 인식 도전</div>
-                        <div class="stage-badge">[1단계] AI를 속여라!</div>
+                        <div class="challenge-number">4</div>
+                        <div>
+                            <div class="challenge-text">행렬 암호 해독기</div>
+                            <div class="stage-badge">[3단계] 4개의 숫자를 맞춰라!!!</div>
+                        </div>
                     </div>
                     <div class="challenge-item">
                         <div class="challenge-number">5</div>
-                        <div class="challenge-text">행렬 연금술사</div>
-                        <div class="stage-badge">[2단계] 행렬 연금술사!!</div>
+                        <div>
+                            <div class="challenge-text">행렬 연금술사</div>
+                            <div class="stage-badge">[2단계] 행렬 연금술사!!</div>
+                        </div>
                     </div>
-                    <div class="challenge-item current">
-                        <div class="challenge-number">4</div>
-                        <div class="challenge-text">행렬 암호 해독기</div>
-                        <div class="stage-badge">[3단계] 4개의 숫자를 맞춰라!!!</div>
+                    <div class="challenge-item">
+                        <div class="challenge-number">6</div>
+                        <div>
+                            <div class="challenge-text">손글씨 인식 도전</div>
+                            <div class="stage-badge">[1단계] AI를 속여라!</div>
+                        </div>
                     </div>
                 </div>
                 <div class="hall-of-fame">🏆 명예의 전당</div>
