@@ -476,6 +476,10 @@
                 <div class="achievement" id="achievement">
                     <strong id="achievementTitle">🎉 성공!</strong>
                     <p id="achievementText"></p>
+                    <div style="margin-top: 12px;">
+                        <label for="participantName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #047857; font-weight: 600;">🙋 이름을 입력해주세요</label>
+                        <input type="text" id="participantName" placeholder="이름 (입력 안 하면 '익명')" maxlength="12" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #6ee7b7; font-size: 1rem; font-family: inherit; color: #334155;">
+                    </div>
                 </div>
 
                 <!-- 행렬 시각화 -->
@@ -1010,16 +1014,33 @@
             hctx.putImageData(out, 0, 0);
         }
 
+        // 캔버스에 그린 그림을 하얀 배경 위에 합성한 작은 스냅샷으로 저장
+        function getDrawingSnapshot(size) {
+            const snap = document.createElement('canvas');
+            snap.width = size;
+            snap.height = size;
+            const sctx = snap.getContext('2d');
+            sctx.fillStyle = '#fff';
+            sctx.fillRect(0, 0, size, size);
+            sctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, size, size);
+            return snap.toDataURL('image/png');
+        }
+
         // 결과 저장
         function saveRecord() {
             const predictedDigit = parseInt(document.getElementById('predictedDigit').textContent);
 
             if (myDigit === null || predictedDigit === myDigit) return;
 
+            const nameInput = document.getElementById('participantName');
+            const name = (nameInput.value || '').trim().slice(0, 12) || '익명';
+
             const record = {
                 id: Date.now(),
+                name: name,
                 actualDigit: myDigit,
                 predictedDigit: predictedDigit,
+                image: getDrawingSnapshot(140),
                 success: true,
                 timestamp: new Date().toLocaleTimeString('ko-KR'),
                 confidence: currentPrediction[predictedDigit]
