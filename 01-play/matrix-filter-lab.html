@@ -797,9 +797,9 @@
                 </div>
             </div>
 
-            <div id="stage4Result" style="display: none; padding: 20px; background: #fffbeb; border: 2px solid #fcd34d; border-radius: 8px; text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 1.5rem; color: #b45309; font-weight: bold; margin-bottom: 10px;">🎉 암호 해독 성공!</div>
-                <div style="font-size: 3rem; color: #667eea; font-weight: bold; letter-spacing: 10px;" id="stage4Number"></div>
+            <div id="stage4Result" style="display: none; padding: 20px; background: #fffbeb; border: 2px solid #fcd34d; border-radius: 8px; text-align: center; margin-bottom: 20px; position: relative; min-height: 200px;">
+                <div style="font-size: 1.5rem; color: #b45309; font-weight: bold; margin-bottom: 20px;">🎉 암호 해독 성공!</div>
+                <canvas id="stage4Fireworks" width="300" height="150" style="display: block; margin: 0 auto; border-radius: 8px;"></canvas>
                 <div style="font-size: 0.9rem; color: #92400e; margin-top: 10px;">숨겨진 숫자를 찾았습니다!</div>
             </div>
 
@@ -1298,11 +1298,12 @@
             createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             stage4OriginalImage = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
-            // 2단계: 첫 번째 필터만 적용 (부분 복호화 - 필터 2 제거)
+            // 2단계: 첫 번째 필터만 적용 (부분 복호화 - 필터 2 제거, 약간의 노이즈 포함)
             createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             if (stage2SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
             }
+            addNoise(stage4CipherCanvas, 0.3);  // 약한 노이즈로 숫자가 긴가민가하게 보임
             stage4FilteredOnce = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // 3단계: 두 필터 모두 적용된 상태 (암호화 상태 - 필터 2 포함)
@@ -1527,9 +1528,67 @@
             showStage4FilterQuiz(step);
         }
 
+        function createStage4Fireworks() {
+            const canvas = document.getElementById('stage4Fireworks');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 배경 채우기
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fillRect(0, 0, w, h);
+
+            // 폭죽 입자 생성
+            const particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: w / 2,
+                    y: h / 2,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8 - 2,
+                    life: 1,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                });
+            }
+
+            let animationId;
+            const animate = () => {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(0, 0, w, h);
+
+                let hasParticles = false;
+                particles.forEach(p => {
+                    if (p.life > 0) {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.2;  // 중력
+                        p.life -= 0.02;
+
+                        ctx.globalAlpha = p.life;
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        hasParticles = true;
+                    }
+                });
+                ctx.globalAlpha = 1;
+
+                if (hasParticles) {
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    cancelAnimationFrame(animationId);
+                }
+            };
+
+            animate();
+        }
+
         function showStage4Result() {
-            document.getElementById('stage4Number').textContent = stage4HiddenNumber;
             document.getElementById('stage4Result').style.display = 'block';
+            createStage4Fireworks();
         }
 
         // Stage 네비게이션
