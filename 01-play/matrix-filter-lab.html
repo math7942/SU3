@@ -1314,11 +1314,10 @@
             if (stage3SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage3SelectedFilter], stage3SelectedFilter !== 'boost');
             }
-            stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
-
             // 극도의 노이즈 추가 (숫자를 완전히 숨김 - TV 정적처럼)
             addNoise(stage4CipherCanvas, 1.0);
             addNoise(stage4CipherCanvas, 0.5);
+            stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // UI 초기화
             document.getElementById('stage4Step1').textContent = '미적용';
