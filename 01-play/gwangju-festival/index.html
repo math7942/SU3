@@ -5,44 +5,200 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2026 광주수학축제 · 수수의 수학</title>
 <link rel="stylesheet" href="../../assets/site.css">
+<style>
+  body { background: #f4f1fb; }
+
+  /* 히어로 배너 -------------------------------------------------- */
+  .festival-hero {
+    position: relative;
+    overflow: hidden;
+    margin: 0 calc(50% - 50vw) 44px;
+    padding: 64px 24px 88px;
+    background:
+      radial-gradient(900px 480px at 15% -10%, rgba(255, 196, 88, 0.5) 0%, rgba(255, 196, 88, 0) 55%),
+      radial-gradient(760px 440px at 90% 10%, rgba(255, 120, 190, 0.4) 0%, rgba(255, 120, 190, 0) 55%),
+      linear-gradient(160deg, #2c1a63 0%, #4a2a86 42%, #7b3fa0 72%, #b8478f 100%);
+    text-align: center;
+  }
+
+  .festival-hero .back {
+    position: relative;
+    z-index: 1;
+    margin: 0 auto 30px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .festival-hero .back:hover { color: #fff; }
+
+  .festival-eyebrow {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffe8b0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  .festival-hero h1 {
+    position: relative;
+    z-index: 1;
+    margin: 22px 0 0;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 12px 40px rgba(20, 8, 50, 0.45);
+  }
+
+  .festival-hero p {
+    position: relative;
+    z-index: 1;
+    max-width: 34em;
+    margin: 18px auto 0;
+    color: #ecdfff;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .festival-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .festival-confetti {
+    position: absolute;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .festival-confetti.round { border-radius: 50%; }
+
+  /* 도전 카드 단계별 강조색 ------------------------------------------ */
+  .challenge-card { position: relative; }
+
+  .challenge-card .top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .challenge-card .icon {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 0;
+    font-size: 1.4rem;
+  }
+
+  .challenge-card .step-badge {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .challenge-card.step1 .icon { background: linear-gradient(140deg, #34d4c0 0%, #17a693 100%); }
+  .challenge-card.step1 .step-badge { background: #e3fbf7; color: #0e8a79; }
+  .challenge-card.step1 .tagline { color: #0e8a79; }
+  .challenge-card.step1 .foot { color: #0e8a79; }
+  .challenge-card.step1 .chev { background: #e3fbf7; }
+
+  .challenge-card.step2 .icon { background: linear-gradient(140deg, #5b8cff 0%, #3c63d6 100%); }
+  .challenge-card.step2 .step-badge { background: #e6edff; color: #2a4fc2; }
+  .challenge-card.step2 .tagline { color: #3c63d6; }
+  .challenge-card.step2 .foot { color: #3c63d6; }
+  .challenge-card.step2 .chev { background: #e6edff; }
+
+  .challenge-card.step3 .icon { background: linear-gradient(140deg, #b34fe0 0%, #7b3fa0 100%); }
+  .challenge-card.step3 .step-badge { background: #f6e6ff; color: #8a2ec2; }
+  .challenge-card.step3 .tagline { color: #8a2ec2; }
+  .challenge-card.step3 .foot { color: #8a2ec2; }
+  .challenge-card.step3 .chev { background: #f6e6ff; }
+
+  /* 명예의 전당 배너 강화 ------------------------------------------- */
+  .card.featured.hof {
+    background: linear-gradient(120deg, #3a2360 0%, #6a2f6e 55%, #a5477a 100%);
+    border-color: transparent;
+  }
+  .card.featured.hof .trophy {
+    background: linear-gradient(150deg, #ffe08a 0%, #f5a623 100%);
+    box-shadow: 0 16px 28px -10px rgba(224, 158, 26, 0.7);
+  }
+  .card.featured.hof h2,
+  .card.featured.hof .desc { color: #fff; }
+  .card.featured.hof .tagline { color: #ffe6b0; }
+  .card.featured.hof .foot { color: #ffe08a; }
+  .card.featured.hof .chev { background: rgba(255, 255, 255, 0.16); color: #ffe08a; }
+  .card.featured.hof:hover,
+  .card.featured.hof:focus-visible { border-color: transparent; }
+</style>
 </head>
 <body class="g1">
 <div class="page">
 
-  <header class="group-head">
+  <div class="festival-hero">
+    <span class="festival-glow" style="top: -60px; left: 8%; width: 220px; height: 220px; background: radial-gradient(circle, rgba(255,214,102,0.55) 0%, rgba(255,214,102,0) 70%);"></span>
+    <span class="festival-glow" style="top: 20px; right: 12%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(120,220,255,0.35) 0%, rgba(120,220,255,0) 70%);"></span>
+    <span class="festival-glow" style="bottom: -60px; left: 44%; width: 280px; height: 280px; background: radial-gradient(circle, rgba(255,120,190,0.3) 0%, rgba(255,120,190,0) 70%);"></span>
+
+    <span class="festival-confetti round" style="top: 30%; left: 12%; width: 9px; height: 9px; background: #ffd666;"></span>
+    <span class="festival-confetti round" style="top: 55%; left: 20%; width: 7px; height: 7px; background: #7ed6ff;"></span>
+    <span class="festival-confetti" style="top: 22%; left: 32%; width: 8px; height: 8px; background: #ff9fd6; transform: rotate(20deg);"></span>
+    <span class="festival-confetti" style="top: 65%; left: 8%; width: 9px; height: 9px; background: #ffd666; transform: rotate(-15deg);"></span>
+    <span class="festival-confetti round" style="top: 25%; right: 14%; width: 8px; height: 8px; background: #ff9fd6;"></span>
+    <span class="festival-confetti" style="top: 50%; right: 22%; width: 10px; height: 10px; background: #7ed6ff; transform: rotate(30deg);"></span>
+    <span class="festival-confetti round" style="top: 70%; right: 30%; width: 7px; height: 7px; background: #ffd666;"></span>
+    <span class="festival-confetti round" style="bottom: 18%; left: 28%; width: 8px; height: 8px; background: #7ed6ff;"></span>
+    <span class="festival-confetti" style="bottom: 24%; right: 12%; width: 9px; height: 9px; background: #ffd666; transform: rotate(12deg);"></span>
+
     <a class="back" href="../index.html">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       수학과 놀자
     </a>
-    <span class="badge" aria-hidden="true">🎊</span>
-    <h1>2026 광주수학축제</h1>
-    <p>행렬 연산의 신비로운 세계를 단계별로 탐험하는 세 가지 도전과, 모든 참가자의 기록을 모은 명예의 전당입니다.</p>
-  </header>
+    <span class="festival-eyebrow">✨ MATH FESTIVAL ✨</span>
+    <h1>🎊 2026 광주수학축제 🎊</h1>
+    <p>행렬 연산의 신비로운 세계를 세 단계로 탐험하고, 명예의 전당에서 당신의 기록을 확인하세요!</p>
+  </div>
 
   <main>
     <div class="groups">
-      <a class="card g4" href="../handwriting-challenge.html">
-        <span class="icon" aria-hidden="true">✍️</span>
+      <a class="card challenge-card step1" href="../handwriting-challenge.html">
+        <div class="top-row">
+          <span class="icon" aria-hidden="true">✍️</span>
+          <span class="step-badge">1단계</span>
+        </div>
         <h2>손글씨 인식 도전</h2>
-        <p class="tagline">[1단계] AI를 속여라!</p>
+        <p class="tagline">AI를 속여라!</p>
         <p class="desc">정밀 AI의 눈을 속여라! 숫자를 그려서 AI를 헷갈리게 하는 적대적 공격 게임입니다.</p>
-        <span class="foot">체험하기<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+        <span class="foot">도전 시작<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
       </a>
-      <a class="card g5" href="../image-blender-lab.html">
-        <span class="icon" aria-hidden="true">🧪</span>
+      <a class="card challenge-card step2" href="../image-blender-lab.html">
+        <div class="top-row">
+          <span class="icon" aria-hidden="true">🧪</span>
+          <span class="step-badge">2단계</span>
+        </div>
         <h2>행렬 연금술사</h2>
-        <p class="tagline">[2단계] 행렬 연금술사!!</p>
+        <p class="tagline">행렬 연금술사!!</p>
         <p class="desc">웹캠과 사진을 합성해 나만의 밈을 만들어보세요. 행렬 연산으로 두 이미지를 신비로운 방법으로 섞습니다!</p>
-        <span class="foot">체험하기<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+        <span class="foot">도전 시작<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
       </a>
-      <a class="card g1" href="../matrix-filter-lab.html">
-        <span class="icon" aria-hidden="true">🔐</span>
+      <a class="card challenge-card step3" href="../matrix-filter-lab.html">
+        <div class="top-row">
+          <span class="icon" aria-hidden="true">🔐</span>
+          <span class="step-badge">3단계</span>
+        </div>
         <h2>행렬 암호 해독기</h2>
-        <p class="tagline">[3단계] 4개의 숫자를 맞춰라!!!</p>
-        <p class="desc">필터 마법사에서 배우고, 나만의 필터를 만들고, 추리 게임으로 익혀보세요. 행렬 연산의 신비로운 세계로 떠나보세요!</p>
-        <span class="foot">체험하기<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+        <p class="tagline">4개의 숫자를 맞춰라!!!</p>
+        <p class="desc">필터 마법사에서 배우고, 나만의 필터를 만들고, 추리 게임으로 익혀보세요. 행렬 연산의 신비로운 세계로!</p>
+        <span class="foot">도전 시작<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
       </a>
-      <a class="card featured g3" href="../hall-of-fame.html">
+      <a class="card featured hof" href="../hall-of-fame.html">
         <span class="trophy" aria-hidden="true">🏆</span>
         <span class="body">
           <h2>명예의 전당</h2>
