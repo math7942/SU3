@@ -824,29 +824,107 @@
             document.getElementById('matrixViz').classList.add('show');
         }
 
+        // 가로/세로 분리형 박스 블러 (O(w*h), radius와 무관하게 빠름)
+        function boxBlur(src, w, h, radius) {
+            const tmp = new Float32Array(w * h);
+            const dst = new Float32Array(w * h);
+            const size = radius * 2 + 1;
+
+            // 가로 방향
+            for (let y = 0; y < h; y++) {
+                const row = y * w;
+                let sum = 0;
+                for (let x = -radius; x <= radius; x++) {
+                    sum += src[row + Math.min(w - 1, Math.max(0, x))];
+                }
+                tmp[row] = sum;
+                for (let x = 1; x < w; x++) {
+                    const addX = Math.min(w - 1, x + radius);
+                    const subX = Math.max(0, x - radius - 1);
+                    sum += src[row + addX] - src[row + subX];
+                    tmp[row + x] = sum;
+                }
+            }
+
+            // 세로 방향
+            for (let x = 0; x < w; x++) {
+                let sum = 0;
+                for (let y = -radius; y <= radius; y++) {
+                    sum += tmp[Math.min(h - 1, Math.max(0, y)) * w + x];
+                }
+                dst[x] = sum / (size * size);
+                for (let y = 1; y < h; y++) {
+                    const addY = Math.min(h - 1, y + radius);
+                    const subY = Math.max(0, y - radius - 1);
+                    sum += tmp[addY * w + x] - tmp[subY * w + x];
+                    dst[y * w + x] = sum / (size * size);
+                }
+            }
+
+            return dst;
+        }
+
+        // 0~1 강도를 파랑→초록→노랑→빨강 히트맵 색으로 변환
+        function heatColor(v) {
+            const stops = [
+                [0.0, [59, 130, 246]],
+                [0.35, [16, 185, 129]],
+                [0.65, [250, 204, 21]],
+                [1.0, [239, 68, 68]]
+            ];
+            for (let i = 0; i < stops.length - 1; i++) {
+                const [t0, c0] = stops[i];
+                const [t1, c1] = stops[i + 1];
+                if (v >= t0 && v <= t1) {
+                    const f = (v - t0) / (t1 - t0);
+                    return [
+                        Math.round(c0[0] + (c1[0] - c0[0]) * f),
+                        Math.round(c0[1] + (c1[1] - c0[1]) * f),
+                        Math.round(c0[2] + (c1[2] - c0[2]) * f)
+                    ];
+                }
+            }
+            return stops[stops.length - 1][1];
+        }
+
         function toggleMatrixView() {
-            // 간단한 히트맵 시뮬레이션
             const heatmapCanvas = document.getElementById('matrixCanvas');
             const hctx = heatmapCanvas.getContext('2d');
-            heatmapCanvas.width = 280;
-            heatmapCanvas.height = 280;
+            const w = canvas.width;
+            const h = canvas.height;
+            heatmapCanvas.width = w;
+            heatmapCanvas.height = h;
 
-            // 원본 이미지에서 중요 영역 표시
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, w, h);
             const data = imageData.data;
 
-            for (let i = 0; i < data.length; i += 4) {
-                if (data[i] < 128) {
-                    // 검은 부분을 히트맵으로
-                    hctx.fillStyle = `hsl(${Math.random() * 60}, 100%, 50%)`;
-                } else {
-                    hctx.fillStyle = '#f8fafc';
-                }
-                const pixelIndex = i / 4;
-                const x = (pixelIndex % canvas.width);
-                const y = Math.floor(pixelIndex / canvas.width);
-                hctx.fillRect(x, y, 1, 1);
+            // 1) 그려진 픽셀(잉크) 맵: 1 = 검은 선, 0 = 빈 공간
+            const ink = new Float32Array(w * h);
+            for (let i = 0; i < ink.length; i++) {
+                ink[i] = data[i * 4] < 128 ? 1 : 0;
             }
+
+            // 2) 블러를 적용해 선 주변으로 매끄럽게 퍼지는 "주의도" 맵 생성
+            //    (겹치거나 두꺼운 획일수록 더 진하게 나타남)
+            const attention = boxBlur(ink, w, h, 7);
+
+            // 3) 정규화 후 히트맵 색상으로 렌더링
+            let maxV = 0;
+            for (let i = 0; i < attention.length; i++) maxV = Math.max(maxV, attention[i]);
+            if (maxV === 0) maxV = 1;
+
+            const out = hctx.createImageData(w, h);
+            for (let i = 0; i < attention.length; i++) {
+                const v = attention[i] / maxV;
+                const idx = i * 4;
+                if (v < 0.06) {
+                    out.data[idx] = 248; out.data[idx + 1] = 250; out.data[idx + 2] = 252; out.data[idx + 3] = 255;
+                } else {
+                    const [r, g, b] = heatColor(v);
+                    out.data[idx] = r; out.data[idx + 1] = g; out.data[idx + 2] = b; out.data[idx + 3] = 255;
+                }
+            }
+            hctx.putImageData(out, 0, 0);
         }
 
         // 결과 저장
