@@ -165,6 +165,57 @@ body {
 .card.empty .foot { color: var(--muted); }
 .card.empty .chev { background: #eeebf7; }
 
+/* 강조 카드 (명예의 전당 등, 한 줄 전체 차지) ----------------------- */
+.card.featured {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 26px;
+  padding: 28px 32px;
+  background: linear-gradient(120deg, #fff9ec 0%, #fff 55%);
+  border-color: #f3d9a0;
+}
+
+.card.featured:hover,
+.card.featured:focus-visible {
+  border-color: #e0ab3d;
+  box-shadow: 0 20px 40px -20px rgba(180, 130, 20, 0.4);
+}
+
+.card.featured .trophy {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: 0;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #ffd76a 0%, #f5a623 100%);
+  font-size: 2.6rem;
+  line-height: 1;
+  box-shadow: 0 12px 24px -10px rgba(224, 158, 26, 0.55);
+}
+
+.card.featured .body { flex: 1 1 auto; min-width: 0; }
+.card.featured h2 { font-size: 1.3rem; }
+.card.featured .tagline { color: #b3780f; }
+.card.featured .desc { margin-bottom: 0; }
+
+.card.featured .foot {
+  flex: none;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  color: #b3780f;
+}
+
+.card.featured .chev { background: #fbe4ae; }
+
+@media (max-width: 600px) {
+  .card.featured { flex-direction: column; align-items: flex-start; text-align: left; }
+  .card.featured .foot { margin-top: 18px; }
+}
+
 /* 실험실 하위 카드 ---------------------------------------------- */
 .subgroups {
   display: grid;
