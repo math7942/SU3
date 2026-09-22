@@ -286,6 +286,50 @@
             font-size: 0.9rem;
         }
 
+        .achievement.show.fail {
+            background: #fee2e2;
+            border-left-color: #ef4444;
+        }
+
+        .achievement.show.fail strong {
+            color: #b91c1c;
+        }
+
+        .achievement.show.fail p {
+            color: #b91c1c;
+        }
+
+        .digit-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .digit-pick-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .digit-pick-btn:hover {
+            border-color: #667eea;
+        }
+
+        .digit-pick-btn.selected {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
         .info-box {
             background: #f0f4ff;
             border-left: 4px solid #667eea;
@@ -348,13 +392,27 @@
 
         <div class="mission-box">
             <h3>🎯 당신의 미션</h3>
-            <p>사람 눈에는 완벽한 '3'인데, AI는 '8'로 착각하게 숫자를 그려보세요!<br>
-            AI를 가장 엉뚱한 숫자로 헷갈리게 하는 참가자가 명예의 전당에 오릅니다. 🏆</p>
+            <p>0~9 중 내가 쓸 숫자를 하나 고른 뒤, 사람 눈에는 그 숫자로 보이게 그려보세요!<br>
+            AI가 다른 숫자로 착각하면 성공! 가장 엉뚱하게 AI를 속인 참가자가 명예의 전당에 오릅니다. 🏆</p>
         </div>
 
         <div class="main-grid">
             <!-- 캔버스 -->
             <div class="canvas-section">
+                <h3>✏️ 어떤 숫자를 쓸까요?</h3>
+                <div class="digit-picker" id="digitPicker">
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(0)">0</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(1)">1</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(2)">2</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(3)">3</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(4)">4</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(5)">5</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(6)">6</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(7)">7</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(8)">8</button>
+                    <button type="button" class="digit-pick-btn" onclick="selectMyDigit(9)">9</button>
+                </div>
+
                 <h3>✏️ 숫자를 써 보세요</h3>
                 <div class="canvas-container">
                     <canvas id="drawingCanvas" width="280" height="280"></canvas>
@@ -384,6 +442,13 @@
                 <div class="info-box">
                     💡 <strong>팁:</strong> 큼직하게 그려야 더 잘 인식됩니다. 검은색 펜으로 흰 종이에 그리는 것처럼!
                 </div>
+
+                <!-- 기록 저장 -->
+                <div style="text-align: center; margin-top: 16px;">
+                    <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none; width: 100%;">
+                        💾 결과를 명예의 전당에 등록하기
+                    </button>
+                </div>
             </div>
 
             <!-- 결과 -->
@@ -396,8 +461,8 @@
                         <div class="prediction-value" id="predictedDigit">-</div>
                     </div>
                     <div class="prediction-item" id="targetBox">
-                        <div class="prediction-label">목표 숫자</div>
-                        <div class="prediction-value" id="targetDigit">-</div>
+                        <div class="prediction-label">내가 쓴 숫자</div>
+                        <div class="prediction-value" id="myDigitDisplay">-</div>
                     </div>
                 </div>
 
@@ -409,24 +474,8 @@
                 </div>
 
                 <div class="achievement" id="achievement">
-                    <strong>🎉 성공!</strong>
+                    <strong id="achievementTitle">🎉 성공!</strong>
                     <p id="achievementText"></p>
-                    <div style="margin-top: 12px;">
-                        <label for="actualDigitSelect" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #047857; font-weight: 600;">🖊️ 사람 눈에는 실제로 무슨 숫자로 보이나요?</label>
-                        <select id="actualDigitSelect" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #6ee7b7; font-size: 1rem; font-family: inherit; color: #334155;">
-                            <option value="">숫자를 선택하세요</option>
-                            <option value="0">0</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                        </select>
-                    </div>
                 </div>
 
                 <!-- 행렬 시각화 -->
@@ -444,13 +493,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 기록 저장 -->
-        <div style="text-align: center;">
-            <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none;">
-                💾 결과를 명예의 전당에 등록하기
-            </button>
-        </div>
     </div>
 
     <script>
@@ -458,24 +500,39 @@
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
         let model = null;
-        let targetDigit = 3;
+        let myDigit = null;
         let currentPrediction = null;
+
+        // 내가 쓸 숫자 선택
+        function selectMyDigit(d) {
+            myDigit = d;
+            document.querySelectorAll('.digit-pick-btn').forEach((btn, idx) => {
+                btn.classList.toggle('selected', idx === d);
+            });
+            document.getElementById('myDigitDisplay').textContent = d;
+
+            // 선택이 바뀌면 이전 인식 결과는 무효화
+            document.getElementById('predictedDigit').textContent = '-';
+            document.getElementById('achievement').classList.remove('show', 'fail');
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('targetBox').classList.remove('incorrect');
+        }
 
         // 캔버스 초기화
         function clearCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             document.getElementById('predictedDigit').textContent = '-';
-            document.getElementById('achievement').classList.remove('show');
+            document.getElementById('achievement').classList.remove('show', 'fail');
             document.getElementById('saveBtn').style.display = 'none';
             document.getElementById('matrixViz').classList.remove('show');
             document.getElementById('targetBox').classList.remove('incorrect');
-            document.getElementById('actualDigitSelect').value = '';
             resetConfidenceGrid();
         }
 
         // 샘플 필기체 로드
         function loadSampleHandwriting(sampleType) {
             clearCanvas();
+            selectMyDigit(3);
 
             const samples = {
                 0: () => {
@@ -595,14 +652,6 @@
             ctx.fill();
         });
 
-        // 미션 설정
-        function setChallenge(target, wrong) {
-            targetDigit = target;
-            document.getElementById('targetDigit').textContent = targetDigit;
-            document.getElementById('targetBox').classList.remove('incorrect');
-            clearCanvas();
-        }
-
         // 신뢰도 그리드 초기화
         function resetConfidenceGrid() {
             const grid = document.getElementById('confidenceGrid');
@@ -657,11 +706,13 @@
             let blackPixels = 0;
 
             for (let i = 0; i < data.length; i += 4) {
-                if (data[i] < 128) blackPixels++;
+                // 투명 배경(alpha=0)은 R값도 0이라 잉크로 잘못 셀 수 있으므로 alpha도 함께 확인
+                if (data[i] < 128 && data[i + 3] > 128) blackPixels++;
             }
 
             const density = blackPixels / pixelCount;
             const predictions = new Array(10).fill(0);
+            const target = myDigit ?? 3;
 
             // 밀도 기반 예측
             if (density < 0.1) {
@@ -669,14 +720,14 @@
             } else if (density < 0.2) {
                 predictions[1] = 0.7; predictions[7] = 0.3;
             } else if (density < 0.35) {
-                predictions[targetDigit] = 0.6;
-                predictions[(targetDigit + 1) % 10] = 0.4;
+                predictions[target] = 0.6;
+                predictions[(target + 1) % 10] = 0.4;
             } else {
-                // 타겟이 아닌 숫자가 나올 확률 높임 (게임 재미)
-                const wrongDigit = (targetDigit + 3) % 10;
+                // 다른 숫자가 나올 확률을 높임 (게임 재미)
+                const wrongDigit = (target + 3) % 10;
                 predictions[wrongDigit] = 0.7;
-                predictions[targetDigit] = 0.2;
-                predictions[(targetDigit + 1) % 10] = 0.1;
+                predictions[target] = 0.2;
+                predictions[(target + 1) % 10] = 0.1;
             }
 
             return predictions;
@@ -690,7 +741,8 @@
 
             for (let y = 0; y < 280; y++) {
                 for (let x = 0; x < 280; x++) {
-                    if (rawData[(y * 280 + x) * 4] < 200) {
+                    // 투명 배경은 alpha=0이라 R값만 보면 검은 선과 구분이 안 됨 -> alpha로 판단
+                    if (rawData[(y * 280 + x) * 4 + 3] > 10) {
                         hasPixel = true;
                         if (x < minX) minX = x;
                         if (x > maxX) maxX = x;
@@ -773,6 +825,11 @@
 
         // 숫자 인식
         async function recognizeDrawing() {
+            if (myDigit === null) {
+                alert('✏️ 먼저 어떤 숫자를 쓸지 선택해주세요!');
+                return;
+            }
+
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
             if (!model) {
@@ -805,22 +862,36 @@
                 grid.appendChild(div);
             });
 
-            // 성공 여부 확인
-            if (predictedDigit === targetDigit) {
+            // 성공 여부 확인: AI의 예측이 내가 쓴 숫자와 다르면 AI를 속인 것 (성공)
+            if (predictedDigit !== myDigit) {
                 showAchievement(predictedDigit);
                 document.getElementById('saveBtn').style.display = 'block';
             } else {
-                document.getElementById('targetBox').classList.add('incorrect');
-                document.getElementById('achievement').classList.remove('show');
-                document.getElementById('matrixViz').classList.add('show');
+                showFailure();
+                document.getElementById('saveBtn').style.display = 'none';
             }
         }
 
         function showAchievement(predicted) {
             const achievement = document.getElementById('achievement');
+            const title = document.getElementById('achievementTitle');
             const text = document.getElementById('achievementText');
-            text.textContent = `목표한 '${targetDigit}'를 그렸습니다! 명예의 전당에 등록해보세요.`;
+            title.textContent = '🎉 성공! AI를 속였어요!';
+            text.textContent = `나는 '${myDigit}'을(를) 그렸는데, AI는 '${predicted}'로 착각했습니다! 명예의 전당에 등록해보세요.`;
+            achievement.classList.remove('fail');
             achievement.classList.add('show');
+            document.getElementById('targetBox').classList.remove('incorrect');
+            document.getElementById('matrixViz').classList.add('show');
+        }
+
+        function showFailure() {
+            const achievement = document.getElementById('achievement');
+            const title = document.getElementById('achievementTitle');
+            const text = document.getElementById('achievementText');
+            title.textContent = '🙅 아쉬워요, AI가 정확히 맞췄어요';
+            text.textContent = `AI가 '${myDigit}'을(를) 정확히 인식했습니다. 다르게 그려서 다시 속여보세요!`;
+            achievement.classList.add('show', 'fail');
+            document.getElementById('targetBox').classList.add('incorrect');
             document.getElementById('matrixViz').classList.add('show');
         }
 
@@ -899,9 +970,11 @@
             const data = imageData.data;
 
             // 1) 그려진 픽셀(잉크) 맵: 1 = 검은 선, 0 = 빈 공간
+            //    캔버스의 빈 공간은 투명(alpha=0)이라 R값만 보면 0이라서 검은 선과
+            //    구분이 안 되므로 alpha 채널로 실제로 그려진 픽셀인지 판단한다.
             const ink = new Float32Array(w * h);
             for (let i = 0; i < ink.length; i++) {
-                ink[i] = data[i * 4] < 128 ? 1 : 0;
+                ink[i] = data[i * 4 + 3] > 128 ? 1 : 0;
             }
 
             // 2) 블러를 적용해 선 주변으로 매끄럽게 퍼지는 "주의도" 맵 생성
@@ -930,38 +1003,30 @@
         // 결과 저장
         function saveRecord() {
             const predictedDigit = parseInt(document.getElementById('predictedDigit').textContent);
-            const actualDigitValue = document.getElementById('actualDigitSelect').value;
 
-            if (actualDigitValue === '') {
-                alert('🖊️ 사람 눈에는 실제로 무슨 숫자로 보이는지 먼저 선택해주세요!');
-                return;
-            }
+            if (myDigit === null || predictedDigit === myDigit) return;
 
-            if (predictedDigit === targetDigit) {
-                const record = {
-                    id: Date.now(),
-                    targetDigit: targetDigit,
-                    predictedDigit: predictedDigit,
-                    actualDigit: parseInt(actualDigitValue),
-                    success: true,
-                    timestamp: new Date().toLocaleTimeString('ko-KR'),
-                    confidence: currentPrediction[targetDigit]
-                };
+            const record = {
+                id: Date.now(),
+                actualDigit: myDigit,
+                predictedDigit: predictedDigit,
+                success: true,
+                timestamp: new Date().toLocaleTimeString('ko-KR'),
+                confidence: currentPrediction[predictedDigit]
+            };
 
-                let records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
-                records.unshift(record);
-                if (records.length > 20) records.pop();
-                localStorage.setItem('handwritingRecords', JSON.stringify(records));
+            let records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+            records.unshift(record);
+            if (records.length > 20) records.pop();
+            localStorage.setItem('handwritingRecords', JSON.stringify(records));
 
-                alert('✨ 명예의 전당에 등록되었습니다!');
-                document.getElementById('saveBtn').style.display = 'none';
-            }
+            alert('✨ 명예의 전당에 등록되었습니다!');
+            document.getElementById('saveBtn').style.display = 'none';
         }
 
         // 초기화
         window.addEventListener('load', async () => {
             model = await loadModel();
-            document.getElementById('targetDigit').textContent = targetDigit;
             resetConfidenceGrid();
         });
     </script>
