@@ -595,7 +595,18 @@
                         </div>
                     </div>
                     <div class="kernel-display">
-                        <div class="kernel-display-content" id="kernelDisplay"><pre style="margin: 0;">(1/64)<br><br>[ 4  8  4]<br>[ 8 16  8]<br>[ 4  8  4]</pre></div>
+                        <div class="kernel-display-content" id="kernelDisplay">
+                            <div style="display: flex; align-items: center; gap: 15px; line-height: 1.8;">
+                                <div style="display: flex; flex-direction: column; align-items: center; font-size: 1.5rem; color: #667eea;">
+                                    <div>1</div>
+                                    <div style="border-top: 2px solid #667eea; width: 30px; margin: 2px 0;"></div>
+                                    <div>64</div>
+                                </div>
+                                <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 2rem; font-weight: 600; color: #667eea;">[ 4  8  4]
+[ 8 16  8]
+[ 4  8  4]</pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -959,17 +970,33 @@
 
             // 각 행 포맷
             const rows = kernel.map(row => '[' + row.map(padNumber).join('  ') + ']');
+            const matrixStr = rows.join('\n');
 
-            // 스칼라 배수를 행렬 앞에 표시
-            const scalarFactors = {
-                blur: '(1/64)',
-                sharpen: '1',
-                edge: '1',
-                boost: '1'
+            // 스칼라 배수에 따른 포맷
+            const fractionFormats = {
+                blur: { numerator: '1', denominator: '64' },
+                sharpen: null,
+                edge: null,
+                boost: null
             };
-            const scalar = scalarFactors[filterName] || '1';
 
-            return '<pre style="margin: 0;">' + scalar + '\n\n' + rows.join('\n') + '</pre>';
+            const format = fractionFormats[filterName];
+
+            if (format) {
+                // 분수 형식으로 표시 (좌측 정렬)
+                const lines = matrixStr.split('\n');
+                return `<div style="display: flex; align-items: center; gap: 15px; line-height: 1.8;">
+                    <div style="display: flex; flex-direction: column; align-items: center; font-size: 1.5rem; color: #667eea;">
+                        <div>${format.numerator}</div>
+                        <div style="border-top: 2px solid #667eea; width: 30px; margin: 2px 0;"></div>
+                        <div>${format.denominator}</div>
+                    </div>
+                    <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 2rem; font-weight: 600; color: #667eea;">${matrixStr}</pre>
+                </div>`;
+            } else {
+                // 분수 없이 행렬만 표시
+                return `<pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 2rem; font-weight: 600; color: #667eea;">${matrixStr}</pre>`;
+            }
         }
 
         // Stage 2 초기화
