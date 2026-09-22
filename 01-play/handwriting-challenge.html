@@ -26,7 +26,7 @@
             padding: 40px;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-            max-width: 900px;
+            max-width: 1160px;
             width: 100%;
         }
 
@@ -340,39 +340,6 @@
             margin-bottom: 12px;
         }
 
-        .challenge-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .challenge-item {
-            padding: 10px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .challenge-item:hover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-
-        .challenge-item strong {
-            display: block;
-            color: #667eea;
-            margin-bottom: 4px;
-        }
-
-        .challenge-item span {
-            color: #64748b;
-        }
-
         @media (max-width: 768px) {
             .container { padding: 24px; }
             h1 { font-size: 1.5rem; }
@@ -421,30 +388,14 @@
                     <button class="btn-secondary" onclick="clearCanvas()">🗑️ 지우기</button>
                     <button class="btn-primary" id="recognizeBtn" onclick="recognizeDrawing()">📊 인식하기</button>
                 </div>
-                <div class="challenge-list" style="margin-top: 12px; margin-bottom: 12px;">
-                    <button class="challenge-item" onclick="loadSampleHandwriting(0)">
-                        <strong>샘플 0</strong>
-                        <span>AI도 맞춤</span>
-                    </button>
-                    <button class="challenge-item" onclick="loadSampleHandwriting(1)">
-                        <strong>샘플 1</strong>
-                        <span>흔한 모양</span>
-                    </button>
-                    <button class="challenge-item" onclick="loadSampleHandwriting(2)">
-                        <strong>샘플 2</strong>
-                        <span>이상한 필체</span>
-                    </button>
-                    <button class="challenge-item" onclick="loadSampleHandwriting(3)">
-                        <strong>샘플 3</strong>
-                        <span>미니멀</span>
-                    </button>
-                </div>
                 <div class="info-box">
                     💡 <strong>팁:</strong> 큼직하게 그려야 더 잘 인식됩니다. 검은색 펜으로 흰 종이에 그리는 것처럼!
                 </div>
 
-                <!-- 기록 저장 -->
-                <div style="text-align: center; margin-top: 16px;">
+                <!-- 이름 입력 + 기록 저장 -->
+                <div style="margin-top: 12px;">
+                    <label for="participantName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #334155; font-weight: 600;">🙋 이름</label>
+                    <input type="text" id="participantName" placeholder="이름 (입력 안 하면 '익명')" maxlength="12" style="width: 100%; padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; font-family: inherit; color: #334155;">
                     <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none; width: 100%;">
                         💾 결과를 명예의 전당에 등록하기
                     </button>
@@ -476,10 +427,6 @@
                 <div class="achievement" id="achievement">
                     <strong id="achievementTitle">🎉 성공!</strong>
                     <p id="achievementText"></p>
-                    <div style="margin-top: 12px;">
-                        <label for="participantName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #047857; font-weight: 600;">🙋 이름을 입력해주세요</label>
-                        <input type="text" id="participantName" placeholder="이름 (입력 안 하면 '익명')" maxlength="12" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #6ee7b7; font-size: 1rem; font-family: inherit; color: #334155;">
-                    </div>
                 </div>
 
                 <!-- 행렬 시각화 -->
@@ -490,10 +437,7 @@
                     <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
                     <div class="matrix-explanation">
                         <strong>✨ 이게 뭘까요?</strong><br>
-                        위 이미지는 <strong>당신이 그린 선이 얼마나 겹치고 두꺼운지</strong>를 보여주는 그림이에요.
-                        밝고 진한 색(빨강)일수록 선이 겹치거나 두껍게 그려진 곳이고, 파랑에 가까울수록 얇게 스친 곳이에요.
-                        실제 AI가 내부적으로 어디에 "주의"를 기울였는지 보여주는 것은 아니지만,
-                        선이 뭉친 부분과 얇은 부분이 AI의 판단을 헷갈리게 만드는 힌트가 될 수 있어요!
+                        선이 겹치거나 두꺼운 곳일수록 빨강, 얇은 곳일수록 파랑으로 표시돼요.
                     </div>
                 </div>
             </div>
@@ -538,99 +482,6 @@
         // 캔버스 초기화
         function clearCanvas() {
             resetDrawingState();
-        }
-
-        // 샘플 필기체 로드
-        function loadSampleHandwriting(sampleType) {
-            clearCanvas();
-            selectMyDigit(3);
-
-            const samples = {
-                0: () => {
-                    // 깔끔한 필기체 숫자 3
-                    ctx.fillStyle = '#000';
-                    ctx.font = 'bold 180px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('3', 140, 140);
-                },
-                1: () => {
-                    // 손으로 쓴 듯한 3 - 약간 울퉁불퉁
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 12;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-
-                    // 위쪽 곡선
-                    ctx.beginPath();
-                    ctx.arc(180, 80, 60, -Math.PI, 0);
-                    ctx.stroke();
-
-                    // 중간 곡선
-                    ctx.beginPath();
-                    ctx.moveTo(120, 140);
-                    ctx.quadraticCurveTo(160, 130, 180, 150);
-                    ctx.stroke();
-
-                    // 아래쪽 곡선
-                    ctx.beginPath();
-                    ctx.arc(180, 200, 60, 0, Math.PI);
-                    ctx.stroke();
-                },
-                2: () => {
-                    // 미니멀하고 각진 3
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 15;
-                    ctx.lineCap = 'round';
-
-                    // 위쪽
-                    ctx.beginPath();
-                    ctx.moveTo(200, 60);
-                    ctx.quadraticCurveTo(220, 80, 200, 100);
-                    ctx.quadraticCurveTo(150, 100, 140, 100);
-                    ctx.stroke();
-
-                    // 중간
-                    ctx.beginPath();
-                    ctx.moveTo(140, 140);
-                    ctx.lineTo(200, 140);
-                    ctx.stroke();
-
-                    // 아래쪽
-                    ctx.beginPath();
-                    ctx.moveTo(200, 180);
-                    ctx.quadraticCurveTo(220, 200, 200, 220);
-                    ctx.quadraticCurveTo(150, 220, 140, 220);
-                    ctx.stroke();
-                },
-                3: () => {
-                    // 흘려 쓴 3 (cursive)
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 14;
-                    ctx.lineCap = 'round';
-                    ctx.lineJoin = 'round';
-
-                    ctx.beginPath();
-                    ctx.moveTo(160, 60);
-                    ctx.quadraticCurveTo(200, 75, 210, 100);
-                    ctx.quadraticCurveTo(220, 130, 200, 150);
-                    ctx.quadraticCurveTo(220, 170, 220, 200);
-                    ctx.quadraticCurveTo(210, 230, 170, 240);
-                    ctx.quadraticCurveTo(150, 240, 140, 230);
-                    ctx.stroke();
-
-                    // 중간 튀어나온 부분
-                    ctx.beginPath();
-                    ctx.moveTo(200, 140);
-                    ctx.lineTo(150, 140);
-                    ctx.stroke();
-                }
-            };
-
-            if (samples[sampleType]) {
-                samples[sampleType]();
-                recognizeDrawing();
-            }
         }
 
         // 그리기 이벤트
