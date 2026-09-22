@@ -810,6 +810,22 @@
             }
         }
 
+        // Stage 4용 숨겨진 숫자가 있는 이미지 생성
+        function createStage4TestImage(canvas, number) {
+            createTestImage(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 큰 숫자 그리기 (중앙에)
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
+            ctx.font = 'bold 80px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(number, w / 2, h / 2);
+        }
+
         // Convolution 연산
         function applyConvolution(canvas, kernel, normalize = true) {
             const ctx = canvas.getContext('2d');
@@ -1207,6 +1223,7 @@
         let stage4OriginalImage = null;
         let stage4FilteredOnce = null;
         let stage4FilteredTwice = null;
+        let stage4HiddenNumber = null;
 
         function initStage4() {
             stage4FilterApplied = [false, false];
@@ -1216,22 +1233,25 @@
 
             const ctx = stage4CipherCanvas.getContext('2d');
 
+            // 숨겨진 4자리 숫자 생성
+            stage4HiddenNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+
             // 1단계: 원본 이미지 (숨겨진 숫자가 있음)
-            createTestImage(stage4CipherCanvas);
+            createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             stage4OriginalImage = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // 2단계: 첫 번째 필터만 적용 (부분 복호화)
-            createTestImage(stage4CipherCanvas);
+            createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             if (stage2SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
             }
             stage4FilteredOnce = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
-            // 3단계: 아무 필터도 적용하지 않음 (암호화된 상태)
-            createTestImage(stage4CipherCanvas);
+            // 3단계: 암호화된 상태 (아무 필터도 적용하지 않음)
+            createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
-            // 무거운 노이즈 추가 (TV 정적처럼 암호화)
+            // 무거운 노이즈 추가 (TV 정적처럼 숫자 암호화)
             addNoise(stage4CipherCanvas, 0.6);
 
             // UI 초기화
@@ -1299,8 +1319,7 @@
         }
 
         function showStage4Result() {
-            const randomNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-            document.getElementById('stage4Number').textContent = randomNumber;
+            document.getElementById('stage4Number').textContent = stage4HiddenNumber;
             document.getElementById('stage4Result').style.display = 'block';
         }
 
