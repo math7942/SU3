@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>탱그램의 제곱근</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #faf5ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #7e22ce; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #78716c; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #7e22ce; }
+
+    .intro-box { background: #faf5ff; border: 2px solid #a855f7; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #7e22ce; }
+    .intro-box p { margin: 0 0 6px; font-size: 0.85rem; color: #334155; line-height: 1.6; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #7e22ce; }
+
+    #introCanvas { display: block; margin: 10px auto 0; max-width: 100%; height: auto; }
+    .quiz-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+    .quiz-row label { font-size: 0.85rem; font-weight: 700; color: #475569; }
+    .quiz-row input { width: 90px; padding: 6px 8px; border: 1px solid #d6d3d1; border-radius: 6px; font-family: inherit; font-size: 0.9rem; }
+    .quiz-feedback { text-align: center; font-size: 0.82rem; font-weight: 700; min-height: 1.4em; margin-top: 8px; }
+    .quiz-feedback.ok { color: #15803d; }
+    .quiz-feedback.bad { color: #b91c1c; }
+
+    .stage-bar { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+    .stage-dot {
+        width: 30px; height: 30px; border-radius: 50%; border: 2px solid #d8b4fe; background: white; color: #a855f7;
+        font-weight: 900; font-size: 0.82rem; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .stage-dot.current { border-color: #7e22ce; background: #7e22ce; color: white; }
+    .stage-dot.solved { border-color: #15803d; background: #dcfce7; color: #15803d; }
+    .stage-dot.current.solved { background: #15803d; color: white; }
+    .stage-title { text-align: center; font-weight: 900; font-size: 1.05rem; color: #1e293b; margin: 4px 0 2px; }
+    .stage-desc { text-align: center; font-size: 0.83rem; color: #57534e; margin: 0 0 12px; line-height: 1.6; }
+
+    .work-layout { display: flex; gap: 18px; flex-wrap: wrap; }
+    .work-canvas-wrap { flex: 1 1 460px; min-width: 280px; }
+    #workCanvas { display: block; margin: 0 auto; width: 100%; max-width: 560px; height: auto; border: 1px solid #e9d5ff; border-radius: 8px; background: #fefaff; touch-action: none; cursor: grab; }
+    .work-controls { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+
+    .tray-label { font-size: 0.78rem; font-weight: 700; color: #78716c; margin: 2px 0 4px; }
+    .tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 8px; background: #faf5ff; border-radius: 8px; min-height: 92px; }
+    .tray-slot {
+        width: 82px; height: 82px; border: 1px solid #e9d5ff; border-radius: 8px; background: white;
+        display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;
+    }
+    .tray-slot.used { opacity: 0.28; cursor: default; }
+    .tray-slot svg { width: 68px; height: 68px; }
+    .tray-slot .piece-label { position: absolute; bottom: 2px; font-size: 0.6rem; color: #78716c; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 0.83rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-rotate { background: #a855f7; }
+    .btn-flip { background: #6366f1; }
+    .btn-back { background: #64748b; }
+    .btn-check { background: #7e22ce; font-size: 0.9rem; padding: 12px 14px; }
+    .btn:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+    .btn-nav { background: #f3e8ff; color: #7e22ce; }
+
+    .result-banner { text-align: center; font-weight: 900; font-size: 0.95rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.ok { background: #dcfce7; color: #15803d; }
+    .result-banner.bad { background: #fee2e2; color: #b91c1c; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+
+    .readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .readout-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; text-align: center; }
+    .readout-cell .k { font-size: 0.7rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.05rem; font-weight: 900; color: #1e293b; }
+
+    .explain-box { margin-top: 14px; padding: 14px 16px; background: #fdf4ff; border: 1px dashed #d8b4fe; border-radius: 10px; }
+    .explain-box p { margin: 0 0 8px; font-size: 0.83rem; color: #334155; line-height: 1.6; }
+    .think { width: 100%; min-height: 70px; border: 1px solid #d6d3d1; border-radius: 8px; padding: 10px; font-family: inherit; font-size: 0.85rem; resize: vertical; }
+    .reveal-btn {
+        background: #f3e8ff; color: #7e22ce; border: 1px solid #a855f7; border-radius: 8px;
+        padding: 9px 16px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit;
+    }
+    .reveal-content { display: none; margin-top: 10px; padding: 14px 16px; background: #fafaf9; border-radius: 8px; border-left: 3px solid #a855f7; font-size: 0.85rem; line-height: 1.7; color: #334155; }
+    .reveal-content.shown { display: block; }
+
+    .extend-list { display: flex; flex-direction: column; gap: 14px; }
+    .extend-item { border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; }
+    .extend-item h4 { margin: 0 0 6px; font-size: 0.88rem; color: #1e293b; }
+    .extend-item p { margin: 0; font-size: 0.82rem; color: #57534e; line-height: 1.6; }
+    .extend-item .hint-btn { margin-top: 8px; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #7e22ce; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 중학교 3학년 목록으로</a>
+    <h1>🧩 탱그램의 제곱근</h1>
+    <p class="subtitle">4cm×4cm 정사각형을 자른 7개의 탱그램 조각으로, 몇 개를 쓰면 새 정사각형을 다시 만들 수 있을까요?</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>📐 원래 탱그램 — 넓이는 몇 cm²일까요?</h3>
+            <p>아래는 모눈 1칸이 1cm인 4cm×4cm 정사각형을 7조각으로 자른 탱그램입니다. 이 7조각을 <b>모두</b> 사용하면 당연히 원래 정사각형이 됩니다.</p>
+            <canvas id="introCanvas" width="360" height="360"></canvas>
+            <div class="quiz-row">
+                <label>넓이 = <input type="number" id="areaInput" placeholder="cm²"> cm²</label>
+                <label>한 변 = <input type="number" id="sideInput" placeholder="cm"> cm</label>
+                <button class="btn btn-check" style="flex:0 0 auto;" id="btnCheckIntro">확인</button>
+            </div>
+            <p class="quiz-feedback" id="introFeedback"></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔬 시뮬레이터 — n조각으로 정사각형 만들기</h2>
+        <div class="stage-bar" id="stageBar"></div>
+        <p class="stage-title" id="stageTitle"></p>
+        <p class="stage-desc" id="stageDesc"></p>
+
+        <div class="work-layout">
+            <div class="work-canvas-wrap">
+                <canvas id="workCanvas" width="560" height="440"></canvas>
+                <p class="result-banner info" id="resultBanner">아래 조각 보관함에서 조각을 클릭해 작업 공간에 올려보세요.</p>
+            </div>
+            <div class="work-controls">
+                <div class="readout-grid">
+                    <div class="readout-cell"><div class="k">사용한 조각 수</div><div class="v" id="usedCountVal">0 / ?</div></div>
+                    <div class="readout-cell"><div class="k">선택한 조각</div><div class="v" id="selectedVal">없음</div></div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-rotate" id="btnRotate">↻ 45° 회전</button>
+                    <button class="btn btn-flip" id="btnFlip">↔ 뒤집기</button>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-back" id="btnReturn">↩ 보관함으로</button>
+                </div>
+                <button class="btn btn-check" id="btnCheck">🔍 정사각형인지 확인하기</button>
+                <div class="btn-row">
+                    <button class="btn btn-nav" id="btnPrevStage">◀ 이전 단계</button>
+                    <button class="btn btn-nav" id="btnNextStage">다음 단계 ▶</button>
+                </div>
+                <button class="btn btn-back" id="btnResetStage">↺ 이 단계 다시 하기</button>
+            </div>
+        </div>
+
+        <div class="tray-label">조각 보관함 (클릭하면 작업 공간에 올라갑니다)</div>
+        <div class="tray" id="tray"></div>
+
+        <div class="explain-box" id="explainBox" style="display:none;">
+            <p><b>🤔 6조각으로는 정사각형이 안 만들어지나요?</b> 아무리 돌리고 뒤집어도 정사각형이 되지 않는다면, 왜 그런지 먼저 스스로 설명해보세요.</p>
+            <textarea class="think" id="explainInput" placeholder="힌트: 7조각 중 1개를 빼면 남는 넓이가 얼마인지, 어떤 조각을 빼느냐에 따라 넓이가 어떻게 달라지는지 생각해보세요."></textarea>
+            <button class="reveal-btn" id="btnRevealExplain" style="margin-top:8px;">💡 설명 확인하기</button>
+            <div class="reveal-content" id="explainReveal">
+                <p>7조각 중 <b>1개를 뺀</b> 6조각의 넓이는, 뺀 조각의 넓이에 따라 16−4=12, 16−2=14, 16−1=15 중 하나가 됩니다. 그러면 한 변의 길이는 각각 √12=2√3, √14, √15가 되는데, 셋 다 서로 다른 값이고 "깔끔하게 맞아떨어지는" 정사각형을 만들 수 있는 조각 배치가 존재하지 않습니다. 즉 넓이만 맞다고 반드시 정사각형이 만들어지는 건 아니라는 것이 이 활동의 핵심입니다 — <b>넓이가 같아도 그 넓이의 정사각형으로 정확히 짜맞춰지는지는 조각의 모양에 달려 있습니다.</b></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <div class="extend-list">
+            <div class="extend-item">
+                <h4>1. 2조각으로 정사각형을 만드는 방법이 두 가지 있어요</h4>
+                <p>큰 삼각형 2개로도, 작은 삼각형 2개로도 정사각형을 만들 수 있습니다. 2단계로 돌아가서 두 가지 방법을 모두 찾아보고, 각각의 넓이와 한 변의 길이를 비교해보세요.</p>
+                <button class="reveal-btn hint-btn" data-target="hintTwo">💡 힌트 보기</button>
+                <div class="reveal-content" id="hintTwo">
+                    <p>큰 삼각형 2개(넓이 4+4=8) → 한 변 2√2. 작은 삼각형 2개(넓이 1+1=2) → 한 변 √2. 두 삼각형을 <b>빗변끼리</b> 맞대면 정사각형이 된다는 게 공통 원리입니다 — 직각이등변삼각형 2개를 빗변으로 붙이면 항상 정사각형이 나옵니다.</p>
+                </div>
+            </div>
+            <div class="extend-item">
+                <h4>2. 4조각으로 만드는 정사각형은 몇 가지일까요?</h4>
+                <p>4단계에서 서로 다른 조각 조합으로 같은 크기(한 변 2√2)의 정사각형을 몇 가지 방법으로 만들 수 있는지 찾아보세요.</p>
+            </div>
+            <div class="extend-item">
+                <h4>3. 넓이가 같으면 항상 정사각형을 만들 수 있을까요?</h4>
+                <p>6조각 활동에서 배웠듯, 넓이가 정사각형 넓이(제곱수·2배수 등)와 맞아도 실제로 조각을 맞출 수 없는 경우가 있습니다. 넓이 조건과 실제로 도형이 맞춰지는 조건이 왜 다른지 자신의 말로 설명해보세요.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 중학교 3학년 목록으로</a>
+        <a href="../index.html">수학실험 전체 목록으로 →</a>
+    </div>
+</div>
+
+<script src="tangram-geometry.js"></script>
+<script src="tangram-app.js"></script>
+</body>
+</html>
