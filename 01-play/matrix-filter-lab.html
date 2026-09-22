@@ -1294,19 +1294,25 @@
             // 숨겨진 4자리 숫자 생성
             stage4HiddenNumber = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
 
-            // 1단계: 원본 이미지 (숨겨진 숫자가 있음)
+            // 1단계: 원본 이미지 (숨겨진 숫자, 필터 없음) - 완전 복호화 상태
             createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             stage4OriginalImage = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
-            // 2단계: 첫 번째 필터만 적용 (부분 복호화)
+            // 2단계: 첫 번째 필터만 적용 (부분 복호화 - 필터 2 제거)
             createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             if (stage2SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
             }
             stage4FilteredOnce = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
-            // 3단계: 암호화된 상태 (아무 필터도 적용하지 않음)
+            // 3단계: 두 필터 모두 적용된 상태 (암호화 상태 - 필터 2 포함)
             createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
+            if (stage2SelectedFilter) {
+                applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
+            }
+            if (stage3SelectedFilter) {
+                applyConvolution(stage4CipherCanvas, filters[stage3SelectedFilter], stage3SelectedFilter !== 'boost');
+            }
             stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // 극도의 노이즈 추가 (숫자를 완전히 숨김 - TV 정적처럼)
@@ -1491,8 +1497,9 @@
             const ctx = stage4CipherCanvas.getContext('2d');
 
             if (step === 1) {
-                if (stage2SelectedFilter) {
-                    applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
+                // 필터 1 제거: FilteredOnce 상태 표시 (부분 복호화)
+                if (stage4FilteredOnce) {
+                    ctx.putImageData(stage4FilteredOnce, 0, 0);
                 }
                 const filterName = ['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(stage2SelectedFilter)];
                 document.getElementById('stage4Step1').textContent = '✅ ' + filterName + ' (부분 복호화)';
@@ -1501,8 +1508,9 @@
                 document.getElementById('stage4Btn2').style.opacity = '1';
                 document.getElementById('stage4Btn2').style.cursor = 'pointer';
             } else if (step === 2) {
-                if (stage3SelectedFilter) {
-                    applyConvolution(stage4CipherCanvas, filters[stage3SelectedFilter], stage3SelectedFilter !== 'boost');
+                // 필터 2 제거: OriginalImage 상태 표시 (완전 복호화)
+                if (stage4OriginalImage) {
+                    ctx.putImageData(stage4OriginalImage, 0, 0);
                 }
                 const filterName = ['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(stage3SelectedFilter)];
                 document.getElementById('stage4Step2').textContent = '✅ ' + filterName + ' (완전 복호화)';
