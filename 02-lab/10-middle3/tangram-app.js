@@ -291,6 +291,20 @@
             ictx.lineWidth = 2;
             ictx.stroke();
         });
+        // 모눈(1cm 간격 안쪽 눈금선) — 조각 위에 겹쳐 그려서 몇 칸인지 셀 수 있게 한다.
+        ictx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ictx.lineWidth = 1;
+        for (let i = 1; i < 4; i++) {
+            ictx.beginPath();
+            ictx.moveTo(offx + i * scale, offy);
+            ictx.lineTo(offx + i * scale, offy + 4 * scale);
+            ictx.stroke();
+            ictx.beginPath();
+            ictx.moveTo(offx, offy + i * scale);
+            ictx.lineTo(offx + 4 * scale, offy + i * scale);
+            ictx.stroke();
+        }
+
         ictx.strokeStyle = '#1e293b';
         ictx.lineWidth = 2.5;
         ictx.strokeRect(offx, offy, 4 * scale, 4 * scale);
