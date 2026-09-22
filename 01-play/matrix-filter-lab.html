@@ -818,9 +818,9 @@
             const w = canvas.width;
             const h = canvas.height;
 
-            // 큰 숫자 그리기 (중앙에)
-            ctx.fillStyle = 'rgba(30, 41, 59, 0.8)';
-            ctx.font = 'bold 80px Arial';
+            // 큰 숫자 그리기 (중앙에, 약간 투명)
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.5)';
+            ctx.font = 'bold 100px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(number, w / 2, h / 2);
@@ -1251,8 +1251,8 @@
             createStage4TestImage(stage4CipherCanvas, stage4HiddenNumber);
             stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
-            // 무거운 노이즈 추가 (TV 정적처럼 숫자 암호화)
-            addNoise(stage4CipherCanvas, 0.6);
+            // 극도의 노이즈 추가 (숫자를 완전히 숨김 - TV 정적처럼)
+            addNoise(stage4CipherCanvas, 0.9);
 
             // UI 초기화
             document.getElementById('stage4Step1').textContent = '미적용';
