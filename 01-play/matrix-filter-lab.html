@@ -805,9 +805,22 @@
 
             <!-- Stage 4 필터 선택 모달 -->
             <div id="stage4FilterModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-                <div style="background: white; border-radius: 16px; padding: 40px; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease-out;">
+                <div style="background: white; border-radius: 16px; padding: 40px; max-width: 700px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.3s ease-out;">
                     <div id="stage4QuizTitle" style="font-size: 1.3rem; font-weight: bold; color: #1e293b; margin-bottom: 20px;"></div>
                     <div id="stage4QuizQuestion" style="font-size: 0.95rem; color: #64748b; margin-bottom: 20px; line-height: 1.6;"></div>
+                    <div id="stage4ReferenceContainer" style="display: none; margin-bottom: 20px;">
+                        <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px; font-weight: 500;">필터 비교:</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">원본 이미지</div>
+                                <canvas id="stage4ReferenceCanvas" width="240" height="240" style="border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc; max-width: 100%;"></canvas>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">현재 이미지 (필터1 적용)</div>
+                                <canvas id="stage4ComparisonCanvas" width="240" height="240" style="border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc; max-width: 100%;"></canvas>
+                            </div>
+                        </div>
+                    </div>
                     <div id="stage4QuizOptions" style="display: grid; gap: 10px; margin-bottom: 20px;"></div>
                     <div id="stage4QuizFeedback" style="display: none; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: 500; text-align: center;"></div>
                 </div>
@@ -1303,7 +1316,7 @@
             if (stage2SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
             }
-            addNoise(stage4CipherCanvas, 0.3);  // 약한 노이즈로 숫자가 긴가민가하게 보임
+            addNoise(stage4CipherCanvas, 0.7);  // 강한 노이즈로 숫자가 거의 안 보임
             stage4FilteredOnce = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // 3단계: 두 필터 모두 적용된 상태 (암호화 상태 - 필터 2 포함)
@@ -1314,11 +1327,10 @@
             if (stage3SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage3SelectedFilter], stage3SelectedFilter !== 'boost');
             }
-            stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
-
             // 극도의 노이즈 추가 (숫자를 완전히 숨김 - TV 정적처럼)
             addNoise(stage4CipherCanvas, 1.0);
             addNoise(stage4CipherCanvas, 0.5);
+            stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // UI 초기화
             document.getElementById('stage4Step1').textContent = '미적용';
@@ -1460,6 +1472,29 @@
             });
 
             document.getElementById('stage4QuizFeedback').style.display = 'none';
+
+            // Filter 2에서만 비교 이미지 표시
+            const refContainer = document.getElementById('stage4ReferenceContainer');
+            if (step === 2) {
+                refContainer.style.display = 'block';
+
+                // 원본 이미지 (stage4OriginalImage) 표시
+                const refCanvas = document.getElementById('stage4ReferenceCanvas');
+                if (refCanvas && stage4OriginalImage) {
+                    const refCtx = refCanvas.getContext('2d');
+                    refCtx.putImageData(stage4OriginalImage, 0, 0);
+                }
+
+                // 현재 필터 1 적용된 이미지 (stage4FilteredOnce) 표시
+                const compCanvas = document.getElementById('stage4ComparisonCanvas');
+                if (compCanvas && stage4FilteredOnce) {
+                    const compCtx = compCanvas.getContext('2d');
+                    compCtx.putImageData(stage4FilteredOnce, 0, 0);
+                }
+            } else {
+                refContainer.style.display = 'none';
+            }
+
             modal.style.display = 'flex';
         }
 
@@ -1542,24 +1577,36 @@
 
             // 폭죽 입자 생성
             const particles = [];
-            for (let i = 0; i < 50; i++) {
-                particles.push({
-                    x: w / 2,
-                    y: h / 2,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8 - 2,
-                    life: 1,
-                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
-                });
-            }
+
+            const createNewParticles = () => {
+                for (let i = 0; i < 50; i++) {
+                    particles.push({
+                        x: w / 2,
+                        y: h / 2,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8 - 2,
+                        life: 1,
+                        color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                    });
+                }
+            };
+
+            createNewParticles();
 
             let animationId;
+            let frameCount = 0;
             const animate = () => {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
                 ctx.fillRect(0, 0, w, h);
 
-                let hasParticles = false;
-                particles.forEach(p => {
+                // 매 15 프레임마다 새로운 폭죽 입자 생성
+                frameCount++;
+                if (frameCount % 15 === 0) {
+                    createNewParticles();
+                }
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
                     if (p.life > 0) {
                         p.x += p.vx;
                         p.y += p.vy;
@@ -1571,16 +1618,13 @@
                         ctx.beginPath();
                         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
                         ctx.fill();
-                        hasParticles = true;
+                    } else {
+                        particles.splice(i, 1);
                     }
-                });
+                }
                 ctx.globalAlpha = 1;
 
-                if (hasParticles) {
-                    animationId = requestAnimationFrame(animate);
-                } else {
-                    cancelAnimationFrame(animationId);
-                }
+                animationId = requestAnimationFrame(animate);
             };
 
             animate();
