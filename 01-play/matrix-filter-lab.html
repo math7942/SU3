@@ -711,9 +711,15 @@
             <p style="color: #64748b; margin-bottom: 20px;">변환된 이미지를 보고 어떤 필터가 적용되었을까요? 맞춰보세요!</p>
 
             <div class="quiz-section">
-                <div class="quiz-image">
-                    <h3>🔍 이 이미지는 어떤 필터로 변환되었을까?</h3>
-                    <canvas id="canvas3-quiz" width="240" height="240"></canvas>
+                <div class="quiz-image" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;">원본 이미지</h3>
+                        <canvas id="canvas2-original" width="240" height="240" style="border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;"></canvas>
+                    </div>
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;">🔍 이 이미지는 어떤 필터로 변환되었을까?</h3>
+                        <canvas id="canvas3-quiz" width="240" height="240" style="border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;"></canvas>
+                    </div>
                 </div>
 
                 <div class="quiz-choices" id="quizChoices">
@@ -744,9 +750,15 @@
             <p style="color: #64748b; margin-bottom: 20px;">다른 이미지로 또 다른 필터를 맞춰보세요! 이 필터가 무엇일까요?</p>
 
             <div class="quiz-section">
-                <div class="quiz-image">
-                    <h3>🔍 이 이미지는 어떤 필터로 변환되었을까?</h3>
-                    <canvas id="canvas3-quiz2" width="240" height="240"></canvas>
+                <div class="quiz-image" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;">원본 이미지</h3>
+                        <canvas id="canvas3-original" width="240" height="240" style="border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;"></canvas>
+                    </div>
+                    <div style="text-align: center;">
+                        <h3 style="font-size: 0.95rem; color: #64748b; margin-bottom: 10px;">🔍 이 이미지는 어떤 필터로 변환되었을까?</h3>
+                        <canvas id="canvas3-quiz2" width="240" height="240" style="border: 2px solid #e2e8f0; border-radius: 8px; background: #f8fafc;"></canvas>
+                    </div>
                 </div>
 
                 <div class="quiz-choices" id="quizChoices3">
@@ -1161,6 +1173,12 @@
             const filterNames = Object.keys(filters);
             quizFilter = filterNames[Math.floor(Math.random() * filterNames.length)];
 
+            // 원본 이미지 표시
+            const canvas2Original = document.getElementById('canvas2-original');
+            if (canvas2Original) {
+                createTestImage(canvas2Original);
+            }
+
             const canvas3Quiz = document.getElementById('canvas3-quiz');
             createTestImage(canvas3Quiz);
             applyConvolution(canvas3Quiz, filters[quizFilter], quizFilter !== 'boost');
@@ -1232,6 +1250,12 @@
         function initStage3() {
             const filterNames = Object.keys(filters);
             quizFilter = filterNames[Math.floor(Math.random() * filterNames.length)];
+
+            // 원본 이미지 표시
+            const canvas3Original = document.getElementById('canvas3-original');
+            if (canvas3Original) {
+                createTestImage(canvas3Original);
+            }
 
             const canvas3Quiz = document.getElementById('canvas3-quiz2');
             createTestImage(canvas3Quiz);
