@@ -411,6 +411,22 @@
                 <div class="achievement" id="achievement">
                     <strong>🎉 성공!</strong>
                     <p id="achievementText"></p>
+                    <div style="margin-top: 12px;">
+                        <label for="actualDigitSelect" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #047857; font-weight: 600;">🖊️ 사람 눈에는 실제로 무슨 숫자로 보이나요?</label>
+                        <select id="actualDigitSelect" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #6ee7b7; font-size: 1rem; font-family: inherit; color: #334155;">
+                            <option value="">숫자를 선택하세요</option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- 행렬 시각화 -->
@@ -453,6 +469,7 @@
             document.getElementById('saveBtn').style.display = 'none';
             document.getElementById('matrixViz').classList.remove('show');
             document.getElementById('targetBox').classList.remove('incorrect');
+            document.getElementById('actualDigitSelect').value = '';
             resetConfidenceGrid();
         }
 
@@ -835,11 +852,19 @@
         // 결과 저장
         function saveRecord() {
             const predictedDigit = parseInt(document.getElementById('predictedDigit').textContent);
+            const actualDigitValue = document.getElementById('actualDigitSelect').value;
+
+            if (actualDigitValue === '') {
+                alert('🖊️ 사람 눈에는 실제로 무슨 숫자로 보이는지 먼저 선택해주세요!');
+                return;
+            }
+
             if (predictedDigit === targetDigit) {
                 const record = {
                     id: Date.now(),
                     targetDigit: targetDigit,
                     predictedDigit: predictedDigit,
+                    actualDigit: parseInt(actualDigitValue),
                     success: true,
                     timestamp: new Date().toLocaleTimeString('ko-KR'),
                     confidence: currentPrediction[targetDigit]
