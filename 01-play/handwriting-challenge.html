@@ -503,6 +503,21 @@
         let myDigit = null;
         let currentPrediction = null;
 
+        // 그림, 인식 결과, 행렬 보기를 모두 깨끗한 상태로 되돌림
+        function resetDrawingState() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('predictedDigit').textContent = '-';
+            document.getElementById('achievement').classList.remove('show', 'fail');
+            document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('matrixViz').classList.remove('show');
+            document.getElementById('targetBox').classList.remove('incorrect');
+
+            const heatmapCanvas = document.getElementById('matrixCanvas');
+            heatmapCanvas.getContext('2d').clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
+
+            resetConfidenceGrid();
+        }
+
         // 내가 쓸 숫자 선택
         function selectMyDigit(d) {
             myDigit = d;
@@ -511,22 +526,13 @@
             });
             document.getElementById('myDigitDisplay').textContent = d;
 
-            // 선택이 바뀌면 이전 인식 결과는 무효화
-            document.getElementById('predictedDigit').textContent = '-';
-            document.getElementById('achievement').classList.remove('show', 'fail');
-            document.getElementById('saveBtn').style.display = 'none';
-            document.getElementById('targetBox').classList.remove('incorrect');
+            // 숫자를 새로 고르면 그려둔 그림과 이전 인식/행렬 보기 결과를 모두 지움
+            resetDrawingState();
         }
 
         // 캔버스 초기화
         function clearCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('predictedDigit').textContent = '-';
-            document.getElementById('achievement').classList.remove('show', 'fail');
-            document.getElementById('saveBtn').style.display = 'none';
-            document.getElementById('matrixViz').classList.remove('show');
-            document.getElementById('targetBox').classList.remove('incorrect');
-            resetConfidenceGrid();
+            resetDrawingState();
         }
 
         // 샘플 필기체 로드
@@ -870,6 +876,9 @@
                 showFailure();
                 document.getElementById('saveBtn').style.display = 'none';
             }
+
+            // 행렬 보기를 지금 그린 그림 기준으로 항상 새로 그림 (이전 그림의 히트맵이 남아있지 않도록)
+            toggleMatrixView();
         }
 
         function showAchievement(predicted) {
