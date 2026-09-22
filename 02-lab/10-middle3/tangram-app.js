@@ -20,7 +20,7 @@
 
     const STAGE_DESC = {
         1: '1개의 조각만 사용해서 정사각형을 만들어 보세요.',
-        2: '2개의 조각을 사용해서 정사각형을 만들어 보세요. (방법이 두 가지 있어요!)',
+        2: '2개의 조각을 사용해서 정사각형을 만들어 보세요. 방법이 두 가지 있어요 — 조각 4개를 모두 꺼내서 한 화면에 정사각형 두 개를 동시에 만들어봐도 좋아요!',
         3: '3개의 조각을 사용해서 정사각형을 만들어 보세요.',
         4: '4개의 조각을 사용해서 정사각형을 만들어 보세요. (방법이 여러 가지예요!)',
         5: '5개의 조각을 사용해서 정사각형을 만들어 보세요.',
@@ -46,6 +46,41 @@
         ctx.stroke();
     }
 
+    // ---- 마우스로 회전하는 손잡이 ----
+    function pieceRadius(piece) {
+        const [cx, cy] = centroidOf(piece.verts);
+        return Math.max(...piece.verts.map(([x, y]) => Math.hypot(x - cx, y - cy)));
+    }
+    function handleWorldPos(piece, state) {
+        const r = pieceRadius(piece) + 0.5;
+        const theta = (state.rot - 90) * Math.PI / 180;
+        return [state.x + r * Math.cos(theta), state.y + r * Math.sin(theta)];
+    }
+    function drawHandle(piece, state) {
+        const [hx, hy] = handleWorldPos(piece, state);
+        const [chx, chy] = worldToCanvas(hx, hy);
+        const [ccx, ccy] = worldToCanvas(state.x, state.y);
+        ctx.beginPath();
+        ctx.moveTo(ccx, ccy);
+        ctx.lineTo(chx, chy);
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 2]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.arc(chx, chy, 11, 0, Math.PI * 2);
+        ctx.fillStyle = '#a855f7';
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('↻', chx, chy);
+    }
+
     function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#fefaff';
@@ -63,20 +98,31 @@
             if (!st.placed) return;
             drawPiece(byId(id), st, id === selectedId);
         });
+        if (selectedId && pieceStates[selectedId].placed) {
+            drawHandle(byId(selectedId), pieceStates[selectedId]);
+        }
         document.getElementById('selectedVal').textContent = selectedId ? byId(selectedId).name : '없음';
         const usedCount = placedOrder.filter(id => pieceStates[id].placed).length;
-        document.getElementById('usedCountVal').textContent = `${usedCount} / ${currentStage}`;
+        document.getElementById('usedCountVal').textContent = `${usedCount} / 7`;
     }
 
     // ---- 조각 보관함 ----
+    // 모든 조각을 "같은 크기의 뷰박스" 안에 중앙 정렬해서 그리면, 실제 조각들끼리의
+    // 상대적인 크기 차이(큰 삼각형 vs 작은 삼각형)가 보관함에서도 그대로 보인다.
+    const TRAY_MAX_DIM = Math.max(...TANGRAM_PIECES.map(p => {
+        const xs = p.verts.map(v => v[0]), ys = p.verts.map(v => v[1]);
+        return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    }));
     function pieceSvgMarkup(piece) {
         const xs = piece.verts.map(v => v[0]), ys = piece.verts.map(v => v[1]);
         const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-        const w = Math.max(maxX - minX, 0.2), h = Math.max(maxY - minY, 0.2);
-        const pad = 0.18 * Math.max(w, h);
-        const vbW = w + 2 * pad, vbH = h + 2 * pad;
-        const pts = piece.verts.map(([x, y]) => `${(x - minX + pad).toFixed(3)},${(y - minY + pad).toFixed(3)}`).join(' ');
-        return `<svg viewBox="0 0 ${vbW.toFixed(3)} ${vbH.toFixed(3)}"><polygon points="${pts}" fill="${piece.color}" stroke="#1e293b" stroke-width="0.06"/></svg>`;
+        const w = maxX - minX, h = maxY - minY;
+        const pad = 0.15 * TRAY_MAX_DIM;
+        const vb = TRAY_MAX_DIM + 2 * pad;
+        const offX = (vb - w) / 2 - minX;
+        const offY = (vb - h) / 2 - minY;
+        const pts = piece.verts.map(([x, y]) => `${(x + offX).toFixed(3)},${(y + offY).toFixed(3)}`).join(' ');
+        return `<svg viewBox="0 0 ${vb.toFixed(3)} ${vb.toFixed(3)}"><polygon points="${pts}" fill="${piece.color}" stroke="#1e293b" stroke-width="0.06"/></svg>`;
     }
 
     function renderTray() {
@@ -96,11 +142,6 @@
     }
 
     function placeFromTray(id) {
-        const placedNow = placedOrder.filter(pid => pieceStates[pid].placed).length;
-        if (placedNow >= currentStage) {
-            showResult(`이번 단계는 조각 ${currentStage}개만 사용할 수 있어요. 먼저 다른 조각을 보관함으로 돌려보내 보세요.`, 'bad');
-            return;
-        }
         const cascade = placeCascade % 5;
         placeCascade++;
         pieceStates[id] = { placed: true, x: (cascade - 2) * 0.5, y: (cascade % 2) * 0.5, rot: 0, flip: false };
@@ -168,11 +209,25 @@
     canvas.addEventListener('pointerdown', (e) => {
         const [cx, cy] = canvasPointFromEvent(e);
         const [wx, wy] = canvasToWorld(cx, cy);
+
+        // 회전 손잡이를 잡았다면 회전 모드로 드래그 시작 (선택된 조각에만 손잡이가 보인다)
+        if (selectedId && pieceStates[selectedId].placed) {
+            const st = pieceStates[selectedId];
+            const [hx, hy] = handleWorldPos(byId(selectedId), st);
+            if (Math.hypot(wx - hx, wy - hy) < 0.35) {
+                dragging = { id: selectedId, mode: 'rotate' };
+                canvas.setPointerCapture(e.pointerId);
+                canvas.style.cursor = 'grabbing';
+                render();
+                return;
+            }
+        }
+
         const hitId = pickPieceAt([wx, wy]);
         selectedId = hitId;
         if (hitId) {
             const st = pieceStates[hitId];
-            dragging = { id: hitId, offX: wx - st.x, offY: wy - st.y };
+            dragging = { id: hitId, mode: 'move', offX: wx - st.x, offY: wy - st.y };
             canvas.setPointerCapture(e.pointerId);
             canvas.style.cursor = 'grabbing';
         }
@@ -183,19 +238,48 @@
         const [cx, cy] = canvasPointFromEvent(e);
         const [wx, wy] = canvasToWorld(cx, cy);
         const st = pieceStates[dragging.id];
-        st.x = wx - dragging.offX;
-        st.y = wy - dragging.offY;
+        if (dragging.mode === 'rotate') {
+            const theta = Math.atan2(wy - st.y, wx - st.x);
+            let deg = theta * 180 / Math.PI + 90;
+            deg = ((deg % 360) + 360) % 360;
+            st.rot = deg;
+        } else {
+            st.x = wx - dragging.offX;
+            st.y = wy - dragging.offY;
+        }
         render();
     });
-    function endDrag() {
+    function isPointOverTray(clientX, clientY) {
+        const trayRect = document.getElementById('tray').getBoundingClientRect();
+        return clientX >= trayRect.left && clientX <= trayRect.right && clientY >= trayRect.top && clientY <= trayRect.bottom;
+    }
+    function endDrag(e) {
         if (!dragging) return;
-        trySnap(dragging.id);
+        const id = dragging.id;
+        const mode = dragging.mode;
+        if (mode === 'move' && e && isPointOverTray(e.clientX, e.clientY)) {
+            dragging = null;
+            canvas.style.cursor = 'grab';
+            returnToTray(id);
+            return;
+        }
+        if (mode === 'rotate') {
+            const st = pieceStates[id];
+            st.rot = ((Math.round(st.rot / 45) * 45) % 360 + 360) % 360;
+        }
+        trySnap(id);
         dragging = null;
         canvas.style.cursor = 'grab';
         render();
     }
     canvas.addEventListener('pointerup', endDrag);
-    canvas.addEventListener('pointercancel', endDrag);
+    canvas.addEventListener('pointercancel', () => endDrag(null));
+    canvas.addEventListener('dblclick', (e) => {
+        const [cx, cy] = canvasPointFromEvent(e);
+        const [wx, wy] = canvasToWorld(cx, cy);
+        const hitId = pickPieceAt([wx, wy]);
+        if (hitId) returnToTray(hitId);
+    });
 
     // ---- 버튼 ----
     document.getElementById('btnRotate').addEventListener('click', () => {
@@ -221,23 +305,67 @@
         el.className = 'result-banner ' + type;
     }
 
+    // 서로 맞닿아 있는(스냅으로 정확히 붙은) 조각들끼리 그룹으로 묶는다.
+    // 이렇게 하면 작업 공간 안에 정사각형 여러 개를 동시에 만들어도 각각 따로 판정할 수 있다.
+    function clusterPlacedPieces() {
+        const ids = placedOrder.filter(id => pieceStates[id].placed);
+        const parent = {};
+        ids.forEach(id => { parent[id] = id; });
+        function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+        function union(a, b) { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; }
+        const EPS = 0.12;
+        const vertsCache = {};
+        ids.forEach(id => { vertsCache[id] = transformVerts(byId(id), pieceStates[id]); });
+        for (let i = 0; i < ids.length; i++) {
+            for (let j = i + 1; j < ids.length; j++) {
+                let touching = false;
+                for (const a of vertsCache[ids[i]]) {
+                    for (const b of vertsCache[ids[j]]) {
+                        if (Math.hypot(a[0] - b[0], a[1] - b[1]) < EPS) { touching = true; break; }
+                    }
+                    if (touching) break;
+                }
+                if (touching) union(ids[i], ids[j]);
+            }
+        }
+        const groups = {};
+        ids.forEach(id => { const r = find(id); (groups[r] = groups[r] || []).push(id); });
+        return Object.values(groups);
+    }
+
+    const stageFoundSolutions = {}; // stage -> Set('id1,id2,...')
+
     document.getElementById('btnCheck').addEventListener('click', () => {
-        const placedIds = placedOrder.filter(id => pieceStates[id].placed);
-        if (placedIds.length !== currentStage) {
-            showResult(`지금 ${placedIds.length}개를 사용 중이에요. ${currentStage}단계는 정확히 ${currentStage}개를 사용해야 해요.`, 'bad');
+        const clusters = clusterPlacedPieces();
+        if (clusters.length === 0) {
+            showResult('아직 작업 공간에 조각이 없어요. 보관함에서 조각을 클릭해 올려보세요.', 'info');
             return;
         }
-        const placed = placedIds.map(id => ({ piece: byId(id), state: pieceStates[id] }));
-        const result = checkSquareAssembly(placed);
-        if (result.valid) {
-            const areaRounded = Math.round(result.area * 1000) / 1000;
-            showResult(`🎉 정사각형 완성! 넓이 = ${areaRounded}cm², 한 변 = ${formatSqrt(result.area)}cm (=√${areaRounded}cm)`, 'ok');
+        let anyOverlap = false;
+        const foundMsgs = [];
+        clusters.forEach(clusterIds => {
+            const placed = clusterIds.map(id => ({ piece: byId(id), state: pieceStates[id] }));
+            const result = checkSquareAssembly(placed);
+            if (result.valid) {
+                const sig = clusterIds.slice().sort().join(',');
+                if (!stageFoundSolutions[currentStage]) stageFoundSolutions[currentStage] = new Set();
+                const isNew = !stageFoundSolutions[currentStage].has(sig);
+                stageFoundSolutions[currentStage].add(sig);
+                const areaRounded = Math.round(result.area * 1000) / 1000;
+                foundMsgs.push(`${clusterIds.length}개(${clusterIds.map(id => byId(id).name).join('+')}) → 넓이 ${areaRounded}cm², 한 변 ${formatSqrt(result.area)}cm${isNew ? ' ✨새 방법!' : ''}`);
+            } else if (clusterIds.length >= 2 && result.reason === 'overlap') {
+                anyOverlap = true;
+            }
+        });
+        if (foundMsgs.length > 0) {
             stageSolved[currentStage] = true;
             renderStageBar();
-        } else if (result.reason === 'overlap') {
+            const total = stageFoundSolutions[currentStage].size;
+            showResult(`🎉 ${foundMsgs.join(' · ')} (이 단계에서 지금까지 찾은 방법: ${total}가지)`, 'ok');
+        } else if (anyOverlap) {
             showResult('조각이 서로 겹쳐 있어요. 겹치지 않게 옮겨보세요.', 'bad');
         } else {
-            showResult('아직 정사각형이 아니에요. 빈틈이나 어긋난 부분이 없는지 확인해보세요.', 'bad');
+            showResult('아직 정사각형이 없어요. 조각을 더 맞춰보세요.', 'bad');
         }
     });
 
