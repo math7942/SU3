@@ -563,7 +563,7 @@
                     <div class="filter-buttons">
                         <button class="filter-btn active" data-filter="blur">
                             <div>🌫️ 블러 (흐릿함)</div>
-                            <div class="filter-formula">[4 8 4] [8 16 8] [4 8 4] ÷ 64</div>
+                            <div class="filter-formula">[4 8 4] [8 16 8] [4 8 4] (1/64)</div>
                         </button>
                         <div class="filter-slider-wrapper">
                             <input type="range" class="filter-slider" data-filter="blur" min="0" max="8" value="4">
@@ -587,7 +587,7 @@
                         </div>
                         <button class="filter-btn" data-filter="boost">
                             <div>💪 색감 부스트 (생생함)</div>
-                            <div class="filter-formula">[0 0 0] [0 5 0] [0 0 0] ÷ 1</div>
+                            <div class="filter-formula">[0 0 0] [0 5 0] [0 0 0]</div>
                         </button>
                         <div class="filter-slider-wrapper">
                             <input type="range" class="filter-slider" data-filter="boost" min="0" max="10" value="5">
@@ -595,7 +595,7 @@
                         </div>
                     </div>
                     <div class="kernel-display">
-                        <div class="kernel-display-content" id="kernelDisplay">[4 8 4]<br>[8 16 8]<br>[4 8 4] ÷ 64</div>
+                        <div class="kernel-display-content" id="kernelDisplay"><pre style="margin: 0;">(1/64)<br><br>[ 4  8  4]<br>[ 8 16  8]<br>[ 4  8  4]</pre></div>
                     </div>
                 </div>
             </div>
@@ -939,13 +939,13 @@
         // 커널을 화면에 표시할 형식으로 변환
         function formatKernel(kernel, filterName) {
             const kernelStr = kernel.map(row => '[' + row.join(' ') + ']').join(' ');
-            const normalizations = {
-                blur: ' ÷ 64',
+            const scalarFactors = {
+                blur: ' (1/64)',
                 sharpen: '',
                 edge: '',
-                boost: ' ÷ 1'
+                boost: ''
             };
-            return kernelStr + (normalizations[filterName] || '');
+            return kernelStr + (scalarFactors[filterName] || '');
         }
 
         // 큰 커널 디스플레이용 포맷
@@ -960,14 +960,16 @@
             // 각 행 포맷
             const rows = kernel.map(row => '[' + row.map(padNumber).join('  ') + ']');
 
-            const normalizations = {
-                blur: ' ÷ 64',
-                sharpen: '',
-                edge: '',
-                boost: ' ÷ 1'
+            // 스칼라 배수를 행렬 앞에 표시
+            const scalarFactors = {
+                blur: '(1/64)',
+                sharpen: '1',
+                edge: '1',
+                boost: '1'
             };
-            const norm = normalizations[filterName] || '';
-            return '<pre style="margin: 0;">' + rows.join('\n') + (norm ? '\n' + norm : '') + '</pre>';
+            const scalar = scalarFactors[filterName] || '1';
+
+            return '<pre style="margin: 0;">' + scalar + '\n\n' + rows.join('\n') + '</pre>';
         }
 
         // Stage 2 초기화
@@ -1070,10 +1072,10 @@
 
         function getFilterFormula(filter) {
             const formulas = {
-                blur: '[4 8 4] [8 16 8] [4 8 4] ÷ 64',
+                blur: '[4 8 4] [8 16 8] [4 8 4] (1/64)',
                 sharpen: '[0 -1 0] [-1 5 -1] [0 -1 0]',
                 edge: '[-1 -1 -1] [-1 8 -1] [-1 -1 -1]',
-                boost: '[0 0 0] [0 5 0] [0 0 0] ÷ 1'
+                boost: '[0 0 0] [0 5 0] [0 0 0]'
             };
             return formulas[filter] || '';
         }
