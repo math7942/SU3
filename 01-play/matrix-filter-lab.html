@@ -1196,7 +1196,9 @@
         // Stage 4: 암호 해독 챌린지
         let stage4FilterApplied = [false, false];
         let stage4CipherCanvas = null;
-        let stage4OriginalImageData = null;
+        let stage4OriginalImage = null;
+        let stage4FilteredOnce = null;
+        let stage4FilteredTwice = null;
 
         function initStage4() {
             stage4FilterApplied = [false, false];
@@ -1204,19 +1206,28 @@
 
             if (!stage4CipherCanvas) return;
 
-            createTestImage(stage4CipherCanvas);
+            const ctx = stage4CipherCanvas.getContext('2d');
 
-            // Stage 2와 3에서 선택한 필터 적용
+            // 1단계: 원본 이미지
+            createTestImage(stage4CipherCanvas);
+            stage4OriginalImage = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
+
+            // 2단계: 첫 번째 필터 적용
+            createTestImage(stage4CipherCanvas);
+            if (stage2SelectedFilter) {
+                applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
+            }
+            stage4FilteredOnce = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
+
+            // 3단계: 두 번째 필터 적용
+            createTestImage(stage4CipherCanvas);
             if (stage2SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
             }
             if (stage3SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage3SelectedFilter], stage3SelectedFilter !== 'boost');
             }
-
-            // 원본 이미지 데이터 저장
-            const ctx = stage4CipherCanvas.getContext('2d');
-            stage4OriginalImageData = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
+            stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // 노이즈 추가 (암호화)
             addNoise(stage4CipherCanvas, 0.15);
@@ -1252,33 +1263,39 @@
         }
 
         function applyStage4Filter(step) {
-            if (!stage4CipherCanvas || !stage4OriginalImageData) return;
+            if (!stage4CipherCanvas) return;
 
             const ctx = stage4CipherCanvas.getContext('2d');
-            const selectedFilter = step === 1 ? stage2SelectedFilter : stage3SelectedFilter;
+            let imageToShow = null;
 
-            if (!selectedFilter) return;
+            if (step === 1) {
+                // 필터 1 제거: 필터 1만 적용된 상태 표시
+                if (stage4FilteredOnce) {
+                    imageToShow = stage4FilteredOnce;
+                }
+                const filterName = ['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(stage2SelectedFilter)];
+                document.getElementById('stage4Step1').textContent = '✅ ' + filterName;
 
-            // 원본 이미지로 복원
-            ctx.putImageData(stage4OriginalImageData, 0, 0);
+                // 필터 2 버튼 활성화
+                document.getElementById('stage4Btn2').disabled = false;
+                document.getElementById('stage4Btn2').style.opacity = '1';
+                document.getElementById('stage4Btn2').style.cursor = 'pointer';
+            } else if (step === 2) {
+                // 필터 2 제거: 원본 이미지 표시
+                if (stage4OriginalImage) {
+                    imageToShow = stage4OriginalImage;
+                }
+                const filterName = ['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(stage3SelectedFilter)];
+                document.getElementById('stage4Step2').textContent = '✅ ' + filterName;
+            }
 
-            // 이전 필터들 다시 적용
-            if (step === 2 && stage2SelectedFilter) {
-                applyConvolution(stage4CipherCanvas, filters[stage2SelectedFilter], stage2SelectedFilter !== 'boost');
+            if (imageToShow) {
+                ctx.putImageData(imageToShow, 0, 0);
             }
 
             stage4FilterApplied[step - 1] = true;
 
-            const stepLabel = step === 1 ? 'stage4Step1' : 'stage4Step2';
-            const filterName = ['블러', '선명화', '엣지감지', '색감부스트'][['blur', 'sharpen', 'edge', 'boost'].indexOf(selectedFilter)];
-            document.getElementById(stepLabel).textContent = '✅ ' + filterName;
-
-            if (step === 1) {
-                document.getElementById('stage4Btn2').disabled = false;
-                document.getElementById('stage4Btn2').style.opacity = '1';
-                document.getElementById('stage4Btn2').style.cursor = 'pointer';
-            }
-
+            // 둘 다 클릭했으면 결과 표시
             if (stage4FilterApplied[0] && stage4FilterApplied[1]) {
                 showStage4Result();
             }
