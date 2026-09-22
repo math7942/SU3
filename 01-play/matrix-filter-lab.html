@@ -690,7 +690,7 @@
             <div class="quiz-section">
                 <div class="quiz-image">
                     <h3>🔍 이 이미지는 어떤 필터로 변환되었을까?</h3>
-                    <canvas id="canvas3-quiz" width="240" height="240"></canvas>
+                    <canvas id="canvas3-quiz2" width="240" height="240"></canvas>
                 </div>
 
                 <div class="quiz-choices" id="quizChoices3">
@@ -1138,7 +1138,7 @@
             const filterNames = Object.keys(filters);
             quizFilter = filterNames[Math.floor(Math.random() * filterNames.length)];
 
-            const canvas3Quiz = document.getElementById('canvas3-quiz');
+            const canvas3Quiz = document.getElementById('canvas3-quiz2');
             createTestImage(canvas3Quiz);
             applyConvolution(canvas3Quiz, filters[quizFilter], quizFilter !== 'boost');
 
