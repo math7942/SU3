@@ -92,8 +92,6 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            width: 280px;
-            margin: 0 auto;
         }
 
         .canvas-section h3 {
@@ -113,6 +111,8 @@
         }
 
         .canvas-container {
+            display: flex;
+            justify-content: center;
             border-radius: 8px;
             padding: 0;
             background: white;
@@ -163,9 +163,6 @@
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
-            width: 280px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .result-section h3 {
@@ -392,10 +389,12 @@
                     💡 <strong>팁:</strong> 큼직하게 그려야 더 잘 인식됩니다. 검은색 펜으로 흰 종이에 그리는 것처럼!
                 </div>
 
-                <!-- 이름 입력 + 기록 저장 -->
+                <!-- 이름 입력 + 기록 저장 (성공했을 때만 표시) -->
                 <div style="margin-top: 12px;">
-                    <label for="participantName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #334155; font-weight: 600;">🙋 이름</label>
-                    <input type="text" id="participantName" placeholder="이름 (입력 안 하면 '익명')" maxlength="12" style="width: 100%; padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; font-family: inherit; color: #334155;">
+                    <div id="nameFieldWrap" style="display: none;">
+                        <label for="participantName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #334155; font-weight: 600;">🙋 이름</label>
+                        <input type="text" id="participantName" placeholder="이름 (입력 안 하면 '익명')" maxlength="12" style="width: 100%; padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; font-family: inherit; color: #334155;">
+                    </div>
                     <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none; width: 100%;">
                         💾 결과를 명예의 전당에 등록하기
                     </button>
@@ -458,6 +457,7 @@
             document.getElementById('predictedDigit').textContent = '-';
             document.getElementById('achievement').classList.remove('show', 'fail');
             document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('nameFieldWrap').style.display = 'none';
             document.getElementById('matrixViz').classList.remove('show');
             document.getElementById('targetBox').classList.remove('incorrect');
 
@@ -747,6 +747,7 @@
             achievement.classList.add('show');
             document.getElementById('targetBox').classList.remove('incorrect');
             document.getElementById('matrixViz').classList.add('show');
+            document.getElementById('nameFieldWrap').style.display = 'block';
         }
 
         function showFailure() {
@@ -758,6 +759,7 @@
             achievement.classList.add('show', 'fail');
             document.getElementById('targetBox').classList.add('incorrect');
             document.getElementById('matrixViz').classList.add('show');
+            document.getElementById('nameFieldWrap').style.display = 'none';
         }
 
         // 가로/세로 분리형 박스 블러 (O(w*h), radius와 무관하게 빠름)
