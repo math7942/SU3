@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>명예의 전당 · 수수의 수학</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            color: #1e293b;
+            margin: 0 0 8px 0;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1rem;
+            margin: 8px 0 0 0;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card.active {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.2s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .tab-btn:hover {
+            color: #1e293b;
+        }
+
+        .tab-btn.active {
+            color: #19547b;
+            border-bottom-color: #19547b;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .rank-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .rank-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px;
+            gap: 16px;
+            align-items: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .rank-item:hover {
+            background: #f0f4ff;
+            border-left-color: #667eea;
+        }
+
+        .rank-item.gold {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left-color: #fbbf24;
+        }
+
+        .rank-item.silver {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            border-left-color: #d1d5db;
+        }
+
+        .rank-item.bronze {
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+            border-left-color: #fb923c;
+        }
+
+        .rank-medal {
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        .rank-info h4 {
+            margin: 0 0 4px 0;
+            color: #1e293b;
+            font-size: 0.95rem;
+        }
+
+        .rank-info p {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .rank-time {
+            text-align: right;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        /* 필터 해독기 스타일 */
+        .filter-content {
+            color: #334155;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* 이미지 블렌더 스타일 */
+        .blend-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .blend-value {
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 손글씨 스타일 */
+        .handwriting-content {
+            text-align: center;
+        }
+
+        .handwriting-result {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .handwriting-digit {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #334155;
+            border: 2px solid #e2e8f0;
+        }
+
+        .arrow {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .auto-refresh {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        .refresh-animation {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 4px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: #e2e8f0;
+            color: #334155;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: #cbd5e1;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 24px; }
+            h1 { font-size: 1.8rem; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .rank-item { grid-template-columns: 60px 1fr; }
+            .rank-time { display: none; }
+            .tabs { gap: 8px; }
+            .tab-btn { padding: 10px 14px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">← 돌아가기</a>
+
+        <div class="header">
+            <div class="badge">🏆 2026 광주수학축제</div>
+            <h1>명예의 전당</h1>
+            <p class="subtitle">행렬로 만들고 AI로 읽다 · 모든 참가자의 기록</p>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stats-grid">
+            <div class="stat-card active">
+                <div class="stat-number" id="totalParticipants">0</div>
+                <div class="stat-label">전체 참가자</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalRecords">0</div>
+                <div class="stat-label">등록된 기록</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="updateTime">방금 전</div>
+                <div class="stat-label">마지막 업데이트</div>
+            </div>
+        </div>
+
+        <!-- 탭 -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('filter')">🔢 필터 해독기</button>
+            <button class="tab-btn" onclick="switchTab('blend')">🎨 이미지 블렌더</button>
+            <button class="tab-btn" onclick="switchTab('handwriting')">✏️ 손글씨 인식</button>
+            <button class="tab-btn" onclick="switchTab('all')">🌟 전체 기록</button>
+        </div>
+
+        <!-- 필터 해독기 탭 -->
+        <div class="tab-content active" id="tab-filter">
+            <h2 style="color: #334155; margin-top: 0;">🏆 창의적인 필터 TOP 5</h2>
+            <div class="rank-list" id="filterRanking">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>아직 등록된 필터가 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 이미지 블렌더 탭 -->
+        <div class="tab-content" id="tab-blend">
+            <h2 style="color: #334155; margin-top: 0;">🎪 최고의 밈 제작자 TOP 5</h2>
+            <div class="rank-list" id="blendRanking">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>아직 등록된 기록이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 손글씨 인식 탭 -->
+        <div class="tab-content" id="tab-handwriting">
+            <h2 style="color: #334155; margin-top: 0;">🎯 AI를 가장 속인 참가자 TOP 5</h2>
+            <div class="rank-list" id="handwritingRanking">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>아직 등록된 기록이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 기록 탭 -->
+        <div class="tab-content" id="tab-all">
+            <h2 style="color: #334155; margin-top: 0;">📊 모든 기록 (최신순)</h2>
+            <div class="rank-list" id="allRanking">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>아직 등록된 기록이 없습니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auto-refresh">
+        <span class="refresh-animation"></span>
+        <div>자동 새로고침</div>
+    </div>
+
+    <script>
+        let allData = [];
+
+        // 데이터 로드
+        function loadAllData() {
+            allData = [];
+
+            // 필터 해독기 데이터
+            const filters = JSON.parse(localStorage.getItem('matrixFilterHallOfFame')) || [];
+            filters.forEach((f, idx) => {
+                allData.push({
+                    type: 'filter',
+                    rank: idx + 1,
+                    title: f.kernel.map(row => `[${row.join(' ')}]`).join(' '),
+                    subtitle: '창의적인 필터',
+                    timestamp: f.timestamp,
+                    time: f.timestamp
+                });
+            });
+
+            // 이미지 블렌더 데이터
+            const blends = JSON.parse(localStorage.getItem('blendRecords')) || [];
+            blends.forEach((b, idx) => {
+                allData.push({
+                    type: 'blend',
+                    rank: idx + 1,
+                    title: `${b.alpha}% : ${b.beta}% 블렌딩`,
+                    subtitle: '창의적인 합성',
+                    timestamp: b.timestamp,
+                    time: b.timestamp,
+                    alpha: b.alpha,
+                    beta: b.beta
+                });
+            });
+
+            // 손글씨 인식 데이터
+            const handwriting = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+            handwriting.forEach((h, idx) => {
+                allData.push({
+                    type: 'handwriting',
+                    rank: idx + 1,
+                    targetDigit: h.targetDigit,
+                    title: `${h.targetDigit}를 그렸어요!`,
+                    subtitle: `성공! 신뢰도 ${(h.confidence * 100).toFixed(0)}%`,
+                    timestamp: h.timestamp,
+                    time: h.timestamp
+                });
+            });
+
+            updateUI();
+        }
+
+        // UI 업데이트
+        function updateUI() {
+            // 통계
+            const uniqueTools = new Set();
+            if (JSON.parse(localStorage.getItem('matrixFilterHallOfFame'))?.length) uniqueTools.add('filter');
+            if (JSON.parse(localStorage.getItem('handwritingRecords'))?.length) uniqueTools.add('handwriting');
+
+            document.getElementById('totalParticipants').textContent = uniqueTools.size > 0 ? '👥' : '0';
+            document.getElementById('totalRecords').textContent = allData.length;
+            document.getElementById('updateTime').textContent = '방금 전';
+
+            // 탭별 랭킹
+            updateFilterRanking();
+            updateBlendRanking();
+            updateHandwritingRanking();
+            updateAllRanking();
+        }
+
+        // 필터 해독기 랭킹
+        function updateFilterRanking() {
+            const container = document.getElementById('filterRanking');
+            const filters = JSON.parse(localStorage.getItem('matrixFilterHallOfFame')) || [];
+
+            if (filters.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 필터가 없습니다.</p></div>';
+                return;
+            }
+
+            container.innerHTML = filters.slice(0, 5).map((f, idx) => {
+                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';
+
+                return `
+                    <div class="${classes}">
+                        <div class="rank-medal">${medals[idx]}</div>
+                        <div class="rank-info">
+                            <h4>창의적인 필터</h4>
+                            <p class="filter-content">${f.kernel.map(row => `[${row.join(' ')}]`).join(' ')}</p>
+                        </div>
+                        <div class="rank-time">${f.timestamp}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 이미지 블렌더 랭킹
+        function updateBlendRanking() {
+            const container = document.getElementById('blendRanking');
+            const blends = JSON.parse(localStorage.getItem('blendRecords')) || [];
+
+            if (blends.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 기록이 없습니다.</p></div>';
+                return;
+            }
+
+            container.innerHTML = blends.slice(0, 5).map((b, idx) => {
+                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';
+
+                return `
+                    <div class="${classes}">
+                        <div class="rank-medal">${medals[idx]}</div>
+                        <div class="rank-info">
+                            <h4>창의적인 블렌딩</h4>
+                            <p>
+                                <span class="blend-value">${b.alpha}%</span>
+                                이미지1 +
+                                <span class="blend-value">${b.beta}%</span>
+                                이미지2
+                            </p>
+                        </div>
+                        <div class="rank-time">${b.timestamp}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 손글씨 인식 랭킹
+        function updateHandwritingRanking() {
+            const container = document.getElementById('handwritingRanking');
+            const records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+
+            if (records.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 기록이 없습니다.</p></div>';
+                return;
+            }
+
+            container.innerHTML = records.slice(0, 5).map((r, idx) => {
+                const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+                const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';
+
+                return `
+                    <div class="${classes}">
+                        <div class="rank-medal">${medals[idx]}</div>
+                        <div class="rank-info">
+                            <h4>AI를 속이다!</h4>
+                            <p>
+                                <span class="handwriting-result">
+                                    <span class="handwriting-digit">${r.targetDigit}</span>
+                                    <span class="arrow">→</span>
+                                    <span class="handwriting-digit">${r.targetDigit}</span>
+                                </span>
+                                신뢰도: ${(r.confidence * 100).toFixed(0)}%
+                            </p>
+                        </div>
+                        <div class="rank-time">${r.timestamp}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 모든 기록
+        function updateAllRanking() {
+            const container = document.getElementById('allRanking');
+
+            if (allData.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 기록이 없습니다.</p></div>';
+                return;
+            }
+
+            container.innerHTML = allData.slice(0, 20).map((d, idx) => {
+                const medal = idx < 3 ? ['🥇', '🥈', '🥉'][idx] : `${idx + 1}️⃣`;
+                const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';
+
+                let content = '';
+                if (d.type === 'filter') {
+                    content = `<p class="filter-content">${d.title}</p>`;
+                } else if (d.type === 'handwriting') {
+                    content = `<p>${d.title}<br><small>${d.subtitle}</small></p>`;
+                }
+
+                return `
+                    <div class="${classes}">
+                        <div class="rank-medal">${medal}</div>
+                        <div class="rank-info">
+                            <h4>${d.subtitle}</h4>
+                            ${content}
+                        </div>
+                        <div class="rank-time">${d.time}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 탭 전환
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 자동 새로고침
+        setInterval(() => {
+            loadAllData();
+        }, 3000);
+
+        // 초기화
+        window.addEventListener('load', () => {
+            loadAllData();
+        });
+
+        // 다른 탭에서 데이터 변경 시 감지
+        window.addEventListener('storage', () => {
+            loadAllData();
+        });
+    </script>
+</body>
+</html>
