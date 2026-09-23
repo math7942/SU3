@@ -1136,6 +1136,7 @@
             ctx.globalAlpha = 1;
             document.getElementById('downloadBtn').disabled = false;
             document.getElementById('saveHallBtn').style.display = 'block';
+            document.getElementById('hallNameWrap').style.display = 'block';
         }
 
         // 결과 다운로드
@@ -1147,13 +1148,28 @@
             link.click();
         }
 
+        // 합성 결과를 작은 썸네일 데이터 URL로 캡처
+        function getBlendSnapshot(size) {
+            const source = document.getElementById('resultCanvas');
+            const snap = document.createElement('canvas');
+            snap.width = size;
+            snap.height = size * (source.height / source.width);
+            const sctx = snap.getContext('2d');
+            sctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, snap.width, snap.height);
+            return snap.toDataURL('image/png');
+        }
+
         // 명예의 전당에 등록
         function saveToHallOfFame() {
             const alpha = parseInt(document.getElementById('alphaSlider').value);
+            const name = (document.getElementById('hallName').value || '').trim().slice(0, 20) || '익명';
+
             const record = {
                 id: Date.now(),
+                name: name,
                 alpha: alpha,
                 beta: 100 - alpha,
+                image: getBlendSnapshot(160),
                 timestamp: new Date().toLocaleTimeString('ko-KR'),
                 description: `${alpha}% : ${100 - alpha}% 블렌딩`
             };
@@ -1165,6 +1181,7 @@
 
             alert('✨ 명예의 전당에 등록되었습니다!');
             document.getElementById('saveHallBtn').style.display = 'none';
+            document.getElementById('hallNameWrap').style.display = 'none';
         }
 
         // 초기화
@@ -1183,6 +1200,8 @@
             document.getElementById('placeholder1').style.display = 'block';
             document.getElementById('placeholder2').style.display = 'block';
             document.getElementById('downloadBtn').disabled = true;
+            document.getElementById('saveHallBtn').style.display = 'none';
+            document.getElementById('hallNameWrap').style.display = 'none';
 
             const ctx = document.getElementById('resultCanvas').getContext('2d');
             ctx.clearRect(0, 0, 400, 300);
