@@ -477,6 +477,10 @@
             <div class="result-container">
                 <canvas id="resultCanvas" width="400" height="300"></canvas>
             </div>
+            <div id="hallNameWrap" style="display: none; margin-bottom: 10px;">
+                <label for="hallName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #334155; font-weight: 600;">🙋 이름 또는 한마디</label>
+                <input type="text" id="hallName" placeholder="이름 또는 한마디 (입력 안 하면 '익명')" maxlength="20" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; font-family: inherit; color: #334155;">
+            </div>
             <div class="button-group">
                 <button class="btn-primary" id="downloadBtn" onclick="downloadResult()" disabled>
                     💾 결과 다운로드
