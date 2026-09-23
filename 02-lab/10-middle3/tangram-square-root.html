@@ -111,9 +111,9 @@
 
     .gallery-thumbnail {
         position: relative;
-        width: 72px;
-        height: 72px;
-        border: 2px solid #d8b4fe;
+        width: 100px;
+        height: 100px;
+        border: 2px solid #a855f7;
         border-radius: 8px;
         background: white;
         overflow: hidden;
@@ -151,6 +151,18 @@
     .gallery-thumbnail:hover .tooltip {
         opacity: 1;
     }
+
+    .btn-check-compact {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        width: 100% !important;
+    }
+
+    .btn-reset-compact {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        width: 100% !important;
+    }
 </style>
 </head>
 <body>
@@ -185,14 +197,14 @@
                 <canvas id="workCanvas" width="560" height="440"></canvas>
                 <p style="font-size:0.72rem; color:#a78bfa; text-align:center; margin:4px 0 0;">💡 조각을 클릭하면 보라색 회전 손잡이(↻)가 나와요 — 손잡이를 드래그해서 돌려보세요. 조각을 보관함까지 드래그하거나 더블클릭하면 다시 담깁니다.</p>
                 <p class="result-banner info" id="resultBanner">아래 조각 보관함에서 조각을 클릭해 작업 공간에 올려보세요.</p>
-                <div style="margin-top: 16px; padding: 12px; background: #fafaf9; border-radius: 8px; border: 1px solid #e7e5e4;">
-                    <p style="margin: 0 0 10px; font-size: 0.82rem; font-weight: 700; color: #334155;">🎨 이 단계에서 성공한 정사각형</p>
-                    <div id="galleryContainer" style="display: flex; gap: 10px; flex-wrap: wrap; min-height: 72px; align-items: flex-start;">
-                        <p style="margin: 0; font-size: 0.78rem; color: #a78bfa; font-style: italic;">정사각형을 확인하면 여기에 저장됩니다</p>
-                    </div>
-                </div>
             </div>
             <div class="work-controls">
+                <div style="padding: 14px; background: #f6e6ff; border-radius: 10px; margin-bottom: 14px; border: 2px solid #d8b4fe;">
+                    <p style="margin: 0 0 12px; font-size: 0.85rem; font-weight: 700; color: #334155;">🎨 이 단계에서 성공한 정사각형</p>
+                    <div id="galleryContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; min-height: 120px;">
+                        <p style="margin: 0; font-size: 0.78rem; color: #a78bfa; font-style: italic; grid-column: 1/-1;">정사각형을 확인하면 여기에 저장됩니다</p>
+                    </div>
+                </div>
                 <div class="readout-grid">
                     <div class="readout-cell"><div class="k">사용한 조각 수</div><div class="v" id="usedCountVal">0 / ?</div></div>
                     <div class="readout-cell"><div class="k">선택한 조각</div><div class="v" id="selectedVal">없음</div></div>
@@ -204,12 +216,12 @@
                 <div class="btn-row">
                     <button class="btn btn-back" id="btnReturn">↩ 보관함으로</button>
                 </div>
-                <button class="btn btn-check" id="btnCheck">🔍 정사각형인지 확인하기</button>
+                <button class="btn btn-check btn-check-compact" id="btnCheck">🔍 확인하기</button>
                 <div class="btn-row">
                     <button class="btn btn-nav" id="btnPrevStage">◀ 이전 단계</button>
                     <button class="btn btn-nav" id="btnNextStage">다음 단계 ▶</button>
                 </div>
-                <button class="btn btn-back" id="btnResetStage">↺ 이 단계 다시 하기</button>
+                <button class="btn btn-back btn-reset-compact" id="btnResetStage">↺ 다시 하기</button>
             </div>
         </div>
 
