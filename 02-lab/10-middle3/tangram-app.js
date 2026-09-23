@@ -144,7 +144,8 @@
     function placeFromTray(id) {
         const cascade = placeCascade % 5;
         placeCascade++;
-        pieceStates[id] = { placed: true, x: (cascade - 2) * 0.5, y: (cascade % 2) * 0.5, rot: 0, flip: false };
+        // 판의 위쪽 왼쪽에 계단식으로 배치해서 기존 조각과 겹치지 않게
+        pieceStates[id] = { placed: true, x: -1.2 + cascade * 0.4, y: -0.8 - (cascade % 3) * 0.4, rot: 0, flip: false };
         if (!placedOrder.includes(id)) placedOrder.push(id);
         else { placedOrder = placedOrder.filter(x => x !== id); placedOrder.push(id); }
         selectedId = id;
