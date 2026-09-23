@@ -476,43 +476,6 @@
             color: #7f1d1d;
         }
 
-        .rank-board {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .rank-board.show {
-            display: block;
-        }
-
-        .rank-board h4 {
-            margin: 0 0 12px 0;
-            color: #334155;
-            font-size: 0.9rem;
-        }
-
-        .rank-item {
-            padding: 8px;
-            background: white;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            color: #334155;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .rank-num {
-            font-weight: bold;
-            color: #667eea;
-            min-width: 30px;
-        }
-
         @media (max-width: 768px) {
             .container { padding: 24px; }
             h1 { font-size: 1.5rem; }
@@ -696,12 +659,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div style="margin-top: 14px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <label for="filterAuthorName" style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: #334155; font-weight: 600;">🙋 이름 또는 한마디를 적고 내 필터를 명예의 전당에 저장해보세요</label>
-                        <input type="text" id="filterAuthorName" placeholder="이름 또는 한마디 (입력 안 하면 '익명')" maxlength="20" style="width: 100%; padding: 10px 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 1rem; font-family: inherit; color: #334155;">
-                        <button class="btn-secondary" style="width: 100%;" onclick="saveCustomFilter()">🏆 지금 필터를 명예의 전당에 저장</button>
-                    </div>
                 </div>
             </div>
 
@@ -732,15 +689,6 @@
                 </div>
 
                 <div class="result-message" id="resultMessage"></div>
-
-                <div class="rank-board" id="rankBoard">
-                    <h4>🏆 명예의 전당 (최근 TOP 3)</h4>
-                    <div id="rankContent">
-                        <div class="rank-item" style="color: #94a3b8; text-align: center; padding: 20px;">
-                            아직 저장된 필터가 없습니다. Stage 2에서 필터를 만들고 저장해보세요!
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div class="button-group">
@@ -957,87 +905,6 @@
         let currentFilter = 'blur';
         let customKernel = [[0, 0, 0], [0, 1, 0], [0, 0, 0]];
         let quizFilter = null;
-        let savedFilters = [];
-
-        // localStorage에서 저장된 필터 로드
-        function loadSavedFilters() {
-            const saved = localStorage.getItem('matrixFilterHallOfFame');
-            if (saved) {
-                savedFilters = JSON.parse(saved);
-            }
-        }
-
-        // 필터 적용 결과 미리보기를 작은 썸네일 데이터 URL로 캡처
-        function getFilterSnapshot(size) {
-            const source = document.getElementById('canvas1-filtered');
-            const snap = document.createElement('canvas');
-            snap.width = size;
-            snap.height = size;
-            snap.getContext('2d').drawImage(source, 0, 0, source.width, source.height, 0, 0, size, size);
-            return snap.toDataURL('image/png');
-        }
-
-        // 필터 저장 및 순위 업데이트
-        function saveCustomFilter() {
-            const timestamp = new Date().toLocaleTimeString('ko-KR');
-            const nameInput = document.getElementById('filterAuthorName');
-            const name = (nameInput.value || '').trim().slice(0, 20) || '익명';
-
-            const entry = {
-                id: Date.now(),
-                name: name,
-                kernel: customKernel.map(row => [...row]),
-                image: getFilterSnapshot(140),
-                timestamp: timestamp
-            };
-
-            savedFilters.unshift(entry);
-            if (savedFilters.length > 10) {
-                savedFilters.pop();
-            }
-
-            localStorage.setItem('matrixFilterHallOfFame', JSON.stringify(savedFilters));
-            updateRankBoard();
-
-            // 피드백
-            alert('✨ 필터가 명예의 전당에 저장되었습니다!');
-        }
-
-        // 사용자가 입력한 텍스트(이름 등)를 안전하게 이스케이프
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        // 명예의 전당 업데이트
-        function updateRankBoard() {
-            const rankContent = document.getElementById('rankContent');
-            rankContent.innerHTML = '';
-
-            if (savedFilters.length === 0) {
-                rankContent.innerHTML = '<div class="rank-item" style="color: #94a3b8; text-align: center; padding: 20px;">아직 저장된 필터가 없습니다.</div>';
-                return;
-            }
-
-            const topFilters = savedFilters.slice(0, 3);
-            topFilters.forEach((filter, idx) => {
-                const medals = ['🥇', '🥈', '🥉'];
-                const kernelStr = filter.kernel.map(row => `[${row.join(' ')}]`).join(' ');
-                const name = escapeHtml(filter.name || '익명');
-
-                const item = document.createElement('div');
-                item.className = 'rank-item';
-                item.innerHTML = `
-                    <span class="rank-num">${medals[idx]}</span>
-                    <div style="flex: 1;">
-                        <div><strong>${name}</strong> · ${kernelStr}</div>
-                        <div style="font-size: 0.75rem; color: #94a3b8;">${filter.timestamp}</div>
-                    </div>
-                `;
-                rankContent.appendChild(item);
-            });
-        }
 
         // Stage 1 초기화
         function initStage1() {
@@ -1211,10 +1078,6 @@
                 btn.addEventListener('click', () => selectAnswer(choice));
                 quizChoices.appendChild(btn);
             });
-
-            // 명예의 전당 표시
-            updateRankBoard();
-            document.getElementById('rankBoard').classList.add('show');
         }
 
         function getFilterFormula(filter) {
@@ -1717,7 +1580,6 @@
 
         // 초기화
         window.addEventListener('load', () => {
-            loadSavedFilters();
             goToStage(1);
         });
     </script>
