@@ -696,6 +696,18 @@
 
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
+            // 캔버스가 비어 있으면(투명 alpha만 있으면) 인식을 진행하지 않는다.
+            // 안 그리면 모델이 균일한 신뢰도를 반환해서 predictedDigit이 항상 0이 되어
+            // "내가 쓴 숫자"와 다르면 아무것도 안 그려도 성공 처리되는 버그가 있었다.
+            let hasInk = false;
+            for (let i = 3; i < imageData.data.length; i += 4) {
+                if (imageData.data[i] > 10) { hasInk = true; break; }
+            }
+            if (!hasInk) {
+                alert('✏️ 먼저 숫자를 그려주세요!');
+                return;
+            }
+
             if (!model) {
                 currentPrediction = simulatePrediction(imageData);
             } else {
