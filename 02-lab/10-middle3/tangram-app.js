@@ -298,7 +298,10 @@
         render();
     });
     document.getElementById('btnReturn').addEventListener('click', () => returnToTray(selectedId));
-    document.getElementById('btnResetStage').addEventListener('click', () => loadStage(currentStage));
+    document.getElementById('btnResetStage').addEventListener('click', () => {
+        resetStageGallery(currentStage);
+        loadStage(currentStage);
+    });
 
     function showResult(msg, type) {
         const el = document.getElementById('resultBanner');
@@ -339,6 +342,11 @@
 
     // ---- 갤러리 함수 ----
     function saveToGallery(clusterIds, result) {
+        // 중복 확인: 같은 조각 조합이 이미 저장되어 있으면 건너뛰기
+        if (!stageGalleries[currentStage]) stageGalleries[currentStage] = [];
+        const sig = clusterIds.slice().sort().join(',');
+        if (stageGalleries[currentStage].some(item => item.sig === sig)) return;
+
         // 중앙 영역(조각들이 있는 부분)만 캡처
         const cropCanvas = document.createElement('canvas');
         const cropCtx = cropCanvas.getContext('2d');
@@ -351,8 +359,7 @@
         const pieces = clusterIds.map(id => byId(id).name).join('+');
         const areaRounded = Math.round(result.area * 1000) / 1000;
 
-        if (!stageGalleries[currentStage]) stageGalleries[currentStage] = [];
-        stageGalleries[currentStage].push({ img: imgData, pieces, area: areaRounded });
+        stageGalleries[currentStage].push({ img: imgData, pieces, area: areaRounded, sig });
 
         // localStorage에도 저장
         const key = `tangram_gallery_stage_${currentStage}`;
@@ -459,6 +466,13 @@
         renderTray();
         renderGallery();
         render();
+    }
+
+    function resetStageGallery(n) {
+        stageGalleries[n] = [];
+        const key = `tangram_gallery_stage_${n}`;
+        localStorage.removeItem(key);
+        renderGallery();
     }
 
 
