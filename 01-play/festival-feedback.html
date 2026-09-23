@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI를 속여라 명예의 전당 · 수수의 수학</title>
+    <title>체험 소감 · 수수의 수학</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
 
         body {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             font-family: 'Noto Sans KR', sans-serif;
             display: flex;
             flex-direction: column;
@@ -60,7 +60,7 @@
 
         .badge {
             display: inline-block;
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -73,7 +73,7 @@
             color: #1e293b;
             margin: 0 0 8px 0;
             font-size: 2.5rem;
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -102,7 +102,7 @@
         }
 
         .stat-card.active {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             color: white;
         }
 
@@ -117,64 +117,43 @@
             opacity: 0.8;
         }
 
-        .rank-list {
+        .feedback-list {
             display: grid;
             gap: 12px;
         }
 
-        .rank-item {
-            display: grid;
-            grid-template-columns: 80px 1fr 150px;
-            gap: 16px;
-            align-items: center;
-            padding: 16px;
+        .feedback-card {
+            padding: 18px 20px;
             background: #f8fafc;
             border-radius: 12px;
-            border-left: 4px solid #e2e8f0;
-            transition: all 0.2s;
+            border-left: 4px solid #b34fe0;
         }
 
-        .rank-item:hover {
-            background: #f0f4ff;
-            border-left-color: #667eea;
+        .feedback-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
 
-        .rank-item.gold {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border-left-color: #fbbf24;
-        }
-
-        .rank-item.silver {
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            border-left-color: #d1d5db;
-        }
-
-        .rank-item.bronze {
-            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-            border-left-color: #fb923c;
-        }
-
-        .rank-medal {
-            font-size: 2.5rem;
-            text-align: center;
-        }
-
-        .rank-info h4 {
-            margin: 0 0 4px 0;
-            color: #1e293b;
+        .feedback-name {
+            font-weight: 700;
+            color: #7b3fa0;
             font-size: 0.95rem;
         }
 
-        .rank-info p {
-            margin: 0;
-            color: #64748b;
-            font-size: 0.85rem;
+        .feedback-time {
+            color: #94a3b8;
+            font-size: 0.8rem;
         }
 
-        .rank-time {
-            text-align: right;
-            color: #94a3b8;
-            font-size: 0.85rem;
+        .feedback-text {
+            margin: 0;
+            color: #334155;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .empty-state {
@@ -186,46 +165,6 @@
         .empty-state-icon {
             font-size: 3rem;
             margin-bottom: 12px;
-        }
-
-        /* 손글씨 스타일 */
-        .handwriting-result {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .handwriting-digit {
-            background: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #334155;
-            border: 2px solid #e2e8f0;
-        }
-
-        .arrow {
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .handwriting-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-
-        .handwriting-thumb {
-            width: 56px;
-            height: 56px;
-            border-radius: 8px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            object-fit: contain;
-            flex: none;
         }
 
         .auto-refresh {
@@ -241,7 +180,7 @@
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid #667eea;
+            border: 2px solid #7b3fa0;
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -273,8 +212,6 @@
             .reset-btn { position: static; margin: 0 0 16px auto; display: flex; width: max-content; }
             h1 { font-size: 1.8rem; }
             .stats-grid { grid-template-columns: 1fr; }
-            .rank-item { grid-template-columns: 60px 1fr; }
-            .rank-time { display: none; }
         }
     </style>
 </head>
@@ -285,20 +222,20 @@
         <a href="gwangju-festival/index.html" class="back-button">← 돌아가기</a>
 
         <div class="header">
-            <div class="badge">✍️ 2026 광주수학축제</div>
-            <h1>AI를 속여라 명예의 전당</h1>
-            <p class="subtitle">[1단계] AI를 속여라! · 모든 참가자의 기록</p>
+            <div class="badge">💬 2026 광주수학축제</div>
+            <h1>체험 소감</h1>
+            <p class="subtitle">[3단계] 4개의 숫자를 맞춰라!!! · 모든 참가자의 이야기</p>
         </div>
 
         <!-- 통계 -->
         <div class="stats-grid">
             <div class="stat-card active">
                 <div class="stat-number" id="totalRecords">0</div>
-                <div class="stat-label">등록된 기록</div>
+                <div class="stat-label">등록된 소감</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="bestConfidence">-</div>
-                <div class="stat-label">최고 신뢰도</div>
+                <div class="stat-number" id="latestName">-</div>
+                <div class="stat-label">최근 작성자</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="updateTime">방금 전</div>
@@ -306,12 +243,12 @@
             </div>
         </div>
 
-        <!-- 손글씨 인식 랭킹 -->
-        <h2 style="color: #334155; margin-top: 0;">🎯 AI를 가장 속인 참가자 TOP 10</h2>
-        <div class="rank-list" id="handwritingRanking">
+        <!-- 소감 목록 -->
+        <h2 style="color: #334155; margin-top: 0;">📝 참가자들의 이야기</h2>
+        <div class="feedback-list" id="feedbackList">
             <div class="empty-state">
                 <div class="empty-state-icon">📭</div>
-                <p>아직 등록된 기록이 없습니다.</p>
+                <p>아직 등록된 소감이 없습니다.</p>
             </div>
         </div>
     </div>
@@ -348,62 +285,42 @@
 
         // UI 업데이트
         function updateUI() {
-            const records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+            const records = JSON.parse(localStorage.getItem('festivalFeedback')) || [];
 
             document.getElementById('totalRecords').textContent = records.length;
-
-            const best = records.reduce((max, r) => Math.max(max, r.confidence || 0), 0);
-            document.getElementById('bestConfidence').textContent = records.length ? `${(best * 100).toFixed(0)}%` : '-';
-
+            document.getElementById('latestName').textContent = records.length ? (records[0].name || '익명') : '-';
             document.getElementById('updateTime').textContent = '방금 전';
 
-            updateHandwritingRanking(records);
+            updateFeedbackList(records);
         }
 
-        // 사용자가 입력한 텍스트(이름 등)를 안전하게 이스케이프
+        // 사용자가 입력한 텍스트(이름, 소감 등)를 안전하게 이스케이프
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
 
-        // 손글씨 인식 랭킹
-        function updateHandwritingRanking(records) {
-            const container = document.getElementById('handwritingRanking');
+        // 소감 목록
+        function updateFeedbackList(records) {
+            const container = document.getElementById('feedbackList');
 
             if (records.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 기록이 없습니다.</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 소감이 없습니다.</p></div>';
                 return;
             }
 
-            container.innerHTML = records.slice(0, 10).map((r, idx) => {
-                const medals = ['🥇', '🥈', '🥉'];
-                const medal = idx < 3 ? medals[idx] : `${idx + 1}`;
-                const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';
-                const actual = (r.actualDigit !== undefined && r.actualDigit !== null) ? r.actualDigit : r.targetDigit;
+            container.innerHTML = records.slice(0, 50).map((r) => {
                 const name = escapeHtml(r.name || '익명');
-                const thumb = r.image
-                    ? `<img class="handwriting-thumb" src="${r.image}" alt="${name}님이 그린 숫자">`
-                    : '';
+                const text = escapeHtml(r.text || '');
 
                 return `
-                    <div class="${classes}">
-                        <div class="rank-medal">${medal}</div>
-                        <div class="rank-info">
-                            <h4>${name}님 · AI를 속이다!</h4>
-                            <div class="handwriting-row">
-                                ${thumb}
-                                <p style="margin: 0;">
-                                    <span class="handwriting-result">
-                                        <span class="handwriting-digit">${actual}</span>
-                                        <span class="arrow">→</span>
-                                        <span class="handwriting-digit">${r.predictedDigit}</span>
-                                    </span>
-                                    신뢰도: ${(r.confidence * 100).toFixed(0)}%
-                                </p>
-                            </div>
+                    <div class="feedback-card">
+                        <div class="feedback-head">
+                            <span class="feedback-name">🙋 ${name}</span>
+                            <span class="feedback-time">${r.timestamp}</span>
                         </div>
-                        <div class="rank-time">${r.timestamp}</div>
+                        <p class="feedback-text">${text}</p>
                     </div>
                 `;
             }).join('');
