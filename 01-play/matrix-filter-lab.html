@@ -804,7 +804,7 @@
 
             <div class="button-group">
                 <button class="btn-secondary" onclick="prevStage()">← 이전 단계</button>
-                <button class="btn-primary" onclick="resetAll()">🔄 처음부터</button>
+                <a href="gwangju-festival/index.html" class="btn-primary" style="display: inline-block; padding: 14px 28px; border-radius: 8px; font-size: 1rem; font-weight: 600; text-decoration: none; box-sizing: border-box;">🏠 축제 메인으로</a>
             </div>
         </div>
     </div>
@@ -1664,10 +1664,6 @@
 
         function prevStage() {
             if (currentStage > 1) goToStage(currentStage - 1);
-        }
-
-        function resetAll() {
-            goToStage(1);
         }
 
         // 초기화
