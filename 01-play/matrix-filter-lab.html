@@ -1243,9 +1243,8 @@
             if (stage3SelectedFilter) {
                 applyConvolution(stage4CipherCanvas, filters[stage3SelectedFilter], stage3SelectedFilter !== 'boost');
             }
-            // 극도의 노이즈 추가 (숫자를 완전히 숨김 - TV 정적처럼)
+            // 완전한 노이즈로 덮어씀 (블렌드 방식이라 strength 1.0이면 원본 색이 전혀 남지 않음 - TV 정적처럼)
             addNoise(stage4CipherCanvas, 1.0);
-            addNoise(stage4CipherCanvas, 0.5);
             stage4FilteredTwice = ctx.getImageData(0, 0, stage4CipherCanvas.width, stage4CipherCanvas.height);
 
             // UI 초기화
@@ -1268,14 +1267,15 @@
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
+            // 픽셀 값에 노이즈를 "더하는" 방식이면, 엣지감지처럼 검은 배경에
+            // 아주 밝은 색 테두리가 남는 이미지에서는 밝은 픽셀이 노이즈를
+            // 더해도 여전히 밝게 남아 테두리가 그대로 드러난다.
+            // 대신 원래 색을 랜덤 색으로 "섞는(blend)" 방식을 쓰면 배경이
+            // 어둡든 밝든, 테두리가 있든 없든 strength만큼 균일하게 가려진다.
             for (let i = 0; i < data.length; i += 4) {
-                const noise = (Math.random() - 0.5) * 255 * strength;
-                data[i] += noise;
-                data[i + 1] += noise;
-                data[i + 2] += noise;
-                data[i] = Math.max(0, Math.min(255, data[i]));
-                data[i + 1] = Math.max(0, Math.min(255, data[i + 1]));
-                data[i + 2] = Math.max(0, Math.min(255, data[i + 2]));
+                data[i] = data[i] * (1 - strength) + Math.random() * 255 * strength;
+                data[i + 1] = data[i + 1] * (1 - strength) + Math.random() * 255 * strength;
+                data[i + 2] = data[i + 2] * (1 - strength) + Math.random() * 255 * strength;
             }
 
             ctx.putImageData(imageData, 0, 0);
