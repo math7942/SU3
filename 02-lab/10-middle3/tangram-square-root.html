@@ -195,16 +195,10 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 14px; margin-bottom: 16px; align-items: flex-start;">
-            <div style="flex: 1; padding: 14px; background: #f6e6ff; border-radius: 10px; border: 2px solid #d8b4fe;">
-                <p style="margin: 0 0 12px; font-size: 0.85rem; font-weight: 700; color: #334155;">🎨 이 단계에서 성공한 정사각형</p>
-                <div id="galleryContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; min-height: 120px;">
-                    <p style="margin: 0; font-size: 0.78rem; color: #a78bfa; font-style: italic; grid-column: 1/-1;">정사각형을 확인하면 여기에 저장됩니다</p>
-                </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 110px;">
-                <button class="btn btn-check btn-check-compact" id="btnCheck" style="margin: 0;">🔍 확인하기</button>
-                <button class="btn btn-back btn-reset-compact" id="btnResetStage" style="margin: 0;">↺ 다시 하기</button>
+        <div style="padding: 14px; background: #f6e6ff; border-radius: 10px; margin-bottom: 16px; border: 2px solid #d8b4fe;">
+            <p style="margin: 0 0 12px; font-size: 0.85rem; font-weight: 700; color: #334155;">🎨 이 단계에서 성공한 정사각형</p>
+            <div id="galleryContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; min-height: 120px;">
+                <p style="margin: 0; font-size: 0.78rem; color: #a78bfa; font-style: italic; grid-column: 1/-1;">정사각형을 확인하면 여기에 저장됩니다</p>
             </div>
         </div>
 
@@ -231,6 +225,11 @@
 
         <div class="tray-label">조각 보관함 (클릭하면 작업 공간에 올라갑니다)</div>
         <div class="tray" id="tray"></div>
+
+        <div style="display: flex; gap: 8px; margin-top: 14px;">
+            <button class="btn btn-check btn-check-compact" id="btnCheck">🔍 확인하기</button>
+            <button class="btn btn-back btn-reset-compact" id="btnResetStage">↺ 다시 하기</button>
+        </div>
 
         <div class="explain-box" id="explainBox" style="display:none;">
             <p><b>🤔 6조각으로는 정사각형이 안 만들어지나요?</b> 아무리 돌리고 뒤집어도 정사각형이 되지 않는다면, 왜 그런지 먼저 스스로 설명해보세요.</p>
