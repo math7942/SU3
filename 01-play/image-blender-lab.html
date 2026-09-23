@@ -398,6 +398,10 @@
                         <button class="btn-primary" id="startWebcam" onclick="startWebcam()">📷 웹캠 켜기</button>
                         <button class="btn-secondary" id="captureWebcam" onclick="captureWebcam()" style="display: none;">✓ 촬영</button>
                     </div>
+                    <div id="cameraSelectWrap" style="display: none; margin-top: 8px;">
+                        <label for="cameraSelect" style="display: block; margin-bottom: 4px; font-size: 0.8rem; color: #64748b;">카메라 선택 (화면이 검게 나오면 다른 카메라를 선택해보세요)</label>
+                        <select id="cameraSelect" onchange="switchWebcamDevice()" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; font-family: inherit; color: #334155;"></select>
+                    </div>
                 </div>
             </div>
 
@@ -930,33 +934,74 @@
         }
 
         // 웹캠 함수들
-        async function startWebcam() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: { ideal: 400 }, height: { ideal: 300 } }
-                });
-                const video = document.getElementById('webcam');
-                // 속성뿐 아니라 프로퍼티로도 명시해야 일부 브라우저에서 자동재생이 확실히 동작함
-                video.muted = true;
-                video.playsInline = true;
-                video.srcObject = stream;
-                video.style.display = 'block';
 
-                try {
-                    await video.play();
-                } catch (playErr) {
-                    console.warn('video.play() 실패, 메타데이터 로드 후 재시도:', playErr);
-                    await new Promise((resolve) => {
-                        video.addEventListener('loadedmetadata', resolve, { once: true });
-                    });
-                    await video.play();
+        // 지정한 deviceId(없으면 기본 카메라)로 스트림을 열어 video에 연결
+        async function openWebcamStream(deviceId) {
+            if (canvasStream) {
+                canvasStream.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = deviceId
+                ? { video: { deviceId: { exact: deviceId }, width: { ideal: 400 }, height: { ideal: 300 } } }
+                : { video: { facingMode: 'user', width: { ideal: 400 }, height: { ideal: 300 } } };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const video = document.getElementById('webcam');
+            // 속성뿐 아니라 프로퍼티로도 명시해야 일부 브라우저에서 자동재생이 확실히 동작함
+            video.muted = true;
+            video.playsInline = true;
+            video.srcObject = stream;
+            video.style.display = 'block';
+
+            try {
+                await video.play();
+            } catch (playErr) {
+                console.warn('video.play() 실패, 메타데이터 로드 후 재시도:', playErr);
+                await new Promise((resolve) => {
+                    video.addEventListener('loadedmetadata', resolve, { once: true });
+                });
+                await video.play();
+            }
+
+            canvasStream = stream;
+        }
+
+        // 카메라가 여러 개면 선택 드롭다운을 채움 (얼굴 인식용 IR 카메라가
+        // 기본으로 잡혀 화면이 검게 나오는 노트북에서 다른 카메라로 바꿀 수 있게 함)
+        async function populateCameraSelect() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const cameras = devices.filter(d => d.kind === 'videoinput');
+                const select = document.getElementById('cameraSelect');
+                const wrap = document.getElementById('cameraSelectWrap');
+
+                if (cameras.length < 2) {
+                    wrap.style.display = 'none';
+                    return;
                 }
 
+                select.innerHTML = cameras.map((cam, idx) =>
+                    `<option value="${cam.deviceId}">${cam.label || `카메라 ${idx + 1}`}</option>`
+                ).join('');
+
+                const currentTrack = canvasStream && canvasStream.getVideoTracks()[0];
+                const currentId = currentTrack && currentTrack.getSettings().deviceId;
+                if (currentId) select.value = currentId;
+
+                wrap.style.display = 'block';
+            } catch (err) {
+                console.warn('카메라 목록을 가져오지 못했습니다:', err);
+            }
+        }
+
+        async function startWebcam() {
+            try {
+                await openWebcamStream();
                 document.getElementById('placeholder1').style.display = 'none';
                 document.getElementById('startWebcam').style.display = 'none';
                 document.getElementById('captureWebcam').style.display = 'block';
                 webcamActive = true;
-                canvasStream = stream;
+                populateCameraSelect();
             } catch (err) {
                 let errorMsg = `웹캠 접근 오류\n\n`;
 
@@ -979,6 +1024,18 @@
             }
         }
 
+        // 드롭다운에서 다른 카메라를 고르면 그 카메라로 스트림을 다시 염
+        async function switchWebcamDevice() {
+            const deviceId = document.getElementById('cameraSelect').value;
+            if (!deviceId) return;
+            try {
+                await openWebcamStream(deviceId);
+            } catch (err) {
+                alert(`카메라 전환 오류\n\n${err.name}: ${err.message}`);
+                console.error('카메라 전환 에러:', err);
+            }
+        }
+
         function stopWebcam() {
             if (canvasStream) {
                 canvasStream.getTracks().forEach(track => track.stop());
@@ -986,6 +1043,7 @@
                 document.getElementById('placeholder1').style.display = 'block';
                 document.getElementById('startWebcam').style.display = 'block';
                 document.getElementById('captureWebcam').style.display = 'none';
+                document.getElementById('cameraSelectWrap').style.display = 'none';
                 webcamActive = false;
             }
         }
