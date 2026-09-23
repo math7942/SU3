@@ -397,6 +397,9 @@
                     <button class="btn-primary" id="saveBtn" onclick="saveRecord()" style="display: none; width: 100%;">
                         💾 결과를 명예의 전당에 등록하기
                     </button>
+                    <a href="image-blender-lab.html" id="nextStageBtn" class="btn-primary" style="display: none; width: 100%; margin-top: 10px; text-align: center; text-decoration: none; box-sizing: border-box;">
+                        다음 단계: 행렬 연금술사!! →
+                    </a>
                 </div>
             </div>
 
@@ -905,6 +908,8 @@
 
             alert('✨ 명예의 전당에 등록되었습니다!');
             document.getElementById('saveBtn').style.display = 'none';
+            document.getElementById('nameFieldWrap').style.display = 'none';
+            document.getElementById('nextStageBtn').style.display = 'block';
         }
 
         // 초기화
