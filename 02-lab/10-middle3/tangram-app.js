@@ -334,6 +334,59 @@
     }
 
     const stageFoundSolutions = {}; // stage -> Set('id1,id2,...')
+    const stageGalleries = {}; // stage -> Array of {img, pieces, area}
+
+    // ---- 갤러리 함수 ----
+    function saveToGallery(clusterIds, result) {
+        const imgData = canvas.toDataURL('image/png');
+        const pieces = clusterIds.map(id => byId(id).name).join('+');
+        const areaRounded = Math.round(result.area * 1000) / 1000;
+
+        if (!stageGalleries[currentStage]) stageGalleries[currentStage] = [];
+        stageGalleries[currentStage].push({ img: imgData, pieces, area: areaRounded });
+
+        // localStorage에도 저장
+        const key = `tangram_gallery_stage_${currentStage}`;
+        localStorage.setItem(key, JSON.stringify(stageGalleries[currentStage]));
+
+        renderGallery();
+    }
+
+    function renderGallery() {
+        const container = document.getElementById('galleryContainer');
+        const gallery = stageGalleries[currentStage] || [];
+
+        if (gallery.length === 0) {
+            container.innerHTML = '<p style="margin: 0; font-size: 0.78rem; color: #a78bfa; font-style: italic;">정사각형을 확인하면 여기에 저장됩니다</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        gallery.forEach((item, idx) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'gallery-thumbnail';
+            thumb.innerHTML = `
+                <img src="${item.img}" alt="Success ${idx + 1}">
+                <div class="tooltip">${item.pieces} (${item.area}cm²)</div>
+            `;
+            container.appendChild(thumb);
+        });
+    }
+
+    function loadGalleryFromStorage() {
+        for (let s = 1; s <= 7; s++) {
+            const key = `tangram_gallery_stage_${s}`;
+            const stored = localStorage.getItem(key);
+            if (stored) {
+                try {
+                    stageGalleries[s] = JSON.parse(stored);
+                } catch (e) {
+                    console.error('Failed to load gallery for stage', s);
+                }
+            }
+        }
+        renderGallery();
+    }
 
     document.getElementById('btnCheck').addEventListener('click', () => {
         const clusters = clusterPlacedPieces();
@@ -353,6 +406,8 @@
                 stageFoundSolutions[currentStage].add(sig);
                 const areaRounded = Math.round(result.area * 1000) / 1000;
                 foundMsgs.push(`${clusterIds.length}개(${clusterIds.map(id => byId(id).name).join('+')}) → 넓이 ${areaRounded}cm², 한 변 ${formatSqrt(result.area)}cm${isNew ? ' ✨새 방법!' : ''}`);
+                // 갤러리에 저장
+                saveToGallery(clusterIds, result);
             } else if (clusterIds.length >= 2 && result.reason === 'overlap') {
                 anyOverlap = true;
             }
@@ -396,6 +451,7 @@
         document.getElementById('btnNextStage').disabled = (n === 7);
         renderStageBar();
         renderTray();
+        renderGallery();
         render();
     }
 
@@ -463,5 +519,6 @@
 
     // ---- 초기화 ----
     renderIntro();
+    loadGalleryFromStorage();
     loadStage(1);
 })();
