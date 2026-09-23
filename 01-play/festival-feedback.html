@@ -207,6 +207,43 @@
             background: #cbd5e1;
         }
 
+        .cross-nav {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .cross-nav a {
+            flex: 1;
+            min-width: 220px;
+            text-align: center;
+            padding: 14px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: transform 0.15s ease;
+        }
+
+        .cross-nav a:hover {
+            transform: translateY(-2px);
+        }
+
+        .cross-nav .to-handwriting {
+            background: #e0f2fe;
+            color: #0c4a6e;
+            border: 1px solid #bae6fd;
+        }
+
+        .cross-nav .to-blender {
+            background: #e6edff;
+            color: #1e3a8a;
+            border: 1px solid #c7d7ff;
+        }
+
         @media (max-width: 768px) {
             .container { padding: 24px; }
             .reset-btn { position: static; margin: 0 0 16px auto; display: flex; width: max-content; }
@@ -250,6 +287,11 @@
                 <div class="empty-state-icon">📭</div>
                 <p>아직 등록된 소감이 없습니다.</p>
             </div>
+        </div>
+
+        <div class="cross-nav">
+            <a class="to-handwriting" href="hall-of-fame.html">✍️ AI를 속여라 명예의 전당 →</a>
+            <a class="to-blender" href="hall-of-fame-blender.html">🧪 행렬 연금술사 명예의 전당 →</a>
         </div>
     </div>
 
