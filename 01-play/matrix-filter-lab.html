@@ -99,7 +99,9 @@
         /* Stage 1: 필터 마법사 */
         .filter-wizard {
             display: grid;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
         }
 
         .wizard-section {
@@ -479,6 +481,7 @@
         @media (max-width: 768px) {
             .container { padding: 24px; }
             h1 { font-size: 1.5rem; }
+            .filter-wizard,
             .wizard-section,
             .filter-grid-section,
             .quiz-image { grid-template-columns: 1fr; }
