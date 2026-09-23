@@ -339,7 +339,15 @@
 
     // ---- 갤러리 함수 ----
     function saveToGallery(clusterIds, result) {
-        const imgData = canvas.toDataURL('image/png');
+        // 중앙 영역(조각들이 있는 부분)만 캡처
+        const cropCanvas = document.createElement('canvas');
+        const cropCtx = cropCanvas.getContext('2d');
+        const cropLeft = 100, cropTop = 60, cropWidth = 360, cropHeight = 320;
+        cropCanvas.width = cropWidth;
+        cropCanvas.height = cropHeight;
+        cropCtx.drawImage(canvas, cropLeft, cropTop, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        const imgData = cropCanvas.toDataURL('image/png');
+
         const pieces = clusterIds.map(id => byId(id).name).join('+');
         const areaRounded = Math.round(result.area * 1000) / 1000;
 
@@ -445,19 +453,14 @@
         selectedId = null;
         placeCascade = 0;
         document.getElementById('stageTitle').textContent = `${n}단계 — ${n}조각으로 정사각형 만들기`;
-        document.getElementById('stageDesc').textContent = STAGE_DESC[n];
         document.getElementById('explainBox').style.display = (n === 6) ? 'block' : 'none';
         showResult('아래 조각 보관함에서 조각을 클릭해 작업 공간에 올려보세요.', 'info');
-        document.getElementById('btnPrevStage').disabled = (n === 1);
-        document.getElementById('btnNextStage').disabled = (n === 7);
         renderStageBar();
         renderTray();
         renderGallery();
         render();
     }
 
-    document.getElementById('btnPrevStage').addEventListener('click', () => { if (currentStage > 1) loadStage(currentStage - 1); });
-    document.getElementById('btnNextStage').addEventListener('click', () => { if (currentStage < 7) loadStage(currentStage + 1); });
 
     // ---- STEP1 소개 캔버스 + 퀴즈 ----
     function renderIntro() {
