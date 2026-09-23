@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI를 속여라 명예의 전당 · 수수의 수학</title>
+    <title>행렬 암호 해독기 명예의 전당 · 수수의 수학</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; }
 
         body {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             font-family: 'Noto Sans KR', sans-serif;
             display: flex;
             flex-direction: column;
@@ -60,7 +60,7 @@
 
         .badge {
             display: inline-block;
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -73,7 +73,7 @@
             color: #1e293b;
             margin: 0 0 8px 0;
             font-size: 2.5rem;
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -102,7 +102,7 @@
         }
 
         .stat-card.active {
-            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            background: linear-gradient(135deg, #b34fe0 0%, #7b3fa0 100%);
             color: white;
         }
 
@@ -135,8 +135,8 @@
         }
 
         .rank-item:hover {
-            background: #f0f4ff;
-            border-left-color: #667eea;
+            background: #f7f0ff;
+            border-left-color: #8a2ec2;
         }
 
         .rank-item.gold {
@@ -188,44 +188,27 @@
             margin-bottom: 12px;
         }
 
-        /* 손글씨 스타일 */
-        .handwriting-result {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .handwriting-digit {
-            background: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #334155;
-            border: 2px solid #e2e8f0;
-        }
-
-        .arrow {
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .handwriting-row {
+        .filter-row {
             display: flex;
             align-items: center;
             gap: 14px;
             flex-wrap: wrap;
         }
 
-        .handwriting-thumb {
+        .filter-thumb {
             width: 56px;
             height: 56px;
             border-radius: 8px;
             border: 2px solid #e2e8f0;
             background: white;
-            object-fit: contain;
+            object-fit: cover;
             flex: none;
+        }
+
+        .filter-content {
+            color: #334155;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
         }
 
         .auto-refresh {
@@ -241,7 +224,7 @@
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid #667eea;
+            border: 2px solid #8a2ec2;
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -285,20 +268,20 @@
         <a href="index.html" class="back-button">← 돌아가기</a>
 
         <div class="header">
-            <div class="badge">✍️ 2026 광주수학축제</div>
-            <h1>AI를 속여라 명예의 전당</h1>
-            <p class="subtitle">[1단계] AI를 속여라! · 모든 참가자의 기록</p>
+            <div class="badge">🔐 2026 광주수학축제</div>
+            <h1>행렬 암호 해독기 명예의 전당</h1>
+            <p class="subtitle">[3단계] 4개의 숫자를 맞춰라!!! · 모든 참가자의 필터</p>
         </div>
 
         <!-- 통계 -->
         <div class="stats-grid">
             <div class="stat-card active">
                 <div class="stat-number" id="totalRecords">0</div>
-                <div class="stat-label">등록된 기록</div>
+                <div class="stat-label">등록된 필터</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="bestConfidence">-</div>
-                <div class="stat-label">최고 신뢰도</div>
+                <div class="stat-number" id="latestName">-</div>
+                <div class="stat-label">최근 참가자</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="updateTime">방금 전</div>
@@ -306,12 +289,12 @@
             </div>
         </div>
 
-        <!-- 손글씨 인식 랭킹 -->
-        <h2 style="color: #334155; margin-top: 0;">🎯 AI를 가장 속인 참가자 TOP 10</h2>
-        <div class="rank-list" id="handwritingRanking">
+        <!-- 필터 해독기 랭킹 -->
+        <h2 style="color: #334155; margin-top: 0;">🏆 창의적인 필터 TOP 10</h2>
+        <div class="rank-list" id="filterRanking">
             <div class="empty-state">
                 <div class="empty-state-icon">📭</div>
-                <p>아직 등록된 기록이 없습니다.</p>
+                <p>아직 등록된 필터가 없습니다.</p>
             </div>
         </div>
     </div>
@@ -347,16 +330,13 @@
 
         // UI 업데이트
         function updateUI() {
-            const records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
+            const records = JSON.parse(localStorage.getItem('matrixFilterHallOfFame')) || [];
 
             document.getElementById('totalRecords').textContent = records.length;
-
-            const best = records.reduce((max, r) => Math.max(max, r.confidence || 0), 0);
-            document.getElementById('bestConfidence').textContent = records.length ? `${(best * 100).toFixed(0)}%` : '-';
-
+            document.getElementById('latestName').textContent = records.length ? (records[0].name || '익명') : '-';
             document.getElementById('updateTime').textContent = '방금 전';
 
-            updateHandwritingRanking(records);
+            updateFilterRanking(records);
         }
 
         // 사용자가 입력한 텍스트(이름 등)를 안전하게 이스케이프
@@ -366,12 +346,12 @@
             return div.innerHTML;
         }
 
-        // 손글씨 인식 랭킹
-        function updateHandwritingRanking(records) {
-            const container = document.getElementById('handwritingRanking');
+        // 필터 해독기 랭킹
+        function updateFilterRanking(records) {
+            const container = document.getElementById('filterRanking');
 
             if (records.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 기록이 없습니다.</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>아직 등록된 필터가 없습니다.</p></div>';
                 return;
             }
 
@@ -379,27 +359,20 @@
                 const medals = ['🥇', '🥈', '🥉'];
                 const medal = idx < 3 ? medals[idx] : `${idx + 1}`;
                 const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';
-                const actual = (r.actualDigit !== undefined && r.actualDigit !== null) ? r.actualDigit : r.targetDigit;
                 const name = escapeHtml(r.name || '익명');
+                const kernelStr = r.kernel.map(row => `[${row.join(' ')}]`).join(' ');
                 const thumb = r.image
-                    ? `<img class="handwriting-thumb" src="${r.image}" alt="${name}님이 그린 숫자">`
+                    ? `<img class="filter-thumb" src="${r.image}" alt="${name}님의 필터 결과">`
                     : '';
 
                 return `
                     <div class="${classes}">
                         <div class="rank-medal">${medal}</div>
                         <div class="rank-info">
-                            <h4>${name}님 · AI를 속이다!</h4>
-                            <div class="handwriting-row">
+                            <h4>${name}님의 필터</h4>
+                            <div class="filter-row">
                                 ${thumb}
-                                <p style="margin: 0;">
-                                    <span class="handwriting-result">
-                                        <span class="handwriting-digit">${actual}</span>
-                                        <span class="arrow">→</span>
-                                        <span class="handwriting-digit">${r.predictedDigit}</span>
-                                    </span>
-                                    신뢰도: ${(r.confidence * 100).toFixed(0)}%
-                                </p>
+                                <p class="filter-content" style="margin: 0;">${kernelStr}</p>
                             </div>
                         </div>
                         <div class="rank-time">${r.timestamp}</div>
