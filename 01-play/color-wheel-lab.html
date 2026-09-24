@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>색상환 탐구실 · 수수의 수학</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #fdf4ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #a21caf; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.5rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #78716c; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #a21caf; }
+
+    .intro-box { background: #fdf4ff; border: 2px solid #e879f9; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #a21caf; }
+    .intro-box p { margin: 0 0 8px; font-size: 0.85rem; color: #334155; line-height: 1.7; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #a21caf; }
+
+    .step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+    .step-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; text-align: center; }
+    .step-cell .n { font-size: 1rem; font-weight: 900; color: #a21caf; }
+    .step-cell .name { font-size: 0.7rem; color: #78716c; margin-top: 4px; line-height: 1.4; }
+
+    .builder-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .builder-canvas-wrap { flex: 1 1 380px; min-width: 280px; }
+    #wheelCanvas { display: block; margin: 0 auto; border: 1px solid #f5d0fe; border-radius: 8px; background: #fffbff; touch-action: none; cursor: crosshair; max-width: 100%; height: auto; }
+    .hint { font-size: 0.72rem; color: #d946ef; text-align: center; margin: 6px 0 0; line-height: 1.6; }
+
+    .builder-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+    .readout-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .readout-cell .k { font-size: 0.7rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.1rem; font-weight: 900; color: #1e293b; margin-top: 2px; }
+    .readout-cell .formula { font-size: 0.72rem; color: #a21caf; margin-top: 4px; font-family: 'Courier New', monospace; word-break: break-all; }
+
+    .count-row { display: flex; align-items: center; gap: 10px; }
+    .count-row input[type="range"] { flex: 1; accent-color: #a21caf; }
+    .count-row .count-val { min-width: 34px; text-align: center; font-weight: 900; color: #a21caf; font-size: 1.05rem; }
+
+    .toggle-row {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px;
+        font-size: 0.85rem; font-weight: 700; color: #334155;
+    }
+    .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .slider {
+        position: absolute; inset: 0; background: #d6d3d1; border-radius: 999px; cursor: pointer; transition: background 0.15s;
+    }
+    .switch .slider::before {
+        content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+        background: white; border-radius: 50%; transition: transform 0.15s;
+    }
+    .switch input:checked + .slider { background: #a21caf; }
+    .switch input:checked + .slider::before { transform: translateX(18px); }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-redraw { background: #a21caf; }
+    .btn-clear { background: #94a3b8; }
+
+    .result-banner { text-align: center; font-weight: 900; font-size: 0.85rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.ok { background: #fae8ff; color: #a21caf; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+    .result-banner.done { background: #fce7f3; color: #be185d; border: 2px dashed #ec4899; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #a21caf; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+        .step-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 수학과 놀자로</a>
+    <h1>🌈 색상환 탐구실</h1>
+    <p class="subtitle">다각형 하나를 그리고, 회전과 리스트로 복제해서 나만의 색상환을 만들어보세요.</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>🧭 회전으로 만드는 색상환이란?</h3>
+            <p>꽃잎처럼 생긴 <b>다각형 하나</b>를 그린 뒤, 같은 중심점을 기준으로 <b>일정한 각도만큼 반복해서 회전</b>시키면 색상환(꽃 모양) 도형이 완성됩니다. "몇 도씩 돌릴지"를 담은 숫자들의 모음을 <b>리스트</b>라고 불러요.</p>
+            <p>예를 들어 30°씩 돌리는 리스트는 <b>a = [0°, 30°, 60°, ..., 330°]</b>로 총 12개의 값을 가지고, 360° ÷ 30° = <b>12개</b>의 꽃잎이 만들어집니다.</p>
+            <div class="step-grid">
+                <div class="step-cell"><div class="n">1</div><div class="name">다각형 그리기</div></div>
+                <div class="step-cell"><div class="n">2</div><div class="name">회전 각도 리스트 정하기</div></div>
+                <div class="step-cell"><div class="n">3</div><div class="name">중심점 기준으로 회전 복제</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔬 만들기</h2>
+
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                <p class="hint" id="drawHint">✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.</p>
+            </div>
+            <div class="builder-side">
+                <div class="readout-cell">
+                    <div class="k">몇 조각(꽃잎)으로 나눌까요?</div>
+                    <div class="count-row">
+                        <input type="range" id="countSlider" min="2" max="36" value="12">
+                        <span class="count-val" id="countVal">12</span>
+                    </div>
+                    <div class="formula" id="formulaText">a = [0°, 30°, ..., 330°] (360° ÷ 12 = 30° 간격)</div>
+                </div>
+
+                <div class="toggle-row">
+                    <span>🌈 무지개색 적용</span>
+                    <label class="switch">
+                        <input type="checkbox" id="rainbowToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="formula" id="hsvFormula" style="text-align:center; color:#a21caf;">C = hsv(a, 0.75, 1)</div>
+
+                <div class="btn-row">
+                    <button class="btn btn-redraw" id="btnRedraw">✏️ 다시 그리기</button>
+                    <button class="btn btn-clear" id="btnClear">↺ 전체 초기화</button>
+                </div>
+                <p class="result-banner info" id="wheelBanner">먼저 꽃잎 모양 다각형을 그려보세요.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0 0 10px;">
+            조각 개수를 바꿔가며 색상환이 어떻게 달라지는지 관찰해보세요.
+        </p>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">
+            🔎 <b>탐구질문 1</b> — 조각을 5개로 하면 회전 각도는 몇 도씩일까요? (360° ÷ 5 = ?)<br>
+            🔎 <b>탐구질문 2</b> — 조각을 7개로 나누면 각도가 <b>51.43°</b>처럼 딱 떨어지지 않는데도, 12개로 나눴을 때처럼 빈틈없이 한 바퀴를 채울 수 있을까요? 왜 그럴까요?<br>
+            🔎 <b>탐구질문 3</b> — 360의 약수(1, 2, 3, 4, 5, 6, 8, 9, 10, 12, ...)로 조각 개수를 정하면 어떤 점이 좋을까요?
+        </p>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 수학과 놀자로</a>
+        <a href="gwangju-festival/index.html">2026 광주수학축제 →</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const CX = W / 2, CY = H / 2;
+    const CLOSE_RADIUS = 14;
+
+    let points = []; // 그리는 중인 다각형의 점들 (캔버스 좌표)
+    let finalized = false;
+    let count = 12;
+    let rainbow = true;
+
+    function showBanner(msg, type) {
+        const el = document.getElementById('wheelBanner');
+        el.textContent = msg;
+        el.className = 'result-banner ' + type;
+    }
+
+    function updateFormula() {
+        const interval = 360 / count;
+        const intervalText = Number.isInteger(interval) ? `${interval}°` : `${interval.toFixed(2)}°`;
+        document.getElementById('countVal').textContent = count;
+        const sample = Number.isInteger(interval)
+            ? `a = [0°, ${interval}°, ..., ${360 - interval}°]`
+            : `a = [0°, ${intervalText}, ${(interval * 2).toFixed(2)}°, ...] (총 ${count}개)`;
+        document.getElementById('formulaText').textContent = `${sample} (360° ÷ ${count} = ${intervalText} 간격)`;
+    }
+
+    function hsvToRgb(h, s, v) {
+        const c = v * s;
+        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+        const m = v - c;
+        let r, g, b;
+        if (h < 60) { r = c; g = x; b = 0; }
+        else if (h < 120) { r = x; g = c; b = 0; }
+        else if (h < 180) { r = 0; g = c; b = x; }
+        else if (h < 240) { r = 0; g = x; b = c; }
+        else if (h < 300) { r = x; g = 0; b = c; }
+        else { r = c; g = 0; b = x; }
+        return `rgb(${Math.round((r + m) * 255)}, ${Math.round((g + m) * 255)}, ${Math.round((b + m) * 255)})`;
+    }
+
+    function rotatePoint([x, y], angleDeg) {
+        const rad = angleDeg * Math.PI / 180;
+        const dx = x - CX, dy = y - CY;
+        return [CX + dx * Math.cos(rad) - dy * Math.sin(rad), CY + dx * Math.sin(rad) + dy * Math.cos(rad)];
+    }
+
+    function drawCenterMarker() {
+        ctx.beginPath();
+        ctx.arc(CX, CY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#a21caf';
+        ctx.fill();
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#a21caf';
+        ctx.textAlign = 'left';
+        ctx.fillText('중심점', CX + 8, CY - 8);
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fffbff';
+        ctx.fillRect(0, 0, W, H);
+
+        // 은은한 안내 원
+        ctx.strokeStyle = '#fae8ff';
+        ctx.lineWidth = 1;
+        [60, 120, 180].forEach(r => {
+            ctx.beginPath();
+            ctx.arc(CX, CY, r, 0, Math.PI * 2);
+            ctx.stroke();
+        });
+
+        if (finalized && points.length >= 3) {
+            const interval = 360 / count;
+            for (let i = 0; i < count; i++) {
+                const angle = i * interval;
+                const rotated = points.map(p => rotatePoint(p, angle));
+                ctx.beginPath();
+                rotated.forEach(([x, y], idx) => { idx === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+                ctx.closePath();
+                if (rainbow) {
+                    ctx.fillStyle = hsvToRgb(angle, 0.75, 1);
+                } else {
+                    ctx.fillStyle = '#c026d3';
+                }
+                ctx.globalAlpha = 0.88;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = 'rgba(30,20,40,0.35)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        } else {
+            // 그리는 중인 다각형 미리보기
+            if (points.length > 0) {
+                ctx.beginPath();
+                points.forEach(([x, y], idx) => { idx === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+                ctx.strokeStyle = '#a21caf';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                if (points.length >= 3) {
+                    ctx.beginPath();
+                    ctx.moveTo(points[points.length - 1][0], points[points.length - 1][1]);
+                    ctx.lineTo(points[0][0], points[0][1]);
+                    ctx.strokeStyle = '#e9b8f0';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([4, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                points.forEach(([x, y], idx) => {
+                    ctx.beginPath();
+                    ctx.arc(x, y, idx === 0 ? 6 : 4, 0, Math.PI * 2);
+                    ctx.fillStyle = idx === 0 ? '#ec4899' : '#a21caf';
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                });
+            }
+        }
+
+        drawCenterMarker();
+    }
+
+    canvas.addEventListener('click', (e) => {
+        if (finalized) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = W / rect.width, scaleY = H / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        if (points.length >= 3) {
+            const [fx, fy] = points[0];
+            if (Math.hypot(x - fx, y - fy) < CLOSE_RADIUS) {
+                finalized = true;
+                document.getElementById('drawHint').textContent = '🎉 다각형이 완성됐어요! 오른쪽에서 조각 개수와 무지개색을 바꿔보세요.';
+                render();
+                showBanner(`✨ 색상환 완성! ${count}개의 꽃잎으로 360°를 채웠어요.`, 'done');
+                return;
+            }
+        }
+        points.push([x, y]);
+        render();
+    });
+
+    document.getElementById('countSlider').addEventListener('input', (e) => {
+        count = parseInt(e.target.value);
+        updateFormula();
+        if (finalized) {
+            render();
+            showBanner(`✨ 색상환 완성! ${count}개의 꽃잎으로 360°를 채웠어요.`, 'done');
+        }
+    });
+
+    document.getElementById('rainbowToggle').addEventListener('change', (e) => {
+        rainbow = e.target.checked;
+        if (finalized) render();
+    });
+
+    document.getElementById('btnRedraw').addEventListener('click', () => {
+        points = [];
+        finalized = false;
+        document.getElementById('drawHint').textContent = '✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.';
+        showBanner('먼저 꽃잎 모양 다각형을 그려보세요.', 'info');
+        render();
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+        points = [];
+        finalized = false;
+        count = 12;
+        rainbow = true;
+        document.getElementById('countSlider').value = 12;
+        document.getElementById('rainbowToggle').checked = true;
+        updateFormula();
+        document.getElementById('drawHint').textContent = '✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.';
+        showBanner('먼저 꽃잎 모양 다각형을 그려보세요.', 'info');
+        render();
+    });
+
+    updateFormula();
+    render();
+})();
+</script>
+
+</body>
+</html>
