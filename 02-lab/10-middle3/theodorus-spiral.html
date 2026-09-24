@@ -71,6 +71,31 @@
     .btn-play:hover { background: #92400e; }
     .btn-reset { background: #94a3b8; }
     .btn-reset:hover { background: #64748b; }
+    .btn-save { background: #92400e; }
+    .btn-save:hover { background: #78350f; }
+
+    .btn-toggle {
+        flex: 1 1 auto; border: 1.5px solid #fbbf24; background: white; color: #92400e;
+        border-radius: 8px; padding: 8px 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: inherit;
+    }
+    .btn-toggle.active { background: #b45309; color: white; border-color: #b45309; }
+
+    .toggle-row {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px;
+        font-size: 0.82rem; font-weight: 700; color: #334155;
+    }
+    .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .slider2 {
+        position: absolute; inset: 0; background: #d6d3d1; border-radius: 999px; cursor: pointer; transition: background 0.15s;
+    }
+    .switch .slider2::before {
+        content: ""; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+        background: white; border-radius: 50%; transition: transform 0.15s;
+    }
+    .switch input:checked + .slider2 { background: #b45309; }
+    .switch input:checked + .slider2::before { transform: translateX(18px); }
 
     .result-banner { text-align: center; font-weight: 700; font-size: 0.8rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
     .result-banner.info { background: #f1f5f9; color: #475569; }
@@ -131,6 +156,9 @@
                     <span><span class="dot rational"></span>완전제곱수 (유리수)</span>
                     <span><span class="dot irrational"></span>무리수</span>
                 </div>
+                <div class="btn-row" style="margin-top:10px;">
+                    <button class="btn btn-save" id="btnSavePng">📷 PNG로 저장</button>
+                </div>
             </div>
             <div class="builder-side">
                 <div class="slider-cell">
@@ -143,6 +171,20 @@
                 <div class="btn-row">
                     <button class="btn btn-play" id="btnPlay">▶ 자동으로 늘리기</button>
                     <button class="btn btn-reset" id="btnReset">↺ 처음부터</button>
+                </div>
+                <div class="slider-cell">
+                    <div class="k">반지름 선 스타일</div>
+                    <div class="btn-row" style="margin-top:6px;">
+                        <button class="btn-toggle active" id="btnDashed" data-style="dashed">점선</button>
+                        <button class="btn-toggle" id="btnSolid" data-style="solid">실선</button>
+                    </div>
+                </div>
+                <div class="toggle-row">
+                    <span>🎨 삼각형 색칠하기</span>
+                    <label class="switch">
+                        <input type="checkbox" id="fillToggle" checked>
+                        <span class="slider2"></span>
+                    </label>
                 </div>
                 <div class="readout-row">
                     <div class="readout-cell">
@@ -226,6 +268,8 @@
     let n = 16;
     let playing = false;
     let playTimer = null;
+    let lineStyle = 'dashed';
+    let fillTriangles = true;
 
     function render() {
         const { pts, finalAngle } = computePoints(n);
@@ -234,10 +278,27 @@
         ctx.fillStyle = '#fffefb';
         ctx.fillRect(0, 0, W, H);
 
+        // 삼각형 색칠 (O, A_i, A_(i+1))
+        if (fillTriangles) {
+            const [ox0, oy0] = toPx(pts[0]);
+            for (let i = 1; i < n; i++) {
+                const [ax, ay] = toPx(pts[i]);
+                const [bx, by] = toPx(pts[i + 1]);
+                const hue = ((i - 1) * 30) % 360;
+                ctx.beginPath();
+                ctx.moveTo(ox0, oy0);
+                ctx.lineTo(ax, ay);
+                ctx.lineTo(bx, by);
+                ctx.closePath();
+                ctx.fillStyle = `hsla(${hue}, 70%, 60%, 0.45)`;
+                ctx.fill();
+            }
+        }
+
         // 반지름(원점에서 각 점까지)
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 1.2;
-        ctx.setLineDash([4, 3]);
+        ctx.setLineDash(lineStyle === 'dashed' ? [4, 3] : []);
         for (let i = 1; i <= n; i++) {
             const [ox, oy] = toPx(pts[0]);
             const [px, py] = toPx(pts[i]);
@@ -358,6 +419,29 @@
         n = 1;
         nSlider.value = 1;
         render();
+    });
+
+    const btnDashed = document.getElementById('btnDashed');
+    const btnSolid = document.getElementById('btnSolid');
+    function setLineStyle(style) {
+        lineStyle = style;
+        btnDashed.classList.toggle('active', style === 'dashed');
+        btnSolid.classList.toggle('active', style === 'solid');
+        render();
+    }
+    btnDashed.addEventListener('click', () => setLineStyle('dashed'));
+    btnSolid.addEventListener('click', () => setLineStyle('solid'));
+
+    document.getElementById('fillToggle').addEventListener('change', (e) => {
+        fillTriangles = e.target.checked;
+        render();
+    });
+
+    document.getElementById('btnSavePng').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'theodorus-spiral.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     });
 
     render();
