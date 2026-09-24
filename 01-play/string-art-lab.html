@@ -275,6 +275,10 @@
                         <div class="slider-row"><input type="range" id="ruleD2" min="-10" max="10" step="1" value="-2"><span class="s-val" id="ruleD2Val">-2</span></div>
                     </div>
                 </div>
+                <div class="slider-cell">
+                    <div class="k">지금 규칙 (실제 값 대입)</div>
+                    <div class="formula-line" id="ruleFormulaText" style="font-size:0.78rem;">-</div>
+                </div>
                 <p class="hint">🔎 공차1과 공차2를 다르게, 또는 분기점(m)을 이동해가며 대칭이 깨진 모양·하트 모양·안쪽 무늬가 작아진 모양을 직접 찾아보세요.</p>
             </div>
         </div>
@@ -446,6 +450,8 @@
         document.getElementById('ruleD1Val').textContent = d1;
         document.getElementById('ruleA2Val').textContent = a2;
         document.getElementById('ruleD2Val').textContent = d2;
+        document.getElementById('ruleFormulaText').textContent =
+            `i≤${m}이면 aᵢ=${a1}+${d1}×i, i>${m}이면 aᵢ=${a2}+(${d2})×(i−${m}−1)`;
 
         const W = ruleCanvas.width, H = ruleCanvas.height;
         ruleCtx.clearRect(0, 0, W, H);
