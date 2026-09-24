@@ -99,6 +99,8 @@
     .challenge-side { flex: 1 1 200px; min-width: 200px; display: flex; flex-direction: column; gap: 10px; }
     .btn-rotate { background: #14b8a6; }
     .btn-flip { background: #6366f1; }
+    .btn-hint { background: #d97706; }
+    .btn-hint:disabled { background: #e5e7eb; color: #9ca3af; cursor: wait; }
 
     .piece-tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 10px; background: #f0fdf9; border-radius: 8px; min-height: 90px; }
     .tray-piece {
@@ -183,6 +185,7 @@
                     <button class="btn btn-rotate" id="btnRotatePiece">↻ 회전</button>
                     <button class="btn btn-flip" id="btnFlipPiece">↔ 뒤집기</button>
                 </div>
+                <button class="btn btn-hint" id="btnHint">💡 힌트</button>
                 <button class="btn btn-clear" id="btnResetChallenge">↺ 처음부터</button>
                 <p class="result-banner info" id="challengeBanner">아래 보관함에서 조각을 클릭해보세요.</p>
             </div>
@@ -441,6 +444,100 @@
     let selectedPiece = null;
     let dragging = null; // { name, mode: 'move'|'rotate', offX, offY }
     let cascadeIndex = 0;
+    let hintCells = null; // 힌트로 제안된 칸들 [[r,c], ...]
+    let hintName = null;  // 힌트가 가리키는 조각 이름
+
+    function clearHint() {
+        hintCells = null;
+        hintName = null;
+    }
+
+    // 지금 놓인 조각(겹치지 않고 보드 안에 있는 것들)을 그대로 둔 채,
+    // 나머지 조각으로 6x10을 완성할 수 있는지 백트래킹으로 찾는다.
+    // 찾으면 그 해에서 "가장 먼저 채워야 할 빈 칸"을 담당하는 조각과 위치를 힌트로 반환한다.
+    const VARIANTS_CACHE = {};
+    function pieceVariants(name) {
+        if (VARIANTS_CACHE[name]) return VARIANTS_CACHE[name];
+        let cur = PENTOMINO_DEFS[name].map(c => c.slice());
+        const variants = [];
+        for (let m = 0; m < 2; m++) {
+            for (let rot = 0; rot < 4; rot++) {
+                variants.push(normalize(cur));
+                cur = rotate90(cur);
+            }
+            cur = mirror(cur);
+        }
+        const seen = new Set();
+        const uniq = variants.filter(v => {
+            const k = toKey(v);
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+        });
+        VARIANTS_CACHE[name] = uniq;
+        return uniq;
+    }
+
+    function computeHint() {
+        const owners = cellOwners();
+        for (let r = 0; r < BOARD_ROWS; r++) {
+            for (let c = 0; c < BOARD_COLS; c++) {
+                if (owners[r][c].length > 1) return { type: 'overlap' };
+            }
+        }
+        for (const name of placedOrder) {
+            for (const [r, c] of currentCells(name)) {
+                if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return { type: 'outside', name };
+            }
+        }
+
+        const board = Array.from({ length: BOARD_ROWS }, () => Array(BOARD_COLS).fill(null));
+        placedOrder.forEach(name => currentCells(name).forEach(([r, c]) => { board[r][c] = name; }));
+        const remaining = Object.keys(PENTOMINO_DEFS).filter(n => !pieceState[n].onBoard);
+
+        function firstEmpty() {
+            for (let r = 0; r < BOARD_ROWS; r++) for (let c = 0; c < BOARD_COLS; c++) if (!board[r][c]) return [r, c];
+            return null;
+        }
+        function canPlace(cells) {
+            return cells.every(([r, c]) => r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS && !board[r][c]);
+        }
+
+        let iterations = 0;
+        const MAX_ITER = 450000;
+        let firstMove = null;
+
+        function solve(remainingNames, depth) {
+            iterations++;
+            if (iterations > MAX_ITER) return 'timeout';
+            const empty = firstEmpty();
+            if (!empty) return true;
+            const [er, ec] = empty;
+            for (const name of remainingNames) {
+                for (const shape of pieceVariants(name)) {
+                    for (const [sr, sc] of shape) {
+                        const anchorR = er - sr, anchorC = ec - sc;
+                        const cells = shape.map(([r, c]) => [anchorR + r, anchorC + c]);
+                        if (canPlace(cells)) {
+                            cells.forEach(([r, c]) => { board[r][c] = name; });
+                            if (depth === 0) firstMove = { name, cells };
+                            const res = solve(remainingNames.filter(x => x !== name), depth + 1);
+                            if (res === true) return true;
+                            if (res === 'timeout') return 'timeout';
+                            cells.forEach(([r, c]) => { board[r][c] = null; });
+                            if (depth === 0) firstMove = null;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        const result = solve(remaining, 0);
+        if (result === true) return { type: 'ok', name: firstMove.name, cells: firstMove.cells };
+        if (result === 'timeout') return { type: 'timeout' };
+        return { type: 'unsolvable' };
+    }
 
     function transformShape(name) {
         const st = pieceState[name];
@@ -548,6 +645,16 @@
         bctx.lineWidth = 3;
         bctx.strokeRect(1, 1, BOARD_COLS * BCELL - 2, BOARD_ROWS * BCELL - 2);
 
+        if (hintCells) {
+            bctx.fillStyle = 'rgba(217,119,6,0.28)';
+            hintCells.forEach(([r, c]) => bctx.fillRect(c * BCELL + 1, r * BCELL + 1, BCELL - 2, BCELL - 2));
+            bctx.strokeStyle = '#d97706';
+            bctx.lineWidth = 3;
+            bctx.setLineDash([5, 3]);
+            hintCells.forEach(([r, c]) => bctx.strokeRect(c * BCELL + 2, r * BCELL + 2, BCELL - 4, BCELL - 4));
+            bctx.setLineDash([]);
+        }
+
         if (selectedPiece && pieceState[selectedPiece].onBoard) {
             const cells = currentCells(selectedPiece);
             bctx.strokeStyle = '#1e293b';
@@ -607,6 +714,7 @@
         pieceState[name] = { onBoard: true, x: pos.x, y: pos.y, rot: 0, flip: false };
         placedOrder.push(name);
         selectedPiece = name;
+        clearHint();
         renderTray();
         renderBoard();
         showChallengeResult(`${name} 조각이 보드 위로 나왔어요. 드래그해서 옮기고 돌려보세요.`, 'info');
@@ -616,6 +724,7 @@
         pieceState[name] = { onBoard: false, x: 0, y: 0, rot: 0, flip: false };
         placedOrder = placedOrder.filter(n => n !== name);
         if (selectedPiece === name) selectedPiece = null;
+        clearHint();
         renderTray();
         renderBoard();
     }
@@ -627,6 +736,7 @@
     }
 
     function checkAndAnnounce() {
+        clearHint();
         const owners = cellOwners();
         if (checkWin(owners)) {
             showChallengeResult('🎉 완성! 12조각으로 6×10 직사각형을 빈틈없이 채웠어요!', 'done');
@@ -634,6 +744,7 @@
             const n = countFilledValid(owners);
             showChallengeResult(`${n} / ${BOARD_ROWS * BOARD_COLS}칸 채움 (보드에 놓은 조각 ${placedOrder.length} / 12개)`, 'info');
         }
+        renderBoard();
     }
 
     function worldFromEvent(e) {
@@ -752,9 +863,34 @@
         selectedPiece = null;
         dragging = null;
         cascadeIndex = 0;
+        clearHint();
         renderTray();
         renderBoard();
         showChallengeResult('아래 보관함에서 조각을 클릭해보세요.', 'info');
+    });
+
+    document.getElementById('btnHint').addEventListener('click', () => {
+        const btn = document.getElementById('btnHint');
+        btn.disabled = true;
+        showChallengeResult('💡 힌트를 찾는 중이에요... 잠시만 기다려주세요.', 'info');
+        setTimeout(() => {
+            const result = computeHint();
+            if (result.type === 'overlap') {
+                showChallengeResult('먼저 겹친 조각(빨간 칸)부터 정리해주세요!', 'bad');
+            } else if (result.type === 'outside') {
+                showChallengeResult(`${result.name} 조각이 보드 밖으로 나가 있어요. 안쪽으로 옮겨주세요.`, 'bad');
+            } else if (result.type === 'timeout') {
+                showChallengeResult('힌트를 찾는 데 시간이 걸리네요. 조각을 몇 개 옮겨보고 다시 시도해주세요.', 'info');
+            } else if (result.type === 'unsolvable') {
+                showChallengeResult('지금 배치로는 완성할 수 없어요. 최근에 놓은 조각의 위치를 조금 옮겨보세요.', 'bad');
+            } else {
+                hintCells = result.cells;
+                hintName = result.name;
+                renderBoard();
+                showChallengeResult(`💡 힌트: 금색 점선 자리에 ${result.name} 조각이 들어가요! 알맞은 방향으로 돌리고 뒤집어서 넣어보세요.`, 'ok');
+            }
+            btn.disabled = false;
+        }, 30);
     });
 
     renderTray();
