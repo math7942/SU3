@@ -340,14 +340,17 @@
     function mod(a, n) { return ((a % n) + n) % n; }
 
     /* ---------- 2단계: 두 직선 축 ---------- */
-    function drawAxisPattern(ctx, W, H, n) {
+    function drawAxisPattern(ctx, W, H, n, showLabels) {
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, W, H);
 
-        const originX = 30, originY = H - 30;
-        const span = Math.min(W - 60, H - 60);
+        const marginLeft = showLabels ? 46 : 30;
+        const marginBottom = showLabels ? 46 : 30;
+        const originX = marginLeft, originY = H - marginBottom;
+        const span = Math.min(W - marginLeft - 16, H - marginBottom - 16);
         const step = span / n;
+        const labelEvery = n <= 16 ? 1 : (n <= 20 ? 2 : 3);
 
         // 축
         ctx.strokeStyle = '#1e293b';
@@ -357,11 +360,23 @@
         ctx.moveTo(originX, originY); ctx.lineTo(originX, originY - span);
         ctx.stroke();
 
-        // 점
+        // 점 + 번호
         ctx.fillStyle = '#4f46e5';
         for (let i = 0; i <= n; i++) {
-            ctx.beginPath(); ctx.arc(originX + i * step, originY, 2.5, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(originX, originY - i * step, 2.5, 0, Math.PI * 2); ctx.fill();
+            const ax = originX + i * step, ay = originY;
+            const bx = originX, by = originY - i * step;
+            ctx.beginPath(); ctx.arc(ax, ay, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(bx, by, 2.5, 0, Math.PI * 2); ctx.fill();
+
+            if (showLabels && i % labelEvery === 0) {
+                ctx.fillStyle = '#4338ca';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('A' + i, ax, ay + 14);
+                ctx.textAlign = 'right';
+                ctx.fillText('B' + i, bx - 6, by + 3);
+                ctx.fillStyle = '#4f46e5';
+            }
         }
 
         // 선분: A_i -- B_(n-i)
@@ -380,17 +395,18 @@
     function renderAxis() {
         const n = parseInt(axisNSlider.value, 10);
         document.getElementById('axisNVal').textContent = n;
-        drawAxisPattern(axisCtx, axisCanvas.width, axisCanvas.height, n);
+        drawAxisPattern(axisCtx, axisCanvas.width, axisCanvas.height, n, true);
     }
     axisNSlider.addEventListener('input', renderAxis);
 
     /* ---------- 3단계: 원 무늬 ---------- */
-    function drawCirclePattern(ctx, W, H, n, k, color) {
+    function drawCirclePattern(ctx, W, H, n, k, color, showLabels) {
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, W, H);
 
-        const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 18;
+        const labelMargin = showLabels ? 20 : 4;
+        const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 14 - labelMargin;
         const pts = [];
         for (let i = 0; i < n; i++) {
             const a = (2 * Math.PI * i / n) - Math.PI / 2;
@@ -407,6 +423,21 @@
         }
         ctx.fillStyle = '#334155';
         pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill(); });
+
+        if (showLabels && n <= 40) {
+            const labelEvery = n <= 20 ? 1 : 2;
+            ctx.font = '9px sans-serif';
+            ctx.fillStyle = '#4338ca';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < n; i++) {
+                if (i % labelEvery !== 0) continue;
+                const a = (2 * Math.PI * i / n) - Math.PI / 2;
+                const lx = cx + (R + 12) * Math.cos(a), ly = cy + (R + 12) * Math.sin(a);
+                ctx.fillText(String(i), lx, ly);
+            }
+            ctx.textBaseline = 'alphabetic';
+        }
     }
 
     const circleCanvas = document.getElementById('circleCanvas');
@@ -420,7 +451,7 @@
         if (k > parseInt(circleKSlider.max, 10)) { k = parseInt(circleKSlider.max, 10); circleKSlider.value = k; }
         document.getElementById('circleNVal').textContent = n;
         document.getElementById('circleKVal').textContent = k;
-        drawCirclePattern(circleCtx, circleCanvas.width, circleCanvas.height, n, k, '#4f46e5');
+        drawCirclePattern(circleCtx, circleCanvas.width, circleCanvas.height, n, k, '#4f46e5', true);
     }
     circleNSlider.addEventListener('input', renderCircle);
     circleKSlider.addEventListener('input', renderCircle);
@@ -458,7 +489,9 @@
         ruleCtx.fillStyle = '#fff';
         ruleCtx.fillRect(0, 0, W, H);
 
-        const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 18;
+        const showLabels = n <= 40;
+        const labelMargin = showLabels ? 20 : 4;
+        const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 14 - labelMargin;
         const pts = [];
         for (let i = 0; i < n; i++) {
             const a = (2 * Math.PI * i / n) - Math.PI / 2;
@@ -477,6 +510,21 @@
         }
         ruleCtx.fillStyle = '#334155';
         pts.forEach(([x, y]) => { ruleCtx.beginPath(); ruleCtx.arc(x, y, 1.8, 0, Math.PI * 2); ruleCtx.fill(); });
+
+        if (showLabels) {
+            const labelEvery = n <= 20 ? 1 : 2;
+            ruleCtx.font = '9px sans-serif';
+            ruleCtx.fillStyle = '#4338ca';
+            ruleCtx.textAlign = 'center';
+            ruleCtx.textBaseline = 'middle';
+            for (let i = 0; i < n; i++) {
+                if (i % labelEvery !== 0) continue;
+                const a = (2 * Math.PI * i / n) - Math.PI / 2;
+                const lx = cx + (R + 12) * Math.cos(a), ly = cy + (R + 12) * Math.sin(a);
+                ruleCtx.fillText(String(i), lx, ly);
+            }
+            ruleCtx.textBaseline = 'alphabetic';
+        }
     }
     [ruleN, ruleM, ruleA1, ruleD1, ruleA2, ruleD2].forEach(el => el.addEventListener('input', renderRule));
 
