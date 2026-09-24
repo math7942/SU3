@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>펜토미노 탐구실 · 수수의 수학</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f0fdf9;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #0f766e; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.5rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #78716c; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #0f766e; }
+
+    .intro-box { background: #f0fdf9; border: 2px solid #2dd4bf; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #0f766e; }
+    .intro-box p { margin: 0 0 8px; font-size: 0.85rem; color: #334155; line-height: 1.7; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #0f766e; }
+
+    .poly-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+    .poly-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 6px; text-align: center; }
+    .poly-cell .n { font-size: 1.1rem; font-weight: 900; color: #0f766e; }
+    .poly-cell .name { font-size: 0.68rem; color: #78716c; margin-top: 2px; }
+
+    .tab-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab-btn {
+        flex: 1; border: 2px solid #e7e5e4; background: white; border-radius: 10px;
+        padding: 10px; font-family: inherit; font-weight: 700; font-size: 0.9rem;
+        color: #57534e; cursor: pointer; transition: all 0.15s;
+    }
+    .tab-btn.active { border-color: #0f766e; background: #f0fdf9; color: #0f766e; }
+    .tab-btn .progress { display: block; font-size: 0.72rem; font-weight: 500; margin-top: 2px; }
+
+    .builder-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .builder-canvas-wrap { flex: 1 1 380px; min-width: 280px; }
+    #buildCanvas { display: block; margin: 0 auto; border: 1px solid #ccfbf1; border-radius: 8px; background: #fafffe; touch-action: none; cursor: pointer; max-width: 100%; height: auto; }
+    .hint { font-size: 0.72rem; color: #5eead4; text-align: center; margin: 6px 0 0; }
+
+    .builder-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+    .readout-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; text-align: center; }
+    .readout-cell .k { font-size: 0.7rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.3rem; font-weight: 900; color: #1e293b; }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 14px; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-check { background: #0f766e; }
+    .btn-clear { background: #94a3b8; }
+    .btn:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
+
+    .result-banner { text-align: center; font-weight: 900; font-size: 0.9rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.ok { background: #dcfce7; color: #15803d; }
+    .result-banner.dup { background: #fef3c7; color: #92400e; }
+    .result-banner.bad { background: #fee2e2; color: #b91c1c; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+    .result-banner.done { background: #ecfdf5; color: #047857; border: 2px dashed #10b981; }
+
+    .gallery-label { font-size: 0.8rem; font-weight: 700; color: #78716c; margin: 4px 0; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 10px; min-height: 60px; }
+    .gallery-empty { grid-column: 1/-1; margin: 0; font-size: 0.78rem; color: #99f6e4; font-style: italic; text-align: center; padding: 10px 0; }
+    .gallery-item {
+        display: flex; align-items: center; justify-content: center;
+        background: white; border: 2px solid #99f6e4; border-radius: 8px; padding: 6px;
+        aspect-ratio: 1; position: relative;
+    }
+    .gallery-item canvas { max-width: 100%; max-height: 100%; }
+    .gallery-item .idx {
+        position: absolute; top: -8px; left: -8px; width: 20px; height: 20px; border-radius: 50%;
+        background: #0f766e; color: white; font-size: 0.65rem; font-weight: 900;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #0f766e; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+    .challenge-link {
+        display: block; text-align: center; background: #0f766e; color: white; text-decoration: none;
+        padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+    }
+    .challenge-link:hover { background: #0d5f58; }
+
+    @media (max-width: 640px) {
+        .poly-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 수학과 놀자로</a>
+    <h1>🟩 펜토미노 탐구실</h1>
+    <p class="subtitle">정사각형을 변끼리 붙여 만들 수 있는 도형, 폴리오미노를 직접 만들어보세요.</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>📐 폴리오미노(Polyomino)란?</h3>
+            <p>크기가 같은 정사각형을 <b>변이 맞닿게</b> 붙여 하나로 이어 만든 평면도형입니다. 몇 개의 정사각형을 붙였는지에 따라 이름이 달라져요. (펜토 = 5를 의미하는 그리스어, 미노 = 조각)</p>
+            <div class="poly-grid">
+                <div class="poly-cell"><div class="n">1</div><div class="name">모노미노</div></div>
+                <div class="poly-cell"><div class="n">2</div><div class="name">도미노</div></div>
+                <div class="poly-cell"><div class="n">3</div><div class="name">트리오미노</div></div>
+                <div class="poly-cell"><div class="n">4</div><div class="name">테트로미노</div></div>
+                <div class="poly-cell"><div class="n">5</div><div class="name">펜토미노</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔬 만들기 — 몇 개의 정사각형을 사용할까요?</h2>
+        <div class="tab-row" id="tabRow"></div>
+
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas id="buildCanvas" width="380" height="380"></canvas>
+                <p class="hint">💡 빈 칸을 클릭하면 채워지고, 채워진 칸을 다시 클릭하면 지워져요.</p>
+            </div>
+            <div class="builder-side">
+                <div class="readout-cell"><div class="k">채운 칸 수</div><div class="v" id="filledCountVal">0 / 3</div></div>
+                <div class="btn-row">
+                    <button class="btn btn-check" id="btnCheck">🔍 확인하기</button>
+                    <button class="btn btn-clear" id="btnClear">↺ 지우기</button>
+                </div>
+                <p class="result-banner info" id="resultBanner">격자를 클릭해서 도형을 만들어보세요.</p>
+            </div>
+        </div>
+
+        <div class="gallery-label" id="galleryLabel">🎨 찾은 모양 (0 / 2)</div>
+        <div class="gallery" id="galleryContainer">
+            <p class="gallery-empty">도형을 확인하면 여기에 모양이 쌓입니다</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0 0 14px;">
+            트리오미노는 2가지, 테트로미노는 5가지, 펜토미노는 <b>12가지</b>의 서로 다른 모양(뒤집거나 돌려서 겹치는 건 같은 모양으로 침)이 있습니다. 모두 찾아보세요! 다 찾았다면 아래 DESMOS 챌린지에도 도전해보세요.
+        </p>
+        <a class="challenge-link" href="https://classroom.amplify.com/activity/68c1872963e3ac43d1c13f15?lang=ko" target="_blank" rel="noopener">🚀 DESMOS로 챌린지에 도전해 보자!</a>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 수학과 놀자로</a>
+        <a href="gwangju-festival/index.html">2026 광주수학축제 →</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    const GRID = 9; // 9x9 클릭 격자
+    const CELL = 40;
+    const canvas = document.getElementById('buildCanvas');
+    canvas.width = GRID * CELL;
+    canvas.height = GRID * CELL;
+    const ctx = canvas.getContext('2d');
+
+    const TOTALS = { 3: 2, 4: 5, 5: 12 };
+    const NAMES = { 3: '트리오미노', 4: '테트로미노', 5: '펜토미노' };
+    let currentN = 3;
+    let filled = new Set(); // "r,c"
+    const found = { 3: [], 4: [], 5: [] }; // canonical cell-array per N
+
+    // ---- localStorage ----
+    function loadFound() {
+        try {
+            const stored = localStorage.getItem('pentomino_found');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                [3, 4, 5].forEach(n => { if (parsed[n]) found[n] = parsed[n]; });
+            }
+        } catch (e) {}
+    }
+    function saveFound() {
+        try { localStorage.setItem('pentomino_found', JSON.stringify(found)); } catch (e) {}
+    }
+
+    // ---- 격자 그리기 ----
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fafffe';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#e0f5f0';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= GRID; i++) {
+            ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
+        }
+        filled.forEach(key => {
+            const [r, c] = key.split(',').map(Number);
+            ctx.fillStyle = '#2dd4bf';
+            ctx.fillRect(c * CELL + 2, r * CELL + 2, CELL - 4, CELL - 4);
+            ctx.strokeStyle = '#0f766e';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(c * CELL + 2, r * CELL + 2, CELL - 4, CELL - 4);
+        });
+        document.getElementById('filledCountVal').textContent = `${filled.size} / ${currentN}`;
+    }
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        const c = Math.floor(x / CELL);
+        const r = Math.floor(y / CELL);
+        if (r < 0 || r >= GRID || c < 0 || c >= GRID) return;
+        const key = `${r},${c}`;
+        if (filled.has(key)) filled.delete(key);
+        else filled.add(key);
+        render();
+    });
+
+    // ---- 연결성 확인 (변끼리만 인접) ----
+    function isConnected(cells) {
+        if (cells.length === 0) return false;
+        const set = new Set(cells.map(([r, c]) => `${r},${c}`));
+        const visited = new Set();
+        const stack = [cells[0]];
+        visited.add(`${cells[0][0]},${cells[0][1]}`);
+        while (stack.length) {
+            const [r, c] = stack.pop();
+            [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].forEach(([nr, nc]) => {
+                const nk = `${nr},${nc}`;
+                if (set.has(nk) && !visited.has(nk)) {
+                    visited.add(nk);
+                    stack.push([nr, nc]);
+                }
+            });
+        }
+        return visited.size === cells.length;
+    }
+
+    // ---- 캐노니컬 형태 (회전 4 + 반사 4 = 8가지 중 사전순 최소) ----
+    function normalize(cells) {
+        const minR = Math.min(...cells.map(c => c[0]));
+        const minC = Math.min(...cells.map(c => c[1]));
+        return cells.map(([r, c]) => [r - minR, c - minC]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    }
+    function toKey(cells) { return cells.map(c => c[0] + ',' + c[1]).join(';'); }
+    function rotate90(cells) { return cells.map(([r, c]) => [c, -r]); }
+    function mirror(cells) { return cells.map(([r, c]) => [r, -c]); }
+
+    function canonicalForm(cells) {
+        let cur = cells;
+        let variants = [];
+        for (let m = 0; m < 2; m++) {
+            for (let rot = 0; rot < 4; rot++) {
+                variants.push(normalize(cur));
+                cur = rotate90(cur);
+            }
+            cur = mirror(cur);
+        }
+        const keyed = variants.map(v => ({ key: toKey(v), v }));
+        keyed.sort((a, b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+        return keyed[0];
+    }
+
+    // ---- 갤러리 썸네일 그리기 ----
+    function drawThumb(canvasEl, cells) {
+        const norm = normalize(cells);
+        const maxR = Math.max(...norm.map(c => c[0])) + 1;
+        const maxC = Math.max(...norm.map(c => c[1])) + 1;
+        const size = 60;
+        const cell = Math.floor(size / Math.max(maxR, maxC, 1));
+        canvasEl.width = maxC * cell;
+        canvasEl.height = maxR * cell;
+        const tctx = canvasEl.getContext('2d');
+        norm.forEach(([r, c]) => {
+            tctx.fillStyle = '#2dd4bf';
+            tctx.fillRect(c * cell + 1, r * cell + 1, cell - 2, cell - 2);
+            tctx.strokeStyle = '#0f766e';
+            tctx.lineWidth = 1;
+            tctx.strokeRect(c * cell + 1, r * cell + 1, cell - 2, cell - 2);
+        });
+    }
+
+    function renderGallery() {
+        const container = document.getElementById('galleryContainer');
+        const list = found[currentN];
+        document.getElementById('galleryLabel').textContent = `🎨 찾은 모양 (${list.length} / ${TOTALS[currentN]})`;
+        if (list.length === 0) {
+            container.innerHTML = '<p class="gallery-empty">도형을 확인하면 여기에 모양이 쌓입니다</p>';
+            return;
+        }
+        container.innerHTML = '';
+        list.forEach((cells, idx) => {
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            const idxBadge = document.createElement('div');
+            idxBadge.className = 'idx';
+            idxBadge.textContent = idx + 1;
+            const c = document.createElement('canvas');
+            item.appendChild(idxBadge);
+            item.appendChild(c);
+            container.appendChild(item);
+            drawThumb(c, cells);
+        });
+        renderTabs();
+    }
+
+    function renderTabs() {
+        const row = document.getElementById('tabRow');
+        row.innerHTML = '';
+        [3, 4, 5].forEach(n => {
+            const btn = document.createElement('button');
+            btn.className = 'tab-btn' + (n === currentN ? ' active' : '');
+            btn.innerHTML = `${NAMES[n]} (${n}칸)<span class="progress">${found[n].length} / ${TOTALS[n]} 찾음</span>`;
+            btn.addEventListener('click', () => switchN(n));
+            row.appendChild(btn);
+        });
+    }
+
+    function switchN(n) {
+        currentN = n;
+        filled = new Set();
+        render();
+        renderTabs();
+        renderGallery();
+        showResult('격자를 클릭해서 도형을 만들어보세요.', 'info');
+    }
+
+    function showResult(msg, type) {
+        const el = document.getElementById('resultBanner');
+        el.textContent = msg;
+        el.className = 'result-banner ' + type;
+    }
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+        filled = new Set();
+        render();
+        showResult('격자를 클릭해서 도형을 만들어보세요.', 'info');
+    });
+
+    document.getElementById('btnCheck').addEventListener('click', () => {
+        const cells = Array.from(filled).map(k => k.split(',').map(Number));
+        if (cells.length !== currentN) {
+            showResult(`정확히 ${currentN}칸을 채워야 해요. (지금 ${cells.length}칸)`, 'bad');
+            return;
+        }
+        if (!isConnected(cells)) {
+            showResult('모든 칸이 변끼리 이어져 있어야 해요. 떨어진 칸이 있는지 확인해보세요.', 'bad');
+            return;
+        }
+        const { key, v } = canonicalForm(cells);
+        const already = found[currentN].some(c => toKey(normalize(c)) === key);
+        if (already) {
+            showResult('앗, 이미 찾은 모양이에요! (돌리거나 뒤집으면 같은 모양)', 'dup');
+            return;
+        }
+        found[currentN].push(v);
+        saveFound();
+        renderGallery();
+        if (found[currentN].length >= TOTALS[currentN]) {
+            showResult(`🎉 축하합니다! ${NAMES[currentN]} ${TOTALS[currentN]}가지를 모두 찾았어요!`, 'done');
+        } else {
+            showResult(`✨ 새로운 모양을 찾았어요! (${found[currentN].length} / ${TOTALS[currentN]})`, 'ok');
+        }
+        filled = new Set();
+        render();
+    });
+
+    // ---- 초기화 ----
+    loadFound();
+    renderTabs();
+    render();
+    renderGallery();
+})();
+</script>
+
+</body>
+</html>
