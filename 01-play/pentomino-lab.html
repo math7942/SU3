@@ -212,21 +212,9 @@
     const NAMES = { 3: '트리오미노', 4: '테트로미노', 5: '펜토미노' };
     let currentN = 3;
     let filled = new Set(); // "r,c"
+    // 축제 현장처럼 여러 명이 같은 기기를 쓰는 상황을 고려해, 찾은 모양은
+    // 저장하지 않고 새로고침하면 항상 새로 시작한다 (localStorage 사용 안 함).
     const found = { 3: [], 4: [], 5: [] }; // canonical cell-array per N
-
-    // ---- localStorage ----
-    function loadFound() {
-        try {
-            const stored = localStorage.getItem('pentomino_found');
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                [3, 4, 5].forEach(n => { if (parsed[n]) found[n] = parsed[n]; });
-            }
-        } catch (e) {}
-    }
-    function saveFound() {
-        try { localStorage.setItem('pentomino_found', JSON.stringify(found)); } catch (e) {}
-    }
 
     // ---- 격자 그리기 ----
     function render() {
@@ -403,7 +391,6 @@
             return;
         }
         found[currentN].push(v);
-        saveFound();
         renderGallery();
         if (found[currentN].length >= TOTALS[currentN]) {
             showResult(`🎉 축하합니다! ${NAMES[currentN]} ${TOTALS[currentN]}가지를 모두 찾았어요!`, 'done');
@@ -415,7 +402,6 @@
     });
 
     // ---- 초기화 ----
-    loadFound();
     renderTabs();
     render();
     renderGallery();
