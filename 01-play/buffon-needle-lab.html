@@ -187,6 +187,7 @@
                     <div class="readout-cell"><div class="k">(l/2)sinθ</div><div class="v" id="oneHalf">-</div></div>
                 </div>
                 <p class="result-banner info" id="oneBanner">버튼을 눌러 바늘을 던져보세요.</p>
+                <p class="hint">※ 여기서 x는 바늘 중심에서 평행선까지의 수직 거리예요. 1단계 그림의 x와 같은 값으로, 캔버스의 가로 좌표가 아니라는 점에 주의하세요.</p>
             </div>
         </div>
         <div class="step-foot">
@@ -255,7 +256,7 @@
         </p>
         <div class="step-foot">
             <button class="step-btn secondary" onclick="goStep(3)">← 이전</button>
-            <button class="step-btn secondary" disabled>처음으로: 1단계에서 다시 보기</button>
+            <button class="step-btn" onclick="goStep(1)">처음으로: 1단계에서 다시 보기</button>
         </div>
     </div>
 
