@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>스트링아트 탐구실 · 수수의 수학</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eef2ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #4f46e5; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.5rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #4f46e5; }
+
+    .intro-box { background: #eef2ff; border: 2px solid #a5b4fc; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #4f46e5; }
+    .intro-box p { margin: 0 0 8px; font-size: 0.85rem; color: #334155; line-height: 1.7; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #4f46e5; }
+    .formula-line { font-family: 'Courier New', monospace; font-weight: 700; color: #4338ca; }
+
+    .step-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .step-pill {
+        flex: 1 1 auto; min-width: 100px; text-align: center; padding: 10px 6px; border-radius: 999px;
+        background: #eef2ff; border: 1.5px solid #c7d2fe; font-size: 0.76rem; font-weight: 700;
+        color: #4338ca; cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .step-pill:hover { background: #e0e7ff; }
+    .step-pill.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+
+    .step-panel { display: none; flex-direction: column; gap: 14px; }
+    .step-panel.active { display: flex; }
+
+    .step-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
+    .step-btn {
+        border: none; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; font-family: inherit; background: #4f46e5; color: white;
+    }
+    .step-btn.secondary { background: #e2e8f0; color: #475569; }
+    .step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .preview-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .preview-cell { text-align: center; }
+    canvas.preview { border: 1px solid #c7d2fe; border-radius: 8px; background: #fff; }
+    .preview-cell .cap { font-size: 0.72rem; color: #4f46e5; font-weight: 700; margin-top: 4px; }
+
+    .step-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 4px; }
+    .step-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; text-align: center; }
+    .step-cell .name { font-size: 0.78rem; color: #334155; font-weight: 700; line-height: 1.5; }
+    .step-cell .desc { font-size: 0.7rem; color: #78716c; margin-top: 4px; line-height: 1.4; }
+
+    .builder-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .builder-canvas-wrap { flex: 1 1 380px; min-width: 280px; }
+    canvas.board { display: block; margin: 0 auto; border: 1px solid #c7d2fe; border-radius: 8px; background: #ffffff; max-width: 100%; height: auto; }
+
+    .builder-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+    .slider-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .slider-cell .k { font-size: 0.72rem; color: #78716c; }
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: #4f46e5; }
+    .slider-row .s-val { min-width: 40px; text-align: center; font-weight: 900; color: #4f46e5; font-size: 0.9rem; }
+
+    .readout-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .readout-cell { flex: 1 1 90px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .readout-cell .k { font-size: 0.68rem; color: #78716c; }
+    .readout-cell .v { font-size: 1rem; font-weight: 900; color: #1e293b; margin-top: 2px; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 10px; font-weight: 700; font-size: 0.82rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-primary { background: #4f46e5; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-clear { background: #94a3b8; }
+    .btn-clear:hover { background: #64748b; }
+
+    .hint { font-size: 0.72rem; color: #4f46e5; text-align: center; margin: 0; line-height: 1.6; }
+
+    .layer-list { display: flex; flex-direction: column; gap: 8px; }
+    .layer-row { display: flex; align-items: center; gap: 8px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 8px 10px; flex-wrap: wrap; }
+    .layer-row .sw { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+    .layer-row label { font-size: 0.7rem; color: #78716c; }
+    .layer-row input[type="number"] { width: 52px; padding: 3px 4px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 0.78rem; }
+    .layer-row .layer-del { margin-left: auto; background: #fecaca; color: #b91c1c; border: none; border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+
+    #btnAddLayer { flex: 0 0 auto; align-self: flex-start; }
+
+    .result-banner { text-align: center; font-weight: 700; font-size: 0.8rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #4f46e5; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+        .step-grid { grid-template-columns: 1fr; }
+        .step-pill { min-width: 44%; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 수학과 놀자로</a>
+    <h1>🧵 스트링아트 탐구실</h1>
+    <p class="subtitle">직선(줄)만 반복해서 이어도 곡선처럼 보이는 아름다운 무늬, 스트링아트를 규칙을 바꿔가며 직접 만들어봅니다.</p>
+
+    <div class="card">
+        <div class="step-nav">
+            <div class="step-pill active" data-step="1">1단계 · 원리</div>
+            <div class="step-pill" data-step="2">2단계 · 직선 축</div>
+            <div class="step-pill" data-step="3">3단계 · 원 무늬</div>
+            <div class="step-pill" data-step="4">4단계 · 나만의 규칙</div>
+            <div class="step-pill" data-step="5">5단계 · 디자인 완성</div>
+        </div>
+    </div>
+
+    <!-- 1단계: 원리 -->
+    <div class="card step-panel active" id="panel-1">
+        <h2>🧵 1단계 · 스트링아트란?</h2>
+        <div class="intro-box">
+            <p>스트링아트(String Art)는 <b>직선(줄)만 반복해서 이어도 곡선처럼 보이는 무늬</b>를 만드는 예술입니다. 대표적인 기초 패턴은 두 가지예요.</p>
+            <div class="step-grid">
+                <div class="step-cell">
+                    <div class="name">① 두 직선 축 패턴</div>
+                    <div class="desc">두 직선 위에 점을 찍고, <b>대응하는 두 수의 합이 일정</b>하도록 연결합니다. (예: A₃—B₇, A₄—B₆ ...)</div>
+                </div>
+                <div class="step-cell">
+                    <div class="name">② 원 둘레 점 연결 패턴</div>
+                    <div class="desc">원 둘레에 점을 찍고, <b>일정한 칸수만큼 떨어진 두 점</b>을 계속 연결합니다.</div>
+                </div>
+            </div>
+        </div>
+        <div class="preview-row">
+            <div class="preview-cell">
+                <canvas class="preview" id="prevAxis" width="200" height="200"></canvas>
+                <div class="cap">① 직선 축 패턴 미리보기</div>
+            </div>
+            <div class="preview-cell">
+                <canvas class="preview" id="prevCircle" width="200" height="200"></canvas>
+                <div class="cap">② 원 무늬 패턴 미리보기</div>
+            </div>
+        </div>
+        <div class="intro-box">
+            <p>이렇게 만들어지는 곡선은 사실 직선과 직선이 만나는 교점들이 모여서 만들어지는 <b>베지어(Bézier) 곡선</b>과 같은 원리입니다. 폰트나 컴퓨터 그래픽에서 부드러운 곡선을 그릴 때도 이 원리가 쓰여요.</p>
+            <p>2~5단계에서 두 패턴을 직접 만들어보고, 규칙을 바꿔가며 나만의 디자인까지 완성해봅시다.</p>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" disabled>← 이전</button>
+            <button class="step-btn" onclick="goStep(2)">다음: 직선 축 패턴 →</button>
+        </div>
+    </div>
+
+    <!-- 2단계: 직선 축 -->
+    <div class="card step-panel" id="panel-2">
+        <h2>📐 2단계 · 두 직선 축에서 만들기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">가로축에 A₀~Aₙ, 세로축에 B₀~Bₙ까지 점을 찍고, <b>Aᵢ와 B(n−i)</b>를 선분으로 이어보세요. 두 점의 번호를 더하면 항상 n이 되는 규칙이에요.</p>
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas class="board" id="axisCanvas" width="440" height="360"></canvas>
+            </div>
+            <div class="builder-side">
+                <div class="slider-cell">
+                    <div class="k">점의 개수 (n)</div>
+                    <div class="slider-row">
+                        <input type="range" id="axisN" min="4" max="24" step="1" value="12">
+                        <span class="s-val" id="axisNVal">12</span>
+                    </div>
+                </div>
+                <p class="hint">n을 늘리면 곡선이 더 촘촘하고 매끄러워져요. 값을 바꿔보며 관찰해보세요.</p>
+            </div>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(1)">← 이전</button>
+            <button class="step-btn" onclick="goStep(3)">다음: 원 무늬 →</button>
+        </div>
+    </div>
+
+    <!-- 3단계: 원 무늬 -->
+    <div class="card step-panel" id="panel-3">
+        <h2>⭕ 3단계 · 원 둘레에서 건너뛰며 연결하기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">원 둘레에 점 n개를 같은 간격으로 찍고, 각 점을 <b>k칸씩 건너뛴</b> 점과 연결해보세요. n과 k를 바꾸면 안쪽에 그려지는 무늬(작은 원처럼 보이는 부분)의 크기가 달라져요.</p>
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas class="board" id="circleCanvas" width="360" height="360"></canvas>
+            </div>
+            <div class="builder-side">
+                <div class="slider-cell">
+                    <div class="k">점의 개수 (n)</div>
+                    <div class="slider-row">
+                        <input type="range" id="circleN" min="6" max="80" step="1" value="30">
+                        <span class="s-val" id="circleNVal">30</span>
+                    </div>
+                </div>
+                <div class="slider-cell">
+                    <div class="k">건너뛰는 칸 수 (k)</div>
+                    <div class="slider-row">
+                        <input type="range" id="circleK" min="1" max="15" step="1" value="7">
+                        <span class="s-val" id="circleKVal">7</span>
+                    </div>
+                </div>
+                <p class="hint">🔎 k를 1부터 하나씩 늘려보면서, 안쪽 무늬의 크기와 모양이 어떻게 달라지는지 관찰해보세요.</p>
+            </div>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(2)">← 이전</button>
+            <button class="step-btn" onclick="goStep(4)">다음: 나만의 규칙 →</button>
+        </div>
+    </div>
+
+    <!-- 4단계: 나만의 규칙 -->
+    <div class="card step-panel" id="panel-4">
+        <h2>💡 4단계 · 두 구간 규칙으로 나만의 모양 만들기</h2>
+        <div class="intro-box">
+            <p>원 둘레의 점 0, 1, 2, ..., n−1 각각에 대응하는 점 aᵢ를 정해서 점 i와 점 aᵢ를 연결하면, 규칙에 따라 하트처럼 대칭이 깨진 모양이나 안쪽 무늬가 작아진 모양도 만들 수 있어요.</p>
+            <p>여기서는 점의 번호를 <b>분기점(m)을 기준으로 두 구간</b>으로 나누고, 각 구간마다 서로 다른 등차수열 규칙(첫째항, 공차)을 적용해요.</p>
+            <p class="formula-line">i ≤ m 이면 aᵢ = 첫째항1 + 공차1×i<br>i &gt; m 이면 aᵢ = 첫째항2 + 공차2×(i−m−1)</p>
+        </div>
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas class="board" id="ruleCanvas" width="360" height="360"></canvas>
+            </div>
+            <div class="builder-side">
+                <div class="slider-cell">
+                    <div class="k">전체 점 개수 (n)</div>
+                    <div class="slider-row">
+                        <input type="range" id="ruleN" min="10" max="60" step="1" value="30">
+                        <span class="s-val" id="ruleNVal">30</span>
+                    </div>
+                </div>
+                <div class="slider-cell">
+                    <div class="k">분기점 (m)</div>
+                    <div class="slider-row">
+                        <input type="range" id="ruleM" min="0" max="29" step="1" value="15">
+                        <span class="s-val" id="ruleMVal">15</span>
+                    </div>
+                </div>
+                <div class="readout-row">
+                    <div class="slider-cell" style="flex:1;">
+                        <div class="k">첫째항1</div>
+                        <div class="slider-row"><input type="range" id="ruleA1" min="0" max="59" step="1" value="0"><span class="s-val" id="ruleA1Val">0</span></div>
+                    </div>
+                </div>
+                <div class="readout-row">
+                    <div class="slider-cell" style="flex:1;">
+                        <div class="k">공차1</div>
+                        <div class="slider-row"><input type="range" id="ruleD1" min="-10" max="10" step="1" value="2"><span class="s-val" id="ruleD1Val">2</span></div>
+                    </div>
+                </div>
+                <div class="readout-row">
+                    <div class="slider-cell" style="flex:1;">
+                        <div class="k">첫째항2</div>
+                        <div class="slider-row"><input type="range" id="ruleA2" min="0" max="59" step="1" value="29"><span class="s-val" id="ruleA2Val">29</span></div>
+                    </div>
+                </div>
+                <div class="readout-row">
+                    <div class="slider-cell" style="flex:1;">
+                        <div class="k">공차2</div>
+                        <div class="slider-row"><input type="range" id="ruleD2" min="-10" max="10" step="1" value="-2"><span class="s-val" id="ruleD2Val">-2</span></div>
+                    </div>
+                </div>
+                <p class="hint">🔎 공차1과 공차2를 다르게, 또는 분기점(m)을 이동해가며 대칭이 깨진 모양·하트 모양·안쪽 무늬가 작아진 모양을 직접 찾아보세요.</p>
+            </div>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(3)">← 이전</button>
+            <button class="step-btn" onclick="goStep(5)">다음: 디자인 완성 →</button>
+        </div>
+    </div>
+
+    <!-- 5단계: 디자인 완성 -->
+    <div class="card step-panel" id="panel-5">
+        <h2>🎨 5단계 · 여러 겹으로 나만의 디자인 완성하기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">3단계의 원 무늬 규칙을 색깔이 다른 여러 겹으로 겹쳐서 나만의 디자인을 완성해보세요. 레이어를 추가하고 n, k, 색을 바꿔가며 실험해보세요.</p>
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas class="board" id="designCanvas" width="400" height="400"></canvas>
+                <div class="btn-row" style="margin-top:10px;">
+                    <button class="btn btn-primary" id="btnSavePng">💾 PNG로 저장</button>
+                </div>
+            </div>
+            <div class="builder-side">
+                <div class="layer-list" id="layerList"></div>
+                <button class="btn btn-primary" id="btnAddLayer">+ 레이어 추가</button>
+            </div>
+        </div>
+
+        <h2 style="margin-top:6px;">🧭 더 탐구해 보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">
+            🔎 <b>탐구질문 1</b> — 3단계에서 n과 k를 바꾸면 안쪽에 그려지는 무늬의 크기는 어떻게 달라지나요? k가 n의 절반에 가까워지면 어떻게 될까요?<br>
+            🔎 <b>탐구질문 2</b> — 4단계에서 공차1과 공차2의 부호(+/−)를 다르게 하면 왜 모양이 좌우 비대칭이 될까요?<br>
+            🔎 <b>탐구질문 3</b> — 4단계에서 하트 모양이 좌우 대칭이 되려면 두 구간의 규칙에 어떤 조건이 필요할지 예상하고, 슬라이더로 직접 확인해보세요.<br>
+            🔎 <b>탐구질문 4</b> — 여러 겹(레이어)을 겹칠 때 색을 다르게 하면 어떤 효과가 있나요? 겹치는 순서를 바꾸면 어떻게 보일까요?
+        </p>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(4)">← 이전</button>
+            <button class="step-btn" onclick="goStep(1)">처음으로: 1단계에서 다시 보기</button>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 수학과 놀자로</a>
+        <a href="buffon-needle-lab.html">뷔퐁의 바늘 탐구실 →</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    /* ---------- 단계 네비게이션 ---------- */
+    window.goStep = function (n) {
+        document.querySelectorAll('.step-pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.step) === n));
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-' + n).classList.add('active');
+        window.scrollTo({ top: document.querySelector('.container').offsetTop, behavior: 'smooth' });
+    };
+    document.querySelectorAll('.step-pill').forEach(p => {
+        p.addEventListener('click', () => goStep(parseInt(p.dataset.step)));
+    });
+
+    function mod(a, n) { return ((a % n) + n) % n; }
+
+    /* ---------- 2단계: 두 직선 축 ---------- */
+    function drawAxisPattern(ctx, W, H, n) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, W, H);
+
+        const originX = 30, originY = H - 30;
+        const span = Math.min(W - 60, H - 60);
+        const step = span / n;
+
+        // 축
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(originX, originY); ctx.lineTo(originX + span, originY);
+        ctx.moveTo(originX, originY); ctx.lineTo(originX, originY - span);
+        ctx.stroke();
+
+        // 점
+        ctx.fillStyle = '#4f46e5';
+        for (let i = 0; i <= n; i++) {
+            ctx.beginPath(); ctx.arc(originX + i * step, originY, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(originX, originY - i * step, 2.5, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // 선분: A_i -- B_(n-i)
+        ctx.strokeStyle = '#818cf8';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= n; i++) {
+            const ax = originX + i * step, ay = originY;
+            const bx = originX, by = originY - (n - i) * step;
+            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        }
+    }
+
+    const axisCanvas = document.getElementById('axisCanvas');
+    const axisCtx = axisCanvas.getContext('2d');
+    const axisNSlider = document.getElementById('axisN');
+    function renderAxis() {
+        const n = parseInt(axisNSlider.value, 10);
+        document.getElementById('axisNVal').textContent = n;
+        drawAxisPattern(axisCtx, axisCanvas.width, axisCanvas.height, n);
+    }
+    axisNSlider.addEventListener('input', renderAxis);
+
+    /* ---------- 3단계: 원 무늬 ---------- */
+    function drawCirclePattern(ctx, W, H, n, k, color) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, W, H);
+
+        const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 18;
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+            const a = (2 * Math.PI * i / n) - Math.PI / 2;
+            pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]);
+        }
+        ctx.strokeStyle = color || '#4f46e5';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < n; i++) {
+            const j = mod(i + k, n);
+            ctx.beginPath();
+            ctx.moveTo(pts[i][0], pts[i][1]);
+            ctx.lineTo(pts[j][0], pts[j][1]);
+            ctx.stroke();
+        }
+        ctx.fillStyle = '#334155';
+        pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2); ctx.fill(); });
+    }
+
+    const circleCanvas = document.getElementById('circleCanvas');
+    const circleCtx = circleCanvas.getContext('2d');
+    const circleNSlider = document.getElementById('circleN');
+    const circleKSlider = document.getElementById('circleK');
+    function renderCircle() {
+        const n = parseInt(circleNSlider.value, 10);
+        let k = parseInt(circleKSlider.value, 10);
+        circleKSlider.max = Math.max(1, Math.floor(n / 2));
+        if (k > parseInt(circleKSlider.max, 10)) { k = parseInt(circleKSlider.max, 10); circleKSlider.value = k; }
+        document.getElementById('circleNVal').textContent = n;
+        document.getElementById('circleKVal').textContent = k;
+        drawCirclePattern(circleCtx, circleCanvas.width, circleCanvas.height, n, k, '#4f46e5');
+    }
+    circleNSlider.addEventListener('input', renderCircle);
+    circleKSlider.addEventListener('input', renderCircle);
+
+    /* ---------- 1단계: 미리보기 ---------- */
+    drawAxisPattern(document.getElementById('prevAxis').getContext('2d'), 200, 200, 10);
+    drawCirclePattern(document.getElementById('prevCircle').getContext('2d'), 200, 200, 24, 5, '#4f46e5');
+
+    /* ---------- 4단계: 두 구간 규칙 ---------- */
+    const ruleCanvas = document.getElementById('ruleCanvas');
+    const ruleCtx = ruleCanvas.getContext('2d');
+    const ruleN = document.getElementById('ruleN'), ruleM = document.getElementById('ruleM');
+    const ruleA1 = document.getElementById('ruleA1'), ruleD1 = document.getElementById('ruleD1');
+    const ruleA2 = document.getElementById('ruleA2'), ruleD2 = document.getElementById('ruleD2');
+
+    function renderRule() {
+        const n = parseInt(ruleN.value, 10);
+        ruleM.max = n - 1;
+        let m = parseInt(ruleM.value, 10);
+        if (m > n - 1) { m = n - 1; ruleM.value = m; }
+        const a1 = parseInt(ruleA1.value, 10), d1 = parseInt(ruleD1.value, 10);
+        const a2 = parseInt(ruleA2.value, 10), d2 = parseInt(ruleD2.value, 10);
+
+        document.getElementById('ruleNVal').textContent = n;
+        document.getElementById('ruleMVal').textContent = m;
+        document.getElementById('ruleA1Val').textContent = a1;
+        document.getElementById('ruleD1Val').textContent = d1;
+        document.getElementById('ruleA2Val').textContent = a2;
+        document.getElementById('ruleD2Val').textContent = d2;
+
+        const W = ruleCanvas.width, H = ruleCanvas.height;
+        ruleCtx.clearRect(0, 0, W, H);
+        ruleCtx.fillStyle = '#fff';
+        ruleCtx.fillRect(0, 0, W, H);
+
+        const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 18;
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+            const a = (2 * Math.PI * i / n) - Math.PI / 2;
+            pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]);
+        }
+
+        ruleCtx.strokeStyle = '#e11d48';
+        ruleCtx.lineWidth = 1;
+        for (let i = 0; i < n; i++) {
+            const ai = i <= m ? (a1 + d1 * i) : (a2 + d2 * (i - m - 1));
+            const j = mod(ai, n);
+            ruleCtx.beginPath();
+            ruleCtx.moveTo(pts[i][0], pts[i][1]);
+            ruleCtx.lineTo(pts[j][0], pts[j][1]);
+            ruleCtx.stroke();
+        }
+        ruleCtx.fillStyle = '#334155';
+        pts.forEach(([x, y]) => { ruleCtx.beginPath(); ruleCtx.arc(x, y, 1.8, 0, Math.PI * 2); ruleCtx.fill(); });
+    }
+    [ruleN, ruleM, ruleA1, ruleD1, ruleA2, ruleD2].forEach(el => el.addEventListener('input', renderRule));
+
+    /* ---------- 5단계: 레이어 디자인 ---------- */
+    const designCanvas = document.getElementById('designCanvas');
+    const designCtx = designCanvas.getContext('2d');
+    const layerList = document.getElementById('layerList');
+    const LAYER_COLORS = ['#4f46e5', '#e11d48', '#0d9488', '#d97706', '#7c3aed'];
+    let layers = [
+        { n: 40, k: 9, color: LAYER_COLORS[0] },
+        { n: 40, k: 13, color: LAYER_COLORS[1] },
+    ];
+
+    function renderLayerList() {
+        layerList.innerHTML = '';
+        layers.forEach((layer, idx) => {
+            const row = document.createElement('div');
+            row.className = 'layer-row';
+            row.innerHTML = `
+                <span class="sw" style="background:${layer.color}"></span>
+                <label>n <input type="number" min="6" max="80" value="${layer.n}" data-idx="${idx}" data-field="n"></label>
+                <label>k <input type="number" min="1" max="${Math.floor(layer.n / 2)}" value="${layer.k}" data-idx="${idx}" data-field="k"></label>
+                <button class="layer-del" data-idx="${idx}">삭제</button>
+            `;
+            layerList.appendChild(row);
+        });
+        layerList.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.idx, 10);
+                const field = e.target.dataset.field;
+                let val = parseInt(e.target.value, 10) || 1;
+                layers[idx][field] = val;
+                if (field === 'n') layers[idx].k = Math.min(layers[idx].k, Math.max(1, Math.floor(val / 2)));
+                renderLayerList();
+                renderDesign();
+            });
+        });
+        layerList.querySelectorAll('.layer-del').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.dataset.idx, 10);
+                layers.splice(idx, 1);
+                renderLayerList();
+                renderDesign();
+            });
+        });
+    }
+
+    function renderDesign() {
+        const W = designCanvas.width, H = designCanvas.height;
+        designCtx.clearRect(0, 0, W, H);
+        designCtx.fillStyle = '#fff';
+        designCtx.fillRect(0, 0, W, H);
+        layers.forEach(layer => {
+            const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 16;
+            const pts = [];
+            for (let i = 0; i < layer.n; i++) {
+                const a = (2 * Math.PI * i / layer.n) - Math.PI / 2;
+                pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]);
+            }
+            designCtx.strokeStyle = layer.color;
+            designCtx.globalAlpha = 0.85;
+            designCtx.lineWidth = 1;
+            for (let i = 0; i < layer.n; i++) {
+                const j = mod(i + layer.k, layer.n);
+                designCtx.beginPath();
+                designCtx.moveTo(pts[i][0], pts[i][1]);
+                designCtx.lineTo(pts[j][0], pts[j][1]);
+                designCtx.stroke();
+            }
+            designCtx.globalAlpha = 1;
+        });
+    }
+
+    document.getElementById('btnAddLayer').addEventListener('click', () => {
+        if (layers.length >= 5) return;
+        const color = LAYER_COLORS[layers.length % LAYER_COLORS.length];
+        layers.push({ n: 40, k: 5 + layers.length * 3, color });
+        renderLayerList();
+        renderDesign();
+    });
+
+    document.getElementById('btnSavePng').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.download = 'string-art.png';
+        link.href = designCanvas.toDataURL('image/png');
+        link.click();
+    });
+
+    /* ---------- 초기화 ---------- */
+    renderAxis();
+    renderCircle();
+    renderRule();
+    renderLayerList();
+    renderDesign();
+})();
+</script>
+
+</body>
+</html>
