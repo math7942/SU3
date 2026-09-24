@@ -118,7 +118,7 @@
         <div class="builder-layout">
             <div class="builder-canvas-wrap">
                 <canvas id="wheelCanvas" width="400" height="400"></canvas>
-                <p class="hint" id="drawHint">✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.</p>
+                <p class="hint" id="drawHint">✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 중심점 근처를 클릭하면 점선 원 안에서 정확히 중심에 달라붙어요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.</p>
             </div>
             <div class="builder-side">
                 <div class="readout-cell">
@@ -173,11 +173,13 @@
     const W = canvas.width, H = canvas.height;
     const CX = W / 2, CY = H / 2;
     const CLOSE_RADIUS = 14;
+    const CENTER_SNAP_RADIUS = 16;
 
     let points = []; // 그리는 중인 다각형의 점들 (캔버스 좌표)
     let finalized = false;
     let count = 12;
     let rainbow = true;
+    let hoverNearCenter = false;
 
     function showBanner(msg, type) {
         const el = document.getElementById('wheelBanner');
@@ -216,10 +218,26 @@
     }
 
     function drawCenterMarker() {
+        if (!finalized && hoverNearCenter) {
+            ctx.beginPath();
+            ctx.arc(CX, CY, CENTER_SNAP_RADIUS, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(162,28,175,0.15)';
+            ctx.fill();
+            ctx.strokeStyle = '#a21caf';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 2]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
         ctx.beginPath();
-        ctx.arc(CX, CY, 4, 0, Math.PI * 2);
+        ctx.arc(CX, CY, hoverNearCenter && !finalized ? 6 : 4, 0, Math.PI * 2);
         ctx.fillStyle = '#a21caf';
         ctx.fill();
+        if (hoverNearCenter && !finalized) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
         ctx.font = '11px sans-serif';
         ctx.fillStyle = '#a21caf';
         ctx.textAlign = 'left';
@@ -295,12 +313,34 @@
         drawCenterMarker();
     }
 
-    canvas.addEventListener('click', (e) => {
+    canvas.addEventListener('pointermove', (e) => {
         if (finalized) return;
         const rect = canvas.getBoundingClientRect();
         const scaleX = W / rect.width, scaleY = H / rect.height;
         const x = (e.clientX - rect.left) * scaleX;
         const y = (e.clientY - rect.top) * scaleY;
+        const near = Math.hypot(x - CX, y - CY) < CENTER_SNAP_RADIUS;
+        if (near !== hoverNearCenter) {
+            hoverNearCenter = near;
+            render();
+        }
+    });
+    canvas.addEventListener('pointerleave', () => {
+        if (hoverNearCenter) { hoverNearCenter = false; render(); }
+    });
+
+    canvas.addEventListener('click', (e) => {
+        if (finalized) return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = W / rect.width, scaleY = H / rect.height;
+        let x = (e.clientX - rect.left) * scaleX;
+        let y = (e.clientY - rect.top) * scaleY;
+
+        // 중심점 근처를 클릭하면 정확히 중심점 좌표로 스냅시킨다.
+        if (Math.hypot(x - CX, y - CY) < CENTER_SNAP_RADIUS) {
+            x = CX;
+            y = CY;
+        }
 
         if (points.length >= 3) {
             const [fx, fy] = points[0];
@@ -333,7 +373,7 @@
     document.getElementById('btnRedraw').addEventListener('click', () => {
         points = [];
         finalized = false;
-        document.getElementById('drawHint').textContent = '✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.';
+        document.getElementById('drawHint').textContent = '✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 중심점 근처를 클릭하면 점선 원 안에서 정확히 중심에 달라붙어요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.';
         showBanner('먼저 꽃잎 모양 다각형을 그려보세요.', 'info');
         render();
     });
@@ -346,7 +386,7 @@
         document.getElementById('countSlider').value = 12;
         document.getElementById('rainbowToggle').checked = true;
         updateFormula();
-        document.getElementById('drawHint').textContent = '✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.';
+        document.getElementById('drawHint').textContent = '✏️ 가운데 점(중심점) 근처에서 시작해서 바깥쪽으로 다각형을 그려보세요. 중심점 근처를 클릭하면 점선 원 안에서 정확히 중심에 달라붙어요. 점을 3개 이상 찍고, 처음 점 근처를 다시 클릭하면 도형이 완성돼요.';
         showBanner('먼저 꽃잎 모양 다각형을 그려보세요.', 'info');
         render();
     });
