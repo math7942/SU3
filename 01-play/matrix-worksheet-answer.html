@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>행렬 탐험 활동지 정답 (교사용) · 2026 광주수학축제</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #ece7f7;
+    --paper: #fffdfa;
+    --ink: #241b3d;
+    --muted: #675f82;
+    --line: #d9d2ec;
+    --deep: #2c1a63;
+    --purple: #7b3fa0;
+    --pink: #b8478f;
+    --teal: #0e8a79;
+    --teal-bg: #e3fbf7;
+    --blue: #3c63d6;
+    --blue-bg: #e9eeff;
+    --violet: #8a2ec2;
+    --violet-bg: #f6e9ff;
+    --red: #c0392b;
+    --red-bg: #fdeceb;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-block: 20px 40px;
+  }
+
+  /* ---------- 비밀번호 게이트 ---------- */
+  .gate {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(160deg, #2c1a63 0%, #4a2a86 45%, #7b3fa0 75%, #b8478f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 20px;
+  }
+  .gate-box {
+    background: #fffdfa;
+    border-radius: 16px;
+    padding: 36px 32px;
+    max-width: 320px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .gate-icon { font-size: 2.2rem; margin-bottom: 6px; }
+  .gate-box h2 { font-family: 'Jua', sans-serif; font-size: 1.3rem; margin: 0 0 6px; color: var(--deep); }
+  .gate-box p { font-size: 0.82rem; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+  #pwInput {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1.6px solid var(--line);
+    font-size: 1rem;
+    font-family: inherit;
+    text-align: center;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+  #pwInput:focus { outline: none; border-color: var(--purple); }
+  .gate-box button {
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(120deg, var(--deep), var(--purple) 55%, var(--pink));
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pw-error { color: var(--red) !important; font-weight: 700; margin-top: 10px !important; margin-bottom: 0 !important; }
+
+  /* ---------- 액션바 ---------- */
+  .actionbar {
+    width: 210mm;
+    max-width: calc(100% - 32px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .actionbar a.back { font-size: 0.85rem; font-weight: 700; color: var(--purple); text-decoration: none; }
+  .actionbar a.back:hover { text-decoration: underline; }
+  .print-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: none; border-radius: 999px; padding: 10px 20px;
+    background: linear-gradient(120deg, var(--deep), var(--purple) 55%, var(--pink));
+    color: #fff; font-family: inherit; font-size: 0.88rem; font-weight: 700;
+    cursor: pointer; box-shadow: 0 8px 20px rgba(123, 63, 160, 0.28);
+  }
+
+  .sheet {
+    position: relative;
+    width: 210mm;
+    max-width: calc(100% - 32px);
+    background: var(--paper);
+    border-radius: 6px;
+    box-shadow: 0 18px 50px rgba(44, 26, 99, 0.16), 0 2px 8px rgba(44, 26, 99, 0.08);
+    padding: 12mm 14mm 10mm;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .head {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+    padding-bottom: 10px; border-bottom: 2.5px solid var(--deep);
+  }
+  .teacher-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 13px; border-radius: 999px;
+    background: linear-gradient(120deg, #c0392b, #e2725a);
+    color: #fff; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  h1 { font-family: 'Jua', 'Noto Sans KR', sans-serif; font-size: 1.75rem; line-height: 1.15; margin: 0 0 4px; color: var(--deep); }
+  .head-sub { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+  .warn-box {
+    flex-shrink: 0; max-width: 190px;
+    background: var(--red-bg); border: 1.4px solid #f0b3ac; border-radius: 8px;
+    padding: 9px 11px; font-size: 0.7rem; color: var(--red); line-height: 1.5; font-weight: 600;
+  }
+
+  .stage {
+    border: 1.5px solid var(--line); border-left: 7px solid var(--accent);
+    border-radius: 10px; padding: 12px 16px 14px; background: #fff;
+  }
+  .stage-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .stage-num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-family: 'Jua', sans-serif; font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage-title { margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--accent); }
+
+  .ans-box {
+    background: var(--accent-bg); border-radius: 8px; padding: 10px 13px; margin-bottom: 8px;
+  }
+  .ans-box .q { font-size: 0.78rem; font-weight: 700; color: var(--ink); margin-bottom: 5px; }
+  .ans-box .a { font-size: 0.85rem; font-weight: 700; color: var(--accent); line-height: 1.6; }
+  .ans-box .a b { text-decoration: underline; text-decoration-color: var(--accent); }
+
+  .note-box {
+    background: #f7f5fb; border-left: 3px solid var(--muted); border-radius: 4px;
+    padding: 8px 11px; font-size: 0.76rem; color: var(--muted); line-height: 1.6; margin-bottom: 8px;
+  }
+  .note-box b { color: var(--ink); }
+
+  .formula {
+    font-weight: 700; font-size: 0.9rem; text-align: center; color: var(--accent);
+    background: var(--accent-bg); border-radius: 8px; padding: 8px; margin-bottom: 8px;
+  }
+
+  table.sample {
+    width: 100%; border-collapse: collapse; font-size: 0.76rem; margin-bottom: 8px;
+  }
+  table.sample th, table.sample td { border: 1px solid var(--line); padding: 6px 7px; text-align: center; }
+  table.sample th { background: var(--accent-bg); color: var(--accent); font-weight: 700; }
+  table.sample td:last-child { text-align: left; color: var(--muted); }
+
+  .kernel-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between; margin-bottom: 8px; }
+  .kernel-card {
+    flex: 1 1 0; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+    border: 1px solid var(--line); border-radius: 8px; padding: 9px 8px; background: #fbfaff;
+  }
+  .kernel-name { font-size: 0.72rem; font-weight: 700; color: var(--ink); text-align: center; }
+  .kernel-grid {
+    display: grid; grid-template-columns: repeat(3, 30px); grid-template-rows: repeat(3, 26px); gap: 3px;
+  }
+  .kernel-grid div {
+    display: flex; align-items: center; justify-content: center;
+    border: 1.2px solid #c4bce0; border-radius: 4px; background: #fff;
+    font-family: 'Jua', sans-serif; font-size: 0.85rem; color: var(--accent);
+  }
+  .kernel-scalar { font-size: 0.7rem; color: var(--muted); font-weight: 700; }
+
+  .foot-note {
+    text-align: center; font-size: 0.72rem; color: var(--muted); padding-top: 6px;
+  }
+
+  @media (max-width: 480px) {
+    .sheet { padding: 6mm 5mm; }
+    .head { flex-direction: column; }
+    .warn-box { max-width: none; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background: #fff; padding: 0; }
+    .actionbar { display: none; }
+    .sheet { box-shadow: none; border-radius: 0; width: 210mm; margin: 0; max-width: none; }
+  }
+
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-box">
+    <div class="gate-icon">🔒</div>
+    <h2>정답지 접근</h2>
+    <p>교사 전용 페이지입니다.<br>비밀번호를 입력해주세요.</p>
+    <input type="password" id="pwInput" placeholder="비밀번호" inputmode="decimal">
+    <button type="button" onclick="checkPw()">확인</button>
+    <p class="pw-error" id="pwError" hidden>비밀번호가 올바르지 않습니다.</p>
+  </div>
+</div>
+
+<div class="actionbar" hidden id="actionbar">
+  <a class="back" href="gwangju-festival/index.html">← 축제 메인으로</a>
+  <button class="print-btn" onclick="window.print()">🖨️ 인쇄하기 / PDF로 저장</button>
+</div>
+
+<div class="sheet" hidden id="content">
+
+  <div class="head">
+    <div>
+      <span class="teacher-badge">🔒 교사용 정답 및 해설</span>
+      <h1>행렬 탐험 활동지 · 정답지</h1>
+      <p class="head-sub">학생용 활동지(matrix-worksheet.html)와 짝을 이루는 정답 및 채점 안내입니다.</p>
+    </div>
+    <div class="warn-box">⚠️ 이 페이지는 학생에게 공유하지 마세요. 링크를 아는 사람만 접근할 수 있습니다.</div>
+  </div>
+
+  <!-- 1단계 -->
+  <section class="stage" style="--accent: var(--teal); --accent-bg: var(--teal-bg);">
+    <div class="stage-head">
+      <div class="stage-num">1</div>
+      <h2 class="stage-title">✍️ AI를 속여라!</h2>
+    </div>
+
+    <div class="note-box"><b>내가 쓴 숫자 / AI가 예측한 숫자 / 성공 여부</b> — 학생마다 다르며 정해진 정답이 없습니다. AI가 학생이 의도한 숫자와 <b>다른</b> 숫자로 판단했다면 성공입니다.</div>
+
+    <div class="ans-box">
+      <div class="q">🔎 탐구질문 — 히트맵에서 빨간색으로 표시된 부분은 무엇을 뜻할까요?</div>
+      <div class="a">정답: 선이 <b>여러 번 겹치거나 굵게</b> 그려져서 잉크(획)가 가장 많이 몰린 부분이 빨간색으로 표시됩니다. (파랑 → 초록 → 노랑 → 빨강 순으로 밀도가 높아짐)</div>
+    </div>
+
+    <div class="note-box">💡 참고 사실 — AI는 그림을 <b>28×28칸(=784개 숫자)</b>의 행렬로 바꾸어 읽습니다. 이 숫자는 활동지에 이미 안내되어 있으므로 별도 채점이 필요 없습니다.</div>
+  </section>
+
+  <!-- 2단계 -->
+  <section class="stage" style="--accent: var(--blue); --accent-bg: var(--blue-bg);">
+    <div class="stage-head">
+      <div class="stage-num">2</div>
+      <h2 class="stage-title">🧪 행렬 연금술사!!</h2>
+    </div>
+
+    <div class="formula">결과 = 이미지1 × α&nbsp; + &nbsp;이미지2 × (1 − α)</div>
+
+    <div class="note-box"><b>실험 기록표</b> — 학생이 직접 고른 α 값이므로 정해진 정답은 없습니다. 아래는 참고용 예시입니다.</div>
+    <table class="sample">
+      <tr><th>시도</th><th>α</th><th>1−α</th><th>예상되는 결과</th></tr>
+      <tr><td>①</td><td>80%</td><td>20%</td><td>이미지1에 가까운 결과</td></tr>
+      <tr><td>②</td><td>50%</td><td>50%</td><td>두 이미지가 반반 섞인 결과</td></tr>
+      <tr><td>③</td><td>20%</td><td>80%</td><td>이미지2에 가까운 결과</td></tr>
+    </table>
+
+    <div class="ans-box">
+      <div class="q">🔎 탐구질문 — α 값을 0에 가깝게 줄이면, 결과 이미지는 어떤 이미지에 더 가까워지나요?</div>
+      <div class="a">정답: <b>이미지2</b>에 가까워집니다. α→0이면 '이미지1×α' 항은 거의 사라지고, '이미지2×(1−α)'의 계수가 1에 가까워지기 때문입니다.</div>
+    </div>
+  </section>
+
+  <!-- 3단계 -->
+  <section class="stage" style="--accent: var(--violet); --accent-bg: var(--violet-bg);">
+    <div class="stage-head">
+      <div class="stage-num">3</div>
+      <h2 class="stage-title">🔐 4개의 숫자를 맞춰라!!!</h2>
+    </div>
+
+    <div class="note-box" style="margin-bottom:9px;">① 필터 행렬(커널) 정답 — 아래 수치와 학생이 옮겨 적은 값이 같은지 확인하세요.</div>
+    <div class="kernel-row">
+      <div class="kernel-card">
+        <div class="kernel-name">🌫️ 블러</div>
+        <div class="kernel-grid"><div>4</div><div>8</div><div>4</div><div>8</div><div>16</div><div>8</div><div>4</div><div>8</div><div>4</div></div>
+        <div class="kernel-scalar">× 1/64</div>
+      </div>
+      <div class="kernel-card">
+        <div class="kernel-name">✨ 선명화</div>
+        <div class="kernel-grid"><div>0</div><div>−1</div><div>0</div><div>−1</div><div>5</div><div>−1</div><div>0</div><div>−1</div><div>0</div></div>
+        <div class="kernel-scalar">&nbsp;</div>
+      </div>
+      <div class="kernel-card">
+        <div class="kernel-name">🔍 엣지감지</div>
+        <div class="kernel-grid"><div>−1</div><div>−1</div><div>−1</div><div>−1</div><div>8</div><div>−1</div><div>−1</div><div>−1</div><div>−1</div></div>
+        <div class="kernel-scalar">&nbsp;</div>
+      </div>
+      <div class="kernel-card">
+        <div class="kernel-name">💪 색감부스트</div>
+        <div class="kernel-grid"><div>0</div><div>0</div><div>0</div><div>0</div><div>5</div><div>0</div><div>0</div><div>0</div><div>0</div></div>
+        <div class="kernel-scalar">&nbsp;</div>
+      </div>
+    </div>
+
+    <div class="note-box"><b>② 1차·2차 필터 추리</b>와 <b>③ 숨겨진 4자리 숫자</b>는 학생이 페이지를 열 때마다 <b>무작위로</b> 새로 생성됩니다(코드에서 4가지 필터 중 무작위 선택, 숫자는 0000~9999 중 무작위 생성). 따라서 고정된 정답이 없으며, <b>학생의 화면에 나타난 필터 이름과 4자리 숫자를 그대로 정답으로 인정</b>하면 됩니다. 채점 시에는 학생이 "암호 해독 성공!" 화면(폭죽 효과)에 도달했는지만 확인하면 충분합니다.</div>
+  </section>
+
+  <div class="foot-note">2026 광주수학축제 · 행렬 탐험 활동지 정답지 — 학생에게 배포하지 마세요.</div>
+
+</div>
+
+<script>
+  var PW = "3.141592";
+  function unlock() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('actionbar').hidden = false;
+    document.getElementById('content').hidden = false;
+  }
+  function checkPw() {
+    var val = document.getElementById('pwInput').value.trim();
+    if (val === PW) {
+      try { sessionStorage.setItem('mw_answer_unlocked', '1'); } catch (e) {}
+      unlock();
+    } else {
+      document.getElementById('pwError').hidden = false;
+    }
+  }
+  document.getElementById('pwInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') checkPw();
+  });
+  window.addEventListener('load', function () {
+    try {
+      if (sessionStorage.getItem('mw_answer_unlocked') === '1') unlock();
+      else document.getElementById('pwInput').focus();
+    } catch (e) {
+      document.getElementById('pwInput').focus();
+    }
+  });
+</script>
+
+</body>
+</html>
