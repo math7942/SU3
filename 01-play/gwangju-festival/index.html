@@ -117,6 +117,41 @@
   .challenge-card.step-doc .foot { color: #b3780f; }
   .challenge-card.step-doc .chev { background: #fdf3da; }
 
+  .challenge-card.wide {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 22px;
+    padding: 22px 28px;
+  }
+  .challenge-card.wide .icon { margin-bottom: 0; flex-shrink: 0; }
+  .challenge-card.wide .wide-body { flex: 1 1 auto; min-width: 0; }
+  .challenge-card.wide .stage-label { margin: 0 0 4px; }
+  .challenge-card.wide .wide-desc { margin: 0; font-size: 0.86rem; color: var(--ink-soft); line-height: 1.55; }
+  .challenge-card.wide .foot {
+    flex-shrink: 0;
+    margin-top: 0;
+    padding-top: 0;
+    padding-left: 22px;
+    border-top: none;
+    border-left: 1px solid var(--line);
+  }
+
+  @media (max-width: 600px) {
+    .challenge-card.wide {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .challenge-card.wide .foot {
+      width: 100%;
+      padding-left: 0;
+      padding-top: 14px;
+      border-left: none;
+      border-top: 1px solid var(--line);
+    }
+  }
+
 </style>
 </head>
 <body class="g1">
@@ -148,11 +183,6 @@
 
   <main>
     <div class="groups">
-      <a class="card challenge-card step-doc" href="../matrix-worksheet.html">
-        <span class="icon" aria-hidden="true">📝</span>
-        <h2 class="stage-label">행렬 탐험 활동지</h2>
-        <span class="foot">활동지 보기·인쇄<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
-      </a>
       <a class="card challenge-card step1" href="../handwriting-challenge.html">
         <span class="icon" aria-hidden="true">✍️</span>
         <h2 class="stage-label">[1단계] AI를 속여라!</h2>
@@ -182,6 +212,14 @@
         <span class="icon" aria-hidden="true">💬</span>
         <h2 class="stage-label">체험 소감</h2>
         <span class="foot">소감 보기<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
+      </a>
+      <a class="card challenge-card step-doc wide" href="../matrix-worksheet.html">
+        <span class="icon" aria-hidden="true">📝</span>
+        <div class="wide-body">
+          <h2 class="stage-label">행렬 탐험 활동지</h2>
+          <p class="wide-desc">세 체험에서 관찰한 공식과 행렬을 직접 기록하는 한 페이지 학생 활동지예요. 화면으로 보거나 인쇄해서 사용하세요.</p>
+        </div>
+        <span class="foot">활동지 보기·인쇄<span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></span>
       </a>
     </div>
   </main>
