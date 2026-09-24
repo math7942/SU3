@@ -174,11 +174,11 @@
 
         <div class="challenge-layout">
             <div class="challenge-board-wrap">
-                <canvas id="challengeBoard" width="400" height="440"></canvas>
-                <p class="hint">💡 조각을 클릭하면 아래 작업 공간으로 이동해요. 조각을 드래그해서 자유롭게 옮기고, 보라색 손잡이를 드래그하거나 회전 버튼으로 돌려보세요. 굵은 테두리 안(목표 영역)을 빈틈없이 채우면 성공! 조각을 더블클릭하면 다시 보관함으로 돌아가요.</p>
+                <canvas id="challengeBoard" width="400" height="240"></canvas>
+                <p class="hint">💡 조각을 클릭하면 보드 위로 나와요(처음엔 다른 조각과 겹칠 수 있어요). 조각을 드래그해서 자유롭게 옮기고, 보라색 손잡이를 드래그하거나 회전 버튼으로 돌려보세요. 겹친 칸은 빨간색으로 표시돼요. 보드를 빈틈없이 채우면 성공! 조각을 더블클릭하면 다시 보관함으로 돌아가요.</p>
             </div>
             <div class="challenge-side">
-                <div class="readout-cell"><div class="k">목표 영역 채운 칸</div><div class="v" id="boardFilledVal">0 / 60</div></div>
+                <div class="readout-cell"><div class="k">채운 칸</div><div class="v" id="boardFilledVal">0 / 60</div></div>
                 <div class="btn-row">
                     <button class="btn btn-rotate" id="btnRotatePiece">↻ 회전</button>
                     <button class="btn btn-flip" id="btnFlipPiece">↔ 뒤집기</button>
@@ -188,7 +188,7 @@
             </div>
         </div>
 
-        <div class="tray-label">조각 보관함 (클릭하면 작업 공간으로 이동)</div>
+        <div class="tray-label">조각 보관함 (클릭하면 보드로 이동)</div>
         <div class="piece-tray" id="pieceTray"></div>
     </div>
 
@@ -425,8 +425,7 @@
         P: '#22c55e', T: '#10b981', U: '#14b8a6', V: '#06b6d4',
         W: '#3b82f6', X: '#8b5cf6', Y: '#d946ef', Z: '#f43f5e',
     };
-    const TARGET_ROWS = 6, BOARD_COLS = 10, STAGE_ROWS = 5;
-    const BOARD_ROWS = TARGET_ROWS + STAGE_ROWS; // 목표 영역 6행 + 작업 공간 5행
+    const BOARD_ROWS = 6, BOARD_COLS = 10;
     const BCELL = 40;
 
     const bCanvas = document.getElementById('challengeBoard');
@@ -476,18 +475,20 @@
         return { hx: cx + r * Math.cos(theta), hy: cy + r * Math.sin(theta), cx, cy };
     }
 
-    function nextStagePos() {
-        const col = (cascadeIndex % 5) * 2;
-        const row = TARGET_ROWS + Math.floor(cascadeIndex / 5) * 2;
+    // 새 조각은 보드 위 여러 자리를 돌아가며 등장한다(처음엔 다른 조각과 겹칠 수 있음 -
+    // 겹친 칸은 빨간색으로 표시되니 드래그해서 정리하면 된다).
+    function nextSpawnPos() {
+        const x = cascadeIndex % (BOARD_COLS - 4);
+        const y = cascadeIndex % (BOARD_ROWS - 3);
         cascadeIndex++;
-        return { x: Math.min(col, BOARD_COLS - 1), y: Math.min(row, BOARD_ROWS - 1) };
+        return { x, y };
     }
 
     function cellOwners() {
-        const owners = Array.from({ length: TARGET_ROWS }, () => Array.from({ length: BOARD_COLS }, () => []));
+        const owners = Array.from({ length: BOARD_ROWS }, () => Array.from({ length: BOARD_COLS }, () => []));
         placedOrder.forEach(name => {
             currentCells(name).forEach(([r, c]) => {
-                if (r >= 0 && r < TARGET_ROWS && c >= 0 && c < BOARD_COLS) owners[r][c].push(name);
+                if (r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS) owners[r][c].push(name);
             });
         });
         return owners;
@@ -504,29 +505,29 @@
         if (!allPlaced) return false;
         for (const name of Object.keys(PENTOMINO_DEFS)) {
             for (const [r, c] of currentCells(name)) {
-                if (r < 0 || r >= TARGET_ROWS || c < 0 || c >= BOARD_COLS) return false;
+                if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return false;
             }
         }
-        return countFilledValid(owners) === TARGET_ROWS * BOARD_COLS;
+        return countFilledValid(owners) === BOARD_ROWS * BOARD_COLS;
     }
 
     function renderBoard() {
         bctx.clearRect(0, 0, bCanvas.width, bCanvas.height);
-        bctx.fillStyle = '#fafffe';
-        bctx.fillRect(0, 0, bCanvas.width, bCanvas.height);
         bctx.fillStyle = '#f0fdf9';
-        bctx.fillRect(0, 0, BOARD_COLS * BCELL, TARGET_ROWS * BCELL);
+        bctx.fillRect(0, 0, bCanvas.width, bCanvas.height);
 
         const owners = cellOwners();
 
         placedOrder.forEach(name => {
             bctx.fillStyle = PIECE_COLORS[name];
             currentCells(name).forEach(([r, c]) => {
-                bctx.fillRect(c * BCELL + 1, r * BCELL + 1, BCELL - 2, BCELL - 2);
+                if (r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS) {
+                    bctx.fillRect(c * BCELL + 1, r * BCELL + 1, BCELL - 2, BCELL - 2);
+                }
             });
         });
 
-        for (let r = 0; r < TARGET_ROWS; r++) {
+        for (let r = 0; r < BOARD_ROWS; r++) {
             for (let c = 0; c < BOARD_COLS; c++) {
                 if (owners[r][c].length > 1) {
                     bctx.fillStyle = 'rgba(239,68,68,0.55)';
@@ -543,14 +544,9 @@
         for (let i = 0; i <= BOARD_ROWS; i++) {
             bctx.beginPath(); bctx.moveTo(0, i * BCELL); bctx.lineTo(bCanvas.width, i * BCELL); bctx.stroke();
         }
-        bctx.strokeStyle = '#ccfbf1';
-        bctx.setLineDash([4, 3]);
-        bctx.lineWidth = 1.5;
-        bctx.beginPath(); bctx.moveTo(0, TARGET_ROWS * BCELL); bctx.lineTo(bCanvas.width, TARGET_ROWS * BCELL); bctx.stroke();
-        bctx.setLineDash([]);
         bctx.strokeStyle = '#0f766e';
         bctx.lineWidth = 3;
-        bctx.strokeRect(1, 1, BOARD_COLS * BCELL - 2, TARGET_ROWS * BCELL - 2);
+        bctx.strokeRect(1, 1, BOARD_COLS * BCELL - 2, BOARD_ROWS * BCELL - 2);
 
         if (selectedPiece && pieceState[selectedPiece].onBoard) {
             const cells = currentCells(selectedPiece);
@@ -569,7 +565,7 @@
             bctx.fillText('↻', hx, hy);
         }
 
-        document.getElementById('boardFilledVal').textContent = `${countFilledValid(owners)} / ${TARGET_ROWS * BOARD_COLS}`;
+        document.getElementById('boardFilledVal').textContent = `${countFilledValid(owners)} / ${BOARD_ROWS * BOARD_COLS}`;
     }
 
     function drawPieceThumb(canvasEl, name) {
@@ -607,13 +603,13 @@
     }
 
     function sendToBoard(name) {
-        const pos = nextStagePos();
+        const pos = nextSpawnPos();
         pieceState[name] = { onBoard: true, x: pos.x, y: pos.y, rot: 0, flip: false };
         placedOrder.push(name);
         selectedPiece = name;
         renderTray();
         renderBoard();
-        showChallengeResult(`${name} 조각이 작업 공간으로 나왔어요. 드래그해서 옮기고 돌려보세요.`, 'info');
+        showChallengeResult(`${name} 조각이 보드 위로 나왔어요. 드래그해서 옮기고 돌려보세요.`, 'info');
     }
 
     function returnToTray(name) {
@@ -636,7 +632,7 @@
             showChallengeResult('🎉 완성! 12조각으로 6×10 직사각형을 빈틈없이 채웠어요!', 'done');
         } else {
             const n = countFilledValid(owners);
-            showChallengeResult(`목표 영역 ${n} / ${TARGET_ROWS * BOARD_COLS}칸 채움 (작업 공간에 놓은 조각 ${placedOrder.length} / 12개)`, 'info');
+            showChallengeResult(`${n} / ${BOARD_ROWS * BOARD_COLS}칸 채움 (보드에 놓은 조각 ${placedOrder.length} / 12개)`, 'info');
         }
     }
 
@@ -737,13 +733,13 @@
     });
 
     document.getElementById('btnRotatePiece').addEventListener('click', () => {
-        if (!selectedPiece) { showChallengeResult('먼저 작업 공간의 조각을 선택해주세요.', 'info'); return; }
+        if (!selectedPiece) { showChallengeResult('먼저 보드 위의 조각을 선택해주세요.', 'info'); return; }
         pieceState[selectedPiece].rot = (pieceState[selectedPiece].rot + 90) % 360;
         renderBoard();
         checkAndAnnounce();
     });
     document.getElementById('btnFlipPiece').addEventListener('click', () => {
-        if (!selectedPiece) { showChallengeResult('먼저 작업 공간의 조각을 선택해주세요.', 'info'); return; }
+        if (!selectedPiece) { showChallengeResult('먼저 보드 위의 조각을 선택해주세요.', 'info'); return; }
         pieceState[selectedPiece].flip = !pieceState[selectedPiece].flip;
         renderBoard();
         checkAndAnnounce();
