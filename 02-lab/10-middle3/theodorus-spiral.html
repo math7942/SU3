@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>테오도로스의 와선</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #fffbeb;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #b45309; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.4rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #78716c; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #b45309; }
+
+    .intro-box { background: #fffbeb; border: 2px solid #fbbf24; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #b45309; }
+    .intro-box p { margin: 0 0 8px; font-size: 0.85rem; color: #334155; line-height: 1.7; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #b45309; }
+    .formula-line { font-family: 'Courier New', monospace; font-weight: 700; color: #92400e; }
+
+    .step-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .step-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; text-align: center; }
+    .step-cell .n { font-size: 1rem; font-weight: 900; color: #b45309; }
+    .step-cell .name { font-size: 0.7rem; color: #78716c; margin-top: 4px; line-height: 1.4; }
+
+    .builder-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .builder-canvas-wrap { flex: 1 1 420px; min-width: 280px; }
+    #spiralCanvas { display: block; margin: 0 auto; border: 1px solid #fde68a; border-radius: 8px; background: #fffefb; max-width: 100%; height: auto; }
+    .legend-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; font-size: 0.75rem; color: #475569; margin-top: 6px; }
+    .legend-row span { display: inline-flex; align-items: center; gap: 5px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.rational { background: #15803d; }
+    .dot.irrational { background: #1d4ed8; }
+
+    .builder-side { flex: 1 1 240px; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
+    .slider-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .slider-cell .k { font-size: 0.72rem; color: #78716c; }
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: #b45309; }
+    .slider-row .s-val { min-width: 30px; text-align: center; font-weight: 900; color: #b45309; font-size: 0.95rem; }
+
+    .readout-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .readout-cell { flex: 1 1 120px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .readout-cell .k { font-size: 0.68rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.05rem; font-weight: 900; color: #1e293b; margin-top: 2px; }
+    .readout-cell .v.rational { color: #15803d; }
+    .readout-cell .v.irrational { color: #1d4ed8; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 10px; font-weight: 700; font-size: 0.82rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-play { background: #b45309; }
+    .btn-play:hover { background: #92400e; }
+    .btn-reset { background: #94a3b8; }
+    .btn-reset:hover { background: #64748b; }
+
+    .result-banner { text-align: center; font-weight: 700; font-size: 0.8rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+    .result-banner.warn { background: #fef3c7; color: #92400e; border: 2px dashed #fbbf24; }
+
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .chip {
+        font-size: 0.72rem; font-weight: 700; padding: 5px 9px; border-radius: 999px; font-family: 'Courier New', monospace;
+    }
+    .chip.rational { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .chip.irrational { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+
+    .fold-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .fold-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; }
+    .fold-cell .n { font-size: 0.85rem; font-weight: 900; color: #b45309; margin-bottom: 4px; }
+    .fold-cell p { margin: 0; font-size: 0.76rem; color: #57534e; line-height: 1.5; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #b45309; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+        .step-grid { grid-template-columns: repeat(2, 1fr); }
+        .fold-steps { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 중학교 3학년 실험실로</a>
+    <h1>🐚 테오도로스의 와선</h1>
+    <p class="subtitle">직각삼각형을 이어 붙여 만든 소용돌이 모양의 도형으로, 완전제곱수가 아닌 자연수의 제곱근이 무리수임을 눈으로 확인해봅니다.</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>🧭 테오도로스의 와선이란?</h3>
+            <p><b>테오도로스 와선</b>(테오도로스의 바퀴)은 기원전 5세기, 그리스의 수학자 <b>테오도로스</b>가 만든 도형이라고 알려져 있습니다. 두 변의 길이가 1인 직각이등변삼각형에서 시작해서, 그 빗변을 다음 삼각형의 한 변으로 삼아 계속 이어 붙이는 방식으로 만들어져요.</p>
+            <p>원점 O에서 첫 번째 점 A₁까지의 거리는 1입니다. 이후 각 점 Aᵢ에서 <b>OAᵢ와 수직이고 길이가 1인 선분</b>을 그어 다음 점 A_(i+1)을 만들면, 피타고라스 정리에 의해 <span class="formula-line">OA_(i+1)² = OAᵢ² + 1² = i + 1</span>이 되어 <span class="formula-line">OA_(i+1) = √(i+1)</span>이 됩니다.</p>
+            <p>이렇게 만들어지는 √1, √2, √3, ... 중에서 완전제곱수(1, 4, 9, 16, ...)의 제곱근만 정수(유리수)이고, 나머지는 모두 <b>무리수</b>예요. 테오도로스는 이 와선을 이용해 완전제곱수가 아닌 자연수의 제곱근이 무리수임을 보였다고 전해지며, 플라톤의 저서 「테아이테토스」에 이 내용이 기록되어 있습니다.</p>
+            <div class="step-grid">
+                <div class="step-cell"><div class="n">1</div><div class="name">직각이등변삼각형에서 시작</div></div>
+                <div class="step-cell"><div class="n">2</div><div class="name">빗변에 수직으로 길이 1인 변 잇기</div></div>
+                <div class="step-cell"><div class="n">3</div><div class="name">피타고라스 정리로 새 빗변 길이 계산</div></div>
+                <div class="step-cell"><div class="n">4</div><div class="name">√1, √2, √3, ... 무리수 확인</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🌀 인터랙티브 와선 만들기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">슬라이더로 삼각형을 하나씩 늘려가며, 각 점까지의 거리(√n)가 유리수인지 무리수인지 확인해보세요. 완전제곱수 지점은 초록색, 무리수 지점은 파란색으로 표시됩니다.</p>
+
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas id="spiralCanvas" width="480" height="480"></canvas>
+                <div class="legend-row">
+                    <span><span class="dot rational"></span>완전제곱수 (유리수)</span>
+                    <span><span class="dot irrational"></span>무리수</span>
+                </div>
+            </div>
+            <div class="builder-side">
+                <div class="slider-cell">
+                    <div class="k">삼각형 개수 (n)</div>
+                    <div class="slider-row">
+                        <input type="range" id="nSlider" min="1" max="30" step="1" value="16">
+                        <span class="s-val" id="nVal">16</span>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-play" id="btnPlay">▶ 자동으로 늘리기</button>
+                    <button class="btn btn-reset" id="btnReset">↺ 처음부터</button>
+                </div>
+                <div class="readout-row">
+                    <div class="readout-cell">
+                        <div class="k">마지막 점까지 거리</div>
+                        <div class="v" id="lastVal">√1 = 1</div>
+                    </div>
+                    <div class="readout-cell">
+                        <div class="k">유리수/무리수</div>
+                        <div class="v" id="lastType">유리수</div>
+                    </div>
+                </div>
+                <div class="readout-cell">
+                    <div class="k">원점에서 누적 회전각</div>
+                    <div class="v" id="angleVal">0.0°</div>
+                </div>
+                <p class="result-banner info" id="overlapBanner">삼각형을 늘려가며 나선이 어떻게 자라는지 관찰해보세요.</p>
+            </div>
+        </div>
+
+        <div class="chip-list" id="chipList"></div>
+    </div>
+
+    <div class="card">
+        <h2>✂️ 종이로 직접 만들어보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0 0 10px;">
+            디지털 와선과 함께, 실제 종이띠를 접어서 테오도로스의 와선을 만들어볼 수도 있어요. 폭이 일정한(예: 1cm) 종이띠를 준비합니다.
+        </p>
+        <div class="fold-steps">
+            <div class="fold-cell"><div class="n">① 띠 자르기</div><p>일정한 폭(예: 1cm)의 종이띠를 길게 준비합니다.</p></div>
+            <div class="fold-cell"><div class="n">② 삼각형으로 접기</div><p>띠의 끝을 접어 폭과 같은 변을 가진 직각이등변삼각형을 만듭니다.</p></div>
+            <div class="fold-cell"><div class="n">③ 안쪽으로 접기</div><p>남은 띠를 삼각형의 빗변을 따라 다시 안쪽으로 접습니다.</p></div>
+            <div class="fold-cell"><div class="n">④ 반복하기</div><p>같은 방법으로 계속 접으면 직각삼각형이 나선 모양으로 이어집니다.</p></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">
+            🔎 <b>탐구질문 1</b> — 슬라이더를 17 근처로 옮겨보세요. 원점에서의 누적 회전각이 360°를 넘으면 어떤 일이 일어나나요? 실제 테오도로스는 왜 16개의 삼각형(√17까지)에서 멈췄을까요?<br>
+            🔎 <b>탐구질문 2</b> — 1부터 30까지의 자연수 중 완전제곱수(초록색 칩)는 몇 개인가요? 완전제곱수와 완전제곱수 사이의 간격은 커질수록 어떻게 변하나요?<br>
+            🔎 <b>탐구질문 3</b> — 처음 삼각형의 두 변의 길이가 1이 아니라 2였다면, 각 점까지의 거리는 어떤 규칙을 따를까요?<br>
+            🔎 <b>탐구질문 4</b> — 나선형 곡선인 '와선'과 소용돌이 모양의 '나선'은 어떻게 다를까요? (1단계 설명을 참고해보세요.)
+        </p>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 중학교 3학년 실험실로</a>
+        <a href="tangram-square-root.html">탱그램의 제곱근 →</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    const canvas = document.getElementById('spiralCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const CX = W / 2, CY = H / 2;
+    const SCALE = 42;
+    const MAX_N = 30;
+
+    function isPerfectSquare(k) {
+        const r = Math.round(Math.sqrt(k));
+        return r * r === k;
+    }
+
+    function computePoints(n) {
+        const pts = [{ x: 0, y: 0 }];
+        let phi = 0;
+        for (let i = 1; i <= n; i++) {
+            const r = Math.sqrt(i);
+            pts.push({ x: r * Math.cos(phi), y: r * Math.sin(phi) });
+            phi += Math.atan2(1, r);
+        }
+        return { pts, finalAngle: phi };
+    }
+
+    function toPx(p) {
+        return [CX + p.x * SCALE, CY - p.y * SCALE];
+    }
+
+    let n = 16;
+    let playing = false;
+    let playTimer = null;
+
+    function render() {
+        const { pts, finalAngle } = computePoints(n);
+
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fffefb';
+        ctx.fillRect(0, 0, W, H);
+
+        // 반지름(원점에서 각 점까지)
+        ctx.strokeStyle = '#e7e5e4';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        for (let i = 1; i <= n; i++) {
+            const [ox, oy] = toPx(pts[0]);
+            const [px, py] = toPx(pts[i]);
+            ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(px, py); ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // 나선 변 (단위 길이 1인 변들)
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let i = 1; i <= n; i++) {
+            const [px, py] = toPx(pts[i]);
+            if (i === 1) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // 첫 변(원점 - A1)
+        ctx.beginPath();
+        const [ox, oy] = toPx(pts[0]);
+        const [p1x, p1y] = toPx(pts[1]);
+        ctx.moveTo(ox, oy); ctx.lineTo(p1x, p1y); ctx.stroke();
+
+        // 점 찍기
+        for (let i = 1; i <= n; i++) {
+            const [px, py] = toPx(pts[i]);
+            ctx.beginPath();
+            ctx.arc(px, py, i === n ? 4.5 : 3, 0, Math.PI * 2);
+            ctx.fillStyle = isPerfectSquare(i) ? '#15803d' : '#1d4ed8';
+            ctx.fill();
+            if (i === n) {
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+        }
+        // 원점
+        ctx.beginPath();
+        ctx.arc(ox, oy, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#1e293b';
+        ctx.fill();
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#57534e';
+        ctx.textAlign = 'left';
+        ctx.fillText('O', ox + 6, oy + 12);
+
+        updateReadouts(n, finalAngle);
+        updateChips(n);
+    }
+
+    function updateReadouts(n, finalAngle) {
+        document.getElementById('nVal').textContent = n;
+        const rational = isPerfectSquare(n);
+        const lastValEl = document.getElementById('lastVal');
+        const lastTypeEl = document.getElementById('lastType');
+
+        if (rational) {
+            lastValEl.textContent = `√${n} = ${Math.round(Math.sqrt(n))}`;
+        } else {
+            lastValEl.textContent = `√${n} ≈ ${Math.sqrt(n).toFixed(4)}`;
+        }
+        lastValEl.className = 'v ' + (rational ? 'rational' : 'irrational');
+        lastTypeEl.textContent = rational ? '유리수' : '무리수';
+        lastTypeEl.className = 'v ' + (rational ? 'rational' : 'irrational');
+
+        const deg = finalAngle * 180 / Math.PI;
+        document.getElementById('angleVal').textContent = deg.toFixed(1) + '°';
+
+        const banner = document.getElementById('overlapBanner');
+        if (deg > 360) {
+            banner.textContent = `🔄 누적 회전각이 ${deg.toFixed(1)}°로 360°를 넘어서, 나선이 처음 삼각형과 겹치기 시작했어요!`;
+            banner.className = 'result-banner warn';
+        } else {
+            banner.textContent = `아직 누적 회전각이 ${deg.toFixed(1)}°예요. 360°를 넘으면 나선이 겹치기 시작합니다.`;
+            banner.className = 'result-banner info';
+        }
+    }
+
+    function updateChips(n) {
+        const list = document.getElementById('chipList');
+        list.innerHTML = '';
+        for (let i = 1; i <= n; i++) {
+            const rational = isPerfectSquare(i);
+            const chip = document.createElement('span');
+            chip.className = 'chip ' + (rational ? 'rational' : 'irrational');
+            chip.textContent = rational ? `√${i}=${Math.round(Math.sqrt(i))}` : `√${i}≈${Math.sqrt(i).toFixed(2)}`;
+            list.appendChild(chip);
+        }
+    }
+
+    const nSlider = document.getElementById('nSlider');
+    nSlider.addEventListener('input', () => {
+        stopPlay();
+        n = parseInt(nSlider.value, 10);
+        render();
+    });
+
+    function stopPlay() {
+        playing = false;
+        if (playTimer) { clearInterval(playTimer); playTimer = null; }
+        document.getElementById('btnPlay').textContent = '▶ 자동으로 늘리기';
+    }
+
+    document.getElementById('btnPlay').addEventListener('click', () => {
+        if (playing) { stopPlay(); return; }
+        playing = true;
+        document.getElementById('btnPlay').textContent = '⏸ 정지';
+        playTimer = setInterval(() => {
+            n++;
+            if (n > MAX_N) { n = MAX_N; stopPlay(); }
+            nSlider.value = n;
+            render();
+        }, 500);
+    });
+
+    document.getElementById('btnReset').addEventListener('click', () => {
+        stopPlay();
+        n = 1;
+        nSlider.value = 1;
+        render();
+    });
+
+    render();
+})();
+</script>
+
+</body>
+</html>
