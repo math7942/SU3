@@ -175,7 +175,7 @@
         <div class="challenge-layout">
             <div class="challenge-board-wrap">
                 <canvas id="challengeBoard" width="400" height="440"></canvas>
-                <p class="hint">💡 조각을 더블클릭하면 아래 작업 공간으로 이동해요. 조각을 드래그해서 자유롭게 옮기고, 보라색 손잡이를 드래그하거나 회전 버튼으로 돌려보세요. 굵은 테두리 안(목표 영역)을 빈틈없이 채우면 성공! 조각을 더블클릭하면 다시 보관함으로 돌아가요.</p>
+                <p class="hint">💡 조각을 클릭하면 아래 작업 공간으로 이동해요. 조각을 드래그해서 자유롭게 옮기고, 보라색 손잡이를 드래그하거나 회전 버튼으로 돌려보세요. 굵은 테두리 안(목표 영역)을 빈틈없이 채우면 성공! 조각을 더블클릭하면 다시 보관함으로 돌아가요.</p>
             </div>
             <div class="challenge-side">
                 <div class="readout-cell"><div class="k">목표 영역 채운 칸</div><div class="v" id="boardFilledVal">0 / 60</div></div>
@@ -184,11 +184,11 @@
                     <button class="btn btn-flip" id="btnFlipPiece">↔ 뒤집기</button>
                 </div>
                 <button class="btn btn-clear" id="btnResetChallenge">↺ 처음부터</button>
-                <p class="result-banner info" id="challengeBanner">아래 보관함에서 조각을 더블클릭해보세요.</p>
+                <p class="result-banner info" id="challengeBanner">아래 보관함에서 조각을 클릭해보세요.</p>
             </div>
         </div>
 
-        <div class="tray-label">조각 보관함 (더블클릭하면 작업 공간으로 이동)</div>
+        <div class="tray-label">조각 보관함 (클릭하면 작업 공간으로 이동)</div>
         <div class="piece-tray" id="pieceTray"></div>
     </div>
 
@@ -600,7 +600,7 @@
             label.className = 'plabel';
             label.textContent = name;
             btn.appendChild(label);
-            if (!st.onBoard) btn.addEventListener('dblclick', () => sendToBoard(name));
+            if (!st.onBoard) btn.addEventListener('click', () => sendToBoard(name));
             tray.appendChild(btn);
             drawPieceThumb(c, name);
         });
@@ -758,7 +758,7 @@
         cascadeIndex = 0;
         renderTray();
         renderBoard();
-        showChallengeResult('아래 보관함에서 조각을 더블클릭해보세요.', 'info');
+        showChallengeResult('아래 보관함에서 조각을 클릭해보세요.', 'info');
     });
 
     renderTray();
