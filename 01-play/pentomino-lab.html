@@ -91,11 +91,25 @@
     .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
     .nav-links a { color: #0f766e; font-weight: 700; text-decoration: none; }
     .nav-links a:hover { text-decoration: underline; }
-    .challenge-link {
-        display: block; text-align: center; background: #0f766e; color: white; text-decoration: none;
-        padding: 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+
+    .challenge-intro { font-size: 0.85rem; color: #57534e; line-height: 1.7; margin: 0 0 14px; }
+    .challenge-layout { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; }
+    .challenge-board-wrap { flex: 2 1 400px; min-width: 280px; }
+    #challengeBoard { display: block; margin: 0 auto; border: 1px solid #ccfbf1; border-radius: 8px; background: #fafffe; touch-action: none; cursor: pointer; max-width: 100%; height: auto; }
+    .challenge-side { flex: 1 1 200px; min-width: 200px; display: flex; flex-direction: column; gap: 10px; }
+    .btn-rotate { background: #14b8a6; }
+    .btn-flip { background: #6366f1; }
+
+    .piece-tray { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 10px; background: #f0fdf9; border-radius: 8px; min-height: 90px; }
+    .tray-piece {
+        width: 76px; height: 76px; border: 2px solid #e7e5e4; border-radius: 8px; background: white;
+        display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative;
+        padding: 4px;
     }
-    .challenge-link:hover { background: #0d5f58; }
+    .tray-piece canvas { max-width: 100%; max-height: 100%; }
+    .tray-piece.selected { border-color: #0f766e; box-shadow: 0 0 0 2px #99f6e4; }
+    .tray-piece.used { opacity: 0.25; cursor: default; }
+    .tray-piece .plabel { position: absolute; bottom: 1px; right: 4px; font-size: 0.6rem; color: #a8a29e; font-weight: 700; }
 
     @media (max-width: 640px) {
         .poly-grid { grid-template-columns: repeat(3, 1fr); }
@@ -150,10 +164,33 @@
 
     <div class="card">
         <h2>🧭 더 탐구해 보기</h2>
-        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0 0 14px;">
-            트리오미노는 2가지, 테트로미노는 5가지, 펜토미노는 <b>12가지</b>의 서로 다른 모양(뒤집거나 돌려서 겹치는 건 같은 모양으로 침)이 있습니다. 모두 찾아보세요! 다 찾았다면 아래 DESMOS 챌린지에도 도전해보세요.
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">
+            트리오미노는 2가지, 테트로미노는 5가지, 펜토미노는 <b>12가지</b>의 서로 다른 모양(뒤집거나 돌려서 겹치는 건 같은 모양으로 침)이 있습니다. 위에서 모두 찾아봤다면, 이번엔 그 12조각으로 아래 직사각형 퍼즐에 도전해보세요!
         </p>
-        <a class="challenge-link" href="https://classroom.amplify.com/activity/68c1872963e3ac43d1c13f15?lang=ko" target="_blank" rel="noopener">🚀 DESMOS로 챌린지에 도전해 보자!</a>
+    </div>
+
+    <div class="card">
+        <h2>🧩 펜토미노 챌린지 — 6×10 직사각형을 채워라!</h2>
+        <p class="challenge-intro">펜토미노 12조각을 모두 사용해서 6×10 크기의 직사각형을 빈틈없이 채우면 성공입니다!</p>
+
+        <div class="challenge-layout">
+            <div class="challenge-board-wrap">
+                <canvas id="challengeBoard" width="400" height="240"></canvas>
+                <p class="hint">💡 아래에서 조각을 고른 뒤 보드 위를 클릭하면 놓입니다. 놓인 조각을 다시 클릭하면 회수돼요.</p>
+            </div>
+            <div class="challenge-side">
+                <div class="readout-cell"><div class="k">채운 칸</div><div class="v" id="boardFilledVal">0 / 60</div></div>
+                <div class="btn-row">
+                    <button class="btn btn-rotate" id="btnRotatePiece">↻ 회전</button>
+                    <button class="btn btn-flip" id="btnFlipPiece">↔ 뒤집기</button>
+                </div>
+                <button class="btn btn-clear" id="btnResetChallenge">↺ 처음부터</button>
+                <p class="result-banner info" id="challengeBanner">아래 보관함에서 조각을 하나 골라보세요.</p>
+            </div>
+        </div>
+
+        <div class="tray-label">조각 보관함 (클릭해서 선택)</div>
+        <div class="piece-tray" id="pieceTray"></div>
     </div>
 
     <div class="nav-links">
@@ -382,6 +419,238 @@
     renderTabs();
     render();
     renderGallery();
+
+    // ==================== 펜토미노 챌린지 (6×10 직사각형 채우기) ====================
+    const PENTOMINO_DEFS = {
+        F: [[0,1],[0,2],[1,0],[1,1],[2,1]],
+        I: [[0,0],[0,1],[0,2],[0,3],[0,4]],
+        L: [[0,0],[1,0],[2,0],[3,0],[3,1]],
+        N: [[0,1],[1,1],[2,0],[2,1],[3,0]],
+        P: [[0,0],[0,1],[1,0],[1,1],[2,0]],
+        T: [[0,0],[0,1],[0,2],[1,1],[2,1]],
+        U: [[0,0],[0,2],[1,0],[1,1],[1,2]],
+        V: [[0,0],[1,0],[2,0],[2,1],[2,2]],
+        W: [[0,0],[1,0],[1,1],[2,1],[2,2]],
+        X: [[0,1],[1,0],[1,1],[1,2],[2,1]],
+        Y: [[0,1],[1,0],[1,1],[2,1],[3,1]],
+        Z: [[0,0],[0,1],[1,1],[2,1],[2,2]],
+    };
+    const PIECE_COLORS = {
+        F: '#ef4444', I: '#f97316', L: '#eab308', N: '#84cc16',
+        P: '#22c55e', T: '#10b981', U: '#14b8a6', V: '#06b6d4',
+        W: '#3b82f6', X: '#8b5cf6', Y: '#d946ef', Z: '#f43f5e',
+    };
+    const BOARD_ROWS = 6, BOARD_COLS = 10, BCELL = 40;
+
+    const bCanvas = document.getElementById('challengeBoard');
+    bCanvas.width = BOARD_COLS * BCELL;
+    bCanvas.height = BOARD_ROWS * BCELL;
+    const bctx = bCanvas.getContext('2d');
+
+    let board = Array.from({ length: BOARD_ROWS }, () => Array(BOARD_COLS).fill(null));
+    const pieceState = {};
+    Object.keys(PENTOMINO_DEFS).forEach(name => {
+        pieceState[name] = { shape: normalize(PENTOMINO_DEFS[name].map(c => c.slice())), used: false };
+    });
+    let selectedPiece = null;
+    let hoverCell = null;
+
+    function boardFilledCount() {
+        let n = 0;
+        board.forEach(row => row.forEach(v => { if (v) n++; }));
+        return n;
+    }
+
+    // 클릭한 칸에 조각의 "실제로 채워진" 기준 칸(정규화된 모양의 첫 칸)이 오도록 배치한다.
+    // (바운딩박스 모서리를 기준으로 삼으면 회전된 모양에 따라 그 모서리가 빈 칸일 수 있어,
+    //  거기를 클릭했을 때 사용자가 보기엔 엉뚱한 칸을 클릭한 것처럼 동작하는 문제가 있었다.)
+    function pieceTargetCells(name, anchorR, anchorC) {
+        const shape = pieceState[name].shape;
+        const [refR, refC] = shape[0];
+        return shape.map(([pr, pc]) => [anchorR + (pr - refR), anchorC + (pc - refC)]);
+    }
+
+    function isPlacementValid(cells) {
+        return cells.every(([r, c]) => r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS && board[r][c] === null);
+    }
+
+    function renderBoard() {
+        bctx.clearRect(0, 0, bCanvas.width, bCanvas.height);
+        bctx.fillStyle = '#fafffe';
+        bctx.fillRect(0, 0, bCanvas.width, bCanvas.height);
+
+        for (let r = 0; r < BOARD_ROWS; r++) {
+            for (let c = 0; c < BOARD_COLS; c++) {
+                const name = board[r][c];
+                if (name) {
+                    bctx.fillStyle = PIECE_COLORS[name];
+                    bctx.fillRect(c * BCELL + 1, r * BCELL + 1, BCELL - 2, BCELL - 2);
+                }
+            }
+        }
+
+        bctx.strokeStyle = '#d1fae5';
+        bctx.lineWidth = 1;
+        for (let i = 0; i <= BOARD_COLS; i++) {
+            bctx.beginPath(); bctx.moveTo(i * BCELL, 0); bctx.lineTo(i * BCELL, bCanvas.height); bctx.stroke();
+        }
+        for (let i = 0; i <= BOARD_ROWS; i++) {
+            bctx.beginPath(); bctx.moveTo(0, i * BCELL); bctx.lineTo(bCanvas.width, i * BCELL); bctx.stroke();
+        }
+
+        if (selectedPiece && hoverCell) {
+            const cells = pieceTargetCells(selectedPiece, hoverCell.r, hoverCell.c);
+            const valid = isPlacementValid(cells);
+            bctx.fillStyle = valid ? 'rgba(16,185,129,0.45)' : 'rgba(239,68,68,0.45)';
+            cells.forEach(([r, c]) => {
+                if (r >= 0 && r < BOARD_ROWS && c >= 0 && c < BOARD_COLS) {
+                    bctx.fillRect(c * BCELL + 1, r * BCELL + 1, BCELL - 2, BCELL - 2);
+                }
+            });
+        }
+
+        document.getElementById('boardFilledVal').textContent = `${boardFilledCount()} / ${BOARD_ROWS * BOARD_COLS}`;
+    }
+
+    function drawPieceThumb(canvasEl, name) {
+        const cells = pieceState[name].shape;
+        const maxR = Math.max(...cells.map(c => c[0])) + 1;
+        const maxC = Math.max(...cells.map(c => c[1])) + 1;
+        const size = 64;
+        const cell = Math.floor(size / Math.max(maxR, maxC, 1));
+        canvasEl.width = maxC * cell;
+        canvasEl.height = maxR * cell;
+        const tctx = canvasEl.getContext('2d');
+        cells.forEach(([r, c]) => {
+            tctx.fillStyle = PIECE_COLORS[name];
+            tctx.fillRect(c * cell + 1, r * cell + 1, cell - 2, cell - 2);
+        });
+    }
+
+    function renderTray() {
+        const tray = document.getElementById('pieceTray');
+        tray.innerHTML = '';
+        Object.keys(PENTOMINO_DEFS).forEach(name => {
+            const state = pieceState[name];
+            const btn = document.createElement('div');
+            btn.className = 'tray-piece' + (state.used ? ' used' : '') + (selectedPiece === name ? ' selected' : '');
+            const c = document.createElement('canvas');
+            btn.appendChild(c);
+            const label = document.createElement('span');
+            label.className = 'plabel';
+            label.textContent = name;
+            btn.appendChild(label);
+            if (!state.used) btn.addEventListener('click', () => selectPiece(name));
+            tray.appendChild(btn);
+            drawPieceThumb(c, name);
+        });
+    }
+
+    function selectPiece(name) {
+        selectedPiece = (selectedPiece === name) ? null : name;
+        hoverCell = null;
+        renderTray();
+        renderBoard();
+        showChallengeResult(selectedPiece ? `${selectedPiece} 조각을 선택했어요. 보드를 클릭해서 놓아보세요.` : '아래 보관함에서 조각을 하나 골라보세요.', 'info');
+    }
+
+    function showChallengeResult(msg, type) {
+        const el = document.getElementById('challengeBanner');
+        el.textContent = msg;
+        el.className = 'result-banner ' + type;
+    }
+
+    function boardPosFromEvent(e) {
+        const rect = bCanvas.getBoundingClientRect();
+        const scaleX = bCanvas.width / rect.width;
+        const scaleY = bCanvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        return { r: Math.floor(y / BCELL), c: Math.floor(x / BCELL) };
+    }
+
+    bCanvas.addEventListener('pointermove', (e) => {
+        if (!selectedPiece) return;
+        const { r, c } = boardPosFromEvent(e);
+        hoverCell = { r, c };
+        renderBoard();
+    });
+    bCanvas.addEventListener('pointerleave', () => {
+        if (hoverCell) { hoverCell = null; renderBoard(); }
+    });
+
+    bCanvas.addEventListener('click', (e) => {
+        const { r, c } = boardPosFromEvent(e);
+        if (r < 0 || r >= BOARD_ROWS || c < 0 || c >= BOARD_COLS) return;
+
+        const occupant = board[r][c];
+        if (occupant) {
+            for (let rr = 0; rr < BOARD_ROWS; rr++) {
+                for (let cc = 0; cc < BOARD_COLS; cc++) {
+                    if (board[rr][cc] === occupant) board[rr][cc] = null;
+                }
+            }
+            pieceState[occupant].used = false;
+            pieceState[occupant].shape = normalize(PENTOMINO_DEFS[occupant].map(c => c.slice()));
+            renderTray();
+            renderBoard();
+            showChallengeResult(`${occupant} 조각을 다시 보관함으로 가져왔어요.`, 'info');
+            return;
+        }
+
+        if (!selectedPiece) {
+            showChallengeResult('먼저 아래 보관함에서 조각을 골라주세요.', 'info');
+            return;
+        }
+
+        const cells = pieceTargetCells(selectedPiece, r, c);
+        if (!isPlacementValid(cells)) {
+            showChallengeResult('여기에는 놓을 수 없어요. 보드 안쪽의 빈 칸인지 확인해보세요.', 'bad');
+            return;
+        }
+
+        cells.forEach(([cr, cc]) => { board[cr][cc] = selectedPiece; });
+        pieceState[selectedPiece].used = true;
+        const placedName = selectedPiece;
+        selectedPiece = null;
+        hoverCell = null;
+        renderTray();
+        renderBoard();
+
+        const filledN = boardFilledCount();
+        if (filledN === BOARD_ROWS * BOARD_COLS) {
+            showChallengeResult('🎉 완성! 12조각으로 6×10 직사각형을 빈틈없이 채웠어요!', 'done');
+        } else {
+            showChallengeResult(`${placedName} 조각을 놓았어요! (${filledN} / ${BOARD_ROWS * BOARD_COLS}칸)`, 'ok');
+        }
+    });
+
+    document.getElementById('btnRotatePiece').addEventListener('click', () => {
+        if (!selectedPiece) { showChallengeResult('먼저 조각을 선택해주세요.', 'info'); return; }
+        pieceState[selectedPiece].shape = normalize(rotate90(pieceState[selectedPiece].shape));
+        renderTray();
+        renderBoard();
+    });
+    document.getElementById('btnFlipPiece').addEventListener('click', () => {
+        if (!selectedPiece) { showChallengeResult('먼저 조각을 선택해주세요.', 'info'); return; }
+        pieceState[selectedPiece].shape = normalize(mirror(pieceState[selectedPiece].shape));
+        renderTray();
+        renderBoard();
+    });
+    document.getElementById('btnResetChallenge').addEventListener('click', () => {
+        board = Array.from({ length: BOARD_ROWS }, () => Array(BOARD_COLS).fill(null));
+        Object.keys(PENTOMINO_DEFS).forEach(name => {
+            pieceState[name] = { shape: normalize(PENTOMINO_DEFS[name].map(c => c.slice())), used: false };
+        });
+        selectedPiece = null;
+        hoverCell = null;
+        renderTray();
+        renderBoard();
+        showChallengeResult('아래 보관함에서 조각을 하나 골라보세요.', 'info');
+    });
+
+    renderTray();
+    renderBoard();
 })();
 </script>
 
