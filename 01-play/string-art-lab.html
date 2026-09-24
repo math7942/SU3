@@ -412,6 +412,13 @@
             const a = (2 * Math.PI * i / n) - Math.PI / 2;
             pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]);
         }
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
         ctx.strokeStyle = color || '#4f46e5';
         ctx.lineWidth = 1;
         for (let i = 0; i < n; i++) {
@@ -498,6 +505,12 @@
             pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]);
         }
 
+        ruleCtx.beginPath();
+        ruleCtx.arc(cx, cy, R, 0, Math.PI * 2);
+        ruleCtx.strokeStyle = '#cbd5e1';
+        ruleCtx.lineWidth = 1;
+        ruleCtx.stroke();
+
         ruleCtx.strokeStyle = '#e11d48';
         ruleCtx.lineWidth = 1;
         for (let i = 0; i < n; i++) {
@@ -577,6 +590,11 @@
         designCtx.clearRect(0, 0, W, H);
         designCtx.fillStyle = '#fff';
         designCtx.fillRect(0, 0, W, H);
+        designCtx.beginPath();
+        designCtx.arc(W / 2, H / 2, Math.min(W, H) / 2 - 16, 0, Math.PI * 2);
+        designCtx.strokeStyle = '#cbd5e1';
+        designCtx.lineWidth = 1;
+        designCtx.stroke();
         layers.forEach(layer => {
             const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 16;
             const pts = [];
