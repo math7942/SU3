@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>파이(π) 근삿값 탐구실 · 수수의 수학</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #eff6ff;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #2563eb; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.5rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #2563eb; }
+
+    .intro-box { background: #eff6ff; border: 2px solid #93c5fd; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #2563eb; }
+    .intro-box p { margin: 0 0 8px; font-size: 0.85rem; color: #334155; line-height: 1.7; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #2563eb; }
+    .intro-box .formula-line { font-family: 'Courier New', monospace; font-weight: 700; color: #1d4ed8; }
+
+    .step-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .step-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; text-align: center; }
+    .step-cell .n { font-size: 1rem; font-weight: 900; color: #2563eb; }
+    .step-cell .name { font-size: 0.7rem; color: #78716c; margin-top: 4px; line-height: 1.4; }
+
+    .builder-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .builder-canvas-wrap { flex: 1 1 380px; min-width: 280px; }
+    #piCanvas { display: block; margin: 0 auto; border: 1px solid #bfdbfe; border-radius: 8px; background: #ffffff; max-width: 100%; height: auto; }
+    .hint { font-size: 0.72rem; color: #3b82f6; text-align: center; margin: 6px 0 0; line-height: 1.6; }
+
+    .builder-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+    .readout-row { display: flex; gap: 8px; }
+    .readout-cell { flex: 1; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .readout-cell .k { font-size: 0.68rem; color: #78716c; }
+    .readout-cell .v { font-size: 1.05rem; font-weight: 900; color: #1e293b; margin-top: 2px; }
+
+    .pi-readout { background: #eff6ff; border: 2px solid #60a5fa; border-radius: 10px; padding: 14px; text-align: center; }
+    .pi-readout .k { font-size: 0.75rem; color: #2563eb; font-weight: 700; }
+    .pi-readout .v { font-size: 1.8rem; font-weight: 900; color: #1d4ed8; margin-top: 4px; }
+    .pi-readout .err { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
+
+    .batch-label { font-size: 0.78rem; color: #475569; font-weight: 700; margin-bottom: -2px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 10px; font-weight: 700; font-size: 0.82rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-add { background: #2563eb; }
+    .btn-add:hover { background: #1d4ed8; }
+    .btn-clear { background: #94a3b8; }
+    .btn-clear:hover { background: #64748b; }
+
+    .result-banner { text-align: center; font-weight: 700; font-size: 0.8rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+    .result-banner.ok { background: #dbeafe; color: #1d4ed8; }
+
+    .legend-row { display: flex; gap: 16px; justify-content: center; font-size: 0.75rem; color: #475569; margin-top: 6px; }
+    .legend-row span { display: inline-flex; align-items: center; gap: 5px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.inside { background: #dc2626; }
+    .dot.outside { background: #94a3b8; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #2563eb; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+        .step-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 수학과 놀자로</a>
+    <h1>🎯 파이(π) 근삿값 탐구실</h1>
+    <p class="subtitle">정사각형 안에 무작위로 점을 찍고, 원 안에 들어간 비율로 원주율(π)의 근삿값을 몬테카를로 방법으로 구해봅니다.</p>
+
+    <div class="card">
+        <div class="intro-box">
+            <h3>🧭 몬테카를로 방법으로 π를 구한다고?</h3>
+            <p>한 변의 길이가 <b>2</b>인 정사각형 안에 반지름이 <b>1</b>인 원을 그리면, 정사각형의 넓이는 <b>4</b>, 원의 넓이는 <b>π</b>예요. 그래서 두 넓이의 비율은 <span class="formula-line">원의 넓이 ÷ 정사각형의 넓이 = π ÷ 4</span> 입니다.</p>
+            <p>정사각형 안에 점을 <b>무작위로 아주 많이</b> 찍으면, "원 안에 찍힌 점의 비율"이 통계적 확률에 의해 "원의 넓이 비율"에 점점 가까워져요. 점 (x, y)가 원 안에 있는지는 <span class="formula-line">x² + y² &lt; 1</span> 인지로 판별할 수 있습니다.</p>
+            <p>그러므로 <span class="formula-line">(원 안의 점 개수 ÷ 전체 점 개수) × 4 ≈ π</span> 가 됩니다. 점을 많이 찍을수록 근삿값은 더 정확해져요.</p>
+            <div class="step-grid">
+                <div class="step-cell"><div class="n">1</div><div class="name">정사각형 안에 무작위 점 찍기</div></div>
+                <div class="step-cell"><div class="n">2</div><div class="name">x²+y²&lt;1 인지 판별</div></div>
+                <div class="step-cell"><div class="n">3</div><div class="name">원 안의 점 비율 계산</div></div>
+                <div class="step-cell"><div class="n">4</div><div class="name">비율 × 4 = π의 근삿값</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔬 시뮬레이션</h2>
+
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas id="piCanvas" width="400" height="400"></canvas>
+                <div class="legend-row">
+                    <span><span class="dot inside"></span>원 안의 점</span>
+                    <span><span class="dot outside"></span>원 밖의 점</span>
+                </div>
+                <p class="hint">아래 버튼을 눌러 점을 찍어보세요. 점이 많아질수록 π의 근삿값이 3.14159...에 가까워지는지 살펴보세요.</p>
+            </div>
+            <div class="builder-side">
+                <div class="pi-readout">
+                    <div class="k">π의 근삿값 = 4 × (원 안 점 개수 ÷ 전체 점 개수)</div>
+                    <div class="v" id="piVal">-</div>
+                    <div class="err" id="piErr">아직 점을 찍지 않았어요.</div>
+                </div>
+
+                <div class="readout-row">
+                    <div class="readout-cell">
+                        <div class="k">전체 점 개수</div>
+                        <div class="v" id="totalVal">0</div>
+                    </div>
+                    <div class="readout-cell">
+                        <div class="k">원 안의 점 개수</div>
+                        <div class="v" id="insideVal">0</div>
+                    </div>
+                </div>
+
+                <div class="batch-label">한 번에 점 찍기</div>
+                <div class="btn-row">
+                    <button class="btn btn-add" data-n="10">+10개</button>
+                    <button class="btn btn-add" data-n="100">+100개</button>
+                    <button class="btn btn-add" data-n="1000">+1,000개</button>
+                    <button class="btn btn-add" data-n="10000">+10,000개</button>
+                </div>
+                <button class="btn btn-clear" id="btnClear">↺ 처음부터 다시 찍기</button>
+                <p class="result-banner info" id="piBanner">버튼을 눌러 점을 찍기 시작해보세요.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧭 더 탐구해 보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">
+            🔎 <b>탐구질문 1</b> — 점을 10개만 찍었을 때와 10,000개를 찍었을 때, π의 근삿값은 실제 원주율(3.14159...)과 얼마나 차이가 나나요?<br>
+            🔎 <b>탐구질문 2</b> — "점이 균일하게(고르게) 무작위로 찍혀야 한다"는 조건이 왜 중요할까요? 한쪽에만 치우쳐 찍히면 어떻게 될까요?<br>
+            🔎 <b>탐구질문 3</b> — 이 방법처럼, 시행 횟수를 충분히 늘리면 통계적으로 어떤 값의 근삿값을 구할 수 있는 다른 예를 생각해보세요.<br>
+            🔎 <b>탐구질문 4</b> — 몬테카를로 시뮬레이션은 인공지능, 물리학 등 다양한 분야에서 활용됩니다. 자신의 진로와 관련된 활용 예를 찾아보세요.
+        </p>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 수학과 놀자로</a>
+        <a href="gwangju-festival/index.html">2026 광주수학축제 →</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    const canvas = document.getElementById('piCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const CX = W / 2, CY = H / 2;
+    const R = W / 2; // 반지름 1 = R px, 한 변 길이 2 = W px
+
+    let total = 0;
+    let inside = 0;
+
+    function toCanvas(x, y) {
+        return [CX + x * R, CY - y * R];
+    }
+
+    function drawBase() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+
+        // 정사각형
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, W - 2, H - 2);
+
+        // 원
+        ctx.beginPath();
+        ctx.arc(CX, CY, R - 1, 0, Math.PI * 2);
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 좌표축
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(CX, 0); ctx.lineTo(CX, H);
+        ctx.moveTo(0, CY); ctx.lineTo(W, CY);
+        ctx.stroke();
+
+        // 라벨
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.textAlign = 'center';
+        ctx.fillText('1', CX + R - 10, CY + 14);
+        ctx.fillText('-1', CX - R + 12, CY + 14);
+        ctx.fillText('1', CX + 12, CY - R + 12);
+        ctx.fillText('-1', CX + 14, CY + R - 6);
+        ctx.fillText('O', CX - 10, CY + 14);
+    }
+
+    function drawPoint(x, y, isInside) {
+        const [px, py] = toCanvas(x, y);
+        ctx.fillStyle = isInside ? '#dc2626' : '#94a3b8';
+        ctx.fillRect(px - 0.75, py - 0.75, 1.5, 1.5);
+    }
+
+    function formatInt(n) {
+        return n.toLocaleString('ko-KR');
+    }
+
+    function updateReadouts() {
+        document.getElementById('totalVal').textContent = formatInt(total);
+        document.getElementById('insideVal').textContent = formatInt(inside);
+
+        const banner = document.getElementById('piBanner');
+        const piValEl = document.getElementById('piVal');
+        const piErrEl = document.getElementById('piErr');
+
+        if (total === 0) {
+            piValEl.textContent = '-';
+            piErrEl.textContent = '아직 점을 찍지 않았어요.';
+            banner.textContent = '버튼을 눌러 점을 찍기 시작해보세요.';
+            banner.className = 'result-banner info';
+            return;
+        }
+
+        const piEstimate = 4 * inside / total;
+        const error = Math.abs(piEstimate - Math.PI);
+        piValEl.textContent = piEstimate.toFixed(4);
+        piErrEl.textContent = `실제 π(3.14159...)와의 오차: ${error.toFixed(4)}`;
+        banner.textContent = `점을 총 ${formatInt(total)}개 찍었고, 그중 ${formatInt(inside)}개가 원 안에 있어요. π ≈ 4 × ${inside}/${total} = ${piEstimate.toFixed(4)}`;
+        banner.className = 'result-banner ok';
+    }
+
+    function addPoints(n) {
+        for (let i = 0; i < n; i++) {
+            const x = Math.random() * 2 - 1;
+            const y = Math.random() * 2 - 1;
+            const isInside = x * x + y * y < 1;
+            total++;
+            if (isInside) inside++;
+            drawPoint(x, y, isInside);
+        }
+        updateReadouts();
+    }
+
+    document.querySelectorAll('.btn-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+            addPoints(parseInt(btn.dataset.n, 10));
+        });
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+        total = 0;
+        inside = 0;
+        drawBase();
+        updateReadouts();
+    });
+
+    drawBase();
+    updateReadouts();
+})();
+</script>
+
+</body>
+</html>
