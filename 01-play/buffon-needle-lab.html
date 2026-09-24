@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>뷔퐁의 바늘 탐구실 · 수수의 수학</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f0fdfa;
+        font-family: 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+    .back-link { font-size: 0.85rem; color: #0d9488; text-decoration: none; font-weight: 700; }
+    .back-link:hover { text-decoration: underline; }
+
+    h1 { font-size: 1.5rem; margin: 0; text-align: center; }
+    .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; margin: 0; }
+
+    .card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1rem; margin: 0 0 10px; color: #0d9488; }
+
+    .intro-box { background: #f0fdfa; border: 2px solid #5eead4; border-radius: 10px; padding: 16px 20px; }
+    .intro-box h3 { margin: 0 0 8px; font-size: 0.95rem; color: #0d9488; }
+    .intro-box p { margin: 0 0 8px; font-size: 0.85rem; color: #334155; line-height: 1.7; }
+    .intro-box p:last-child { margin-bottom: 0; }
+    .intro-box b { color: #0d9488; }
+    .formula-line { font-family: 'Courier New', monospace; font-weight: 700; color: #0f766e; }
+
+    /* 단계 네비게이션 */
+    .step-nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .step-pill {
+        flex: 1 1 auto; min-width: 110px; text-align: center; padding: 10px 6px; border-radius: 999px;
+        background: #f0fdfa; border: 1.5px solid #99f6e4; font-size: 0.78rem; font-weight: 700;
+        color: #0f766e; cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .step-pill:hover { background: #ccfbf1; }
+    .step-pill.active { background: #0d9488; color: white; border-color: #0d9488; }
+
+    .step-panel { display: none; flex-direction: column; gap: 14px; }
+    .step-panel.active { display: flex; }
+
+    .step-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 4px; }
+    .step-btn {
+        border: none; border-radius: 8px; padding: 10px 18px; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; font-family: inherit; background: #0d9488; color: white;
+    }
+    .step-btn.secondary { background: #e2e8f0; color: #475569; }
+    .step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .diagram-wrap { display: flex; justify-content: center; }
+    #theoryCanvas { border: 1px solid #99f6e4; border-radius: 8px; background: #fff; max-width: 100%; }
+
+    .step-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px; }
+    .step-cell { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; text-align: center; }
+    .step-cell .n { font-size: 1rem; font-weight: 900; color: #0d9488; }
+    .step-cell .name { font-size: 0.7rem; color: #78716c; margin-top: 4px; line-height: 1.4; }
+
+    .builder-layout { display: flex; gap: 20px; flex-wrap: wrap; }
+    .builder-canvas-wrap { flex: 1 1 380px; min-width: 280px; }
+    canvas.board { display: block; margin: 0 auto; border: 1px solid #99f6e4; border-radius: 8px; background: #ffffff; max-width: 100%; height: auto; }
+    .hint { font-size: 0.72rem; color: #0d9488; text-align: center; margin: 6px 0 0; line-height: 1.6; }
+    .legend-row { display: flex; gap: 16px; justify-content: center; font-size: 0.75rem; color: #475569; margin-top: 6px; }
+    .legend-row span { display: inline-flex; align-items: center; gap: 5px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.cross { background: #dc2626; }
+    .dot.nocross { background: #334155; }
+
+    .builder-side { flex: 1 1 220px; min-width: 220px; display: flex; flex-direction: column; gap: 10px; }
+    .readout-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .readout-cell { flex: 1 1 90px; background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; }
+    .readout-cell .k { font-size: 0.68rem; color: #78716c; }
+    .readout-cell .v { font-size: 1rem; font-weight: 900; color: #1e293b; margin-top: 2px; }
+
+    .pi-readout { background: #f0fdfa; border: 2px solid #2dd4bf; border-radius: 10px; padding: 14px; text-align: center; }
+    .pi-readout .k { font-size: 0.72rem; color: #0d9488; font-weight: 700; }
+    .pi-readout .v { font-size: 1.7rem; font-weight: 900; color: #0f766e; margin-top: 4px; }
+    .pi-readout .err { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
+
+    .l-row { display: flex; align-items: center; gap: 10px; }
+    .l-row input[type="range"] { flex: 1; accent-color: #0d9488; }
+    .l-row .l-val { min-width: 60px; text-align: center; font-weight: 900; color: #0d9488; font-size: 0.95rem; }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+        border: none; border-radius: 8px; padding: 10px 10px; font-weight: 700; font-size: 0.82rem;
+        cursor: pointer; font-family: inherit; color: white; flex: 1 1 auto;
+    }
+    .btn-add { background: #0d9488; }
+    .btn-add:hover { background: #0f766e; }
+    .btn-drop { background: #0d9488; }
+    .btn-clear { background: #94a3b8; }
+    .btn-clear:hover { background: #64748b; }
+
+    .result-banner { text-align: center; font-weight: 700; font-size: 0.8rem; min-height: 1.6em; border-radius: 8px; padding: 10px; }
+    .result-banner.info { background: #f1f5f9; color: #475569; }
+    .result-banner.ok { background: #ccfbf1; color: #0f766e; }
+    .result-banner.cross { background: #fee2e2; color: #b91c1c; }
+    .result-banner.nocross { background: #f1f5f9; color: #334155; }
+
+    .nav-links { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .nav-links a { color: #0d9488; font-weight: 700; text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+        .step-grid { grid-template-columns: repeat(2, 1fr); }
+        .step-pill { min-width: 44%; }
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <a class="back-link" href="index.html">← 수학과 놀자로</a>
+    <h1>🪡 뷔퐁의 바늘 탐구실</h1>
+    <p class="subtitle">평행선 위에 바늘을 무작위로 떨어뜨려서, 바늘이 평행선과 만나는 비율로 원주율(π)의 근삿값을 구해봅니다.</p>
+
+    <div class="card">
+        <div class="step-nav">
+            <div class="step-pill active" data-step="1">1단계 · 원리</div>
+            <div class="step-pill" data-step="2">2단계 · 바늘 하나</div>
+            <div class="step-pill" data-step="3">3단계 · 시뮬레이션</div>
+            <div class="step-pill" data-step="4">4단계 · 탐구하기</div>
+        </div>
+    </div>
+
+    <!-- 1단계: 원리 -->
+    <div class="card step-panel active" id="panel-1">
+        <h2>📐 1단계 · 뷔퐁의 바늘 문제란?</h2>
+        <div class="intro-box">
+            <p>18세기 프랑스의 수학자 <b>뷔퐁(Buffon)</b>이 제시한 문제로, 일정한 간격 <b>d</b>로 그어진 평행선 위에 길이 <b>l</b>인 바늘(l ≤ d)을 무작위로 떨어뜨렸을 때, 바늘이 평행선과 만날 확률을 구하는 문제입니다.</p>
+            <p>바늘 중심에서 가장 가까운 평행선까지의 거리를 <b>x</b>, 바늘이 평행선과 이루는 각도를 <b>θ</b>라 하면, 바늘이 평행선과 만나기 위한 조건은 <span class="formula-line">x ≤ (l/2) sin θ</span> 입니다.</p>
+        </div>
+        <div class="diagram-wrap">
+            <canvas id="theoryCanvas" width="320" height="190"></canvas>
+        </div>
+        <div class="intro-box">
+            <p>x와 θ가 균등하게 무작위로 정해진다고 보면, 기하학적 확률의 정의에 따라 바늘이 평행선과 만날 확률은</p>
+            <p style="text-align:center;" class="formula-line">P = (l/2 · ∫₀^π sinθ dθ) ÷ (d·π/2) = 2l / (dπ)</p>
+            <p>특히 <b>l = d</b>이면 <span class="formula-line">P = 2/π ≈ 0.6366</span>이고, <b>l = d/2</b>이면 <span class="formula-line">P = 1/π ≈ 0.3183</span>입니다.</p>
+            <p>이 식을 π에 대해 정리하면 <span class="formula-line">π ≈ 2l / (dP)</span> 가 되므로, 바늘을 아주 많이 던져서 만날 확률(상대도수) P를 실험적으로 구하면 π의 근삿값을 얻을 수 있습니다!</p>
+            <div class="step-grid">
+                <div class="step-cell"><div class="n">1</div><div class="name">바늘 하나 던지기</div></div>
+                <div class="step-cell"><div class="n">2</div><div class="name">평행선과 만나는지 판별</div></div>
+                <div class="step-cell"><div class="n">3</div><div class="name">수천 번 반복해서 비율 계산</div></div>
+                <div class="step-cell"><div class="n">4</div><div class="name">π ≈ 2l/(d×비율)</div></div>
+            </div>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" disabled>← 이전</button>
+            <button class="step-btn" onclick="goStep(2)">다음: 바늘 하나 던지기 →</button>
+        </div>
+    </div>
+
+    <!-- 2단계: 바늘 하나 -->
+    <div class="card step-panel" id="panel-2">
+        <h2>🪡 2단계 · 바늘 하나 던져보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">간격이 1인 평행선(d = 1) 위에 바늘을 하나씩 떨어뜨려 보면서, 바늘의 중심 위치와 기울어진 각도가 어떻게 "평행선과 만난다"는 조건으로 이어지는지 확인해보세요.</p>
+
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas class="board" id="singleCanvas" width="480" height="308"></canvas>
+                <div class="legend-row">
+                    <span><span class="dot cross"></span>평행선과 만남</span>
+                    <span><span class="dot nocross"></span>만나지 않음</span>
+                </div>
+            </div>
+            <div class="builder-side">
+                <div class="readout-cell">
+                    <div class="k">바늘 길이 l (d = 1 기준)</div>
+                    <div class="l-row">
+                        <input type="range" id="lSlider2" min="0.2" max="1" step="0.05" value="0.8">
+                        <span class="l-val" id="lVal2">0.80</span>
+                    </div>
+                </div>
+                <button class="btn btn-drop" id="btnDropOne">🪡 바늘 하나 던지기</button>
+                <div class="readout-row">
+                    <div class="readout-cell"><div class="k">최단거리 x</div><div class="v" id="oneX">-</div></div>
+                    <div class="readout-cell"><div class="k">각도 θ</div><div class="v" id="oneTheta">-</div></div>
+                    <div class="readout-cell"><div class="k">(l/2)sinθ</div><div class="v" id="oneHalf">-</div></div>
+                </div>
+                <p class="result-banner info" id="oneBanner">버튼을 눌러 바늘을 던져보세요.</p>
+            </div>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(1)">← 이전</button>
+            <button class="step-btn" onclick="goStep(3)">다음: 많이 던지기 →</button>
+        </div>
+    </div>
+
+    <!-- 3단계: 시뮬레이션 -->
+    <div class="card step-panel" id="panel-3">
+        <h2>🔬 3단계 · 많은 바늘을 던져서 π 구하기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">바늘을 수천 개 던져서 평행선과 만난 비율(상대도수)로 π의 근삿값을 계산해보세요. 점을 많이 찍을수록 π ≈ 3.14159...에 가까워지는지 관찰해보세요.</p>
+
+        <div class="builder-layout">
+            <div class="builder-canvas-wrap">
+                <canvas class="board" id="batchCanvas" width="480" height="308"></canvas>
+                <div class="legend-row">
+                    <span><span class="dot cross"></span>평행선과 만남</span>
+                    <span><span class="dot nocross"></span>만나지 않음</span>
+                </div>
+            </div>
+            <div class="builder-side">
+                <div class="readout-cell">
+                    <div class="k">바늘 길이 l (d = 1 기준)</div>
+                    <div class="l-row">
+                        <input type="range" id="lSlider3" min="0.2" max="1" step="0.05" value="0.8">
+                        <span class="l-val" id="lVal3">0.80</span>
+                    </div>
+                </div>
+                <div class="pi-readout">
+                    <div class="k">π의 근삿값 = 2l ÷ (d × 상대도수)</div>
+                    <div class="v" id="piVal">-</div>
+                    <div class="err" id="piErr">아직 바늘을 던지지 않았어요.</div>
+                </div>
+                <div class="readout-row">
+                    <div class="readout-cell"><div class="k">전체 바늘 수</div><div class="v" id="totalVal">0</div></div>
+                    <div class="readout-cell"><div class="k">만난 바늘 수</div><div class="v" id="crossVal">0</div></div>
+                    <div class="readout-cell"><div class="k">상대도수</div><div class="v" id="ratioVal">-</div></div>
+                </div>
+                <div class="batch-label" style="font-size:0.78rem; color:#475569; font-weight:700;">한 번에 바늘 던지기</div>
+                <div class="btn-row">
+                    <button class="btn btn-add" data-n="10">+10개</button>
+                    <button class="btn btn-add" data-n="100">+100개</button>
+                    <button class="btn btn-add" data-n="1000">+1,000개</button>
+                    <button class="btn btn-add" data-n="5000">+5,000개</button>
+                </div>
+                <button class="btn btn-clear" id="btnClearBatch">↺ 처음부터 다시 던지기</button>
+                <p class="result-banner info" id="batchBanner">버튼을 눌러 바늘을 던지기 시작해보세요.</p>
+            </div>
+        </div>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(2)">← 이전</button>
+            <button class="step-btn" onclick="goStep(4)">다음: 탐구하기 →</button>
+        </div>
+    </div>
+
+    <!-- 4단계: 탐구하기 -->
+    <div class="card step-panel" id="panel-4">
+        <h2>🧭 4단계 · 더 탐구해 보기</h2>
+        <p style="font-size:0.85rem; color:#57534e; line-height:1.7; margin:0;">
+            🔎 <b>탐구질문 1</b> — 3단계에서 바늘 길이를 l = 1(= d)로 맞추고 5,000개 이상 던져보세요. 상대도수가 이론값 2/π ≈ 0.6366에 가까워지나요?<br>
+            🔎 <b>탐구질문 2</b> — 바늘 길이를 l = 0.5(= d/2)로 바꿔서 던져보세요. 상대도수가 이론값 1/π ≈ 0.3183에 가까워지나요?<br>
+            🔎 <b>탐구질문 3</b> — 바늘 길이 l이 평행선 간격 d에 가까워질수록(길어질수록), 평행선과 만날 확률은 어떻게 변하나요? 그 이유를 2단계의 조건 x ≤ (l/2)sinθ로 설명해보세요.<br>
+            🔎 <b>탐구질문 4</b> — 바늘을 10개만 던졌을 때와 5,000개 던졌을 때, π 근삿값의 정확도를 비교해보세요. 왜 차이가 날까요?<br>
+            🔎 <b>탐구질문 5</b> — 뷔퐁의 바늘 실험도 앞서 살펴본 몬테카를로 방법의 한 예로 볼 수 있습니다. 두 방법(정사각형-원 방법과 뷔퐁의 바늘 방법)의 공통점은 무엇일까요?
+        </p>
+        <div class="step-foot">
+            <button class="step-btn secondary" onclick="goStep(3)">← 이전</button>
+            <button class="step-btn secondary" disabled>처음으로: 1단계에서 다시 보기</button>
+        </div>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">← 수학과 놀자로</a>
+        <a href="pi-monte-carlo-lab.html">파이 근삿값 탐구실 →</a>
+    </div>
+</div>
+
+<script>
+(function () {
+    /* ---------- 단계 네비게이션 ---------- */
+    window.goStep = function (n) {
+        document.querySelectorAll('.step-pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.step) === n));
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-' + n).classList.add('active');
+        window.scrollTo({ top: document.querySelector('.container').offsetTop, behavior: 'smooth' });
+    };
+    document.querySelectorAll('.step-pill').forEach(p => {
+        p.addEventListener('click', () => goStep(parseInt(p.dataset.step)));
+    });
+
+    /* ---------- 1단계: 원리 다이어그램 ---------- */
+    (function drawTheoryDiagram() {
+        const c = document.getElementById('theoryCanvas');
+        const ctx = c.getContext('2d');
+        const W = c.width, H = c.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, W, H);
+
+        const lineTopY = 20, lineBottomY = H - 20;
+        const cx = W / 2, cy = 128; // 바늘 중심 (아래쪽 평행선에 더 가깝게)
+        const halfLen = 68;
+        const theta = 38 * Math.PI / 180;
+        const x1 = cx - halfLen * Math.cos(theta), y1 = cy - halfLen * Math.sin(theta);
+        const x2 = cx + halfLen * Math.cos(theta), y2 = cy + halfLen * Math.sin(theta);
+
+        // 평행선
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2.5;
+        [lineTopY, lineBottomY].forEach(y => {
+            ctx.beginPath(); ctx.moveTo(10, y); ctx.lineTo(W - 10, y); ctx.stroke();
+        });
+
+        // x (중심에서 가까운 평행선까지 거리) - 점선
+        ctx.strokeStyle = '#0d9488';
+        ctx.lineWidth = 1.3;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, lineBottomY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#0d9488';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('x', cx + 5, (cy + lineBottomY) / 2);
+
+        // l/2 sinθ (중심에서 바늘 위쪽 끝의 높이) - 점선
+        ctx.strokeStyle = '#d97706';
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, y1); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#d97706';
+        ctx.textAlign = 'left';
+        ctx.fillText('l/2 sinθ', cx + 5, (cy + y1) / 2 - 14);
+
+        // 바늘
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.fillStyle = '#dc2626';
+        [[x1, y1], [x2, y2]].forEach(([px, py]) => {
+            ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+        });
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+
+        // 각도 θ 호
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 26, -theta, 0, false);
+        ctx.stroke();
+        ctx.fillStyle = '#475569';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('θ', cx + 30, cy - 6);
+
+        // 기준 수평선(각도 측정용)
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + 45, cy); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('d', 14, (lineTopY + lineBottomY) / 2);
+        ctx.setLineDash([2, 2]);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.beginPath(); ctx.moveTo(24, lineTopY); ctx.lineTo(24, lineBottomY); ctx.stroke();
+        ctx.setLineDash([]);
+    })();
+
+    /* ---------- 공통 상수/함수 ---------- */
+    const D = 1; // 평행선 간격
+    const LINES = 9; // y = 0..9 (10개 평행선)
+    const VIEW_X = 14, VIEW_Y = 9;
+    let l = 0.8; // 바늘 길이
+
+    function mapX(x, W) { return (x / VIEW_X) * W; }
+    function mapY(y, H) { return (y / VIEW_Y) * H; }
+
+    function drawBoard(ctx, W, H) {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#ccfbf1';
+        ctx.lineWidth = 1.5;
+        for (let y = 0; y <= LINES; y++) {
+            const py = mapY(y, H);
+            ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+        }
+    }
+
+    function randomNeedle() {
+        const xmid = 0.5 + Math.random() * (VIEW_X - 1);
+        const ymid = 0.5 + Math.random() * (VIEW_Y - 1);
+        const theta = Math.random() * Math.PI;
+        const half = l / 2;
+        const x1 = xmid - half * Math.cos(theta), y1 = ymid - half * Math.sin(theta);
+        const x2 = xmid + half * Math.cos(theta), y2 = ymid + half * Math.sin(theta);
+        const crosses = Math.floor(y1) !== Math.floor(y2);
+        const nearest = Math.min(ymid - Math.floor(ymid), Math.ceil(ymid) - ymid);
+        return { xmid, ymid, theta, x1, y1, x2, y2, crosses, nearest };
+    }
+
+    function drawNeedle(ctx, W, H, n) {
+        ctx.strokeStyle = n.crosses ? '#dc2626' : '#334155';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(mapX(n.x1, W), mapY(n.y1, H));
+        ctx.lineTo(mapX(n.x2, W), mapY(n.y2, H));
+        ctx.stroke();
+    }
+
+    function formatInt(n) { return n.toLocaleString('ko-KR'); }
+    function toDeg(rad) { return (rad * 180 / Math.PI).toFixed(1) + '°'; }
+
+    /* ---------- l 슬라이더 동기화 ---------- */
+    const lSlider2 = document.getElementById('lSlider2');
+    const lSlider3 = document.getElementById('lSlider3');
+    const lVal2 = document.getElementById('lVal2');
+    const lVal3 = document.getElementById('lVal3');
+
+    function setL(newL, resetBatch) {
+        l = newL;
+        lSlider2.value = l;
+        lSlider3.value = l;
+        lVal2.textContent = l.toFixed(2);
+        lVal3.textContent = l.toFixed(2);
+        if (resetBatch) clearBatch();
+    }
+
+    lSlider2.addEventListener('input', () => setL(parseFloat(lSlider2.value), true));
+    lSlider3.addEventListener('input', () => setL(parseFloat(lSlider3.value), true));
+
+    /* ---------- 2단계: 바늘 하나 던지기 ---------- */
+    const singleCanvas = document.getElementById('singleCanvas');
+    const singleCtx = singleCanvas.getContext('2d');
+    const SW = singleCanvas.width, SH = singleCanvas.height;
+
+    function resetSingle() {
+        drawBoard(singleCtx, SW, SH);
+    }
+
+    document.getElementById('btnDropOne').addEventListener('click', () => {
+        const n = randomNeedle();
+        drawBoard(singleCtx, SW, SH);
+        drawNeedle(singleCtx, SW, SH, n);
+
+        document.getElementById('oneX').textContent = n.nearest.toFixed(2);
+        document.getElementById('oneTheta').textContent = toDeg(n.theta);
+        document.getElementById('oneHalf').textContent = (Math.abs(Math.sin(n.theta)) * l / 2).toFixed(2);
+
+        const banner = document.getElementById('oneBanner');
+        if (n.crosses) {
+            banner.textContent = `🔴 평행선과 만났어요! x(${n.nearest.toFixed(2)}) ≤ (l/2)sinθ(${(Math.abs(Math.sin(n.theta)) * l / 2).toFixed(2)})`;
+            banner.className = 'result-banner cross';
+        } else {
+            banner.textContent = `⚪ 평행선과 만나지 않았어요. x(${n.nearest.toFixed(2)}) > (l/2)sinθ(${(Math.abs(Math.sin(n.theta)) * l / 2).toFixed(2)})`;
+            banner.className = 'result-banner nocross';
+        }
+    });
+
+    /* ---------- 3단계: 배치 시뮬레이션 ---------- */
+    const batchCanvas = document.getElementById('batchCanvas');
+    const batchCtx = batchCanvas.getContext('2d');
+    const BW = batchCanvas.width, BH = batchCanvas.height;
+    let total = 0, cross = 0;
+
+    function updateBatchReadouts() {
+        document.getElementById('totalVal').textContent = formatInt(total);
+        document.getElementById('crossVal').textContent = formatInt(cross);
+
+        const banner = document.getElementById('batchBanner');
+        const piValEl = document.getElementById('piVal');
+        const piErrEl = document.getElementById('piErr');
+        const ratioEl = document.getElementById('ratioVal');
+
+        if (total === 0) {
+            ratioEl.textContent = '-';
+            piValEl.textContent = '-';
+            piErrEl.textContent = '아직 바늘을 던지지 않았어요.';
+            banner.textContent = '버튼을 눌러 바늘을 던지기 시작해보세요.';
+            banner.className = 'result-banner info';
+            return;
+        }
+        const ratio = cross / total;
+        ratioEl.textContent = ratio.toFixed(4);
+
+        if (cross === 0) {
+            piValEl.textContent = '-';
+            piErrEl.textContent = '아직 평행선과 만난 바늘이 없어요.';
+            banner.textContent = `바늘을 총 ${formatInt(total)}개 던졌지만 아직 평행선과 만난 바늘이 없어요.`;
+            banner.className = 'result-banner info';
+            return;
+        }
+        const piEstimate = 2 * l / (D * ratio);
+        const error = Math.abs(piEstimate - Math.PI);
+        piValEl.textContent = piEstimate.toFixed(4);
+        piErrEl.textContent = `실제 π(3.14159...)와의 오차: ${error.toFixed(4)}`;
+        banner.textContent = `바늘 ${formatInt(total)}개 중 ${formatInt(cross)}개가 평행선과 만났어요(상대도수 ${ratio.toFixed(4)}). π ≈ 2×${l.toFixed(2)}/(1×${ratio.toFixed(4)}) = ${piEstimate.toFixed(4)}`;
+        banner.className = 'result-banner ok';
+    }
+
+    function addBatch(n) {
+        for (let i = 0; i < n; i++) {
+            const needle = randomNeedle();
+            total++;
+            if (needle.crosses) cross++;
+            drawNeedle(batchCtx, BW, BH, needle);
+        }
+        updateBatchReadouts();
+    }
+
+    function clearBatch() {
+        total = 0; cross = 0;
+        drawBoard(batchCtx, BW, BH);
+        updateBatchReadouts();
+    }
+
+    document.querySelectorAll('.btn-add').forEach(btn => {
+        btn.addEventListener('click', () => addBatch(parseInt(btn.dataset.n, 10)));
+    });
+    document.getElementById('btnClearBatch').addEventListener('click', clearBatch);
+
+    /* ---------- 초기화 ---------- */
+    setL(0.8, false);
+    resetSingle();
+    clearBatch();
+})();
+</script>
+
+</body>
+</html>
