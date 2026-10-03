@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5-1단계 · 모의고사에서 문제 찾기 · AI와 함께하는 수학교사의 1학기 살이 · 수수의 수학</title>
+<link rel="stylesheet" href="../../assets/site.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  .result-list { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+  .result-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    background: var(--surface);
+  }
+  .result-item input[type="checkbox"] { margin-top: 3px; flex: none; }
+  .result-item .meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 3px; }
+  .result-item .snippet { font-size: 0.88rem; color: var(--ink-soft); }
+  .result-item .topics { margin-top: 4px; }
+  .result-item .topics span {
+    display: inline-block; font-size: 0.74rem; color: var(--accent);
+    background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; margin: 2px 4px 0 0;
+  }
+  .search-empty { color: var(--muted); font-size: 0.88rem; padding: 10px 2px; }
+  .print-sheet { display: none; }
+  .print-problem {
+    background: #fff; border: 1px solid var(--line); border-radius: 10px;
+    padding: 24px 26px; margin-bottom: 18px;
+  }
+  .print-problem .ps-meta { color: #777; font-size: 0.8rem; margin: 0 0 10px; }
+  .print-problem canvas { max-width: 100%; height: auto; display: block; border: 1px solid #eee; }
+  .print-problem .ps-answer {
+    margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line);
+    font-size: 0.9rem; color: #1b1830;
+  }
+  .print-problem .ps-answer b { color: var(--accent); }
+  @page { size: A4 portrait; margin: 14mm; }
+  @media print {
+    body * { visibility: hidden; }
+    #print-area, #print-area * { visibility: visible; }
+    #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; }
+    .print-problem { border: none; padding: 0 0 18px; page-break-after: always; }
+    .print-problem:last-child { page-break-after: auto; }
+  }
+</style>
+</head>
+<body class="g4">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      지필평가 출제
+    </a>
+    <span class="badge" aria-hidden="true">🔍</span>
+    <h1>5-1단계 · 모의고사에서 문제 찾기</h1>
+    <p>등록해 둔 모의고사 PDF에서 키워드로 문제를 찾아, 교사용(정답·풀이 포함)과 학생용(문제만)으로 바로 출력합니다.</p>
+  </header>
+
+  <main>
+    <div class="lesson">
+
+      <h2>1. 새 모의고사 등록하기</h2>
+      <p>이 도구는 미리 등록해 둔 모의고사 안에서만 검색합니다. 모의고사를 볼 때마다 PDF를 Claude Code에게 보내 등록을 요청하세요 — 문항별로 번호·페이지·단원 키워드·정답·간단한 풀이를 정리해 검색 목록에 추가해 드립니다.</p>
+
+      <div class="callout tip">
+        <h4>요청 예시</h4>
+        <p>"첨부한 2026년 9월 모의고사 수학 PDF를 수수의 수학 사이트 모의고사 검색에 추가해줘. 문항마다 단원·개념 키워드도 넉넉히 붙여줘."</p>
+      </div>
+
+      <h2>2. 키워드로 문제 찾기</h2>
+      <p>단원이나 개념 이름으로 검색하면, 등록된 모의고사 전체에서 관련 문항을 찾아 보여줍니다.</p>
+
+      <div class="practice">
+        <span class="practice-label">실습</span>
+        <h4>모의고사 문제 검색</h4>
+        <p class="practice-desc">예: "합성함수", "이차함수의 최댓값", "수열의 극한"</p>
+
+        <div class="field">
+          <label for="ms-query">검색어</label>
+          <input type="text" id="ms-query" placeholder="단원이나 개념 이름을 입력하세요">
+        </div>
+
+        <div id="ms-status" class="search-empty"></div>
+        <div class="result-list" id="ms-results"></div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn" type="button" id="ms-student">학생용 만들기 (문제만)</button>
+          <button class="btn secondary" type="button" id="ms-teacher">교사용 만들기 (정답·풀이 포함)</button>
+        </div>
+      </div>
+
+      <div id="print-area" class="print-sheet"></div>
+
+      <div class="callout warn">
+        <h4>저작권·출처를 지켜주세요</h4>
+        <p>모의고사 문항은 출제 기관(한국교육과정평가원 등)에 저작권이 있습니다. 여기서 만든 인쇄물은 소속 학급 수업·학습 자료로만 쓰고, 출처를 밝히지 않은 채 외부에 공개하거나 배포하지 마세요.</p>
+      </div>
+
+    </div>
+
+    <p class="foot-note" style="display:flex; justify-content:space-between; text-align:left;">
+      <a class="back" href="index.html" style="margin:0;">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        지필평가 출제 목록
+      </a>
+      <a class="back" href="02-writing.html" style="margin:0; flex-direction:row-reverse;">
+        다음 단계 · 문항 출제
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </p>
+  </main>
+
+</div>
+<script>
+(function () {
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  var allProblems = [];
+  var statusEl = document.getElementById('ms-status');
+  var resultsEl = document.getElementById('ms-results');
+  var pdfCache = {};
+
+  function loadLibrary() {
+    return fetch('exams/manifest.json')
+      .then(function (res) { return res.json(); })
+      .then(function (manifest) {
+        var exams = manifest.exams || [];
+        if (!exams.length) {
+          statusEl.textContent = '아직 등록된 모의고사가 없습니다. 위 안내대로 Claude Code에게 PDF를 보내 추가해달라고 요청하세요.';
+          return;
+        }
+        statusEl.textContent = '';
+        return Promise.all(exams.map(function (exam) {
+          return fetch('exams/' + exam.index)
+            .then(function (res) { return res.json(); })
+            .then(function (idx) {
+              (idx.problems || []).forEach(function (p) {
+                allProblems.push({
+                  examTitle: exam.title,
+                  examFile: 'exams/' + exam.file,
+                  number: p.number,
+                  page: p.page,
+                  topics: p.topics || [],
+                  snippet: p.snippet || '',
+                  answer: p.answer || '',
+                  solution: p.solution || ''
+                });
+              });
+            })
+            .catch(function (err) {
+              console.error('모의고사 인덱스를 불러오지 못했습니다: ' + exam.index, err);
+            });
+        }));
+      })
+      .catch(function (err) {
+        statusEl.textContent = '모의고사 목록을 불러오지 못했습니다.';
+        console.error(err);
+      });
+  }
+
+  function renderResults(query) {
+    resultsEl.innerHTML = '';
+    if (!query) return;
+    var q = query.trim().toLowerCase();
+    if (!q) return;
+
+    var matches = allProblems.filter(function (p) {
+      var inTopics = p.topics.some(function (t) { return t.toLowerCase().indexOf(q) !== -1; });
+      var inSnippet = p.snippet.toLowerCase().indexOf(q) !== -1;
+      return inTopics || inSnippet;
+    });
+
+    if (!matches.length) {
+      resultsEl.innerHTML = '<p class="search-empty">"' + query + '"에 해당하는 문제를 찾지 못했습니다.</p>';
+      return;
+    }
+
+    matches.forEach(function (p, i) {
+      var item = document.createElement('label');
+      item.className = 'result-item';
+      var topicsHtml = p.topics.map(function (t) { return '<span>' + t + '</span>'; }).join('');
+      item.innerHTML =
+        '<input type="checkbox" class="ms-pick" data-idx="' + allProblems.indexOf(p) + '">' +
+        '<span class="body" style="flex:1;">' +
+        '<span class="meta">' + p.examTitle + ' · ' + p.number + '번 · ' + p.page + '쪽</span>' +
+        '<span class="snippet">' + p.snippet + '</span>' +
+        '<span class="topics">' + topicsHtml + '</span>' +
+        '</span>';
+      resultsEl.appendChild(item);
+    });
+  }
+
+  var queryInput = document.getElementById('ms-query');
+  queryInput.addEventListener('input', function () { renderResults(queryInput.value); });
+
+  function getSelected() {
+    var picked = [];
+    document.querySelectorAll('.ms-pick:checked').forEach(function (cb) {
+      picked.push(allProblems[parseInt(cb.getAttribute('data-idx'), 10)]);
+    });
+    return picked;
+  }
+
+  function loadPdf(file) {
+    if (!pdfCache[file]) {
+      pdfCache[file] = pdfjsLib.getDocument(file).promise;
+    }
+    return pdfCache[file];
+  }
+
+  function renderProblemCanvas(problem) {
+    return loadPdf(problem.examFile).then(function (pdf) {
+      return pdf.getPage(problem.page);
+    }).then(function (page) {
+      var viewport = page.getViewport({ scale: 1.6 });
+      var canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      var ctx = canvas.getContext('2d');
+      return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function () {
+        return canvas;
+      });
+    });
+  }
+
+  function buildPrintSheet(mode) {
+    var picked = getSelected();
+    var printArea = document.getElementById('print-area');
+    if (!picked.length) {
+      alert('먼저 검색 결과에서 문제를 하나 이상 선택하세요.');
+      return;
+    }
+    printArea.innerHTML = '<p class="search-empty">페이지를 불러오는 중…</p>';
+    printArea.style.display = 'block';
+
+    Promise.all(picked.map(function (p) {
+      return renderProblemCanvas(p).then(function (canvas) { return { problem: p, canvas: canvas }; });
+    })).then(function (rendered) {
+      printArea.innerHTML = '';
+      rendered.forEach(function (r) {
+        var box = document.createElement('div');
+        box.className = 'print-problem';
+        var meta = document.createElement('p');
+        meta.className = 'ps-meta';
+        meta.textContent = r.problem.examTitle + ' · ' + r.problem.number + '번 (p.' + r.problem.page + ')';
+        box.appendChild(meta);
+        box.appendChild(r.canvas);
+        if (mode === 'teacher') {
+          var ans = document.createElement('div');
+          ans.className = 'ps-answer';
+          ans.innerHTML = '<b>정답 ' + (r.problem.answer || '미입력') + '</b><br>' + (r.problem.solution || '풀이가 등록되지 않았습니다.');
+          box.appendChild(ans);
+        }
+        printArea.appendChild(box);
+      });
+      window.print();
+    }).catch(function (err) {
+      console.error(err);
+      printArea.innerHTML = '<p class="search-empty">페이지를 불러오지 못했습니다. PDF 파일 경로를 확인하세요.</p>';
+    });
+  }
+
+  document.getElementById('ms-student').addEventListener('click', function () { buildPrintSheet('student'); });
+  document.getElementById('ms-teacher').addEventListener('click', function () { buildPrintSheet('teacher'); });
+
+  loadLibrary();
+})();
+</script>
+</body>
+</html>
