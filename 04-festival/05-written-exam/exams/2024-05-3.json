@@ -1,0 +1,323 @@
+{
+  "id": "2024-05-3",
+  "title": "2024학년도 5월 고3 전국연합학력평가 수학영역 (미적분)",
+  "file": "2024-05-3.pdf",
+  "problems": [
+    {
+      "number": 1,
+      "page": 1,
+      "topics": [
+        "지수법칙"
+      ],
+      "snippet": "4^(1-√3)×2^(1+2√3)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 2,
+      "page": 1,
+      "topics": [
+        "무리식의 극한"
+      ],
+      "snippet": "lim_{x→∞}(√(x²+4x)-x)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 3,
+      "page": 1,
+      "topics": [
+        "등차수열"
+      ],
+      "snippet": "등차수열에서 a₅-a₃=8일 때 a₂의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 4,
+      "page": 1,
+      "topics": [
+        "미분계수"
+      ],
+      "snippet": "극한 조건으로부터 f(1)+f'(1)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 5,
+      "page": 2,
+      "topics": [
+        "삼각함수의 성질"
+      ],
+      "snippet": "삼각함수 조건식으로부터 tanθ의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 6,
+      "page": 2,
+      "topics": [
+        "삼차함수의 극값"
+      ],
+      "snippet": "함수 f(x)=x³+ax²+3a가 x=-2에서 극대일 때 극솟값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 7,
+      "page": 2,
+      "topics": [
+        "도함수의 부호와 함수의 증가"
+      ],
+      "snippet": "f(x)가 실수 전체에서 증가하도록 하는 조건에서 f(2)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 8,
+      "page": 3,
+      "topics": [
+        "삼각함수의 주기와 최댓값"
+      ],
+      "snippet": "주기와 최댓값 조건을 만족시키는 a+b의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 9,
+      "page": 3,
+      "topics": [
+        "수열의 귀납적 정의",
+        "수열의 합"
+      ],
+      "snippet": "Sn과 관련된 점화식 조건에서 a₁×a₆의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 10,
+      "page": 3,
+      "topics": [
+        "속도와 거리",
+        "적분"
+      ],
+      "snippet": "두 점이 이동한 거리가 같도록 하는 모든 m값의 합을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 11,
+      "page": 4,
+      "topics": [
+        "등차수열"
+      ],
+      "snippet": "두 등차수열의 조건을 만족시킬 때 Σb_k의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 12,
+      "page": 4,
+      "topics": [
+        "사차함수",
+        "정적분과 넓이"
+      ],
+      "snippet": "곡선과 직선으로 둘러싸인 두 영역의 넓이가 같을 때 f(1)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 13,
+      "page": 5,
+      "topics": [
+        "지수함수",
+        "그래프의 교점 개수"
+      ],
+      "snippet": "구간별 지수함수 조건을 만족시키는 실수 k의 최댓값으로 a+b를 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 14,
+      "page": 5,
+      "topics": [
+        "삼차함수",
+        "접선"
+      ],
+      "snippet": "조건을 만족시키는 삼차함수에서 f(4)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 15,
+      "page": 6,
+      "topics": [
+        "수열의 귀납적 정의"
+      ],
+      "snippet": "3의 배수 여부에 따라 정의된 수열에서 특정 값이 되도록 하는 a₁의 값의 합을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 16,
+      "page": 6,
+      "topics": [
+        "로그방정식"
+      ],
+      "snippet": "로그방정식 log₂(x-3)=1-log₂(x-4)를 만족시키는 실수 x의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 17,
+      "page": 6,
+      "topics": [
+        "다항함수의 미분"
+      ],
+      "snippet": "f(x)=(x-1)(x³+x²+5)에서 f'(1)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 18,
+      "page": 7,
+      "topics": [
+        "정적분",
+        "부정적분"
+      ],
+      "snippet": "함수방정식 조건을 만족시키는 이차함수에서 f(2)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 19,
+      "page": 7,
+      "topics": [
+        "집합과 거듭제곱근"
+      ],
+      "snippet": "조건을 만족시키는 집합 X의 모든 원소의 합의 최댓값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 20,
+      "page": 7,
+      "topics": [
+        "함수방정식",
+        "극한"
+      ],
+      "snippet": "다항함수 조건식과 극한 조건으로부터 k의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 21,
+      "page": 8,
+      "topics": [
+        "부채꼴",
+        "삼각형의 외접원"
+      ],
+      "snippet": "부채꼴과 외접원 조건으로부터 AD에 대한 p,q 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 22,
+      "page": 8,
+      "topics": [
+        "사차함수",
+        "조건부 함수"
+      ],
+      "snippet": "복잡한 함수 조건을 만족시킬 때 g(1)×h(3)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 23,
+      "page": 9,
+      "topics": [
+        "삼각함수의 이계도함수"
+      ],
+      "snippet": "f(x)=sin2x에서 f''(π/4)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 24,
+      "page": 9,
+      "topics": [
+        "등차수열",
+        "급수"
+      ],
+      "snippet": "급수 조건을 만족시키는 등차수열의 공차 d의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 25,
+      "page": 10,
+      "topics": [
+        "지수함수",
+        "극한"
+      ],
+      "snippet": "곡선 위의 점과 x축 위의 점 사이 관계로 정의된 함수의 극한값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 26,
+      "page": 10,
+      "topics": [
+        "함수의 극한",
+        "방정식"
+      ],
+      "snippet": "극한으로 정의된 함수에서 f(x)=2x-3의 모든 실근의 합을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 27,
+      "page": 11,
+      "topics": [
+        "역함수",
+        "매개변수 미분"
+      ],
+      "snippet": "역함수를 이용한 매개변수 곡선에서 t=3일 때 dy/dx의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 28,
+      "page": 11,
+      "topics": [
+        "삼각함수와 지수함수",
+        "방정식의 해"
+      ],
+      "snippet": "두 함수의 조건을 만족시킬 때 tanb의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 29,
+      "page": 12,
+      "topics": [
+        "원과 삼각비",
+        "접선"
+      ],
+      "snippet": "원 위의 점들로 정의된 길이 함수의 미분계수 관련 k²의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 30,
+      "page": 12,
+      "topics": [
+        "등비수열",
+        "수열의 합"
+      ],
+      "snippet": "복잡한 조건을 만족시키는 등비수열에서 32×(a₃+p)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    }
+  ]
+}
