@@ -1,0 +1,247 @@
+{
+  "id": "2024-09-3",
+  "title": "2025학년도 대학수학능력시험 9월 모의평가",
+  "file": "2024-09-3.pdf",
+  "problems": [
+    {
+      "number": 1,
+      "page": 1,
+      "topics": ["거듭제곱근"],
+      "snippet": "⁴√32 / ⁴√4의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 2,
+      "page": 1,
+      "topics": ["미분계수"],
+      "snippet": "함수 f(x)=x³+3x²-5에 대하여 lim_{h→0}(f(1+h)-f(1))/h의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 3,
+      "page": 1,
+      "topics": ["등비수열"],
+      "snippet": "모든 항이 실수인 등비수열 {a_n}에서 a₂a₃=2, a₄=4일 때 a₆의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 4,
+      "page": 1,
+      "topics": ["함수의 극한", "그래프와 극한"],
+      "snippet": "함수 y=f(x)의 그래프를 보고 lim_{x→0-}f(x)+lim_{x→1+}f(x)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 5,
+      "page": 2,
+      "topics": ["다항함수의 미분"],
+      "snippet": "함수 f(x)=(x+1)(x²+x-5)에 대하여 f'(2)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 6,
+      "page": 2,
+      "topics": ["삼각함수 사이의 관계"],
+      "snippet": "π/2<θ<π인 θ에 대해 cos(π+θ)=2√5/5일 때 sinθ+cosθ의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 7,
+      "page": 2,
+      "topics": ["함수의 연속", "구간별 정의된 함수"],
+      "snippet": "구간별로 정의된 함수 f(x)가 실수 전체의 집합에서 연속이 되도록 하는 모든 상수 a의 값의 곱을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 8,
+      "page": 3,
+      "topics": ["로그의 성질"],
+      "snippet": "a>2인 상수 a에 대해 log₂a, log_a8의 합과 곱이 각각 4, k일 때 a+k의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 9,
+      "page": 3,
+      "topics": ["정적분"],
+      "snippet": "함수 f(x)=x²+x에 대하여 5∫₀¹f(x)dx-∫₀¹(5x+f(x))dx의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 10,
+      "page": 3,
+      "topics": ["삼각형과 외접원", "사인법칙"],
+      "snippet": "∠A>π/2인 삼각형 ABC에서 AB:AC=√2:1, AH=2이고 외접원 넓이가 50π일 때 선분 BH의 길이를 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 11,
+      "page": 4,
+      "topics": ["속도와 가속도", "미분법의 활용"],
+      "snippet": "수직선 위를 움직이는 두 점 P, Q의 위치가 같아지는 순간의 가속도 p, q에 대해 p-q의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 12,
+      "page": 4,
+      "topics": ["등차수열", "수열의 합"],
+      "snippet": "등차수열 {a_n}과 b_n=Σ(-1)^(k+1)a_k로 정의된 수열에서 b₂=-2, b₃+b₇=0일 때 첫째항부터 제9항까지의 합을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 13,
+      "page": 5,
+      "topics": ["이차함수", "정적분과 넓이"],
+      "snippet": "구간별 이차함수 f(x)의 그래프와 x축, 직선 x=k가 만드는 넓이 A=2B일 때 k의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 14,
+      "page": 5,
+      "topics": ["지수함수와 로그함수", "원과 직선"],
+      "snippet": "곡선 y=2^x 위의 두 점 Aₙ, Bₙ에 대한 조건과 원이 곡선 y=log₂x와 만나는 점을 이용해 x₁+x₂+x₃의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 15,
+      "page": 6,
+      "topics": ["정적분", "다항함수"],
+      "snippet": "두 다항함수 f(x), g(x)가 적분 조건 (가), (나)를 만족시킬 때 ∫₀³g(x)dx의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 16,
+      "page": 6,
+      "topics": ["로그방정식"],
+      "snippet": "방정식 log₃(x+2)-log_{1/3}(x-4)=3을 만족시키는 실수 x의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 17,
+      "page": 6,
+      "topics": ["부정적분"],
+      "snippet": "f'(x)=6x²+2x+1이고 f(0)=1일 때 f(1)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 18,
+      "page": 7,
+      "topics": ["수열의 합", "시그마"],
+      "snippet": "수열 {a_n}에서 Σka_k=36, Σka_{k+1}=7일 때 Σa_k의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 19,
+      "page": 7,
+      "topics": ["삼차함수의 극값"],
+      "snippet": "함수 f(x)=x³+ax²-9x+b가 x=1에서 극소이고 극댓값이 28일 때 a+b의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 20,
+      "page": 7,
+      "topics": ["삼각함수의 그래프", "실근의 개수"],
+      "snippet": "구간별 삼각함수 f(x)에 대해 f(x)=f(t)의 실근 개수가 3이 되는 모든 t값의 합을 이용해 p+q의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 21,
+      "page": 8,
+      "topics": ["삼차함수", "부등식"],
+      "snippet": "최고차항의 계수가 1인 삼차함수 f(x)가 모든 정수 k에 대한 부등식 조건을 만족시킬 때 f'(3)의 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 22,
+      "page": 8,
+      "topics": ["수열의 귀납적 정의", "절댓값 조건"],
+      "snippet": "양수 k에 대해 a₁=k인 수열이 조건을 만족시킬 때 a₅=0이 되는 모든 양수 k에 대해 k²의 값의 합을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 23,
+      "page": 9,
+      "topics": ["미적분", "극한값 계산"],
+      "snippet": "lim_{x→0} sin5x/x의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 24,
+      "page": 9,
+      "topics": ["미적분", "접선의 기울기", "부정적분"],
+      "snippet": "양의 실수에서 정의된 미분가능한 함수 f(x)에 대해 접선의 기울기 조건과 f(1)=2e²+1에서 f(e)의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 25,
+      "page": 10,
+      "topics": ["미적분", "등비수열의 극한"],
+      "snippet": "등비수열 {a_n}에서 lim_{n→∞}(4ⁿ×a_n-1)/(3×2^(n+1))=1일 때 a₁+a₂의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 26,
+      "page": 10,
+      "topics": ["미적분", "입체도형의 부피", "정적분"],
+      "snippet": "곡선 y=2x√(xsinx²)로 둘러싸인 부분을 밑면으로 하고 단면이 반원인 입체도형의 부피를 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 27,
+      "page": 11,
+      "topics": ["미적분", "합성함수의 미분"],
+      "snippet": "미분가능한 함수 f(x)가 f(x)+f((1/2)sinx)=sinx를 만족시킬 때 f'(π)의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 28,
+      "page": 11,
+      "topics": ["미적분", "역함수", "정적분"],
+      "snippet": "이계도함수를 갖는 함수 f(x)와 g(x)=f'(2x)sinπx+x의 역함수 조건에서 ∫₀²f(x)cos(πx/2)dx의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 29,
+      "page": 12,
+      "topics": ["미적분", "급수", "수열의 합"],
+      "snippet": "수열 {a_n}의 부분합 S_m이 급수로 정의될 때 a₁+a₁₀=q/p에서 p+q의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 30,
+      "page": 12,
+      "topics": ["미적분", "부정적분", "최솟값"],
+      "snippet": "함수 f(x)=(k-|x|)e^(-x)의 부정적분 F(x)의 조건에서 F(0)의 최솟값 g(k)를 이용해 100(p+q)의 값을 구하는 문제. (미적분)",
+      "answer": "",
+      "solution": ""
+    }
+  ]
+}

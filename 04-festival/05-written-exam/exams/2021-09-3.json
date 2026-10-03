@@ -1,0 +1,327 @@
+{
+  "id": "2021-09-3",
+  "title": "2022학년도 대학수학능력시험 9월 모의평가 수학 영역 (미적분)",
+  "file": "2021-09-3.pdf",
+  "problems": [
+    {
+      "number": 1,
+      "page": 1,
+      "topics": [
+        "지수법칙"
+      ],
+      "snippet": "(1/∜3)×3^(-7/4)의 값을 구하는 지수 계산 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 2,
+      "page": 1,
+      "topics": [
+        "도함수"
+      ],
+      "snippet": "함수 f(x)=2x^3+4x+5에 대하여 f'(1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 3,
+      "page": 1,
+      "topics": [
+        "등비수열"
+      ],
+      "snippet": "등비수열 {a_n}에 대하여 a1=2, a2a4=36일 때 a7/a3의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 4,
+      "page": 1,
+      "topics": [
+        "함수의 연속"
+      ],
+      "snippet": "구간함수 2x+a(x≤-1), x^2-5x-a(x>-1)가 실수 전체에서 연속일 때 상수 a의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 5,
+      "page": 2,
+      "topics": [
+        "삼차함수의 극값"
+      ],
+      "snippet": "함수 f(x)=2x^3+3x^2-12x+1의 극댓값 M, 극솟값 m에 대해 M+m의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 6,
+      "page": 2,
+      "topics": [
+        "삼각함수 방정식"
+      ],
+      "snippet": "π/2<θ<π인 θ에 대하여 sinθ/(1-sinθ)-sinθ/(1+sinθ)=4일 때 cosθ의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 7,
+      "page": 2,
+      "topics": [
+        "수열",
+        "시그마",
+        "부분분수"
+      ],
+      "snippet": "a1=-4인 수열 {a_n}이 Σ(a_{k+1}-a_k)/(a_k a_{k+1})=1/n을 만족시킬 때 a13의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 8,
+      "page": 3,
+      "topics": [
+        "함수의 극한",
+        "삼차함수"
+      ],
+      "snippet": "삼차함수 f(x)가 lim_{x→0}f(x)/x=lim_{x→1}f(x)/(x-1)=1을 만족시킬 때 f(2)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 9,
+      "page": 3,
+      "topics": [
+        "속도와 가속도",
+        "정적분"
+      ],
+      "snippet": "속도 v(t)=-4t^3+12t^2인 점 P의 t=k에서 가속도가 12일 때 t=3k에서 t=4k까지 움직인 거리를 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 10,
+      "page": 3,
+      "topics": [
+        "삼각함수",
+        "도형의 넓이"
+      ],
+      "snippet": "곡선 y=a sin bπx와 직선 y=a가 만나는 두 점 A,B로 이루어진 삼각형 OAB의 넓이가 5이고 기울기의 곱이 5/4일 때 a+b의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 11,
+      "page": 4,
+      "topics": [
+        "다항함수",
+        "정적분"
+      ],
+      "snippet": "다항함수 f(x)가 xf(x)=2x^3+ax^2+3a+∫_1^x f(t)dt를 만족시키고 f(1)=∫_0^1 f(t)dt일 때 a+f(3)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 12,
+      "page": 4,
+      "topics": [
+        "사인법칙",
+        "원에 내접하는 다각형"
+      ],
+      "snippet": "반지름 2√7인 원에 내접하고 ∠A=π/3인 삼각형 ABC에서 sin(∠BCD)=2√7/7일 때 BD+CD의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 13,
+      "page": 5,
+      "topics": [
+        "등차수열",
+        "절댓값"
+      ],
+      "snippet": "첫째항이 -45이고 공차가 d인 등차수열 {a_n}이 주어진 조건을 만족시키도록 하는 모든 자연수 d의 값의 합을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 14,
+      "page": 5,
+      "topics": [
+        "삼차함수",
+        "미분가능성"
+      ],
+      "snippet": "최고차항의 계수가 1이고 f'(0)=f'(2)=0인 삼차함수 f(x)와 양수 p에 대한 구간함수 g(x)에 관한 보기의 참거짓을 판단하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 15,
+      "page": 6,
+      "topics": [
+        "수열의 귀납적 정의",
+        "부등식"
+      ],
+      "snippet": "|a1|≤1인 수열 {a_n}의 구간별 귀납식에서 a5+a6=0이고 Σ_{k=1}^5 a_k>0이 되도록 하는 모든 a1의 값의 합을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 16,
+      "page": 6,
+      "topics": [
+        "로그의 계산"
+      ],
+      "snippet": "log_2 100 - 2log_2 5의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 17,
+      "page": 6,
+      "topics": [
+        "부정적분"
+      ],
+      "snippet": "f'(x)=8x^3-12x^2+7이고 f(0)=3일 때 f(1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 18,
+      "page": 7,
+      "topics": [
+        "수열의 합"
+      ],
+      "snippet": "Σ(a_k+2b_k)=45, Σ(a_k-b_k)=3일 때 Σ(b_k-1/2)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 19,
+      "page": 7,
+      "topics": [
+        "평균변화율",
+        "삼차함수"
+      ],
+      "snippet": "f(x)=x^3-6x^2+5x에서 x=0부터 4까지의 평균변화율과 f'(a)의 값이 같은 0<a<4인 모든 a의 곱 q/p에 대해 p+q의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 20,
+      "page": 7,
+      "topics": [
+        "삼차함수",
+        "절댓값 방정식"
+      ],
+      "snippet": "f(x)=(1/2)x^3-(9/2)x^2+10x에 대하여 f(x)+|f(x)+x|=6x+k의 서로 다른 실근의 개수가 4가 되도록 하는 모든 정수 k의 값의 합을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 21,
+      "page": 8,
+      "topics": [
+        "지수함수와 로그함수의 역함수 관계",
+        "넓이"
+      ],
+      "snippet": "a>1인 실수 a에 대하여 직선 y=-x+4와 두 곡선 y=a^(x-1), y=log_a(x-1)이 만나는 점 A,B, y축과 만나는 점 C에서 AB=2√2일 때 50×(삼각형 ABC의 넓이)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 22,
+      "page": 8,
+      "topics": [
+        "삼차함수",
+        "절댓값함수의 미분"
+      ],
+      "snippet": "최고차항의 계수가 1인 삼차함수 f(x)와 g(x)=f(x-3)×lim_{h→0+}(|f(x+h)|-|f(x-h)|)/h에 대한 조건에서 f(5)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 23,
+      "page": 9,
+      "topics": [
+        "수열의 극한"
+      ],
+      "snippet": "lim_{n→∞} (2×3^(n+1)+5)/(3^n+2^(n+1))의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 24,
+      "page": 9,
+      "topics": [
+        "삼각함수 덧셈정리"
+      ],
+      "snippet": "2cosα=3sinα이고 tan(α+β)=1일 때 tanβ의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 25,
+      "page": 10,
+      "topics": [
+        "매개변수 미분"
+      ],
+      "snippet": "매개변수 x=e^t-4e^(-t), y=t+1로 나타낸 곡선에서 t=ln2일 때 dy/dx의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 26,
+      "page": 10,
+      "topics": [
+        "정적분",
+        "입체도형의 부피"
+      ],
+      "snippet": "곡선 y=√((3x+1)/x^2)(x>0)과 x축, 두 직선 x=1,x=2로 둘러싸인 부분을 밑면으로 하는 정사각형 단면 입체도형의 부피를 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 27,
+      "page": 11,
+      "topics": [
+        "등비급수",
+        "도형의 넓이"
+      ],
+      "snippet": "닮음을 이용해 반복 작도한 직사각형 도형에서 n번째 색칠된 부분의 넓이 Sn에 대해 lim_{n→∞}Sn의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 28,
+      "page": 11,
+      "topics": [
+        "삼각함수와 좌표기하",
+        "정적분"
+      ],
+      "snippet": "원 C(반지름 2)와 점 A(2,0), B(0,-2), 원 위의 점 P에 대하여 ∠PAB=θ일 때 주어진 정적분 ∫f(θ)dθ의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 29,
+      "page": 12,
+      "topics": [
+        "합성함수의 미분",
+        "최대와 최소"
+      ],
+      "snippet": "이차함수 f(x)와 g(x)={f(x)+2}e^(f(x))에 대한 최댓값·최솟값 조건에서 방정식 f(x)=0의 두 실근 α,β에 대해 (α-β)^2의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 30,
+      "page": 12,
+      "topics": [
+        "삼차함수",
+        "주기함수",
+        "정적분"
+      ],
+      "snippet": "최고차항의 계수가 9인 삼차함수 f(x)와 주기함수 g(x)에 대한 조건에서 ∫_0^5 xg(x)dx=q/p일 때 p+q의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    }
+  ]
+}

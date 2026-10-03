@@ -1,0 +1,322 @@
+{
+  "id": "2021-04-3",
+  "title": "2021학년도 4월 고3 전국연합학력평가 수학 영역 (미적분)",
+  "file": "2021-04-3.pdf",
+  "problems": [
+    {
+      "number": 1,
+      "page": 1,
+      "topics": [
+        "지수법칙",
+        "무리수 지수"
+      ],
+      "snippet": "(√(3^√2))^√2의 값을 구하는 지수 계산 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 2,
+      "page": 1,
+      "topics": [
+        "등차수열"
+      ],
+      "snippet": "공차가 2인 등차수열 {a_n}에 대하여 a5-a2의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 3,
+      "page": 1,
+      "topics": [
+        "지수함수의 최대와 최소"
+      ],
+      "snippet": "닫힌구간 [0,4]에서 함수 f(x)=(1/3)^(x-2)+1의 최댓값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 4,
+      "page": 1,
+      "topics": [
+        "함수의 좌극한과 우극한"
+      ],
+      "snippet": "그래프로 주어진 함수 y=f(x)에 대하여 lim_{x→1-}f(x)+lim_{x→2+}f(x)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 5,
+      "page": 2,
+      "topics": [
+        "부정적분"
+      ],
+      "snippet": "함수 f(x)에 대하여 f'(x)=2x+4이고 f(-1)+f(1)=0일 때 f(2)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 6,
+      "page": 2,
+      "topics": [
+        "삼각함수의 주기"
+      ],
+      "snippet": "양수 a에 대하여 함수 f(x)=sin(ax+π/6)의 주기가 4π일 때 f(π)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 7,
+      "page": 2,
+      "topics": [
+        "평균변화율",
+        "미분계수"
+      ],
+      "snippet": "f(x)=x^3-3x에서 x=1부터 4까지의 평균변화율과 x=k에서의 접선의 기울기가 같을 때 양수 k의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 8,
+      "page": 3,
+      "topics": [
+        "함수의 연속"
+      ],
+      "snippet": "구간함수 (x^2+3x+a)/(x-2)(x<2), -x^2+b(x≥2)가 x=2에서 연속일 때 a+b의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 9,
+      "page": 3,
+      "topics": [
+        "함수의 극한"
+      ],
+      "snippet": "lim{2f(x)-3g(x)}=1, lim g(x)=∞일 때 lim (4f(x)+g(x))/(3f(x)-g(x))의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 10,
+      "page": 3,
+      "topics": [
+        "속도와 위치",
+        "정적분"
+      ],
+      "snippet": "속도 v(t)=4t-10인 점 P의 t=1에서의 위치와 t=k(k>1)에서의 위치가 같을 때 k의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 11,
+      "page": 4,
+      "topics": [
+        "삼각방정식"
+      ],
+      "snippet": "0<x<2π일 때 방정식 2cos^2x-sin(π+x)-2=0의 모든 해의 합을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 12,
+      "page": 4,
+      "topics": [
+        "삼차함수의 최대와 최소"
+      ],
+      "snippet": "닫힌구간 [0,3]에서 f(x)=x^3-6x^2+9x+a의 최댓값이 12일 때 상수 a의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 13,
+      "page": 5,
+      "topics": [
+        "정적분과 넓이",
+        "이차함수"
+      ],
+      "snippet": "두 양수 a,b(a<b)에 대하여 f(x)=(x-a)(x-b)이고 ∫0^a f=11/6, ∫0^b f=-8/3일 때 곡선과 x축으로 둘러싸인 부분의 넓이를 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 14,
+      "page": 5,
+      "topics": [
+        "수열의 합",
+        "경우의 수",
+        "좌표평면"
+      ],
+      "snippet": "n이하의 자연수 a,b,c,d로 만들어지는 직각이등변삼각형 OAB 조건에서 순서쌍의 개수 T_n의 합을 구하는 빈칸 채우기 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 15,
+      "page": 6,
+      "topics": [
+        "로그함수의 그래프"
+      ],
+      "snippet": "1보다 큰 실수 k에 대하여 두 로그곡선이 만나는 점 A,B,C에 관한 보기의 참거짓을 판단하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 16,
+      "page": 6,
+      "topics": [
+        "도함수"
+      ],
+      "snippet": "함수 f(x)=x^2+ax에 대하여 f'(1)=4일 때 상수 a의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 17,
+      "page": 6,
+      "topics": [
+        "삼각함수 항등식"
+      ],
+      "snippet": "0<θ<π/2인 θ에 대하여 sinθcosθ=7/18일 때 30(sinθ+cosθ)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 18,
+      "page": 7,
+      "topics": [
+        "곱의 미분법",
+        "극값"
+      ],
+      "snippet": "g(x)=(x^2-2x)f(x)이고 f(x)가 x=3에서 극솟값 2를 가질 때 g'(3)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 19,
+      "page": 7,
+      "topics": [
+        "등비수열"
+      ],
+      "snippet": "첫째항이 1/4이고 공비가 양수인 등비수열 {a_n}이 a3+a5=1/a3+1/a5일 때 a10의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 20,
+      "page": 7,
+      "topics": [
+        "사인법칙",
+        "삼각형의 변"
+      ],
+      "snippet": "AB:BC:CA=1:2:√2인 삼각형 ABC의 외접원의 넓이가 28π일 때 선분 CA의 길이를 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 21,
+      "page": 8,
+      "topics": [
+        "수열의 귀납적 정의"
+      ],
+      "snippet": "첫째항이 자연수인 수열 {a_n}의 부호 조건부 귀납식에서 a15<0이 되도록 하는 a1의 최솟값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 22,
+      "page": 8,
+      "topics": [
+        "정적분",
+        "함수의 곱"
+      ],
+      "snippet": "f(x)=3x+a, g(x)=∫_2^x(t+a)f(t)dt이고 h(x)=f(x)g(x)일 때 h(-1)의 최솟값에서 p+q의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 23,
+      "page": 9,
+      "topics": [
+        "수열의 극한",
+        "등비수열"
+      ],
+      "snippet": "lim_{n→∞}(2^n+3^(n+1))/(3^n+1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 24,
+      "page": 9,
+      "topics": [
+        "로그함수의 미분"
+      ],
+      "snippet": "함수 f(x)=log_3(6x)에 대하여 f'(9)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 25,
+      "page": 10,
+      "topics": [
+        "급수",
+        "수열의 극한"
+      ],
+      "snippet": "Σ(a_n/n-2)=5일 때 lim(2n^2+3na_n)/(n^2+4)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 26,
+      "page": 10,
+      "topics": [
+        "지수함수",
+        "극한"
+      ],
+      "snippet": "직선 x=t가 두 곡선 y=e^(2x+k), y=e^(-3x+k)와 만나는 두 점 P,Q에 대해 PQ=t인 k=f(t)일 때 lim_{t→0+} e^(f(t))의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 27,
+      "page": 11,
+      "topics": [
+        "삼각함수와 극한"
+      ],
+      "snippet": "곡선 y=xsinx 위의 점 P를 중심으로 하고 y축에 접하는 원이 선분 OP와 만나는 점 Q의 x좌표 f(t)에 대해 lim_{t→0+} f(t)/t^3의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 28,
+      "page": 11,
+      "topics": [
+        "등비급수",
+        "도형의 넓이"
+      ],
+      "snippet": "반복되는 원과 삼각형으로 구성된 도형에서 n번째 색칠된 부분의 넓이 Sn에 대하여 lim_{n→∞}Sn의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 29,
+      "page": 12,
+      "topics": [
+        "삼각함수",
+        "삼각형"
+      ],
+      "snippet": "∠BAC=2π/3이고 BD=CD인 삼각형에서 cos^2α=(7+√21)/14일 때 54√3×tanβ의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 30,
+      "page": 12,
+      "topics": [
+        "함수의 극한",
+        "수열과 함수"
+      ],
+      "snippet": "f(x)=lim_{n→∞}(ax^(2n)+bx^(2n-1)+x)/(x^(2n)+2)에 대해 방정식 f(x)=2(x-1)+m의 실근 개수 c_m=5인 자연수 k가 존재할 때 k+Σ(c_m-1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    }
+  ]
+}

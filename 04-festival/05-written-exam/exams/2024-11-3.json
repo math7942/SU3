@@ -1,0 +1,327 @@
+{
+  "id": "2024-11-3",
+  "title": "2025학년도 대학수학능력시험 수학 영역 (홀수형, 미적분)",
+  "file": "2024-11-3.pdf",
+  "problems": [
+    {
+      "number": 1,
+      "page": 1,
+      "topics": [
+        "지수법칙",
+        "거듭제곱근"
+      ],
+      "snippet": "거듭제곱근과 지수법칙을 이용한 계산 값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 2,
+      "page": 1,
+      "topics": [
+        "미분계수",
+        "함수의 극한"
+      ],
+      "snippet": "함수 f(x)=x^3-8x+7에 대하여 lim_{h→0} (f(2+h)-f(2))/h 의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 3,
+      "page": 1,
+      "topics": [
+        "등비수열"
+      ],
+      "snippet": "첫째항과 공비가 모두 양수 k인 등비수열 {a_n}이 a4/a2+a2/a1=30을 만족시킬 때 k의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 4,
+      "page": 1,
+      "topics": [
+        "함수의 연속",
+        "구간함수"
+      ],
+      "snippet": "함수 f(x)=5x+a (x<-2), x^2-a (x≥-2)가 실수 전체에서 연속일 때 상수 a의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 5,
+      "page": 2,
+      "topics": [
+        "도함수",
+        "곱의 미분법"
+      ],
+      "snippet": "함수 f(x)=(x^2+1)(3x^2-x)에 대하여 f'(1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 6,
+      "page": 2,
+      "topics": [
+        "삼각함수의 성질"
+      ],
+      "snippet": "cos(π/2+θ)=-1/5일 때 sinθ/(1-cos^2θ)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 7,
+      "page": 2,
+      "topics": [
+        "정적분과 미분",
+        "도함수"
+      ],
+      "snippet": "다항함수 f(x)가 모든 실수 x에 대해 ∫_0^x f(t)dt=3x^3+2x를 만족시킬 때 f(1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 8,
+      "page": 3,
+      "topics": [
+        "로그의 계산"
+      ],
+      "snippet": "a=2log(1/√10)+log_2 20, b=log2일 때 a×b의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 9,
+      "page": 3,
+      "topics": [
+        "정적분"
+      ],
+      "snippet": "f(x)=3x^2-16x-20에 대하여 ∫_{-2}^a f(x)dx=∫_{-2}^0 f(x)dx일 때 양수 a의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 10,
+      "page": 3,
+      "topics": [
+        "삼각함수의 최대와 최소"
+      ],
+      "snippet": "닫힌구간 [0,2π]에서 f(x)=a cos bx+3이 x=π/3에서 최댓값 13을 갖도록 하는 자연수 (a,b)의 순서쌍 중 a+b의 최솟값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 11,
+      "page": 4,
+      "topics": [
+        "속도와 가속도"
+      ],
+      "snippet": "수직선 위를 움직이는 점 P의 위치 x=t^3-(3/2)t^2-6t에서 운동 방향이 바뀌는 시각의 가속도를 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 12,
+      "page": 4,
+      "topics": [
+        "수열의 합",
+        "귀납적 정의"
+      ],
+      "snippet": "a1=2인 수열 {a_n}과 b1=2인 등차수열 {b_n}이 Σ a_k/b_{k+1}=n^2/2를 만족시킬 때 Σ_{k=1}^5 a_k의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 13,
+      "page": 5,
+      "topics": [
+        "삼차함수",
+        "정적분과 넓이"
+      ],
+      "snippet": "최고차항의 계수가 1인 삼차함수 f(x)가 f(1)=f(2)=0, f'(0)=-7을 만족시킬 때 선분 OP, PQ로 둘러싸인 두 넓이의 차 B-A의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 14,
+      "page": 5,
+      "topics": [
+        "사인법칙",
+        "외접원",
+        "넓이의 최댓값"
+      ],
+      "snippet": "삼각형 ABC에서 AD:DB=3:2인 점 D, 원 O와 관련된 조건에서 외접원 반지름 7일 때 삼각형 PBC 넓이의 최댓값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 15,
+      "page": 6,
+      "topics": [
+        "함수의 미분가능성",
+        "삼차함수"
+      ],
+      "snippet": "상수 a(≠3√5)와 최고차항의 계수가 음수인 이차함수 f(x)에 대하여 정의된 구간함수 g(x)의 미분가능 조건으로부터 g(-2)+g(2)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 16,
+      "page": 6,
+      "topics": [
+        "로그방정식"
+      ],
+      "snippet": "방정식 log_2(x-3)=log_4(3x-5)를 만족시키는 실수 x의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 17,
+      "page": 6,
+      "topics": [
+        "부정적분"
+      ],
+      "snippet": "다항함수 f(x)에 대하여 f'(x)=9x^2+4x이고 f(1)=6일 때 f(2)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 18,
+      "page": 7,
+      "topics": [
+        "수열의 성질",
+        "시그마"
+      ],
+      "snippet": "수열 {a_n}이 모든 자연수 n에 대하여 a_n+a_{n+4}=12를 만족시킬 때 Σ_{n=1}^16 a_n의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 19,
+      "page": 7,
+      "topics": [
+        "삼차함수의 극값"
+      ],
+      "snippet": "양수 a에 대하여 f(x)=2x^3-3ax^2-12a^2x의 극댓값이 7/27일 때 f(3)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 20,
+      "page": 7,
+      "topics": [
+        "로그함수와 역함수",
+        "합성함수"
+      ],
+      "snippet": "곡선 y=(1/5)^(x-3)과 직선 y=x가 만나는 점의 x좌표를 k라 할 때, 주어진 조건을 만족시키는 함수 f에 대하여 f(1/(k^3×5^3k))의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 21,
+      "page": 8,
+      "topics": [
+        "극한의 존재조건",
+        "삼차함수"
+      ],
+      "snippet": "함수 f(x)=x^3+ax^2+bx+4가 모든 실수 α에 대하여 lim_{x→α} f(2x+1)/f(x)의 값이 존재하도록 하는 두 정수 a,b에 대해 f(1)의 최댓값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 22,
+      "page": 8,
+      "topics": [
+        "수열의 귀납적 정의",
+        "규칙성"
+      ],
+      "snippet": "모든 항이 정수인 수열 {a_n}의 짝수/홀수 조건부 귀납식에서 |a1|의 값의 합을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 23,
+      "page": 9,
+      "topics": [
+        "삼각함수의 극한"
+      ],
+      "snippet": "lim_{x→0} sinπx/x 형태의 극한값을 구하는 문제.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 24,
+      "page": 9,
+      "topics": [
+        "정적분",
+        "유리함수의 적분"
+      ],
+      "snippet": "∫_0^10 (x+2)/(x+1) dx의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 25,
+      "page": 10,
+      "topics": [
+        "수열의 극한"
+      ],
+      "snippet": "수열 {a_n}에 대하여 lim na_n/(n^2+3)=1일 때 lim(√(a_n^2+n)-a_n)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 26,
+      "page": 10,
+      "topics": [
+        "입체도형의 부피",
+        "정적분"
+      ],
+      "snippet": "곡선 y=√((x+1)/(x(x+lnx)))과 x축, 두 직선 x=1,x=e로 둘러싸인 부분을 밑면으로 하고 단면이 정사각형인 입체도형의 부피를 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 27,
+      "page": 11,
+      "topics": [
+        "역함수의 미분",
+        "합성함수"
+      ],
+      "snippet": "최고차항의 계수가 1인 삼차함수 f(x)에 대하여 g(x)=f(e^x)+e^x의 접선이 x축이고 역함수 h를 가질 때 h'(8)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 28,
+      "page": 11,
+      "topics": [
+        "정적분과 넓이",
+        "접선"
+      ],
+      "snippet": "f'(x)=-x+e^(1-x^2)인 함수 f(x)에 대하여 곡선 위 점 (t,f(t))의 접선과 곡선, y축으로 둘러싸인 넓이 g(t)에 대해 g(1)+g'(1)의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 29,
+      "page": 12,
+      "topics": [
+        "등비수열",
+        "급수"
+      ],
+      "snippet": "등비수열 {a_n}이 Σ(|a_n|+a_n)=40/3, Σ(|a_n|-a_n)=20/3을 만족시킬 때 주어진 부등식을 만족시키는 모든 자연수 m의 값의 합을 구하시오.",
+      "answer": "",
+      "solution": ""
+    },
+    {
+      "number": 30,
+      "page": 12,
+      "topics": [
+        "삼각함수의 극대와 극소",
+        "함수의 그래프"
+      ],
+      "snippet": "두 상수 a(1≤a≤2), b에 대하여 f(x)=sin(ax+b+sinx)가 주어진 조건을 만족시킬 때 p+q의 값을 구하시오.",
+      "answer": "",
+      "solution": ""
+    }
+  ]
+}
