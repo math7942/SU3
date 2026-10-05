@@ -169,11 +169,14 @@
                 // 💡 [수정] 학생 한 명(헤더 3줄 + 점수 1줄 + 여백 1줄)이 절대 페이지 중간에서
                 // 잘리지 않도록, 실제 행 높이를 직접 지정하고 그 높이를 기준으로
                 // 한 페이지에 몇 명이 들어갈지 미리 계산한다 (엑셀의 자동 줄바꿈 높이 추정에 맡기지 않음)
+                // 2줄로 꺾이는 "선택형\n점수" 같은 라벨은 맨 위 헤더행(rawH1)에만 나오므로
+                // 그 행만 2줄 높이로 잡고, 정답·배점 행은 일반 데이터 행과 같은 1줄 높이로 둔다
+                // (전부 2줄 높이로 잡으면 불필요하게 칸이 커져서 페이지 수가 늘어난다)
                 const lineFactor = 1.35;
                 const headerRowHeight = Math.ceil(2 * dynamicFontSize * lineFactor + 4); // 점수열 헤더는 2줄(예: "선택형\n점수")까지 들어갈 수 있음
                 const dataRowHeight = Math.ceil(dynamicFontSize * lineFactor + 4);
                 const blankRowHeight = 6;
-                const studentBlockHeight = (headerRowHeight * 3) + dataRowHeight + blankRowHeight;
+                const studentBlockHeight = headerRowHeight + (dataRowHeight * 3) + blankRowHeight;
                 const usableHeightPt = (11.69 - 0.8) * 72; // A4 세로 - 위아래 여백(0.4in씩, 아래 !margins와 동일)
                 const studentsPerPage = Math.max(1, Math.floor(usableHeightPt / studentBlockHeight) - 1); // -1은 여유분
 
@@ -237,7 +240,7 @@
                     outputData.push(buildRow(rawH2, true));
                     outputData.push(buildRow(rawH3, true));
                     outputData.push(buildRow(rawStudent, false, true));
-                    rowHeights.push({hpt: headerRowHeight}, {hpt: headerRowHeight}, {hpt: headerRowHeight}, {hpt: dataRowHeight});
+                    rowHeights.push({hpt: headerRowHeight}, {hpt: dataRowHeight}, {hpt: dataRowHeight}, {hpt: dataRowHeight});
 
                     merges.push({s: {r: currentRow, c: 0}, e: {r: currentRow+2, c: 1}});
                     merges.push({s: {r: currentRow, c: 2}, e: {r: currentRow+2, c: 2}});
