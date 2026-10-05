@@ -173,9 +173,10 @@
                 // 그 행만 2줄 높이로 잡고, 정답·배점 행은 일반 데이터 행과 같은 1줄 높이로 둔다
                 // (전부 2줄 높이로 잡으면 불필요하게 칸이 커져서 페이지 수가 늘어난다)
                 const lineFactor = 1.35;
-                const headerRowHeight = Math.ceil(2 * dynamicFontSize * lineFactor + 4); // 점수열 헤더는 2줄(예: "선택형\n점수")까지 들어갈 수 있음
-                const dataRowHeight = Math.ceil(dynamicFontSize * lineFactor + 4);
-                const blankRowHeight = 6;
+                const cellPadding = 2; // 너무 크게 잡으면 페이지가 불필요하게 늘어나므로 최소한으로만 확보
+                const headerRowHeight = Math.ceil(2 * dynamicFontSize * lineFactor + cellPadding); // 점수열 헤더는 2줄(예: "선택형\n점수")까지 들어갈 수 있음
+                const dataRowHeight = Math.ceil(dynamicFontSize * lineFactor + cellPadding);
+                const blankRowHeight = 4;
                 const studentBlockHeight = headerRowHeight + (dataRowHeight * 3) + blankRowHeight;
                 const usableHeightPt = (11.69 - 0.8) * 72; // A4 세로 - 위아래 여백(0.4in씩, 아래 !margins와 동일)
                 const studentsPerPage = Math.max(1, Math.floor(usableHeightPt / studentBlockHeight) - 1); // -1은 여유분
