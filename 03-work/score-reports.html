@@ -166,9 +166,21 @@
                 if (validCols.length > 25) dynamicFontSize = 7.0;
                 if (validCols.length > 30) dynamicFontSize = 6.5;
 
+                // 💡 [수정] 학생 한 명(헤더 3줄 + 점수 1줄 + 여백 1줄)이 절대 페이지 중간에서
+                // 잘리지 않도록, 실제 행 높이를 직접 지정하고 그 높이를 기준으로
+                // 한 페이지에 몇 명이 들어갈지 미리 계산한다 (엑셀의 자동 줄바꿈 높이 추정에 맡기지 않음)
+                const lineFactor = 1.35;
+                const headerRowHeight = Math.ceil(2 * dynamicFontSize * lineFactor + 4); // 점수열 헤더는 2줄(예: "선택형\n점수")까지 들어갈 수 있음
+                const dataRowHeight = Math.ceil(dynamicFontSize * lineFactor + 4);
+                const blankRowHeight = 6;
+                const studentBlockHeight = (headerRowHeight * 3) + dataRowHeight + blankRowHeight;
+                const usableHeightPt = (11.69 - 0.8) * 72; // A4 세로 - 위아래 여백(0.4in씩, 아래 !margins와 동일)
+                const studentsPerPage = Math.max(1, Math.floor(usableHeightPt / studentBlockHeight) - 1); // -1은 여유분
+
                 const outputData = [];
+                const rowHeights = [];
                 const merges = [];
-                const rowBreaks = []; 
+                const rowBreaks = [];
                 let currentRow = 0;
 
                 function createCell(val, isHeader) {
@@ -188,13 +200,13 @@
                     if(isHeader) {
                         row.push(createCell("반/번호", true));
                         row.push(createCell("", true));
-                        row.push(createCell("성명", true)); 
+                        row.push(createCell("성명", true));
                     } else {
-                        row.push(createCell(rawArr[1] || "", false)); 
-                        row.push(createCell("", false));              
-                        row.push(createCell(rawArr[2] || "", false)); 
+                        row.push(createCell(rawArr[1] || "", false));
+                        row.push(createCell("", false));
+                        row.push(createCell(rawArr[2] || "", false));
                     }
-                    
+
                     validCols.forEach((origIdx, i) => {
                         let val = rawArr[origIdx];
                         const isScoreCol = newScoreCols.includes(i + 3);
@@ -216,7 +228,7 @@
                     return row;
                 }
 
-                let studentCount = 0; 
+                let studentCount = 0;
                 for (let i = headerStartIdx + 3; i < json.length; i++) {
                     const rawStudent = json[i];
                     if (!rawStudent || !rawStudent[2] || String(rawStudent[2]).trim() === "") continue;
@@ -225,30 +237,33 @@
                     outputData.push(buildRow(rawH2, true));
                     outputData.push(buildRow(rawH3, true));
                     outputData.push(buildRow(rawStudent, false, true));
+                    rowHeights.push({hpt: headerRowHeight}, {hpt: headerRowHeight}, {hpt: headerRowHeight}, {hpt: dataRowHeight});
 
                     merges.push({s: {r: currentRow, c: 0}, e: {r: currentRow+2, c: 1}});
                     merges.push({s: {r: currentRow, c: 2}, e: {r: currentRow+2, c: 2}});
-                    merges.push({s: {r: currentRow+3, c: 0}, e: {r: currentRow+3, c: 1}}); 
-                    
+                    merges.push({s: {r: currentRow+3, c: 0}, e: {r: currentRow+3, c: 1}});
+
                     newScoreCols.forEach(colIdx => {
                         merges.push({s: {r: currentRow, c: colIdx}, e: {r: currentRow+2, c: colIdx}});
                     });
 
                     currentRow += 4;
-                    outputData.push([]); 
+                    outputData.push([]);
+                    rowHeights.push({hpt: blankRowHeight});
                     currentRow += 1;
-                    
-                    studentCount++; 
-                    
-                    // 10명마다 페이지 자르기
-                    if (studentCount % 10 === 0) {
-                        rowBreaks.push(currentRow - 1); 
+
+                    studentCount++;
+
+                    // 학생 블록 높이를 기준으로 계산한 안전한 인원마다 페이지 자르기
+                    if (studentCount % studentsPerPage === 0) {
+                        rowBreaks.push(currentRow - 1);
                     }
                 }
 
                 const newWorksheet = XLSX.utils.aoa_to_sheet(outputData);
+                newWorksheet['!rows'] = rowHeights;
                 newWorksheet['!merges'] = merges;
-                newWorksheet['!rowBreaks'] = rowBreaks; 
+                newWorksheet['!rowBreaks'] = rowBreaks;
 
                 // 💡 [수정] 한셀이나 구버전 엑셀에서 프로그램이 크기 조절을 무시해도 아예 물리적 너비가 A4에 맞도록 (기존 82 -> 72로 대폭 축소)
                 const targetTotalWch = 72; 
