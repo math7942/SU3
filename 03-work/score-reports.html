@@ -15,6 +15,8 @@
         input[type="file"] { display: none; }
         button { background-color: #4CAF50; color: white; border: none; padding: 15px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold; width: 90%; }
         button:hover { background-color: #45a049; }
+        button.secondary { background-color: #007bff; margin-top: 10px; }
+        button.secondary:hover { background-color: #0069d9; }
         #status { margin-top: 20px; font-weight: bold; color: #333; font-size: 15px; word-break: keep-all; }
     </style>
 </head>
@@ -30,7 +32,8 @@
         <input type="file" id="upload" accept=".xlsx, .xls" onchange="updateFileName()" />
         
         <button onclick="processExcel()">✨ 파일 선택 후 여기를 눌러 변환 시작!</button>
-        
+        <button class="secondary" onclick="downloadHTML()">🌐 HTML로 다운로드 (인쇄 시 안 잘림)</button>
+
         <div id="status"></div>
     </div>
 
@@ -48,6 +51,14 @@
         }
 
         function processExcel() {
+            loadAndProcess(createIndividualSheets);
+        }
+
+        function downloadHTML() {
+            loadAndProcess(createHTMLReport);
+        }
+
+        function loadAndProcess(outputFn) {
             const fileInput = document.getElementById('upload');
             const statusDiv = document.getElementById('status');
 
@@ -58,20 +69,20 @@
 
             const file = fileInput.files[0];
             statusDiv.innerHTML = "⏳ 파일을 분석 중입니다...";
-            
+
             const reader = new FileReader();
             reader.onload = function(eText) {
                 try {
                     const textData = eText.target.result;
-                    
+
                     if (textData.includes('<html') || textData.includes('<table')) {
                         console.log("HTML 기반 엑셀 파일 감지");
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(textData, 'text/html');
                         const tables = doc.querySelectorAll('table');
-                        
+
                         if (!tables || tables.length === 0) throw new Error("파일 내부에서 표 데이터를 찾을 수 없습니다.");
-                        
+
                         let targetTable = tables[0];
                         for(let t of tables) { if(t.rows.length > targetTable.rows.length) targetTable = t; }
 
@@ -83,7 +94,7 @@
                             }
                             json.push(rowData);
                         }
-                        createIndividualSheets(json, statusDiv);
+                        outputFn(json, statusDiv);
 
                     } else {
                         console.log("일반 엑셀 파일 감지");
@@ -94,7 +105,7 @@
                                 const workbook = XLSX.read(data, {type: 'array'});
                                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                                 const json = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
-                                createIndividualSheets(json, statusDiv);
+                                outputFn(json, statusDiv);
                             } catch (err2) {
                                 throw new Error("일반 엑셀 변환 중 오류: " + err2.message);
                             }
@@ -106,59 +117,174 @@
                     statusDiv.innerHTML = `<span style='color: red;'>❌ 변환 실패: ${err.message}</span>`;
                 }
             };
-            
-            reader.readAsText(file, 'euc-kr'); 
+
+            reader.readAsText(file, 'euc-kr');
+        }
+
+        function esc(v) {
+            return String(v === undefined || v === null ? "" : v).replace(/[&<>"']/g, function(c) {
+                return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+            });
+        }
+
+        function parseStructure(json) {
+            if (!json || json.length === 0) throw new Error("엑셀 파일에 데이터가 없습니다.");
+
+            let fileNameInfo = "개별성적표";
+            for (let i = 0; i < Math.min(10, json.length); i++) {
+                if (json[i]) {
+                    let rowStr = json[i].filter(c => String(c).trim() !== "").join(" ");
+                    if (rowStr.includes("학년도") && rowStr.includes("학기")) {
+                        fileNameInfo = rowStr.replace(/1차\s*정기시험/g, " ").replace(/:/g, "_").trim().replace(/\s+/g, "_");
+                        break;
+                    }
+                }
+            }
+
+            let headerStartIdx = -1;
+            for (let i = 0; i < json.length; i++) {
+                if (json[i]) {
+                    for(let j = 0; j < json[i].length; j++) {
+                        if (json[i][j] && (String(json[i][j]).includes("번호") || String(json[i][j]).includes("반/번호"))) {
+                            headerStartIdx = i; break;
+                        }
+                    }
+                    if (headerStartIdx !== -1) break;
+                }
+            }
+
+            if (headerStartIdx === -1) {
+                throw new Error("표에서 '반/번호' 항목을 찾지 못했습니다. 올바른 나이스 다운로드 파일인지 확인해주세요.");
+            }
+
+            const rawH1 = json[headerStartIdx];
+            const rawH2 = json[headerStartIdx + 1] || [];
+            const rawH3 = json[headerStartIdx + 2] || [];
+            const validCols = [];
+            const newScoreCols = [];
+
+            for(let c = 3; c < Math.max(rawH1.length, rawH2.length, rawH3.length); c++) {
+                if (String(rawH1[c] || "").trim() !== "" || String(rawH2[c] || "").trim() !== "") {
+                    const headerText = String(rawH1[c]).replace(/\s/g, '');
+
+                    if (headerText === "기타점수") continue;
+
+                    validCols.push(c);
+                    if (["선택형점수", "서답형점수", "과목총점"].includes(headerText)) {
+                        newScoreCols.push(validCols.length + 2);
+                    }
+                }
+            }
+
+            return { fileNameInfo, headerStartIdx, rawH1, rawH2, rawH3, validCols, newScoreCols };
+        }
+
+        function createHTMLReport(json, statusDiv) {
+            try {
+                const { fileNameInfo, headerStartIdx, rawH1, rawH2, rawH3, validCols, newScoreCols } = parseStructure(json);
+
+                let dynamicFontSize = 9.0;
+                if (validCols.length > 20) dynamicFontSize = 8.0;
+                if (validCols.length > 25) dynamicFontSize = 7.0;
+                if (validCols.length > 30) dynamicFontSize = 6.5;
+
+                const qCount = validCols.length - newScoreCols.length;
+                const scoreColPct = 7;
+                const fixedPct = 12; // 반/번호 6% + 성명 6%
+                const qPctTotal = 100 - fixedPct - (newScoreCols.length * scoreColPct);
+                const qPct = Math.max(1.5, qPctTotal / Math.max(1, qCount));
+
+                function headerLabel(origIdx, idx) {
+                    const isScoreCol = newScoreCols.includes(idx + 3);
+                    let val = rawH1[origIdx];
+                    if (isScoreCol && val) {
+                        const cleanVal = String(val).replace(/\s/g, '');
+                        if (cleanVal === '선택형점수') return '선택형<br>점수';
+                        if (cleanVal === '서답형점수') return '서답형<br>점수';
+                        if (cleanVal === '과목총점') return '과목<br>총점';
+                    }
+                    return esc(val);
+                }
+
+                let colgroup = '<colgroup><col style="width:6%"><col style="width:6%">';
+                validCols.forEach((origIdx, idx) => {
+                    const isScoreCol = newScoreCols.includes(idx + 3);
+                    colgroup += '<col style="width:' + (isScoreCol ? scoreColPct : qPct) + '%">';
+                });
+                colgroup += '</colgroup>';
+
+                let blocks = "";
+                let studentCount = 0;
+
+                for (let i = headerStartIdx + 3; i < json.length; i++) {
+                    const rawStudent = json[i];
+                    if (!rawStudent || !rawStudent[2] || String(rawStudent[2]).trim() === "") continue;
+                    studentCount++;
+
+                    let row1 = '<tr><th rowspan="3">반/번호</th><th rowspan="3">성명</th>';
+                    let row2 = '<tr>';
+                    let row3 = '<tr>';
+                    let rowData = '<tr><td class="data">' + esc(rawStudent[1] || "") + '</td><td class="data">' + esc(rawStudent[2] || "") + '</td>';
+
+                    validCols.forEach((origIdx, idx) => {
+                        const isScoreCol = newScoreCols.includes(idx + 3);
+                        if (isScoreCol) {
+                            row1 += '<th rowspan="3">' + headerLabel(origIdx, idx) + '</th>';
+                        } else {
+                            row1 += '<th>' + esc(rawH1[origIdx]) + '</th>';
+                            row2 += '<td class="sub">' + esc(rawH2[origIdx]) + '</td>';
+                            row3 += '<td class="sub">' + esc(rawH3[origIdx]) + '</td>';
+                        }
+                        let val = rawStudent[origIdx];
+                        if (isScoreCol && (val === undefined || val === null || String(val).trim() === "")) val = 0;
+                        rowData += '<td class="data' + (isScoreCol ? ' score' : '') + '">' + esc(val !== undefined ? val : "") + '</td>';
+                    });
+
+                    row1 += '</tr>';
+                    row2 += '</tr>';
+                    row3 += '</tr>';
+                    rowData += '</tr>';
+
+                    blocks += '<div class="student-block"><table style="font-size:' + dynamicFontSize + 'pt">' + colgroup + '<tbody>' + row1 + row2 + row3 + rowData + '</tbody></table></div>';
+                }
+
+                if (studentCount === 0) throw new Error("학생 데이터를 찾지 못했습니다.");
+
+                const title = esc(fileNameInfo.replace(/_/g, ' '));
+                const html = '<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<title>' + title + ' 개별정오표</title>\n<style>\n' +
+                    "  body { font-family: '맑은 고딕', sans-serif; margin: 0; padding: 10mm; color: #222; }\n" +
+                    "  h1 { font-size: 13pt; text-align: center; margin: 0 0 10mm; }\n" +
+                    "  .student-block { break-inside: avoid; page-break-inside: avoid; margin-bottom: 6mm; }\n" +
+                    "  table { width: 100%; border-collapse: collapse; table-layout: fixed; }\n" +
+                    "  th, td { border: 1px solid #999; text-align: center; vertical-align: middle; padding: 2px 1px; word-break: keep-all; }\n" +
+                    "  th { background: #f2f2f2; font-weight: bold; }\n" +
+                    "  td.sub { background: #fafafa; }\n" +
+                    "  td.data { font-weight: bold; }\n" +
+                    "  @page { size: A4 portrait; margin: 10mm; }\n" +
+                    "  @media print { body { padding: 0; } }\n" +
+                    '</style>\n</head>\n<body>\n<h1>' + title + ' 개별정오표</h1>\n' + blocks + '\n</body>\n</html>';
+
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileNameInfo + '_개별정오표.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusDiv.innerHTML = `<span style='color: green;'>✅ 성공! <br><b>${fileNameInfo}_개별정오표.html</b> 파일이 저장되었습니다.<br>(브라우저로 열어서 인쇄하면 학생이 페이지 중간에서 잘리지 않습니다)</span>`;
+            } catch (error) {
+                console.error(error);
+                alert("🚨 조립 과정 중 오류가 발생했습니다: \n" + error.message);
+                statusDiv.innerHTML = `<span style='color: red;'>❌ 조립 실패: ${error.message}</span>`;
+            }
         }
 
         function createIndividualSheets(json, statusDiv) {
             try {
-                if (!json || json.length === 0) throw new Error("엑셀 파일에 데이터가 없습니다.");
-
-                let fileNameInfo = "개별성적표";
-                for (let i = 0; i < Math.min(10, json.length); i++) {
-                    if (json[i]) {
-                        let rowStr = json[i].filter(c => String(c).trim() !== "").join(" ");
-                        if (rowStr.includes("학년도") && rowStr.includes("학기")) {
-                            fileNameInfo = rowStr.replace(/1차\s*정기시험/g, " ").replace(/:/g, "_").trim().replace(/\s+/g, "_");
-                            break;
-                        }
-                    }
-                }
-
-                let headerStartIdx = -1;
-                for (let i = 0; i < json.length; i++) {
-                    if (json[i]) {
-                        for(let j = 0; j < json[i].length; j++) {
-                            if (json[i][j] && (String(json[i][j]).includes("번호") || String(json[i][j]).includes("반/번호"))) {
-                                headerStartIdx = i; break;
-                            }
-                        }
-                        if (headerStartIdx !== -1) break;
-                    }
-                }
-
-                if (headerStartIdx === -1) {
-                    throw new Error("표에서 '반/번호' 항목을 찾지 못했습니다. 올바른 나이스 다운로드 파일인지 확인해주세요.");
-                }
-
-                const rawH1 = json[headerStartIdx];
-                const rawH2 = json[headerStartIdx + 1] || [];
-                const rawH3 = json[headerStartIdx + 2] || [];
-                const validCols = [];
-                const newScoreCols = []; 
-                
-                for(let c = 3; c < Math.max(rawH1.length, rawH2.length, rawH3.length); c++) {
-                    if (String(rawH1[c] || "").trim() !== "" || String(rawH2[c] || "").trim() !== "") {
-                        const headerText = String(rawH1[c]).replace(/\s/g, '');
-                        
-                        if (headerText === "기타점수") continue;
-
-                        validCols.push(c);
-                        if (["선택형점수", "서답형점수", "과목총점"].includes(headerText)) {
-                            newScoreCols.push(validCols.length + 2); 
-                        }
-                    }
-                }
+                const { fileNameInfo, headerStartIdx, rawH1, rawH2, rawH3, validCols, newScoreCols } = parseStructure(json);
 
                 // 💡 [수정] 어떤 환경에서도 잘리지 않도록 폰트 크기를 조금 더 줄여서 공간을 강제로 확보
                 let dynamicFontSize = 9.0;
