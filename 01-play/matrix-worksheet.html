@@ -156,29 +156,6 @@
   .fill-sm { display: inline-block; min-width: 34px; border-bottom: 1.4px dotted var(--purple); padding: 0 2px; }
   .fill-name { display: inline-block; min-width: 130px; border-bottom: 1.4px dotted var(--purple); padding: 0 2px; }
 
-  .stamps {
-    flex-shrink: 0;
-    text-align: center;
-  }
-  .stamps-label {
-    font-size: 0.66rem;
-    font-weight: 700;
-    color: var(--muted);
-    letter-spacing: 0.03em;
-    margin-bottom: 6px;
-  }
-  .stamp-row { display: flex; gap: 7px; }
-  .stamp {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    border: 2px dashed var(--purple);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Jua', sans-serif;
-    font-size: 0.95rem;
-    color: var(--purple);
-    background: #fbf8ff;
-  }
-
   /* ---------- 단계 카드 공통 ---------- */
   .stage {
     position: relative;
@@ -371,11 +348,6 @@
 
   .foot-sign { font-size: 0.76rem; color: var(--muted); display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
   .foot-sign .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-  .teacher-box {
-    width: 46px; height: 46px;
-    border: 1.6px dashed var(--purple);
-    border-radius: 8px;
-  }
 
   @media (max-width: 480px) {
     .sheet { padding: 6mm 5mm 6mm; min-height: auto; }
@@ -407,16 +379,7 @@
       <h1>행렬 탐험 활동지</h1>
       <p class="head-sub">행렬 연산의 신비로운 세계를 세 단계로 탐험하고, 직접 관찰한 내용을 기록해보세요.</p>
       <div class="id-row">
-        <div><span>학년</span><span class="fill-sm"></span>&nbsp;&nbsp;<span>반</span><span class="fill-sm"></span>&nbsp;&nbsp;<span>번호</span><span class="fill-sm"></span></div>
         <div><span>이름</span><span class="fill-name"></span></div>
-      </div>
-    </div>
-    <div class="stamps">
-      <div class="stamps-label">완주 스탬프</div>
-      <div class="stamp-row">
-        <div class="stamp">1</div>
-        <div class="stamp">2</div>
-        <div class="stamp">3</div>
       </div>
     </div>
   </div>
@@ -516,7 +479,6 @@
     </div>
     <div class="foot-sign">
       <div class="row">작성일&nbsp; <span class="fill-sm" style="min-width:22px;"></span>월&nbsp;<span class="fill-sm" style="min-width:22px;"></span>일</div>
-      <div class="row">선생님 확인&nbsp; <span class="teacher-box"></span></div>
     </div>
   </div>
 
