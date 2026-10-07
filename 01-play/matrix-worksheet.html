@@ -79,7 +79,6 @@
     position: relative;
     width: 210mm;
     max-width: calc(100% - 32px);
-    min-height: 297mm;
     background: var(--paper);
     border-radius: 6px;
     box-shadow: 0 18px 50px rgba(44, 26, 99, 0.16), 0 2px 8px rgba(44, 26, 99, 0.08);
@@ -321,7 +320,6 @@
   .foot {
     position: relative;
     z-index: 1;
-    margin-top: auto;
     padding-top: 10px;
     border-top: 2.5px solid var(--deep);
     display: flex;
@@ -336,7 +334,7 @@
 
 
   @media (max-width: 480px) {
-    .sheet { padding: 6mm 5mm 6mm; min-height: auto; }
+    .sheet { padding: 6mm 5mm 6mm; }
     .head { flex-direction: column; }
     .kernel-row { justify-content: center; }
   }
@@ -346,7 +344,7 @@
     @page { size: A4; margin: 0; }
     body { background: #fff; padding: 0; }
     .actionbar { display: none; }
-    .sheet { box-shadow: none; border-radius: 0; width: 210mm; min-height: 297mm; margin: 0; max-width: none; }
+    .sheet { box-shadow: none; border-radius: 0; width: 210mm; margin: 0; max-width: none; }
   }
 </style>
 </head>
