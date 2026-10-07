@@ -133,6 +133,7 @@
     line-height: 1.15;
     margin: 6px 0 3px;
     color: var(--deep);
+    text-align: center;
     text-wrap: balance;
   }
 
@@ -142,19 +143,6 @@
     color: var(--muted);
     line-height: 1.55;
   }
-
-  .id-row {
-    margin-top: 7px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 18px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--ink);
-  }
-  .id-row span { font-weight: 500; color: var(--muted); margin-right: 4px; }
-  .fill-sm { display: inline-block; min-width: 34px; border-bottom: 1.4px dotted var(--purple); padding: 0 2px; }
-  .fill-name { display: inline-block; min-width: 130px; border-bottom: 1.4px dotted var(--purple); padding: 0 2px; }
 
   /* ---------- 단계 카드 공통 ---------- */
   .stage {
@@ -346,8 +334,6 @@
   .foot-note .lbl { font-size: 0.78rem; font-weight: 700; color: var(--deep); margin-bottom: 5px; }
   .foot-line { height: 18px; border-bottom: 1.3px dotted var(--purple); }
 
-  .foot-sign { font-size: 0.76rem; color: var(--muted); display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-  .foot-sign .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 
   @media (max-width: 480px) {
     .sheet { padding: 6mm 5mm 6mm; min-height: auto; }
@@ -378,9 +364,6 @@
       <span class="eyebrow">✨ 2026 광주수학축제 ✨</span>
       <h1>행렬 탐험 활동지</h1>
       <p class="head-sub">행렬 연산의 신비로운 세계를 세 단계로 탐험하고, 직접 관찰한 내용을 기록해보세요.</p>
-      <div class="id-row">
-        <div><span>이름</span><span class="fill-name"></span></div>
-      </div>
     </div>
   </div>
 
@@ -476,9 +459,6 @@
     <div class="foot-note">
       <div class="lbl">📝 오늘 행렬 탐험에서 배운 것, 한 줄로 정리하기</div>
       <div class="foot-line"></div>
-    </div>
-    <div class="foot-sign">
-      <div class="row">작성일&nbsp; <span class="fill-sm" style="min-width:22px;"></span>월&nbsp;<span class="fill-sm" style="min-width:22px;"></span>일</div>
     </div>
   </div>
 
