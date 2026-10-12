@@ -1128,11 +1128,12 @@
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 이미지 1 그리기 (투명도 적용)
-            ctx.globalAlpha = alpha;
+            // 이미지 1을 불투명하게 먼저 그린 뒤, 이미지 2를 (1-alpha) 투명도로 겹쳐
+            // "소스 오버" 합성을 이용해 정확히 이미지1×alpha + 이미지2×(1-alpha)가 되도록 한다.
+            // (두 이미지를 각각 alpha, 1-alpha로 그리면 알파가 이중으로 곱해져 비율이 어긋난다.)
+            ctx.globalAlpha = 1;
             ctx.drawImage(img1, 0, 0, canvas.width, canvas.height);
 
-            // 이미지 2 그리기 (투명도 적용)
             ctx.globalAlpha = 1 - alpha;
             ctx.drawImage(img2, 0, 0, canvas.width, canvas.height);
 
