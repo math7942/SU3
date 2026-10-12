@@ -309,7 +309,10 @@
             for (let c = 0; c < mode; c++) {
                 const idx = (r * mode + c) * 4;
                 const gray = Math.round(0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2]);
-                row.push(gray);
+                // 캔버스는 흰 배경에 검은 선으로 그리지만, 실제 MNIST 데이터셋은 반대로
+                // 배경이 0(검정), 숫자 획이 밝은 값이다. 반전하지 않으면 "MNIST와 동일한
+                // 형식"이라는 안내와 달리 흑백이 뒤바뀐 행렬이 나온다.
+                row.push(255 - gray);
             }
             matrixValues.push(row);
         }
