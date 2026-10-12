@@ -1110,11 +1110,16 @@
             const result = [];
 
             const points = 100;
-            const phaseShift = (delayMs / 5) * 2 * Math.PI;
+            // 실제 오디오(toggleSec5Audio)는 BASE_FREQ_S5(300Hz)로 재생되므로, 그래프의 위상차도
+            // 같은 주기(1000/300ms)를 기준으로 계산해야 "1.6ms에서 최악"이라는 안내 문구와 일치한다.
+            // 예전에는 5ms(=200Hz 주기)로 고정되어 있어 실제 소리와 그래프가 어긋났다.
+            const periodMs = 1000 / BASE_FREQ_S5;
+            const phaseShift = (delayMs / periodMs) * 2 * Math.PI;
 
             for (let i = 0; i <= points; i++) {
                 const x = (i / points) * 4 * Math.PI;
-                rawLabels.push(`디지털 연산 시간 t = ${(i/10).toFixed(1)}ms`);
+                const tMs = (i / points) * 2 * periodMs;
+                rawLabels.push(`디지털 연산 시간 t = ${tMs.toFixed(2)}ms`);
                 const y1 = Math.sin(x);
                 const y2 = -Math.sin(x - phaseShift);
                 const yr = y1 + y2;
