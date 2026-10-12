@@ -910,7 +910,7 @@
                 predictedDigit: predictedDigit,
                 image: getDrawingSnapshot(140),
                 success: true,
-                timestamp: new Date().toLocaleTimeString('ko-KR'),
+                timestamp: (() => { const d = new Date(); return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString('ko-KR')}`; })(),
                 confidence: currentPrediction[predictedDigit]
             };
 

@@ -1173,7 +1173,7 @@
                 alpha: alpha,
                 beta: 100 - alpha,
                 image: getBlendSnapshot(160),
-                timestamp: new Date().toLocaleTimeString('ko-KR'),
+                timestamp: (() => { const d = new Date(); return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString('ko-KR')}`; })(),
                 description: `${alpha}% : ${100 - alpha}% 블렌딩`
             };
 
