@@ -1263,13 +1263,13 @@
   }
 
   /* ---------- cpu ---------- */
+  // 소개 문구("넷 다 20점에서만 멈춘다"), 상대 선택 화면, 점수판의 "20에서 멈춤"
+  // 태그가 모두 고정된 20점 문턱 전략이라고 못 박고 있으므로, 실제 판단도
+  // 항상 20에서만 멈추도록 한다(상대가 앞서갈 때 문턱을 몰래 올리지 않는다).
   function cpuDecide(){
-    var me = S.scores[1], opp = S.scores[0];
+    var me = S.scores[1];
     if(me + S.tt >= S.target) return 'hold';
-    var th = 20;
-    if(opp >= S.target - 20) th = Math.max(th, S.target - me);
-    th = Math.min(th, S.target - me);
-    return S.tt >= th ? 'hold' : 'roll';
+    return S.tt >= 20 ? 'hold' : 'roll';
   }
   function cpuStep(){
     if(S.over || !isCpuTurn() || S.rolling) return;
