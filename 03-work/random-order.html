@@ -63,7 +63,11 @@
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         statusDiv.innerText = "✨ 결과 발표! ✨";
-        confetti({ pixelDensity: 2, particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        // confetti는 외부 CDN 스크립트라 학교 네트워크 등에서 차단되면 로드되지 않을 수 있다.
+        // 이때 confetti()를 그냥 호출하면 에러가 나서 아래 결과 표시 코드 전체가 실행되지
+        // 않으므로(화면에 아무것도 안 뜨고 엑셀 버튼도 안 나오는 버그), try/catch로 감싼다.
+        try { confetti({ pixelDensity: 2, particleCount: 150, spread: 70, origin: { y: 0.6 } }); }
+        catch (e) { console.warn('색종이 효과를 불러오지 못했습니다:', e); }
 
         // 결과를 하나씩 순차적으로 등장시킴
         for (let i = 0; i < names.length; i++) {
