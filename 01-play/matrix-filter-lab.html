@@ -1629,7 +1629,7 @@
                 id: Date.now(),
                 name: name,
                 text: text.slice(0, 300),
-                timestamp: new Date().toLocaleTimeString('ko-KR')
+                timestamp: (() => { const d = new Date(); return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString('ko-KR')}`; })()
             };
 
             let records = JSON.parse(localStorage.getItem('festivalFeedback')) || [];
