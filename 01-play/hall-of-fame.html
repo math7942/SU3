@@ -419,7 +419,13 @@
                 return;
             }
 
-            container.innerHTML = records.slice(0, 10).map((r, idx) => {
+            // "AI를 가장 속인 참가자 TOP 10"이라는 제목과 금/은/동 메달이 붙지만,
+            // 실제로는 정렬 없이 저장된 순서(최신 등록순)로만 보여주고 있었다.
+            // AI가 잘못 예측한 신뢰도(confidence)가 높을수록 더 확실하게 AI를 속인
+            // 것이므로, 신뢰도 내림차순으로 정렬해 진짜 TOP 10이 되도록 한다.
+            const ranked = records.slice().sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+
+            container.innerHTML = ranked.slice(0, 10).map((r, idx) => {
                 const medals = ['🥇', '🥈', '🥉'];
                 const medal = idx < 3 ? medals[idx] : `${idx + 1}`;
                 const classes = idx === 0 ? 'rank-item gold' : idx === 1 ? 'rank-item silver' : idx === 2 ? 'rank-item bronze' : 'rank-item';

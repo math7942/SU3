@@ -876,7 +876,12 @@
         }
 
         // Convolution 연산
-        function applyConvolution(canvas, kernel, normalize = true) {
+        // fixedDivisor: 슬라이더로 커널 값을 조정했을 때도 화면에 표시되는 분수(예: 블러의 1/64)와
+        // 실제로 적용되는 나눗셈이 같도록 "조정 전" 커널의 합을 그대로 쓰기 위한 값.
+        // 이걸 생략하고 매번 kernel.flat().reduce(...)로 다시 계산하면, 슬라이더로 커널 전체를
+        // 같은 배수로 늘려도 분모(커널 합)까지 똑같이 늘어나 버려서 서로 상쇄되고, 슬라이더를
+        // 움직여도 결과 이미지가 전혀 바뀌지 않는 버그가 생긴다.
+        function applyConvolution(canvas, kernel, normalize = true, fixedDivisor = null) {
             const ctx = canvas.getContext('2d');
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
@@ -888,7 +893,7 @@
 
             const kernelSize = 3;
             const offset = Math.floor(kernelSize / 2);
-            const kernelSum = kernel.flat().reduce((a, b) => a + b, 0);
+            const kernelSum = fixedDivisor !== null ? fixedDivisor : kernel.flat().reduce((a, b) => a + b, 0);
             const divisor = normalize && kernelSum !== 0 ? kernelSum : 1;
 
             for (let y = offset; y < h - offset; y++) {
@@ -927,6 +932,12 @@
             boost: [[0, 0, 0], [0, 5, 0], [0, 0, 0]]
         };
 
+        // 필터의 "기본(조정 전)" 커널 합. Stage 1 슬라이더로 커널을 늘리거나 줄여도
+        // 화면에 적힌 분수(예: 블러의 1/64)와 실제 나눗셈이 같게 유지하는 데 쓴다.
+        function baseKernelSum(filterName) {
+            return filters[filterName].flat().reduce((a, b) => a + b, 0);
+        }
+
         let currentStage = 1;
         let currentFilter = 'blur';
         let customKernel = [[0, 0, 0], [0, 1, 0], [0, 0, 0]];
@@ -958,7 +969,7 @@
                     }
 
                     createTestImage(canvas1Filtered);
-                    applyConvolution(canvas1Filtered, filters[currentFilter], currentFilter !== 'boost');
+                    applyConvolution(canvas1Filtered, filters[currentFilter], currentFilter !== 'boost', baseKernelSum(currentFilter));
                 });
             });
 
@@ -991,7 +1002,7 @@
 
                     // 미리보기 업데이트
                     createTestImage(canvas1Filtered);
-                    applyConvolution(canvas1Filtered, adjustedKernel, filterName !== 'boost');
+                    applyConvolution(canvas1Filtered, adjustedKernel, filterName !== 'boost', baseKernelSum(filterName));
                 });
             });
         }
