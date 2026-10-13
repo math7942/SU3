@@ -218,8 +218,7 @@
     .back, header.hero, .upload-card, .picker { display: none !important; }
     #printArea { display: block; }
 
-    #printArea > .print-student + .print-student { break-before: page; page-break-before: always; }
-    #printArea > .teacher-page + .teacher-page { break-before: page; page-break-before: always; }
+    #printArea > .print-student:not(.teacher-student) + .print-student { break-before: page; page-break-before: always; }
 
     .teacher-page-title {
       margin: 0 0 6px;
@@ -228,7 +227,7 @@
       letter-spacing: -0.02em;
       text-align: center;
     }
-    .teacher-student { margin-bottom: 5mm; }
+    .teacher-student { margin-bottom: 5mm; break-inside: avoid; page-break-inside: avoid; }
     .teacher-student .print-student-id {
       margin: 0 0 3px;
       font-size: 9.5pt;
@@ -346,7 +345,7 @@
     <div class="student-grid" id="studentGrid"></div>
     <div class="print-action-bar">
       <span class="hint">인쇄 대화상자의 레이아웃은 자동으로 가로(A4)가 적용됩니다.</span>
-      <button class="btn btn-ghost" id="teacherPrintBtn" type="button">🖨 교사용 출력 (전체 학생, 2명씩)</button>
+      <button class="btn btn-ghost" id="teacherPrintBtn" type="button">🖨 교사용 출력 (전체 학생, 안 잘리게 꽉 채워서)</button>
       <button class="btn" id="printBtn" type="button">🖨 선택한 학생 인쇄</button>
     </div>
   </div>
@@ -632,24 +631,15 @@
     var cols = checkedColumns();
     if (!studentKeys.length || !cols.length) return;
 
-    var pages = [];
-    for (var i = 0; i < studentKeys.length; i += 2) {
-      pages.push(studentKeys.slice(i, i + 2));
-    }
-
-    printArea.innerHTML = pages.map(function (pair) {
-      var studentsHtml = pair.map(function (key) {
-        var s = students[key];
-        return '<div class="print-student teacher-student">' +
-          '<div class="print-student-id">' + esc(studentLabel(s)) + ' · 지원 ' + s.rows.length + '건</div>' +
-          renderStudentTable(s, cols) +
-          '</div>';
-      }).join('');
-      return '<div class="teacher-page">' +
-        '<div class="teacher-page-title">2026학년도 수시 원서접수 현황 (교사용)</div>' +
-        studentsHtml +
+    var studentsHtml = studentKeys.map(function (key) {
+      var s = students[key];
+      return '<div class="print-student teacher-student">' +
+        '<div class="print-student-id">' + esc(studentLabel(s)) + ' · 지원 ' + s.rows.length + '건</div>' +
+        renderStudentTable(s, cols) +
         '</div>';
     }).join('');
+
+    printArea.innerHTML = '<div class="teacher-page-title">2026학년도 수시 원서접수 현황 (교사용)</div>' + studentsHtml;
 
     window.print();
   });
