@@ -143,21 +143,6 @@
   .select-all input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
   .picked-count { color: var(--muted); font-size: 0.86rem; }
 
-  .sort-toggle { display: flex; align-items: center; gap: 6px; }
-  .sort-btn {
-    padding: 6px 13px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink-soft);
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .sort-btn:hover { border-color: var(--accent); }
-  .sort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
   .section-label {
     margin: 18px 0 8px;
     font-size: 0.9rem;
@@ -288,6 +273,7 @@
       word-break: keep-all;
       overflow-wrap: break-word;
     }
+    table.apply thead { display: table-header-group; }
     table.apply thead th {
       background: var(--accent-soft) !important;
       color: var(--accent) !important;
@@ -356,14 +342,11 @@
         </label>
         <span class="picked-count" id="pickedCount"></span>
       </div>
-      <div class="sort-toggle">
-        <button type="button" class="sort-btn active" data-sort="no">번호순</button>
-        <button type="button" class="sort-btn" data-sort="interview">면접 날짜순</button>
-      </div>
     </div>
     <div class="student-grid" id="studentGrid"></div>
     <div class="print-action-bar">
       <span class="hint">인쇄 대화상자의 레이아웃은 자동으로 가로(A4)가 적용됩니다.</span>
+      <button class="btn btn-ghost" id="scheduleBtn" type="button">🖨 면접 일정표 출력 (날짜순→번호순)</button>
       <button class="btn btn-ghost" id="teacherPrintBtn" type="button">🖨 교사용 출력 (전체 학생, 안 잘리게 꽉 채워서)</button>
       <button class="btn" id="printBtn" type="button">🖨 선택한 학생 인쇄</button>
     </div>
@@ -408,6 +391,7 @@
   var pickedCount = document.getElementById('pickedCount');
   var printBtn = document.getElementById('printBtn');
   var teacherPrintBtn = document.getElementById('teacherPrintBtn');
+  var scheduleBtn = document.getElementById('scheduleBtn');
   var printArea = document.getElementById('printArea');
 
   function esc(s) {
@@ -559,6 +543,7 @@
   function updatePrintBtn() {
     printBtn.disabled = checkedKeys().length === 0 || checkedColumns().length === 0;
     teacherPrintBtn.disabled = studentKeys.length === 0 || checkedColumns().length === 0;
+    scheduleBtn.disabled = studentKeys.length === 0 || checkedColumns().length === 0;
   }
 
   function renderPicker() {
@@ -567,45 +552,6 @@
     renderColumnPicker();
     renderStudentGrid();
   }
-
-  var sortOrder = 'no';
-
-  function studentEarliestInterview(s) {
-    var min = null;
-    s.rows.forEach(function (r) {
-      var raw = r.interviewRaw;
-      if (!raw) return;
-      var start = raw.split('~')[0].trim();
-      if (!/^\d{4}-\d{2}-\d{2}/.test(start)) return;
-      if (!min || start < min) min = start;
-    });
-    return min;
-  }
-
-  function sortedStudentKeys() {
-    var keys = studentKeys.slice();
-    if (sortOrder === 'interview') {
-      keys.sort(function (a, b) {
-        var sa = students[a], sb = students[b];
-        var da = studentEarliestInterview(sa) || '9999-99-99';
-        var db = studentEarliestInterview(sb) || '9999-99-99';
-        if (da !== db) return da < db ? -1 : 1;
-        if (sa.classNo !== sb.classNo) return sa.classNo.localeCompare(sb.classNo, 'ko', { numeric: true });
-        return sa.no.localeCompare(sb.no, 'ko', { numeric: true });
-      });
-    }
-    return keys;
-  }
-
-  Array.prototype.forEach.call(document.querySelectorAll('.sort-btn'), function (btn) {
-    btn.addEventListener('click', function () {
-      sortOrder = btn.dataset.sort;
-      Array.prototype.forEach.call(document.querySelectorAll('.sort-btn'), function (b) {
-        b.classList.toggle('active', b === btn);
-      });
-      renderStudentGrid();
-    });
-  });
 
   function renderStudentGrid() {
     var prevChecked = null;
@@ -616,7 +562,7 @@
       });
     }
 
-    studentGrid.innerHTML = sortedStudentKeys().map(function (key) {
+    studentGrid.innerHTML = studentKeys.map(function (key) {
       var s = students[key];
       var checkedAttr = (!prevChecked || prevChecked[key]) ? ' checked' : '';
       return '<label class="student-item">' +
@@ -635,7 +581,6 @@
       });
     });
   }
-
 
   function checkedKeys() {
     return Array.prototype.map.call(
@@ -703,7 +648,7 @@
     var cols = checkedColumns();
     if (!studentKeys.length || !cols.length) return;
 
-    var studentsHtml = sortedStudentKeys().map(function (key) {
+    var studentsHtml = studentKeys.map(function (key) {
       var s = students[key];
       return '<div class="print-student teacher-student">' +
         '<div class="print-student-id">' + esc(studentLabel(s)) + ' · 지원 ' + s.rows.length + '건</div>' +
@@ -712,6 +657,56 @@
     }).join('');
 
     printArea.innerHTML = '<div class="teacher-page-title">2026학년도 수시 원서접수 현황 (교사용)</div>' + studentsHtml;
+
+    window.print();
+  });
+
+  function buildInterviewSchedule() {
+    var out = [];
+    studentKeys.forEach(function (key) {
+      var s = students[key];
+      s.rows.forEach(function (r) {
+        var start = r.interviewRaw ? r.interviewRaw.split('~')[0].trim() : '';
+        if (!/^\d{4}-\d{2}-\d{2}/.test(start)) return;
+        out.push({ s: s, r: r, date: start });
+      });
+    });
+    out.sort(function (a, b) {
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      if (a.s.classNo !== b.s.classNo) return a.s.classNo.localeCompare(b.s.classNo, 'ko', { numeric: true });
+      return a.s.no.localeCompare(b.s.no, 'ko', { numeric: true });
+    });
+    return out;
+  }
+
+  function renderScheduleTable(entries, cols) {
+    var totalWidth = cols.reduce(function (sum, c) { return sum + c.width; }, 0);
+    var pct = function (c) { return (c.width / totalWidth * 100).toFixed(2) + '%'; };
+    var head = cols.map(function (c) {
+      return '<th class="' + c.cls + '" style="width:' + pct(c) + '">' + esc(c.label) + '</th>';
+    }).join('');
+    var body = entries.map(function (entry) {
+      var cells = cols.map(function (c) {
+        var val = c.id === 'studentNo' ? entry.s.no : entry.r[c.id];
+        return '<td class="' + c.cls + '">' + esc(val || '—') + '</td>';
+      }).join('');
+      return '<tr>' + cells + '</tr>';
+    }).join('');
+    return '<table class="apply"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+  }
+
+  scheduleBtn.addEventListener('click', function () {
+    var cols = checkedColumns();
+    if (!studentKeys.length || !cols.length) return;
+
+    var entries = buildInterviewSchedule();
+    if (!entries.length) {
+      alert('면접일자가 입력된 지원 내역이 없습니다.');
+      return;
+    }
+
+    printArea.innerHTML = '<div class="teacher-page-title">2026학년도 수시 면접 일정표 (날짜순 · 번호순)</div>' +
+      renderScheduleTable(entries, cols);
 
     window.print();
   });
