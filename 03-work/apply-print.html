@@ -143,6 +143,21 @@
   .select-all input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
   .picked-count { color: var(--muted); font-size: 0.86rem; }
 
+  .sort-toggle { display: flex; align-items: center; gap: 6px; }
+  .sort-btn {
+    padding: 6px 13px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .sort-btn:hover { border-color: var(--accent); }
+  .sort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
   .section-label {
     margin: 18px 0 8px;
     font-size: 0.9rem;
@@ -341,6 +356,10 @@
         </label>
         <span class="picked-count" id="pickedCount"></span>
       </div>
+      <div class="sort-toggle">
+        <button type="button" class="sort-btn active" data-sort="no">번호순</button>
+        <button type="button" class="sort-btn" data-sort="interview">면접 날짜순</button>
+      </div>
     </div>
     <div class="student-grid" id="studentGrid"></div>
     <div class="print-action-bar">
@@ -450,6 +469,7 @@
         selectType: get(row, '선발유형'),
         minReq: get(row, '최저학력기준'),
         interview: fmtDateRange(get(row, '면접일자')),
+        interviewRaw: get(row, '면접일자'),
         practical: fmtDateRange(get(row, '실기일자')),
         essay: fmtDateRange(get(row, '논술일자')),
         announce: fmtDateRange(get(row, '최종발표일'))
@@ -545,11 +565,62 @@
     emptyMsg.style.display = 'none';
     picker.classList.add('show');
     renderColumnPicker();
+    renderStudentGrid();
+  }
 
-    studentGrid.innerHTML = studentKeys.map(function (key) {
+  var sortOrder = 'no';
+
+  function studentEarliestInterview(s) {
+    var min = null;
+    s.rows.forEach(function (r) {
+      var raw = r.interviewRaw;
+      if (!raw) return;
+      var start = raw.split('~')[0].trim();
+      if (!/^\d{4}-\d{2}-\d{2}/.test(start)) return;
+      if (!min || start < min) min = start;
+    });
+    return min;
+  }
+
+  function sortedStudentKeys() {
+    var keys = studentKeys.slice();
+    if (sortOrder === 'interview') {
+      keys.sort(function (a, b) {
+        var sa = students[a], sb = students[b];
+        var da = studentEarliestInterview(sa) || '9999-99-99';
+        var db = studentEarliestInterview(sb) || '9999-99-99';
+        if (da !== db) return da < db ? -1 : 1;
+        if (sa.classNo !== sb.classNo) return sa.classNo.localeCompare(sb.classNo, 'ko', { numeric: true });
+        return sa.no.localeCompare(sb.no, 'ko', { numeric: true });
+      });
+    }
+    return keys;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.sort-btn'), function (btn) {
+    btn.addEventListener('click', function () {
+      sortOrder = btn.dataset.sort;
+      Array.prototype.forEach.call(document.querySelectorAll('.sort-btn'), function (b) {
+        b.classList.toggle('active', b === btn);
+      });
+      renderStudentGrid();
+    });
+  });
+
+  function renderStudentGrid() {
+    var prevChecked = null;
+    if (studentGrid.children.length) {
+      prevChecked = {};
+      Array.prototype.forEach.call(studentGrid.querySelectorAll('.student-cb:checked'), function (cb) {
+        prevChecked[cb.dataset.key] = true;
+      });
+    }
+
+    studentGrid.innerHTML = sortedStudentKeys().map(function (key) {
       var s = students[key];
+      var checkedAttr = (!prevChecked || prevChecked[key]) ? ' checked' : '';
       return '<label class="student-item">' +
-        '<input type="checkbox" class="student-cb" data-key="' + esc(key) + '" checked>' +
+        '<input type="checkbox" class="student-cb" data-key="' + esc(key) + '"' + checkedAttr + '>' +
         '<span class="label">' + esc(studentLabel(s)) + '</span>' +
         '<span class="count">' + s.rows.length + '건</span>' +
         '</label>';
@@ -564,6 +635,7 @@
       });
     });
   }
+
 
   function checkedKeys() {
     return Array.prototype.map.call(
@@ -631,7 +703,7 @@
     var cols = checkedColumns();
     if (!studentKeys.length || !cols.length) return;
 
-    var studentsHtml = studentKeys.map(function (key) {
+    var studentsHtml = sortedStudentKeys().map(function (key) {
       var s = students[key];
       return '<div class="print-student teacher-student">' +
         '<div class="print-student-id">' + esc(studentLabel(s)) + ' · 지원 ' + s.rows.length + '건</div>' +
