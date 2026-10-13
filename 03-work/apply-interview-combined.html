@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>원서접수+면접 통합 출력</title>
+<style>
+  :root {
+    --bg: #f2f0fa;
+    --surface: #ffffff;
+    --ink: #1b1830;
+    --ink-soft: #4a4666;
+    --muted: #7c7796;
+    --line: #e3dff2;
+    --accent: #c2601f;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 0 20px 48px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+      "Malgun Gothic", "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+
+  .page { max-width: 1200px; margin: 0 auto; }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 28px 0 22px;
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .back:hover { color: var(--accent); }
+
+  header.hero { padding: 4px 0 24px; }
+  .eyebrow {
+    display: inline-block;
+    margin: 0 0 14px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.6rem, 4vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  header.hero > p { max-width: 50em; margin: 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+  .upload-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 22px 0 18px;
+    padding: 18px 22px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .upload-card .status { color: var(--muted); font-size: 0.88rem; }
+  .upload-card .status strong { color: var(--ink); }
+
+  .btn {
+    padding: 10px 18px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { opacity: 0.92; }
+  #fileInput { display: none; }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 14px;
+  }
+  .tab-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab-btn:hover { border-color: var(--accent); }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .frame-wrap {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .tool-frame {
+    display: none;
+    width: 100%;
+    height: 85vh;
+    min-height: 640px;
+    border: 0;
+    background: #fff;
+  }
+  .tool-frame.show { display: block; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back" href="index.html">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    업무 도구
+  </a>
+
+  <header class="hero">
+    <span class="eyebrow">3학년 진학계</span>
+    <h1>원서접수+면접 통합 출력</h1>
+    <p>수시 진학관리 엑셀을 한 번만 올리면, 아래 두 도구(원서접수 출력 / 면접·논술·실기·적성 편성표)에 똑같이 반영됩니다. 같은 파일로 작업할 때 엑셀을 두 번 올릴 필요 없이 탭만 바꿔가며 쓰면 됩니다.</p>
+  </header>
+
+  <div class="upload-card">
+    <p class="status" id="fileStatus">아직 불러온 파일이 없습니다.</p>
+    <div>
+      <label class="btn" for="fileInput">📁 엑셀 불러오기</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button type="button" class="tab-btn active" id="tabApplyBtn">원서접수 출력</button>
+    <button type="button" class="tab-btn" id="tabInterviewBtn">면접·논술·실기·적성 편성표</button>
+  </div>
+
+  <div class="frame-wrap">
+    <iframe id="frameApply" class="tool-frame show" src="apply-print.html" title="원서접수 출력"></iframe>
+    <iframe id="frameInterview" class="tool-frame" src="interview-prep.html" title="면접·논술·실기·적성 편성표"></iframe>
+  </div>
+
+</div>
+
+<script>
+  var fileInput = document.getElementById('fileInput');
+  var fileStatus = document.getElementById('fileStatus');
+  var tabApplyBtn = document.getElementById('tabApplyBtn');
+  var tabInterviewBtn = document.getElementById('tabInterviewBtn');
+  var frameApply = document.getElementById('frameApply');
+  var frameInterview = document.getElementById('frameInterview');
+
+  var pendingFile = null;
+  var applyReady = false;
+  var interviewReady = false;
+
+  function setTab(which) {
+    frameApply.classList.toggle('show', which === 'apply');
+    frameInterview.classList.toggle('show', which === 'interview');
+    tabApplyBtn.classList.toggle('active', which === 'apply');
+    tabInterviewBtn.classList.toggle('active', which === 'interview');
+  }
+  tabApplyBtn.addEventListener('click', function () { setTab('apply'); });
+  tabInterviewBtn.addEventListener('click', function () { setTab('interview'); });
+
+  function hideInnerBack(frame) {
+    try {
+      var back = frame.contentDocument.querySelector('.back');
+      if (back) back.style.visibility = 'hidden';
+    } catch (e) {
+      // 같은 출처가 아니거나 아직 준비되지 않은 경우 무시
+    }
+  }
+
+  function forwardFileToFrame(frame, file) {
+    try {
+      var doc = frame.contentDocument;
+      var input = doc.getElementById('fileInput');
+      if (!input) return;
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (e) {
+      console.error('파일 전달 중 오류', e);
+    }
+  }
+
+  function tryForward() {
+    if (!pendingFile) return;
+    if (applyReady) forwardFileToFrame(frameApply, pendingFile);
+    if (interviewReady) forwardFileToFrame(frameInterview, pendingFile);
+  }
+
+  frameApply.addEventListener('load', function () {
+    applyReady = true;
+    hideInnerBack(frameApply);
+    tryForward();
+  });
+  frameInterview.addEventListener('load', function () {
+    interviewReady = true;
+    hideInnerBack(frameInterview);
+    tryForward();
+  });
+
+  fileInput.addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    pendingFile = file;
+    fileStatus.innerHTML = '불러온 파일: <strong>' + file.name.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    }) + '</strong> · 두 도구 모두에 반영했습니다.';
+    tryForward();
+  });
+</script>
+</body>
+</html>
