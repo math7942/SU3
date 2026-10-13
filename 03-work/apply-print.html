@@ -218,7 +218,26 @@
     .back, header.hero, .upload-card, .picker { display: none !important; }
     #printArea { display: block; }
 
-    .print-student + .print-student { break-before: page; page-break-before: always; }
+    #printArea > .print-student + .print-student { break-before: page; page-break-before: always; }
+    #printArea > .teacher-page + .teacher-page { break-before: page; page-break-before: always; }
+
+    .teacher-page-title {
+      margin: 0 0 6px;
+      font-size: 11pt;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+    .teacher-student { margin-bottom: 5mm; }
+    .teacher-student .print-student-id {
+      margin: 0 0 3px;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #444;
+      text-align: left;
+    }
+    .teacher-student table.apply { font-size: 6.2pt; }
+    .teacher-student table.apply th, .teacher-student table.apply td { padding: 2px 3px; line-height: 1.15; }
 
     .print-title {
       margin: 0 0 2px;
@@ -269,7 +288,7 @@
       print-color-adjust: exact;
     }
     table.apply tr { break-inside: avoid; }
-    .col-term, .col-track, .col-capacity, .col-select,
+    .col-studentno, .col-term, .col-track, .col-capacity, .col-select,
     .col-interview, .col-practical, .col-essay, .col-announce { text-align: center; }
   }
 </style>
@@ -327,6 +346,7 @@
     <div class="student-grid" id="studentGrid"></div>
     <div class="print-action-bar">
       <span class="hint">인쇄 대화상자의 레이아웃은 자동으로 가로(A4)가 적용됩니다.</span>
+      <button class="btn btn-ghost" id="teacherPrintBtn" type="button">🖨 교사용 출력 (전체 학생, 2명씩)</button>
       <button class="btn" id="printBtn" type="button">🖨 선택한 학생 인쇄</button>
     </div>
   </div>
@@ -338,6 +358,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
   var COLUMNS = [
+    { id: 'studentNo', label: '번호', cls: 'col-studentno', width: 4 },
     { id: 'univ', label: '대학명', cls: 'col-univ', width: 13 },
     { id: 'term', label: '모집시기', cls: 'col-term', width: 5 },
     { id: 'type1', label: '전형유형', cls: 'col-type1', width: 9 },
@@ -368,6 +389,7 @@
   var selectAllCb = document.getElementById('selectAllCb');
   var pickedCount = document.getElementById('pickedCount');
   var printBtn = document.getElementById('printBtn');
+  var teacherPrintBtn = document.getElementById('teacherPrintBtn');
   var printArea = document.getElementById('printArea');
 
   function esc(s) {
@@ -517,6 +539,7 @@
 
   function updatePrintBtn() {
     printBtn.disabled = checkedKeys().length === 0 || checkedColumns().length === 0;
+    teacherPrintBtn.disabled = studentKeys.length === 0 || checkedColumns().length === 0;
   }
 
   function renderPicker() {
@@ -579,7 +602,8 @@
     }).join('');
     var body = s.rows.map(function (r) {
       var cells = cols.map(function (c) {
-        return '<td class="' + c.cls + '">' + esc(r[c.id] || '—') + '</td>';
+        var val = c.id === 'studentNo' ? s.no : r[c.id];
+        return '<td class="' + c.cls + '">' + esc(val || '—') + '</td>';
       }).join('');
       return '<tr>' + cells + '</tr>';
     }).join('');
@@ -598,6 +622,32 @@
         '<div class="print-student-id">' + esc(studentLabel(s)) + '</div>' +
         '<p class="print-summary">지원 ' + s.rows.length + '건</p>' +
         renderStudentTable(s, cols) +
+        '</div>';
+    }).join('');
+
+    window.print();
+  });
+
+  teacherPrintBtn.addEventListener('click', function () {
+    var cols = checkedColumns();
+    if (!studentKeys.length || !cols.length) return;
+
+    var pages = [];
+    for (var i = 0; i < studentKeys.length; i += 2) {
+      pages.push(studentKeys.slice(i, i + 2));
+    }
+
+    printArea.innerHTML = pages.map(function (pair) {
+      var studentsHtml = pair.map(function (key) {
+        var s = students[key];
+        return '<div class="print-student teacher-student">' +
+          '<div class="print-student-id">' + esc(studentLabel(s)) + ' · 지원 ' + s.rows.length + '건</div>' +
+          renderStudentTable(s, cols) +
+          '</div>';
+      }).join('');
+      return '<div class="teacher-page">' +
+        '<div class="teacher-page-title">2026학년도 수시 원서접수 현황 (교사용)</div>' +
+        studentsHtml +
         '</div>';
     }).join('');
 
