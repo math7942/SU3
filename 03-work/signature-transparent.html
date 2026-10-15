@@ -75,8 +75,10 @@
         <select id="scale">
           <option value="1">1배 (원본)</option>
           <option value="2">2배</option>
-          <option value="4" selected>4배</option>
+          <option value="4">4배</option>
           <option value="6">6배</option>
+          <option value="8" selected>8배</option>
+          <option value="10">10배</option>
         </select>
       </label>
       <label>잉크 색
@@ -84,16 +86,18 @@
       </label>
     </div>
     <p class="hint">
-      획이 사라지면 배경 제거 강도를 낮추고, 배경 얼룩이 남으면 높여 보세요.
+      획이 사라지면 배경 제거 강도를 낮추고, 배경 얼룩이 남으면 높여 보세요.<br>
+      출력 크기를 작게(50px 등) 설정할수록 해상도 배율을 높여야 획이 뭉개지지 않고 선명하게 나옵니다.
     </p>
     <div class="row">
       <label><input type="checkbox" id="trimMargin" checked> 빈 여백 자동 자르기</label>
     </div>
     <div class="row">
       <label>출력 가로 크기
-        <input type="number" id="outWidth" min="50" max="3000" step="10" value="100"> px
+        <input type="number" id="outWidth" min="50" max="3000" step="10" value="50"> px
       </label>
-      <button type="button" class="preset-btn active" data-w="100">작게 100px</button>
+      <button type="button" class="preset-btn active" data-w="50">아주 작게 50px</button>
+      <button type="button" class="preset-btn" data-w="100">작게 100px</button>
       <button type="button" class="preset-btn" data-w="200">보통 200px</button>
       <button type="button" class="preset-btn" data-w="400">크게 400px</button>
       <button type="button" class="preset-btn" data-w="">원본 비율 그대로</button>
