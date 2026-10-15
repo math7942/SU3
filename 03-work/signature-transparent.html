@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>배경이 투명한 서명 이미지 만들기</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px;
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: #f4f5f7; color: #222;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.3rem; margin: 0 0 16px; }
+  .card {
+    background: #fff; border-radius: 12px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin: 12px 0; }
+  label { font-size: .9rem; }
+  input[type="range"] { width: 200px; vertical-align: middle; }
+  select, input[type="color"] { font-size: .9rem; padding: 4px 6px; }
+  .preview {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 220px; border-radius: 8px; overflow: hidden;
+    background-color: #fff;
+    background-image:
+      linear-gradient(45deg, #e5e5e5 25%, transparent 25%),
+      linear-gradient(-45deg, #e5e5e5 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e5e5e5 75%),
+      linear-gradient(-45deg, transparent 75%, #e5e5e5 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    border: 1px solid #ddd;
+  }
+  .preview canvas { max-width: 100%; max-height: 480px; height: auto; display: block; }
+  .empty { color: #888; font-size: .95rem; }
+  button {
+    font-size: .95rem; padding: 10px 18px; border: 0; border-radius: 8px;
+    background: #2563eb; color: #fff; cursor: pointer;
+  }
+  button:disabled { background: #9ca3af; cursor: default; }
+  .hint { font-size: .82rem; color: #666; margin-top: 8px; line-height: 1.5; }
+  input[type="file"] { font-size: .9rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>배경이 투명한 서명 이미지 만들기</h1>
+
+  <div class="card">
+    <input type="file" id="file" accept="image/*">
+    <p class="hint">
+      흰 배경의 서명 사진을 올리면 배경이 투명해집니다. 파일은 이 컴퓨터의 브라우저 안에서만 처리되며 어디에도 전송되지 않습니다.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>배경 제거 강도
+        <input type="range" id="threshold" min="120" max="235" value="200">
+        <span id="thresholdVal">200</span>
+      </label>
+    </div>
+    <div class="row">
+      <label>해상도 배율
+        <select id="scale">
+          <option value="1">1배 (원본)</option>
+          <option value="2">2배</option>
+          <option value="4" selected>4배</option>
+          <option value="6">6배</option>
+        </select>
+      </label>
+      <label>잉크 색
+        <input type="color" id="ink" value="#000000">
+      </label>
+    </div>
+    <p class="hint">
+      획이 사라지면 배경 제거 강도를 낮추고, 배경 얼룩이 남으면 높여 보세요.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="preview" id="preview">
+      <span class="empty">이미지를 올리면 여기에 미리보기가 표시됩니다.</span>
+    </div>
+    <div class="row" style="margin-top:16px;">
+      <button id="download" disabled>PNG로 저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const fileInput = document.getElementById('file');
+  const threshold = document.getElementById('threshold');
+  const thresholdVal = document.getElementById('thresholdVal');
+  const scaleSel = document.getElementById('scale');
+  const inkInput = document.getElementById('ink');
+  const preview = document.getElementById('preview');
+  const downloadBtn = document.getElementById('download');
+
+  let sourceImg = null;
+  let resultCanvas = null;
+
+  function hexToRgb(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
+  function process() {
+    if (!sourceImg) return;
+
+    const scale = parseInt(scaleSel.value, 10);
+    const lo = parseInt(threshold.value, 10); // 이 값보다 밝으면 투명
+    const hi = lo - 110;                       // 이 값보다 어두우면 완전 불투명
+    const [r0, g0, b0] = hexToRgb(inkInput.value);
+
+    // 1) 원본을 배율만큼 키워서 그리기 (부드러운 보간)
+    const w = sourceImg.naturalWidth * scale;
+    const h = sourceImg.naturalHeight * scale;
+    const tmp = document.createElement('canvas');
+    tmp.width = w; tmp.height = h;
+    const tctx = tmp.getContext('2d', { willReadFrequently: true });
+    tctx.imageSmoothingEnabled = true;
+    tctx.imageSmoothingQuality = 'high';
+    tctx.drawImage(sourceImg, 0, 0, w, h);
+
+    // 2) 픽셀별로 밝기 -> 알파값 변환
+    const imgData = tctx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const gray = (d[i] + d[i + 1] + d[i + 2]) / 3;
+      let a = (lo - gray) / (lo - hi);
+      a = Math.min(1, Math.max(0, a));
+      d[i] = r0;
+      d[i + 1] = g0;
+      d[i + 2] = b0;
+      d[i + 3] = Math.round(a * 255);
+    }
+    tctx.putImageData(imgData, 0, 0);
+
+    resultCanvas = tmp;
+    preview.innerHTML = '';
+    preview.appendChild(tmp);
+    downloadBtn.disabled = false;
+  }
+
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    img.onload = () => {
+      sourceImg = img;
+      process();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  });
+
+  threshold.addEventListener('input', () => {
+    thresholdVal.textContent = threshold.value;
+    process();
+  });
+  scaleSel.addEventListener('change', process);
+  inkInput.addEventListener('input', process);
+
+  downloadBtn.addEventListener('click', () => {
+    if (!resultCanvas) return;
+    resultCanvas.toBlob((blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'signature_transparent.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, 'image/png');
+  });
+</script>
+</body>
+</html>
