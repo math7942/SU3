@@ -1,0 +1,339 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>초과근무 계산기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: 엑셀 시트 형태. 제목 띠 → 기준 셀 → 열 문자(A~K)와 행 번호가 있는 격자 → 합계 행 */
+:root {
+  --bg: #ffffff;
+  --fg: #1f2a24;
+  --muted: #5c6b63;
+  --band: #217346;
+  --band-fg: #ffffff;
+  --head: #e9ede9;
+  --head-fg: #3a4a40;
+  --grid: #c9d1cb;
+  --calc: #f3f6f3;
+  --sel: #1b6b41;
+  --total: #e3efe7;
+  --danger: #b3261e;
+  --font-body: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+  --font-num: Consolas, "SF Mono", Menlo, "Noto Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161c18; --fg: #e3ebe5; --muted: #98a89d; --band: #1c5a38; --band-fg: #f1f7f3;
+    --head: #222b25; --head-fg: #b9c7be; --grid: #35423a; --calc: #1c241f; --sel: #5fcf93; --total: #1f3427; --danger: #f08d86;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161c18; --fg: #e3ebe5; --muted: #98a89d; --band: #1c5a38; --band-fg: #f1f7f3;
+  --head: #222b25; --head-fg: #b9c7be; --grid: #35423a; --calc: #1c241f; --sel: #5fcf93; --total: #1f3427; --danger: #f08d86;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.4;
+  padding-block: 0 40px; margin: 0;
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+.titlebar { background: var(--band); color: var(--band-fg); padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+.titlebar h1 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.titlebar span { font-size: 0.82rem; opacity: 0.85; }
+.body { padding: 14px max(16px, env(safe-area-inset-left, 0px)) 0; display: flex; flex-direction: column; gap: 14px; }
+
+.scroll { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; table-layout: fixed; }
+.rules { min-width: 560px; }
+.sheet { min-width: 880px; width: 100%; }
+th, td { border: 1px solid var(--grid); padding: 0; height: 30px; }
+th { background: var(--head); color: var(--head-fg); font-weight: 600; font-size: 0.82rem; text-align: center; padding: 0 6px; }
+th.letter { font-weight: 400; font-size: 0.74rem; color: var(--muted); height: 22px; }
+th.rn { width: 38px; font-weight: 400; color: var(--muted); font-size: 0.78rem; }
+.rules th { text-align: center; }
+.rules td input { text-align: center; }
+.hint { font-size: 0.8rem; color: var(--muted); }
+
+td input, td select {
+  width: 100%; height: 100%; min-height: 28px; border: 0; background: transparent; color: inherit;
+  font: inherit; padding: 0 8px; text-align: center; border-radius: 0;
+}
+td input[type="time"], td input[type="number"], td .mono { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+td select { text-align-last: center; appearance: none; -webkit-appearance: none; cursor: pointer; }
+td input:focus-visible, td select:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
+td input[type="checkbox"] { width: 18px; min-height: 18px; height: 18px; accent-color: var(--sel); vertical-align: middle; }
+td.in { background: var(--bg); }
+td.calc { background: var(--calc); text-align: right; padding: 0 10px; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.calc.final { font-weight: 700; }
+td.chk { text-align: center; }
+td.x { text-align: center; width: 34px; }
+.del { background: none; border: 0; color: var(--muted); font-size: 1.1rem; line-height: 1; cursor: pointer; width: 100%; height: 100%; }
+.del:hover { color: var(--danger); }
+.del:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
+tfoot td { background: var(--total); font-weight: 700; border-top: 2px solid var(--band); }
+tfoot td.lbl { text-align: center; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { background: var(--head); color: var(--fg); border: 1px solid var(--grid); border-radius: 3px; padding: 6px 14px; font: inherit; cursor: pointer; }
+.btn.main { background: var(--band); color: var(--band-fg); border-color: var(--band); font-weight: 600; }
+.btn:hover { filter: brightness(1.05); }
+.btn:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
+.toast { color: var(--sel); font-size: 0.85rem; min-height: 1.3em; }
+.fallback { width: 100%; min-height: 9rem; font-family: var(--font-num); font-size: 0.8rem; background: var(--bg); border: 1px solid var(--grid); padding: 8px; color: var(--fg); }
+.note { color: var(--muted); font-size: 0.82rem; max-width: 72ch; margin: 0; }
+</style>
+
+<div class="titlebar">
+  <h1>초과근무 계산기</h1>
+  <span>시작·완료시간과 방과후 차시를 입력하면 회색 칸이 자동 계산됩니다.</span>
+</div>
+
+<div class="body">
+  <div class="scroll">
+    <table class="rules" aria-label="계산 기준">
+      <colgroup><col style="width:38px"><col><col><col><col></colgroup>
+      <tr><th class="rn"></th><th>아침 인정 종료</th><th>오후 인정 시작</th><th>기본 공제(분)</th><th>방과후 1차시(분)</th></tr>
+      <tr>
+        <th class="rn">1</th>
+        <td class="in"><input id="amEnd" type="time" value="08:30" aria-label="아침 인정 종료"></td>
+        <td class="in"><input id="pmStart" type="time" value="16:30" aria-label="오후 인정 시작"></td>
+        <td class="in"><input id="baseMin" type="number" min="0" step="5" value="60" aria-label="기본 공제 분"></td>
+        <td class="in"><input id="slotMin" type="number" min="0" step="5" value="50" aria-label="방과후 1차시 분"></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="scroll">
+    <table class="sheet" aria-label="날짜별 초과근무">
+      <colgroup>
+        <col style="width:38px"><col style="width:150px"><col style="width:100px"><col style="width:100px"><col style="width:90px"><col style="width:80px">
+        <col style="width:90px"><col style="width:90px"><col style="width:90px"><col style="width:130px"><col style="width:34px">
+      </colgroup>
+      <thead>
+        <tr><th class="letter rn"></th><th class="letter">A</th><th class="letter">B</th><th class="letter">C</th><th class="letter">D</th><th class="letter">E</th><th class="letter">F</th><th class="letter">G</th><th class="letter">H</th><th class="letter">I</th><th class="letter"></th></tr>
+        <tr><th class="rn"></th><th>일자</th><th>시작시간</th><th>완료시간</th><th>방과후(차시)</th><th>기본공제</th><th>합계(분)</th><th>공제(분)</th><th>최종(분)</th><th>최종(시간·분)</th><th></th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+      <tfoot>
+        <tr>
+          <th class="rn" id="footRn"></th>
+          <td class="lbl" colspan="5">합계</td>
+          <td class="calc" id="tTotal">0</td>
+          <td class="calc" id="tDeduct">0</td>
+          <td class="calc" id="tFinal">0</td>
+          <td class="calc" id="tHm">0분</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="actions">
+    <button class="btn main" id="add" type="button">행 추가</button>
+    <button class="btn" id="copy" type="button">표 복사</button>
+    <button class="btn" id="reset" type="button">모두 지우기</button>
+    <span class="toast" id="toast" role="status"></span>
+  </div>
+  <div id="fallbackBox" hidden>
+    <p class="note">자동 복사가 되지 않았습니다. 아래 내용을 선택해서 복사하세요.</p>
+    <textarea class="fallback" id="fallback" readonly></textarea>
+  </div>
+
+  <p class="note">아침은 시작시간부터 아침 인정 종료까지, 오후는 오후 인정 시작부터 완료시간까지만 셉니다. 합계에서 기본 공제와 방과후 공제(차시 × 차시당 분)를 빼면 최종 시간이 되고, 0 아래로 내려가면 0분으로 표시합니다. 방과후는 하지 않았으면 비워 두고, 했으면 1 또는 2를 고르세요. 입력한 내용은 이 브라우저에만 저장됩니다.</p>
+</div>
+
+<script>
+(function () {
+  var KEY = "overtime-calc-v3";
+  var DAYS = ["일", "월", "화", "수", "목", "금", "토"];
+  var $ = function (id) { return document.getElementById(id); };
+  var rowsEl = $("rows");
+
+  var sample = [{ d: "", s: "", e: "", a: 0, b: true }];
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && Array.isArray(o.rows)) {
+          if (o.rules) {
+            $("amEnd").value = o.rules.am || "08:30";
+            $("pmStart").value = o.rules.pm || "16:30";
+            $("baseMin").value = o.rules.base != null ? o.rules.base : 60;
+            $("slotMin").value = o.rules.slot != null ? o.rules.slot : 50;
+          }
+          return o.rows;
+        }
+      }
+    } catch (err) {}
+    return sample;
+  }
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        rules: { am: $("amEnd").value, pm: $("pmStart").value, base: $("baseMin").value, slot: $("slotMin").value },
+        rows: collect()
+      }));
+    } catch (err) {}
+  }
+
+  function toMin(v) {
+    if (!v || v.indexOf(":") < 0) return null;
+    var p = v.split(":");
+    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+  }
+  function hm(m) {
+    var h = Math.floor(m / 60), r = m % 60;
+    if (h === 0) return r + "분";
+    if (r === 0) return h + "시간";
+    return h + "시간 " + r + "분";
+  }
+  function fmt(n) { return n.toLocaleString("ko-KR"); }
+  function dayLabel(v) {
+    if (!v) return "";
+    var d = new Date(v + "T00:00:00");
+    return isNaN(d.getTime()) ? "" : "(" + DAYS[d.getDay()] + ")";
+  }
+
+  var uid = 0;
+  function addRow(r) {
+    var i = uid++;
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<th class="rn"></th>' +
+      '<td class="in"><input type="date" class="f-d" id="d' + i + '" aria-label="일자" value="' + (r.d || "") + '"></td>' +
+      '<td class="in"><input type="time" class="f-s" id="s' + i + '" aria-label="시작시간" value="' + (r.s || "") + '"></td>' +
+      '<td class="in"><input type="time" class="f-e" id="e' + i + '" aria-label="완료시간" value="' + (r.e || "") + '"></td>' +
+      '<td class="in"><select class="f-a" id="a' + i + '" aria-label="방과후 차시"><option value="0"></option><option value="1">1</option><option value="2">2</option></select></td>' +
+      '<td class="in chk"><input type="checkbox" class="f-b" id="b' + i + '" aria-label="기본 공제 적용"></td>' +
+      '<td class="calc o-total">-</td>' +
+      '<td class="calc o-deduct">-</td>' +
+      '<td class="calc final o-final">-</td>' +
+      '<td class="calc final o-hm">-</td>' +
+      '<td class="x"><button type="button" class="del" aria-label="이 행 삭제">×</button></td>';
+    tr.querySelector(".f-a").value = String(r.a || 0);
+    tr.querySelector(".f-b").checked = r.b !== false;
+    rowsEl.appendChild(tr);
+    return tr;
+  }
+
+  function numberRows() {
+    var n = rowsEl.children.length;
+    Array.prototype.forEach.call(rowsEl.children, function (tr, idx) {
+      tr.querySelector(".rn").textContent = String(idx + 2);
+    });
+    $("footRn").textContent = String(n + 2);
+  }
+
+  function collect() {
+    return Array.prototype.map.call(rowsEl.children, function (tr) {
+      return {
+        d: tr.querySelector(".f-d").value,
+        s: tr.querySelector(".f-s").value,
+        e: tr.querySelector(".f-e").value,
+        a: parseInt(tr.querySelector(".f-a").value, 10) || 0,
+        b: tr.querySelector(".f-b").checked
+      };
+    });
+  }
+
+  function calc(r) {
+    var s = toMin(r.s), e = toMin(r.e);
+    if (s === null || e === null) return null;
+    var am = toMin($("amEnd").value), pm = toMin($("pmStart").value);
+    var base = parseInt($("baseMin").value, 10) || 0;
+    var slot = parseInt($("slotMin").value, 10) || 0;
+    var morning = Math.max(0, Math.min(am, e) - s);
+    var afternoon = Math.max(0, e - Math.max(pm, s));
+    var total = morning + afternoon;
+    var deduct = (r.b ? base : 0) + r.a * slot;
+    return { total: total, deduct: deduct, final: Math.max(0, total - deduct) };
+  }
+
+  function update() {
+    var sumT = 0, sumF = 0;
+    var data = collect();
+    Array.prototype.forEach.call(rowsEl.children, function (tr, idx) {
+      var c = calc(data[idx]);
+      var T = tr.querySelector(".o-total"), D = tr.querySelector(".o-deduct"), F = tr.querySelector(".o-final"), H = tr.querySelector(".o-hm");
+      if (!c) { T.textContent = D.textContent = F.textContent = H.textContent = "-"; return; }
+      T.textContent = fmt(c.total);
+      D.textContent = c.deduct ? "-" + fmt(c.deduct) : "0";
+      F.textContent = fmt(c.final);
+      H.textContent = hm(c.final);
+      sumT += c.total; sumF += c.final;
+    });
+    $("tTotal").textContent = fmt(sumT);
+    $("tDeduct").textContent = "-" + fmt(sumT - sumF);
+    $("tFinal").textContent = fmt(sumF);
+    $("tHm").textContent = hm(sumF);
+    numberRows();
+    save();
+  }
+
+  function summary() {
+    var lines = ["일자\t시작시간\t완료시간\t합계(분)\t기본공제\t방과후 공제\t최종(분)\t최종(시간·분)"];
+    var base = parseInt($("baseMin").value, 10) || 0, slot = parseInt($("slotMin").value, 10) || 0;
+    var sT = 0, sF = 0;
+    collect().forEach(function (r) {
+      var c = calc(r);
+      if (!c) return;
+      sT += c.total; sF += c.final;
+      lines.push([r.d + dayLabel(r.d), r.s, r.e, c.total, r.b ? -base : 0, r.a ? -(r.a * slot) : 0, c.final, hm(c.final)].join("\t"));
+    });
+    lines.push(["합계", "", "", sT, "", "", sF, hm(sF)].join("\t"));
+    return lines.join("\n");
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    $("toast").textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $("toast").textContent = ""; }, 2500);
+  }
+
+  rowsEl.addEventListener("input", update);
+  rowsEl.addEventListener("change", update);
+  rowsEl.addEventListener("click", function (ev) {
+    var t = ev.target;
+    if (t && t.classList && t.classList.contains("del")) {
+      rowsEl.removeChild(t.closest("tr"));
+      update();
+    }
+  });
+  ["amEnd", "pmStart", "baseMin", "slotMin"].forEach(function (id) { $(id).addEventListener("input", update); });
+
+  $("add").addEventListener("click", function () {
+    var tr = addRow({ d: "", s: "", e: "", a: 0, b: true });
+    update();
+    tr.querySelector(".f-d").focus();
+  });
+  $("reset").addEventListener("click", function () {
+    rowsEl.innerHTML = "";
+    addRow({ d: "", s: "", e: "", a: 0, b: true });
+    update();
+    toast("목록을 비웠습니다.");
+  });
+  $("copy").addEventListener("click", function () {
+    var text = summary();
+    function fb() {
+      $("fallbackBox").hidden = false;
+      var ta = $("fallback");
+      ta.value = text; ta.focus(); ta.select();
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () {
+        $("fallbackBox").hidden = true;
+        toast("표를 복사했습니다. 엑셀이나 한글에 붙여 넣을 수 있습니다.");
+      }, fb);
+    } catch (err) { fb(); }
+  });
+
+  load().forEach(addRow);
+  update();
+})();
+</script>
+
+</body></html>
