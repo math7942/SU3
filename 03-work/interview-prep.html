@@ -415,6 +415,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     {id:'type1', label:'전형유형', get:function(r){ return r.type1 || '미기재'; }},
     {id:'type2', label:'전형명', get:function(r){ return r.type2 || '미기재'; }},
     {id:'region', label:'지역', get:function(r){ return r.region || '미기재'; }},
+    {id:'selectType', label:'선발방법', get:function(r){ return r.selectType || '미기재'; }},
     {id:'student', label:'번호', get:function(r){ return studentLabel(r); }},
     {id:'month', label:'일정 월', get:function(r){
       var d = primaryDate(r);
@@ -622,6 +623,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         major: cellStr(get(row,'모집단위')) || '',
         track: cellStr(get(row,'계열')) || '미분류',
         region: cellStr(get(row,'지역')) || '',
+        selectType: cellStr(get(row,'선발유형')) || '',
         interview: parseRangeJS(get(row,'면접일자')),
         essay: parseRangeJS(get(row,'논술일자')),
         practical: parseRangeJS(get(row,'실기일자')),
@@ -717,7 +719,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       {id:'type2', label:'전형명'},
       {id:'major', label:'모집단위'},
       {id:'track', label:'계열'},
-      {id:'region', label:'지역'}
+      {id:'region', label:'지역'},
+      {id:'selectType', label:'선발방법'}
     ];
     var scheduleCols = selectedTypes().map(function(t){
       return {id:'sched_' + t.id, label: t.label + '일자', field: t.id};
