@@ -526,6 +526,31 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     window.print();
   });
 
+  // 모집단위 글자가 3줄 이상으로 넘칠 때만 글씨를 줄여서 2줄 안에 들어오게 함
+  function fitMajorCells(){
+    Array.prototype.forEach.call(resultEl.querySelectorAll('td.major-cell'), function(td){
+      td.style.fontSize = '';
+      var cs = getComputedStyle(td);
+      var padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      var size = parseFloat(cs.fontSize);
+      var minSize = Math.max(8, size - 4);
+      while(size > minSize){
+        cs = getComputedStyle(td);
+        var lh = parseFloat(cs.lineHeight);
+        if(!lh || isNaN(lh)) lh = size * 1.3;
+        var lines = Math.round((td.scrollHeight - padY) / lh);
+        if(lines <= 2) break;
+        size -= 0.5;
+        td.style.fontSize = size.toFixed(1) + 'px';
+      }
+    });
+  }
+  function resetMajorCells(){
+    Array.prototype.forEach.call(resultEl.querySelectorAll('td.major-cell'), function(td){ td.style.fontSize = ''; });
+  }
+  window.addEventListener('beforeprint', fitMajorCells);
+  window.addEventListener('afterprint', resetMajorCells);
+
   function fmtFullDate(range){
     if(!range) return '';
     var s = fmtOne(range.start);
@@ -764,6 +789,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
           return '<td><span class="track-dot" style="--dot:' + color + '"></span>' + esc(r.track) + '</td>';
         }
         var v = r[c.id] || '—';
+        if(c.id === 'major') return '<td class="major-cell">' + esc(v) + '</td>';
         return '<td>' + esc(v) + '</td>';
       }).join('');
       return '<tr><td class="mono student-cell">' + esc(studentLabel(r)) + '</td>' + cells + '</tr>';
