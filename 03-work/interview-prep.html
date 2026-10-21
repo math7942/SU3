@@ -258,6 +258,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
   .group-block{ margin-bottom:8px; }
   .result > .group-block[data-dim="month"] + .group-block[data-dim="month"]{ break-before:page; page-break-before:always; }
   .sched-cell{ width:56px; }
+  .table-wrap{ overflow:visible; border:none; }
 
   body.print-compact .print-header h1{ font-size:17px !important; margin-bottom:2px !important; }
   body.print-compact #printMeta, body.print-compact #printDate{ font-size:10.5px !important; }
@@ -295,7 +296,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       <div class="file-controls">
         <label class="btn btn-primary" for="fileInput">엑셀 불러오기</label>
         <input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
-        <button type="button" class="btn" id="printBtn">인쇄</button>
+        <button type="button" class="btn" id="printBtn">전체 인쇄</button>
+        <button type="button" class="btn" id="printMonthBtn">월별 인쇄</button>
         <button type="button" class="btn" id="downloadBtn">엑셀 다운로드</button>
       </div>
     </div>
@@ -502,6 +504,25 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
 
   printBtn.addEventListener('click', function(){
     Array.prototype.forEach.call(resultEl.querySelectorAll('details'), function(d){ d.open = true; });
+    window.print();
+  });
+
+  var printMonthBtn = document.getElementById('printMonthBtn');
+  printMonthBtn.addEventListener('click', function(){
+    if(!state.filteredRows.length){
+      window.print();
+      return;
+    }
+    var prevGroupFields = state.groupFields.slice();
+    state.groupFields = ['month'];
+    render();
+    Array.prototype.forEach.call(resultEl.querySelectorAll('details'), function(d){ d.open = true; });
+    function restore(){
+      window.removeEventListener('afterprint', restore);
+      state.groupFields = prevGroupFields;
+      render();
+    }
+    window.addEventListener('afterprint', restore);
     window.print();
   });
 
