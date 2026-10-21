@@ -75,13 +75,14 @@ tfoot td { background: var(--total); font-weight: 700; border-top: 2px solid var
 tfoot td.lbl { text-align: center; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.btn { background: var(--head); color: var(--fg); border: 1px solid var(--grid); border-radius: 3px; padding: 6px 14px; font: inherit; cursor: pointer; }
+.btn { background: var(--head); color: var(--fg); border: 1px solid var(--grid); border-radius: 3px; padding: 6px 14px; font: inherit; cursor: pointer; display: inline-block; text-decoration: none; }
 .btn.main { background: var(--band); color: var(--band-fg); border-color: var(--band); font-weight: 600; }
 .btn:hover { filter: brightness(1.05); }
 .btn:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
 .toast { color: var(--sel); font-size: 0.85rem; min-height: 1.3em; }
 .fallback { width: 100%; min-height: 9rem; font-family: var(--font-num); font-size: 0.8rem; background: var(--bg); border: 1px solid var(--grid); padding: 8px; color: var(--fg); }
 .note { color: var(--muted); font-size: 0.82rem; max-width: 72ch; margin: 0; }
+.note a { color: var(--sel); font-weight: 600; }
 </style>
 
 <div class="titlebar">
@@ -90,6 +91,7 @@ tfoot td.lbl { text-align: center; }
 </div>
 
 <div class="body">
+  <p class="note">💾 인터넷 없이 쓰고 싶다면 <a href="downloads/overtime-calc.exe" download="초과근무계산기.exe">Windows용 프로그램(.exe) 내려받기</a> — 같은 계산기를 컴퓨터에 설치해 오프라인으로 쓸 수 있습니다.</p>
   <div class="scroll">
     <table class="rules" aria-label="계산 기준">
       <colgroup><col style="width:38px"><col><col><col><col></colgroup>
