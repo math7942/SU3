@@ -180,6 +180,7 @@
   var pendingFile = null;
   var applyReady = false;
   var interviewReady = false;
+  var forwarding = false;
 
   function setTab(which) {
     frameApply.classList.toggle('show', which === 'apply');
@@ -199,6 +200,22 @@
     }
   }
 
+  // 각 도구 안에 있던 "엑셀 불러오기" 버튼은 숨기고, 맨 위의 업로드 하나만 쓰도록 안내
+  function hideInnerUpload(frame) {
+    try {
+      var label = frame.contentDocument.querySelector('label[for="fileInput"]');
+      if (label) label.style.display = 'none';
+    } catch (e) {
+      // 같은 출처가 아니거나 아직 준비되지 않은 경우 무시
+    }
+  }
+
+  function setStatus(file) {
+    fileStatus.innerHTML = '불러온 파일: <strong>' + file.name.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    }) + '</strong> · 두 도구 모두에 반영했습니다.';
+  }
+
   function forwardFileToFrame(frame, file) {
     try {
       var doc = frame.contentDocument;
@@ -206,9 +223,12 @@
       if (!input) return;
       var dt = new DataTransfer();
       dt.items.add(file);
+      forwarding = true;
       input.files = dt.files;
       input.dispatchEvent(new Event('change', { bubbles: true }));
+      forwarding = false;
     } catch (e) {
+      forwarding = false;
       console.error('파일 전달 중 오류', e);
     }
   }
@@ -219,14 +239,38 @@
     if (interviewReady) forwardFileToFrame(frameInterview, pendingFile);
   }
 
+  // 혹시라도 숨긴 버튼 대신 도구 안쪽에서 직접 파일을 선택하더라도,
+  // 반대쪽 도구로도 똑같이 전달되도록 하는 안전장치
+  function watchInnerUpload(frame, otherFrame) {
+    try {
+      var input = frame.contentDocument.getElementById('fileInput');
+      if (!input || input.dataset.combinedWatched) return;
+      input.dataset.combinedWatched = '1';
+      input.addEventListener('change', function (e) {
+        if (forwarding) return; // 반대쪽으로 전달하는 중에 발생한 이벤트는 무시(무한 루프 방지)
+        var file = e.target.files && e.target.files[0];
+        if (!file) return;
+        pendingFile = file;
+        setStatus(file);
+        forwardFileToFrame(otherFrame, file);
+      });
+    } catch (e) {
+      // 같은 출처가 아니거나 아직 준비되지 않은 경우 무시
+    }
+  }
+
   frameApply.addEventListener('load', function () {
     applyReady = true;
     hideInnerBack(frameApply);
+    hideInnerUpload(frameApply);
+    watchInnerUpload(frameApply, frameInterview);
     tryForward();
   });
   frameInterview.addEventListener('load', function () {
     interviewReady = true;
     hideInnerBack(frameInterview);
+    hideInnerUpload(frameInterview);
+    watchInnerUpload(frameInterview, frameApply);
     tryForward();
   });
 
@@ -234,9 +278,7 @@
     var file = e.target.files && e.target.files[0];
     if (!file) return;
     pendingFile = file;
-    fileStatus.innerHTML = '불러온 파일: <strong>' + file.name.replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    }) + '</strong> · 두 도구 모두에 반영했습니다.';
+    setStatus(file);
     tryForward();
   });
 </script>
