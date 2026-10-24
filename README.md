@@ -69,6 +69,7 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 | 업무 도구 | `03-work/apply-interview-combined.html` | 원서접수+면접 통합 출력 (엑셀 한 번 업로드) |
 | 업무 도구 | `03-work/signature-transparent.html` | 배경이 투명한 서명 이미지 만들기 |
 | 업무 도구 | `03-work/overtime-calc.html` | 초과근무 계산기 |
+| 업무 도구 | 연수등록부 (claude.ai 아티팩트, 링크만 연결) | 연수자 명단 업로드 → 서명 링크 생성 → 실시간 서명 수합 |
 
 AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 가이드·도구로 전체 공개됐습니다. 수수는 아직 비어 있습니다.
 
