@@ -69,7 +69,7 @@ assets/site.css         모든 페이지가 함께 쓰는 스타일
 | 업무 도구 | `03-work/apply-interview-combined.html` | 원서접수+면접 통합 출력 (엑셀 한 번 업로드) |
 | 업무 도구 | `03-work/signature-transparent.html` | 배경이 투명한 서명 이미지 만들기 |
 | 업무 도구 | `03-work/overtime-calc.html` | 초과근무 계산기 |
-| 업무 도구 | 연수등록부 (claude.ai 아티팩트, 링크만 연결) | 연수자 명단 업로드 → 서명 링크 생성 → 실시간 서명 수합 |
+| 업무 도구 | `03-work/training-roster.html` | 연수등록부 (교직원 명단 관리 → 교직원/교사 유형별 등록부 생성 → 로그인 없이 서명) |
 
 AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 가이드·도구로 전체 공개됐습니다. 수수는 아직 비어 있습니다.
 
@@ -292,6 +292,226 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 
 시트를 좀 더 보기 좋게 꾸미고 싶다면: 1행을 선택해 굵게 하고 **보기 → 고정 → 1행**으로 머리글을
 고정하면 스크롤해도 열 제목이 계속 보입니다.
+
+## 연수등록부 도구 설정 (`03-work/training-roster.html`)
+
+이 도구도 시험범위 수합 도구와 마찬가지로 구글 시트 + Apps Script를 저장소로 씁니다.
+연수자가 로그인 없이 서명할 수 있어야 하기 때문입니다 (Claude 계정 로그인이 필요 없습니다).
+
+1. 데이터를 담을 구글 시트가 이미 만들어져 있습니다: `연수등록부 저장소`
+   (`https://docs.google.com/spreadsheets/d/1Kwt7XlArEoWG5fjJzYkrApZ_zcaXK9fyPpLOtTAaZJc/edit`)
+   시트 3개로 구성됩니다.
+   - `Staff` — 교직원 명단(관리자가 입력·삭제). 열: `id, school, position, subject, name, order`
+   - `Rosters` — 생성된 연수등록부. 열: `id, title, type, department, datetime, entries, createdAt`
+     (`entries`는 등록부를 만든 시점의 교직원/교사 명단을 그대로 찍어 둔 값이라, 나중에 `Staff`를
+     수정해도 이미 만든 등록부는 바뀌지 않습니다.)
+   - `Signatures` — 서명 기록. 열: `rosterId, idx, name, dataUrl, signedAt`
+2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기존 코드를 전부 지우고 아래 코드를
+   붙여넣습니다. 맨 위 `ADMIN_PASSWORD`는 담당자들만 아는 값으로 반드시 바꿔주세요 — 교직원 명단
+   관리와 연수등록부 생성 모두 이 비밀번호로 보호됩니다. 서명 자체는 비밀번호 없이 누구나 할 수
+   있습니다(링크만 있으면 됩니다).
+
+   ```js
+   var ADMIN_PASSWORD = "여기에_비밀번호를_정하세요"; // 반드시 바꾸세요
+
+   function doGet(e) {
+     var action = e.parameter.action;
+     var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+     if (action === "roster") {
+       var roster = findRoster(ss, e.parameter.id);
+       if (!roster) return json({ ok: false, error: "등록부를 찾을 수 없습니다" });
+       return json({ ok: true, roster: roster, signatures: getSignatures(ss, roster.id) });
+     }
+     if (action === "list") {
+       if (e.parameter.password !== ADMIN_PASSWORD) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       return json({ ok: true, rosters: listRosters(ss) });
+     }
+     if (action === "staffList") {
+       if (e.parameter.password !== ADMIN_PASSWORD) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       return json({ ok: true, staff: listStaff(ss) });
+     }
+     return json({ ok: false, error: "알 수 없는 요청입니다" });
+   }
+
+   function doPost(e) {
+     var payload = JSON.parse(e.postData.contents);
+     var ss = SpreadsheetApp.getActiveSpreadsheet();
+     var action = payload.action;
+
+     if (action === "createRoster") {
+       if (payload.password !== ADMIN_PASSWORD) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       var title = String(payload.title || "").trim();
+       var type = payload.type === "teacher" ? "teacher" : "staff";
+       if (!title) return json({ ok: false, error: "연수명을 입력해주세요" });
+       var staff = listStaff(ss);
+       var entries = staff
+         .filter(function (s) { return type === "teacher" ? s.position === "교사" : true; })
+         .map(function (s) { return { school: s.school, position: s.position, subject: s.subject, name: s.name }; });
+       if (!entries.length) return json({ ok: false, error: "교직원 명단이 비어 있습니다. 먼저 교직원 명단을 등록해주세요." });
+       var id = Utilities.getUuid();
+       getSheet(ss, "Rosters").appendRow([
+         id, title, type, payload.department || "", payload.datetime || "",
+         JSON.stringify(entries), new Date().toISOString()
+       ]);
+       return json({ ok: true, id: id });
+     }
+
+     if (action === "sign") {
+       var rosterId = payload.rosterId;
+       var idx = payload.index;
+       var dataUrl = payload.dataUrl || "";
+       if (!rosterId || idx === undefined || idx === null || !dataUrl) {
+         return json({ ok: false, error: "잘못된 요청입니다" });
+       }
+       var roster = findRoster(ss, rosterId);
+       if (!roster) return json({ ok: false, error: "등록부를 찾을 수 없습니다" });
+       if (idx < 0 || idx >= roster.entries.length) return json({ ok: false, error: "잘못된 요청입니다" });
+
+       var sheet = getSheet(ss, "Signatures");
+       var data = sheet.getDataRange().getValues();
+       for (var r = 1; r < data.length; r++) {
+         if (String(data[r][0]) === String(rosterId) && String(data[r][1]) === String(idx)) {
+           return json({ ok: false, error: "이미 서명한 사람입니다" });
+         }
+       }
+       var displayName = String(payload.name || "").trim() || roster.entries[idx].name || "";
+       sheet.appendRow([rosterId, idx, displayName, dataUrl, new Date().toISOString()]);
+       return json({ ok: true });
+     }
+
+     if (action === "addStaff") {
+       if (payload.password !== ADMIN_PASSWORD) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       if (!String(payload.name || "").trim()) return json({ ok: false, error: "성명을 입력해주세요" });
+       appendStaffRow(ss, payload);
+       return json({ ok: true });
+     }
+
+     if (action === "addStaffBulk") {
+       if (payload.password !== ADMIN_PASSWORD) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       var rows = payload.rows || [];
+       rows.forEach(function (r) { if (String(r.name || "").trim()) appendStaffRow(ss, r); });
+       return json({ ok: true, added: rows.length });
+     }
+
+     if (action === "deleteStaff") {
+       if (payload.password !== ADMIN_PASSWORD) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       var sheet2 = getSheet(ss, "Staff");
+       var data2 = sheet2.getDataRange().getValues();
+       for (var r2 = 1; r2 < data2.length; r2++) {
+         if (String(data2[r2][0]) === String(payload.id)) {
+           sheet2.deleteRow(r2 + 1);
+           return json({ ok: true });
+         }
+       }
+       return json({ ok: false, error: "대상을 찾지 못했습니다" });
+     }
+
+     return json({ ok: false, error: "알 수 없는 요청입니다" });
+   }
+
+   function appendStaffRow(ss, r) {
+     var sheet = getSheet(ss, "Staff");
+     var id = Utilities.getUuid();
+     var lastRow = sheet.getLastRow();
+     sheet.appendRow([id, r.school || "", r.position || "", r.subject || "", r.name || "", lastRow]);
+   }
+
+   function getSheet(ss, name) {
+     var sheet = ss.getSheetByName(name);
+     if (!sheet) {
+       sheet = ss.insertSheet(name);
+       if (name === "Rosters") sheet.appendRow(["id", "title", "type", "department", "datetime", "entries", "createdAt"]);
+       if (name === "Signatures") sheet.appendRow(["rosterId", "idx", "name", "dataUrl", "signedAt"]);
+       if (name === "Staff") sheet.appendRow(["id", "school", "position", "subject", "name", "order"]);
+     }
+     return sheet;
+   }
+
+   function findRoster(ss, id) {
+     if (!id) return null;
+     var data = getSheet(ss, "Rosters").getDataRange().getValues();
+     for (var r = 1; r < data.length; r++) {
+       if (String(data[r][0]) === String(id)) {
+         return {
+           id: data[r][0],
+           title: data[r][1],
+           type: data[r][2],
+           department: data[r][3],
+           datetime: data[r][4],
+           entries: JSON.parse(data[r][5] || "[]"),
+           createdAt: data[r][6]
+         };
+       }
+     }
+     return null;
+   }
+
+   function listRosters(ss) {
+     var data = getSheet(ss, "Rosters").getDataRange().getValues();
+     var sigData = getSheet(ss, "Signatures").getDataRange().getValues();
+     var counts = {};
+     for (var s = 1; s < sigData.length; s++) {
+       var rid = String(sigData[s][0]);
+       counts[rid] = (counts[rid] || 0) + 1;
+     }
+     var out = [];
+     for (var r = 1; r < data.length; r++) {
+       var id = String(data[r][0]);
+       var entries = JSON.parse(data[r][5] || "[]");
+       out.push({
+         id: id, title: data[r][1], type: data[r][2], department: data[r][3], datetime: data[r][4],
+         total: entries.length, createdAt: data[r][6], signedCount: counts[id] || 0
+       });
+     }
+     out.sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; });
+     return out;
+   }
+
+   function listStaff(ss) {
+     var data = getSheet(ss, "Staff").getDataRange().getValues();
+     var out = [];
+     for (var r = 1; r < data.length; r++) {
+       if (!data[r][0]) continue;
+       out.push({ id: data[r][0], school: data[r][1], position: data[r][2], subject: data[r][3], name: data[r][4], order: data[r][5] });
+     }
+     out.sort(function (a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0); });
+     return out;
+   }
+
+   function getSignatures(ss, rosterId) {
+     var data = getSheet(ss, "Signatures").getDataRange().getValues();
+     var out = [];
+     for (var r = 1; r < data.length; r++) {
+       if (String(data[r][0]) === String(rosterId)) {
+         out.push({ idx: Number(data[r][1]), name: data[r][2], dataUrl: data[r][3], signedAt: data[r][4] });
+       }
+     }
+     return out;
+   }
+
+   function json(obj) {
+     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+   }
+   ```
+
+3. 오른쪽 위 **배포 → 새 배포**를 누르고, 유형은 **웹앱**을 선택합니다.
+   - 실행 계정: **나**
+   - 액세스 권한이 있는 사용자: **모든 사용자** (이래야 연수자가 로그인 없이 서명할 수 있습니다)
+4. 배포하면 나오는 웹앱 URL(`https://script.google.com/macros/s/.../exec`)을 복사합니다.
+5. `03-work/training-roster.html` 파일 맨 아래 `<script>`의 `CONFIG.APPS_SCRIPT_URL` 값에
+   그 URL을 붙여넣고 저장합니다.
+
+이미 배포해 두었다면: **배포 → 배포 관리 → 연필(수정) 아이콘 → 버전: 새 버전 → 배포**로
+코드만 새로 반영하면 됩니다 (URL은 그대로 유지).
+
+**사용 흐름**: 담당자가 페이지를 열어 "교직원 명단 관리"에서 비밀번호를 입력하고 교직원을
+한 명씩 추가하거나(소속·직위·과목·성명) 엑셀 파일로 한 번에 올립니다(소속/직위/과목/성명 열이
+있는 표를 자동으로 인식하고, 못 찾으면 이름 한 줄씩으로 받아 "빈 칸 한번에 채우기"로 소속·직위를
+일괄 적용할 수 있습니다). 이후 각 업무 담당자는 홈 화면에서 "교직원 전체" 또는 "교사만" 유형과
+연수명·담당부서·일시, 비밀번호만 입력하면 그 시점의 교직원 명단이 그대로 복사되어 등록부가
+만들어지고, 전용 서명 링크가 생깁니다. 그 링크를 연수자들에게 보내면 누구나(로그인 없이) 자기
+줄을 찾아 서명할 수 있습니다.
 
 ## 도구를 추가하려면
 
