@@ -142,8 +142,6 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
 .ledger-head h2{ margin:0; font-family:var(--font-display); font-size:19px; text-wrap:balance; }
 .ledger-meta{ margin:0; font-size:13px; color:var(--ink-soft); }
 .ledger-progress{ margin:6px 0 0; font-size:12.5px; font-weight:700; color:var(--accent); font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
-.print-only{ display:none; }
-.roll-unsigned{ font-size:12px; color:var(--ink-soft); }
 
 .roll{ list-style:none; margin:0; padding:0; }
 .roll-row{ display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid var(--rule); flex-wrap:wrap; }
@@ -179,14 +177,23 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
   .roster-actions{ width:100%; }
   .roster-actions .btn{ flex:1; }
 }
+.print-ledger{ display:none; }
 @media print{
   body{ background:#fff; padding:0; }
   .page{ max-width:none; }
-  .back, .share-box, header.hero, #setupBanner, .screen-only{ display:none !important; }
-  .print-only{ display:inline; }
-  .ledger{ box-shadow:none; border-color:#999; }
-  .roll-row{ break-inside:avoid; }
-  .sig-thumb{ height:28px; }
+  .back, .share-box, header.hero, #setupBanner, .screen-only, .ledger-head, .roll{ display:none !important; }
+  .ledger{ box-shadow:none; border:none; margin:0; }
+  .print-ledger{ display:block; }
+  .print-head{ display:flex; align-items:baseline; justify-content:center; gap:28px; margin:0 0 14px; }
+  .print-head h1{ margin:0; font-family:var(--font-display); font-size:20px; }
+  .print-school{ font-size:13px; font-weight:600; white-space:nowrap; }
+  .print-fields{ display:flex; justify-content:space-between; gap:16px; margin:0 0 10px; font-size:12.5px; font-weight:600; }
+  .print-table{ width:100%; border-collapse:collapse; font-size:11px; }
+  .print-table th, .print-table td{ border:1px solid #000; padding:4px 6px; text-align:center; }
+  .print-table thead th{ background:#FFFF00; font-weight:700; }
+  .print-table td.print-name{ text-align:left; }
+  .print-table tr{ break-inside:avoid; }
+  .print-sig-img{ height:22px; display:block; margin:0 auto; }
 }
 </style>
 </head>
@@ -286,6 +293,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
           '<a class="panel-link" href="#staff">교직원 명단 관리 →</a>' +
         '</div>' +
         '<form id="createForm">' +
+          '<label class="field"><span>학교명</span><input type="text" id="fSchool" placeholder="예: 운남고등학교" required></label>' +
           '<div class="field">' +
             '<span>명단 유형</span>' +
             '<div class="radio-group" id="typeGroup">' +
@@ -328,16 +336,17 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       e.preventDefault();
       errorEl.hidden = true;
       if(!CONFIG.APPS_SCRIPT_URL){ errorEl.textContent = '저장소가 연결되지 않았습니다.'; errorEl.hidden = false; return; }
+      var school = document.getElementById('fSchool').value.trim();
       var title = document.getElementById('fTitle').value.trim();
       var department = document.getElementById('fDept').value.trim();
       var datetime = document.getElementById('fDatetime').value.trim();
       var password = document.getElementById('fPassword').value;
       var type = document.querySelector('#typeGroup input:checked').value;
-      if(!title) return;
+      if(!school || !title) return;
       var btn = form.querySelector('button[type="submit"]');
       btn.disabled = true; btn.textContent = '만드는 중...';
       try{
-        var data = await apiPost({ action: 'createRoster', title: title, type: type, department: department, datetime: datetime, password: password });
+        var data = await apiPost({ action: 'createRoster', school: school, title: title, type: type, department: department, datetime: datetime, password: password });
         if(!data.ok){
           errorEl.textContent = '등록부를 만들지 못했어요: ' + (data.error || '알 수 없는 오류');
           errorEl.hidden = false;
@@ -381,7 +390,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
 
   function rosterRow(r){
     var typeLabel = r.type === 'teacher' ? '교사' : '교직원';
-    var metaParts = [typeLabel];
+    var metaParts = [r.school, typeLabel].filter(Boolean);
     if(r.department) metaParts.push(r.department);
     if(r.datetime) metaParts.push(r.datetime);
     return '<div class="roster-row">' +
@@ -417,6 +426,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
 
   // ---------- 교직원 명단 관리 ----------
   var staffPassword = '';
+  var currentStaffSchool = '';
 
   function renderStaffView(){
     render(
@@ -424,38 +434,37 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       '<section class="panel">' +
         '<h2>교직원 명단 관리</h2>' +
         '<div class="list-controls">' +
+          '<input type="text" id="staffSchoolInput" placeholder="학교명 (예: 운남고등학교)">' +
           '<input type="password" id="staffPassword" placeholder="관리자 비밀번호">' +
           '<button type="button" class="btn" id="staffUnlockBtn">목록 보기</button>' +
         '</div>' +
-        '<p class="empty" id="staffGate">비밀번호를 입력하고 목록을 불러오세요.</p>' +
+        '<p class="empty" id="staffGate">학교명과 비밀번호를 입력하고 목록을 불러오세요.</p>' +
         '<div id="staffManaged" hidden>' +
+          '<h3 id="staffSchoolLabel"></h3>' +
           '<h3>새 교직원 추가</h3>' +
           '<form id="addStaffForm" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-            '<input type="text" id="sSchool" placeholder="소속(학교명)">' +
             '<input type="text" id="sPosition" placeholder="직위(또는 부서) 예: 교사">' +
             '<input type="text" id="sSubject" placeholder="과목 (선택)">' +
-            '<input type="text" id="sName" placeholder="성명" required>' +
+            '<input type="text" id="sName" placeholder="성명" required style="grid-column:1 / -1;">' +
             '<button type="submit" class="btn btn-primary" style="grid-column:1 / -1;">추가</button>' +
           '</form>' +
           '<p class="form-error" id="addStaffError" hidden></p>' +
 
           '<h3 style="margin-top:6px;">엑셀로 일괄 추가 (선택)</h3>' +
-          '<label class="field"><span>소속·직위·과목·성명 열이 있는 엑셀 파일 (.xlsx, .xls, .csv)</span><input type="file" id="staffFile" accept=".xlsx,.xls,.csv"></label>' +
+          '<label class="field"><span>직위·과목·성명 열이 있는 엑셀 파일 (.xlsx, .xls, .csv)</span><input type="file" id="staffFile" accept=".xlsx,.xls,.csv"></label>' +
           '<p class="import-status" id="staffImportStatus" hidden></p>' +
           '<div id="staffPreviewWrap" hidden>' +
             '<div class="bulk-apply-row">' +
               '<span>빈 칸 한번에 채우기:</span>' +
-              '<input type="text" id="applySchool" placeholder="소속">' +
-              '<button type="button" class="btn btn-small" id="applySchoolBtn">소속 적용</button>' +
               '<input type="text" id="applyPosition" placeholder="직위">' +
               '<button type="button" class="btn btn-small" id="applyPositionBtn">직위 적용</button>' +
             '</div>' +
-            '<div class="table-wrap"><table class="staff-table"><thead><tr><th>소속</th><th>직위</th><th>과목</th><th>성명</th></tr></thead><tbody id="staffPreviewBody"></tbody></table></div>' +
+            '<div class="table-wrap"><table class="staff-table"><thead><tr><th>직위</th><th>과목</th><th>성명</th></tr></thead><tbody id="staffPreviewBody"></tbody></table></div>' +
             '<button type="button" class="btn btn-primary" id="staffBulkSubmit">일괄 등록</button>' +
           '</div>' +
 
           '<h3 style="margin-top:6px;">현재 교직원 명단 (<span id="staffCount">0</span>명)</h3>' +
-          '<div class="table-wrap"><table class="staff-table"><thead><tr><th>소속</th><th>직위</th><th>과목</th><th>성명</th><th></th></tr></thead><tbody id="staffListBody"></tbody></table></div>' +
+          '<div class="table-wrap"><table class="staff-table"><thead><tr><th>직위</th><th>과목</th><th>성명</th><th></th></tr></thead><tbody id="staffListBody"></tbody></table></div>' +
         '</div>' +
       '</section>'
     );
@@ -464,16 +473,20 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
 
   function wireStaffView(){
     document.getElementById('staffUnlockBtn').addEventListener('click', async function(){
+      var school = document.getElementById('staffSchoolInput').value.trim();
       var pw = document.getElementById('staffPassword').value;
       var gate = document.getElementById('staffGate');
       if(!CONFIG.APPS_SCRIPT_URL){ gate.textContent = '저장소가 연결되지 않았습니다.'; return; }
+      if(!school){ gate.textContent = '학교명을 입력해주세요.'; return; }
       gate.textContent = '불러오는 중...';
       try{
-        var data = await api({ action: 'staffList', password: pw });
+        var data = await api({ action: 'staffList', school: school, password: pw });
         if(!data.ok){ gate.textContent = data.error || '비밀번호가 올바르지 않습니다.'; return; }
         staffPassword = pw;
+        currentStaffSchool = school;
         gate.hidden = true;
         document.getElementById('staffManaged').hidden = false;
+        document.getElementById('staffSchoolLabel').textContent = school;
         renderStaffTable(data.staff);
         wireAddStaffForm();
         wireStaffFileImport();
@@ -487,12 +500,11 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     document.getElementById('staffCount').textContent = staff.length;
     var body = document.getElementById('staffListBody');
     if(!staff.length){
-      body.innerHTML = '<tr><td colspan="5" class="empty">아직 등록된 교직원이 없어요.</td></tr>';
+      body.innerHTML = '<tr><td colspan="4" class="empty">아직 등록된 교직원이 없어요.</td></tr>';
       return;
     }
     body.innerHTML = staff.map(function(s){
       return '<tr>' +
-        '<td>' + esc(s.school || '—') + '</td>' +
         '<td>' + esc(s.position || '—') + '</td>' +
         '<td>' + esc(s.subject || '—') + '</td>' +
         '<td>' + esc(s.name) + '</td>' +
@@ -503,9 +515,9 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       btn.addEventListener('click', async function(){
         btn.disabled = true; btn.textContent = '삭제 중...';
         try{
-          var data = await apiPost({ action: 'deleteStaff', id: btn.dataset.id, password: staffPassword });
+          var data = await apiPost({ action: 'deleteStaff', id: btn.dataset.id, school: currentStaffSchool, password: staffPassword });
           if(!data.ok){ btn.disabled = false; btn.textContent = '삭제'; return; }
-          var data2 = await api({ action: 'staffList', password: staffPassword });
+          var data2 = await api({ action: 'staffList', school: currentStaffSchool, password: staffPassword });
           if(data2.ok) renderStaffTable(data2.staff);
         }catch(err){
           btn.disabled = false; btn.textContent = '삭제';
@@ -521,8 +533,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       e.preventDefault();
       errorEl.hidden = true;
       var payload = {
-        action: 'addStaff', password: staffPassword,
-        school: document.getElementById('sSchool').value.trim(),
+        action: 'addStaff', password: staffPassword, school: currentStaffSchool,
         position: document.getElementById('sPosition').value.trim(),
         subject: document.getElementById('sSubject').value.trim(),
         name: document.getElementById('sName').value.trim()
@@ -535,7 +546,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
         if(!data.ok){ errorEl.textContent = data.error || '추가하지 못했어요.'; errorEl.hidden = false; btn.disabled = false; return; }
         form.reset();
         btn.disabled = false;
-        var data2 = await api({ action: 'staffList', password: staffPassword });
+        var data2 = await api({ action: 'staffList', school: currentStaffSchool, password: staffPassword });
         if(data2.ok) renderStaffTable(data2.staff);
       }catch(err){
         errorEl.textContent = '네트워크 오류로 추가하지 못했어요.'; errorEl.hidden = false; btn.disabled = false;
@@ -550,14 +561,6 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       var file = e.target.files && e.target.files[0];
       if(file) handleStaffFile(file);
     });
-    document.getElementById('applySchoolBtn').addEventListener('click', function(){
-      var v = document.getElementById('applySchool').value.trim();
-      if(!v) return;
-      Array.prototype.forEach.call(document.querySelectorAll('#staffPreviewBody tr'), function(tr){
-        var input = tr.querySelector('.cell-school');
-        if(input && !input.value.trim()) input.value = v;
-      });
-    });
     document.getElementById('applyPositionBtn').addEventListener('click', function(){
       var v = document.getElementById('applyPosition').value.trim();
       if(!v) return;
@@ -569,7 +572,6 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     document.getElementById('staffBulkSubmit').addEventListener('click', async function(){
       var rows = Array.prototype.map.call(document.querySelectorAll('#staffPreviewBody tr'), function(tr){
         return {
-          school: tr.querySelector('.cell-school').value.trim(),
           position: tr.querySelector('.cell-position').value.trim(),
           subject: tr.querySelector('.cell-subject').value.trim(),
           name: tr.querySelector('.cell-name').value.trim()
@@ -579,12 +581,12 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       var btn = document.getElementById('staffBulkSubmit');
       btn.disabled = true; btn.textContent = '등록 중...';
       try{
-        var data = await apiPost({ action: 'addStaffBulk', rows: rows, password: staffPassword });
+        var data = await apiPost({ action: 'addStaffBulk', rows: rows, school: currentStaffSchool, password: staffPassword });
         if(!data.ok){ alert('일괄 등록에 실패했어요: ' + (data.error || '알 수 없는 오류')); btn.disabled = false; btn.textContent = '일괄 등록'; return; }
         document.getElementById('staffPreviewWrap').hidden = true;
         document.getElementById('staffFile').value = '';
         btn.disabled = false; btn.textContent = '일괄 등록';
-        var data2 = await api({ action: 'staffList', password: staffPassword });
+        var data2 = await api({ action: 'staffList', school: currentStaffSchool, password: staffPassword });
         if(data2.ok) renderStaffTable(data2.staff);
       }catch(err){
         alert('네트워크 오류로 일괄 등록하지 못했어요.');
@@ -604,16 +606,15 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
     if(!aoa.length) return [];
     var headerRowIdx = -1;
-    var col = { school: -1, position: -1, subject: -1, name: -1 };
+    var col = { position: -1, subject: -1, name: -1 };
     for(var i = 0; i < Math.min(aoa.length, 5); i++){
       var row = aoa[i] || [];
-      var found = { school: -1, position: -1, subject: -1, name: -1 };
+      var found = { position: -1, subject: -1, name: -1 };
       for(var j = 0; j < row.length; j++){
         var h = row[j];
         if(h === null || h === undefined) continue;
         var s = String(h).trim();
-        if(/^(소속|소속\(학교명\)|학교명)$/i.test(s)) found.school = j;
-        else if(/^(직위|직위\(또는 부서\)|부서)$/i.test(s)) found.position = j;
+        if(/^(직위|직위\(또는 부서\)|부서)$/i.test(s)) found.position = j;
         else if(/^(과목)$/i.test(s)) found.subject = j;
         else if(/^(성명|이름|name)$/i.test(s)) found.name = j;
       }
@@ -627,21 +628,20 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
         name = (name === null || name === undefined) ? '' : String(name).trim();
         if(!name) continue;
         rows.push({
-          school: col.school !== -1 && rowData[col.school] != null ? String(rowData[col.school]).trim() : '',
           position: col.position !== -1 && rowData[col.position] != null ? String(rowData[col.position]).trim() : '',
           subject: col.subject !== -1 && rowData[col.subject] != null ? String(rowData[col.subject]).trim() : '',
           name: name
         });
       }
     } else {
-      // 헤더를 못 찾으면 한 줄에 이름 하나로 보고, 소속·직위는 비워둠(일괄 적용으로 채우기)
+      // 헤더를 못 찾으면 한 줄에 이름 하나로 보고, 직위는 비워둠(일괄 적용으로 채우기)
       aoa.forEach(function(row){
         if(!row) return;
         for(var k = 0; k < row.length; k++){
           var v = row[k];
           if(v === null || v === undefined) continue;
           var sv = String(v).trim();
-          if(sv){ rows.push({ school: '', position: '', subject: '', name: sv }); break; }
+          if(sv){ rows.push({ position: '', subject: '', name: sv }); break; }
         }
       });
     }
@@ -676,7 +676,6 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     var body = document.getElementById('staffPreviewBody');
     body.innerHTML = rows.map(function(r){
       return '<tr>' +
-        '<td><input type="text" class="cell-school" value="' + esc(r.school) + '"></td>' +
         '<td><input type="text" class="cell-position" value="' + esc(r.position) + '"></td>' +
         '<td><input type="text" class="cell-subject" value="' + esc(r.subject) + '"></td>' +
         '<td><input type="text" class="cell-name" value="' + esc(r.name) + '"></td>' +
@@ -704,6 +703,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
       }
       if(isFirstLoad){
         var metaParts = [];
+        if(data.roster.school) metaParts.push(data.roster.school);
         if(data.roster.department) metaParts.push(data.roster.department);
         if(data.roster.datetime) metaParts.push(data.roster.datetime);
         var shareLink = baseLink() + '#r-' + id;
@@ -726,6 +726,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
               '<p class="ledger-progress" id="ledgerProgress"></p>' +
             '</header>' +
             '<ol class="roll" id="roll"></ol>' +
+            '<div class="print-ledger" id="printLedger"></div>' +
           '</section>' +
           '<div class="sign-overlay" id="signOverlay" hidden>' +
             '<div class="sign-sheet">' +
@@ -764,8 +765,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
         (subParts.length ? '<span class="roll-sub">' + esc(subParts.join(' · ')) + '</span>' : '');
       var right = sig
         ? '<span class="roll-sig"><img src="' + sig.dataUrl + '" alt="서명" class="sig-thumb"></span><span class="roll-time">' + fmtDate(sig.signedAt) + '</span>'
-        : '<button type="button" class="btn btn-sign screen-only" data-index="' + i + '" data-name="' + esc(entry.name || '') + '">서명하기</button>' +
-          '<span class="print-only roll-unsigned">미서명</span>';
+        : '<button type="button" class="btn btn-sign" data-index="' + i + '" data-name="' + esc(entry.name || '') + '">서명하기</button>';
       return '<li class="roll-row' + (sig ? ' is-signed' : '') + '">' +
         '<span class="roll-index">' + (i + 1) + '</span>' +
         '<span class="roll-who">' + whoHtml + '</span>' +
@@ -780,6 +780,38 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
         openSignPad(id, +btn.dataset.index, entry);
       });
     });
+    renderPrintLedger(roster, map);
+  }
+
+  function academicYear(){
+    var now = new Date();
+    var y = now.getFullYear();
+    return (now.getMonth() + 1 >= 3) ? y : y - 1;
+  }
+
+  function renderPrintLedger(roster, map){
+    var el = document.getElementById('printLedger');
+    if(!el) return;
+    var school = roster.school || '';
+    var rows = roster.entries.map(function(entry, i){
+      var sig = map[i];
+      var name = sig ? sig.name : (entry.name || '');
+      var sigCell = sig ? '<img src="' + sig.dataUrl + '" alt="서명" class="print-sig-img">' : '';
+      return '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td>' + esc(entry.school || '') + '</td>' +
+        '<td>' + esc(entry.position || '') + '</td>' +
+        '<td>' + esc(entry.subject || '') + '</td>' +
+        '<td class="print-name">' + esc(name) + '</td>' +
+        '<td>' + sigCell + '</td>' +
+        '<td></td>' +
+      '</tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="print-head"><h1>' + academicYear() + '학년도 연수등록부</h1><span class="print-school">' + esc(school) + '</span></div>' +
+      '<div class="print-fields"><p>연수명 : ' + esc(roster.title) + '</p><p>담당부서 : ' + esc(roster.department || '') + '　　일시: ' + esc(roster.datetime || '') + '</p></div>' +
+      '<table class="print-table"><thead><tr><th>연번</th><th>소속(학교명)</th><th>직위(또는 부서)</th><th>과목</th><th>성명</th><th>서명</th><th>비고</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
   }
 
   // ---------- signature pad ----------
