@@ -25,12 +25,14 @@
   --font-mono:'Roboto Mono',ui-monospace,'SFMono-Regular',monospace;
 }
 *{ box-sizing:border-box; }
-html{ -webkit-text-size-adjust:100%; }
+html{ -webkit-text-size-adjust:100%; overscroll-behavior:none; }
 body{
   margin:0; min-height:100vh; padding:0 20px 72px;
   background:var(--bg); color:var(--ink); font-family:var(--font-body);
   font-size:16px; line-height:1.6; word-break:keep-all;
+  overscroll-behavior:none;
 }
+body.signing{ overflow:hidden; position:fixed; width:100%; left:0; right:0; }
 .page{ max-width:780px; margin:0 auto; }
 .back{
   display:inline-flex; align-items:center; gap:6px; margin:28px 0 22px;
@@ -136,9 +138,12 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
 }
 .ledger{ background:var(--surface); border:1px solid var(--rule); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; margin:18px 0; }
 .ledger-head{ padding:20px 20px 16px; border-bottom:2px solid var(--rule); display:flex; flex-direction:column; gap:4px; }
+.ledger-head-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .ledger-head h2{ margin:0; font-family:var(--font-display); font-size:19px; text-wrap:balance; }
 .ledger-meta{ margin:0; font-size:13px; color:var(--ink-soft); }
 .ledger-progress{ margin:6px 0 0; font-size:12.5px; font-weight:700; color:var(--accent); font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+.print-only{ display:none; }
+.roll-unsigned{ font-size:12px; color:var(--ink-soft); }
 
 .roll{ list-style:none; margin:0; padding:0; }
 .roll-row{ display:flex; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid var(--rule); flex-wrap:wrap; }
@@ -155,6 +160,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
 .sign-overlay{
   position:fixed; inset:0; background:rgba(38,34,32,.5);
   display:flex; align-items:flex-end; justify-content:center; z-index:20; padding:0 16px 16px;
+  touch-action:none; overscroll-behavior:none;
 }
 #signOverlay[hidden]{ display:none; }
 .sign-sheet{
@@ -172,6 +178,15 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
   .roster-row{ flex-direction:column; align-items:flex-start; }
   .roster-actions{ width:100%; }
   .roster-actions .btn{ flex:1; }
+}
+@media print{
+  body{ background:#fff; padding:0; }
+  .page{ max-width:none; }
+  .back, .share-box, header.hero, #setupBanner, .screen-only{ display:none !important; }
+  .print-only{ display:inline; }
+  .ledger{ box-shadow:none; border-color:#999; }
+  .roll-row{ break-inside:avoid; }
+  .sig-thumb{ height:28px; }
 }
 </style>
 </head>
@@ -700,9 +715,14 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
           '</div>' +
           '<section class="ledger">' +
             '<header class="ledger-head">' +
-              '<p class="eyebrow">연수등록부 · ' + (data.roster.type === 'teacher' ? '교사' : '교직원') + '</p>' +
-              '<h2>' + esc(data.roster.title) + '</h2>' +
-              (metaParts.length ? '<p class="ledger-meta">' + esc(metaParts.join(' · ')) + '</p>' : '') +
+              '<div class="ledger-head-top">' +
+                '<div>' +
+                  '<p class="eyebrow">연수등록부 · ' + (data.roster.type === 'teacher' ? '교사' : '교직원') + '</p>' +
+                  '<h2>' + esc(data.roster.title) + '</h2>' +
+                  (metaParts.length ? '<p class="ledger-meta">' + esc(metaParts.join(' · ')) + '</p>' : '') +
+                '</div>' +
+                '<button type="button" class="btn screen-only" id="printBtn">인쇄 · PDF 저장</button>' +
+              '</div>' +
               '<p class="ledger-progress" id="ledgerProgress"></p>' +
             '</header>' +
             '<ol class="roll" id="roll"></ol>' +
@@ -724,6 +744,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
         );
         var shareCopyBtn = document.querySelector('.share-box .copy-link');
         if(shareCopyBtn) shareCopyBtn.addEventListener('click', function(){ copyLink(id, shareCopyBtn); });
+        document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
       }
       renderRoll(id, data.roster, data.signatures || []);
     }).catch(function(){});
@@ -743,7 +764,8 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
         (subParts.length ? '<span class="roll-sub">' + esc(subParts.join(' · ')) + '</span>' : '');
       var right = sig
         ? '<span class="roll-sig"><img src="' + sig.dataUrl + '" alt="서명" class="sig-thumb"></span><span class="roll-time">' + fmtDate(sig.signedAt) + '</span>'
-        : '<button type="button" class="btn btn-sign" data-index="' + i + '" data-name="' + esc(entry.name || '') + '">서명하기</button>';
+        : '<button type="button" class="btn btn-sign screen-only" data-index="' + i + '" data-name="' + esc(entry.name || '') + '">서명하기</button>' +
+          '<span class="print-only roll-unsigned">미서명</span>';
       return '<li class="roll-row' + (sig ? ' is-signed' : '') + '">' +
         '<span class="roll-index">' + (i + 1) + '</span>' +
         '<span class="roll-who">' + whoHtml + '</span>' +
@@ -773,6 +795,19 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     padCtx.lineCap = 'round';
   }
 
+  function lockBodyScroll(){
+    var y = window.scrollY || window.pageYOffset || 0;
+    document.body.dataset.scrollY = String(y);
+    document.body.style.top = (-y) + 'px';
+    document.body.classList.add('signing');
+  }
+  function unlockBodyScroll(){
+    var y = parseInt(document.body.dataset.scrollY || '0', 10);
+    document.body.classList.remove('signing');
+    document.body.style.top = '';
+    window.scrollTo(0, y);
+  }
+
   function openSignPad(rosterId, index, entry){
     var overlay = document.getElementById('signOverlay');
     var submitBtn = document.getElementById('padSubmit');
@@ -782,6 +817,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     var subParts = [entry.school, entry.position, entry.subject].filter(Boolean);
     document.getElementById('signSub').textContent = subParts.join(' · ');
     overlay.hidden = false;
+    lockBodyScroll();
     errorEl.hidden = true;
     submitBtn.disabled = true;
     submitBtn.textContent = '서명 완료';
@@ -806,7 +842,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
     };
 
     document.getElementById('padClear').onclick = function(){ resetPad(canvas); padHasDrawn = false; submitBtn.disabled = true; };
-    document.getElementById('padCancel').onclick = function(){ overlay.hidden = true; };
+    document.getElementById('padCancel').onclick = function(){ overlay.hidden = true; unlockBodyScroll(); };
     submitBtn.onclick = async function(){
       if(!padHasDrawn) return;
       var signerName = entry.name;
@@ -826,6 +862,7 @@ table.staff-table td input{ width:100%; font-size:13px; padding:5px 7px; border:
           return;
         }
         overlay.hidden = true;
+        unlockBodyScroll();
         loadAndRenderRoster(rosterId, false);
       }catch(err){
         errorEl.textContent = '네트워크 오류로 서명을 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
