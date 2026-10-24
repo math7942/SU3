@@ -301,11 +301,13 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 1. 데이터를 담을 구글 시트가 이미 만들어져 있습니다: `연수등록부 저장소`
    (`https://docs.google.com/spreadsheets/d/1Kwt7XlArEoWG5fjJzYkrApZ_zcaXK9fyPpLOtTAaZJc/edit`)
    시트 3개로 구성됩니다.
-   - `Staff` — 교직원 명단(관리자가 입력·삭제). 열: `id, school, position, subject, name, order`
-   - `Rosters` — 생성된 연수등록부. 열: `id, title, type, department, datetime, entries, createdAt`
-     (`entries`는 등록부를 만든 시점의 교직원/교사 명단을 그대로 찍어 둔 값이라, 나중에 `Staff`를
+   - `Staff` — 교직원 명단(관리자가 입력·삭제). 열(왼쪽부터): 아이디, 소속, 직위, 과목, 성명, 순서
+   - `Rosters` — 생성된 연수등록부. 열(왼쪽부터): 아이디, 연수명, 유형, 담당부서, 일시, 명단데이터, 생성일시
+     (`명단데이터`는 등록부를 만든 시점의 교직원/교사 명단을 그대로 찍어 둔 값이라, 나중에 `Staff`를
      수정해도 이미 만든 등록부는 바뀌지 않습니다.)
-   - `Signatures` — 서명 기록. 열: `rosterId, idx, name, dataUrl, signedAt`
+   - `Signatures` — 서명 기록. 열(왼쪽부터): 등록부아이디, 순번, 성명, 서명이미지, 서명일시
+   - 열 이름은 보기 좋으라고 한글로 적어 둔 것일 뿐, Apps Script 코드는 열 순서(위치)로 값을 읽고
+     씁니다. 시트에서 열 이름을 다른 말로 바꿔도 동작에는 영향이 없습니다(순서만 바뀌지 않으면 됩니다).
 2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기존 코드를 전부 지우고 아래 코드를
    붙여넣습니다. 맨 위 `ADMIN_PASSWORD`는 담당자들만 아는 값으로 반드시 바꿔주세요 — 교직원 명단
    관리와 연수등록부 생성 모두 이 비밀번호로 보호됩니다. 서명 자체는 비밀번호 없이 누구나 할 수
@@ -421,9 +423,9 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
      var sheet = ss.getSheetByName(name);
      if (!sheet) {
        sheet = ss.insertSheet(name);
-       if (name === "Rosters") sheet.appendRow(["id", "title", "type", "department", "datetime", "entries", "createdAt"]);
-       if (name === "Signatures") sheet.appendRow(["rosterId", "idx", "name", "dataUrl", "signedAt"]);
-       if (name === "Staff") sheet.appendRow(["id", "school", "position", "subject", "name", "order"]);
+       if (name === "Rosters") sheet.appendRow(["아이디", "연수명", "유형", "담당부서", "일시", "명단데이터", "생성일시"]);
+       if (name === "Signatures") sheet.appendRow(["등록부아이디", "순번", "성명", "서명이미지", "서명일시"]);
+       if (name === "Staff") sheet.appendRow(["아이디", "소속", "직위", "과목", "성명", "순서"]);
      }
      return sheet;
    }
