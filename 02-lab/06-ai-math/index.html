@@ -5,6 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>인공지능 수학 · 수학실험 · 수수의 수학</title>
 <link rel="stylesheet" href="../../assets/site.css">
+<style>
+  .quick-links{ margin: 0 0 34px; }
+  .quick-links-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .quick-links-head h2{ margin:0; font-size:1.02rem; font-weight:700; color: var(--ink-soft); }
+  .quick-link-form{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .quick-link-form input{
+    flex:1 1 160px; min-width:0; padding:9px 12px; border:1px solid var(--line); border-radius:9px;
+    background: var(--bg); color: var(--ink); font: inherit; font-size:0.9rem;
+  }
+  .quick-link-form input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .quick-links-list{ display:flex; flex-wrap:wrap; gap:8px; }
+  .quick-links-empty{ margin:0; color: var(--muted); font-size:0.88rem; }
+  .quick-link-chip{
+    display:inline-flex; align-items:center; gap:6px; padding:7px 8px 7px 14px;
+    border:1px solid var(--line); border-radius:999px; background: var(--surface);
+  }
+  .quick-link-chip a{ color: var(--ink); font-size:0.9rem; font-weight:600; text-decoration:none; }
+  .quick-link-chip a:hover{ color: var(--accent); }
+  .quick-link-del{
+    display:grid; place-items:center; width:20px; height:20px; border:none; border-radius:50%;
+    background: var(--accent-soft); color: var(--accent); font-size:0.85rem; line-height:1; cursor:pointer; padding:0;
+  }
+  .quick-link-del:hover{ opacity:0.8; }
+</style>
 </head>
 <body class="g2">
 <div class="page">
@@ -20,6 +44,18 @@
   </header>
 
   <main>
+    <section class="quick-links" aria-label="유용한 사이트">
+      <div class="quick-links-head">
+        <h2>유용한 사이트</h2>
+        <button type="button" class="btn secondary" id="quickLinkAddBtn">+ 추가</button>
+      </div>
+      <form id="quickLinkForm" class="quick-link-form" hidden>
+        <input type="text" id="quickLinkName" placeholder="이름 (예: 티처블 머신)" required>
+        <input type="text" id="quickLinkUrl" placeholder="주소 (예: teachablemachine.withgoogle.com)" required>
+        <button type="submit" class="btn">저장</button>
+      </form>
+      <div class="quick-links-list" id="quickLinksList"></div>
+    </section>
 <!-- 단원을 추가하려면 폴더를 만들고 아래 목록에 <a class="subcard"> 한 덩어리를 붙여 넣으세요. -->
     <div class="subgroups">
       <a class="subcard filled" href="01-ai-bigdata/index.html">
@@ -52,5 +88,85 @@
 
 </div>
 <script src="../../assets/tool-count.js"></script>
+<script>
+(function(){
+  var KEY = 'su3-lab-ai-math-quicklinks';
+  var DELETE_PASSWORD = '3.141592';
+  function load(){
+    try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ return []; }
+  }
+  function save(links){
+    try{ localStorage.setItem(KEY, JSON.stringify(links)); }catch(e){}
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function normalizeUrl(u){
+    u = String(u || '').trim();
+    if(!u) return '';
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+
+  var listEl = document.getElementById('quickLinksList');
+  var addBtn = document.getElementById('quickLinkAddBtn');
+  var form = document.getElementById('quickLinkForm');
+  var nameInput = document.getElementById('quickLinkName');
+  var urlInput = document.getElementById('quickLinkUrl');
+  if(!listEl || !addBtn || !form) return;
+
+  var links = [];
+
+  function render(){
+    links = load();
+    if(!links.length){
+      listEl.innerHTML = '<p class="quick-links-empty">아직 추가한 사이트가 없어요. "+ 추가"를 눌러보세요.</p>';
+      return;
+    }
+    listEl.innerHTML = links.map(function(l, i){
+      return '<span class="quick-link-chip">' +
+        '<a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.name) + '</a>' +
+        '<button type="button" class="quick-link-del" data-i="' + i + '" aria-label="' + esc(l.name) + ' 삭제" title="삭제">×</button>' +
+      '</span>';
+    }).join('');
+    Array.prototype.forEach.call(listEl.querySelectorAll('.quick-link-del'), function(btn){
+      btn.addEventListener('click', function(){
+        var input = window.prompt('삭제하려면 비밀번호를 입력하세요.');
+        if(input === null) return;
+        if(input !== DELETE_PASSWORD){
+          alert('비밀번호가 올바르지 않습니다.');
+          return;
+        }
+        var i = +btn.dataset.i;
+        links.splice(i, 1);
+        save(links);
+        render();
+      });
+    });
+  }
+
+  addBtn.addEventListener('click', function(){
+    form.hidden = !form.hidden;
+    if(!form.hidden) nameInput.focus();
+  });
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = nameInput.value.trim();
+    var url = normalizeUrl(urlInput.value);
+    if(!name || !url) return;
+    links.push({ name: name, url: url });
+    save(links);
+    nameInput.value = '';
+    urlInput.value = '';
+    form.hidden = true;
+    render();
+  });
+
+  render();
+})();
+</script>
 </body>
 </html>
