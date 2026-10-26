@@ -161,11 +161,18 @@
 <script>
 (function(){
   var KEY = 'su3-work-quicklinks';
+  var PW_KEY = 'su3-work-quicklinks-pw';
   function load(){
     try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ return []; }
   }
   function save(links){
     try{ localStorage.setItem(KEY, JSON.stringify(links)); }catch(e){}
+  }
+  function getStoredPassword(){
+    try{ return localStorage.getItem(PW_KEY) || ''; }catch(e){ return ''; }
+  }
+  function setStoredPassword(pw){
+    try{ localStorage.setItem(PW_KEY, pw); }catch(e){}
   }
   function esc(s){
     return String(s).replace(/[&<>"']/g, function(c){
@@ -202,6 +209,21 @@
     }).join('');
     Array.prototype.forEach.call(listEl.querySelectorAll('.quick-link-del'), function(btn){
       btn.addEventListener('click', function(){
+        var stored = getStoredPassword();
+        if(!stored){
+          var newPw = window.prompt('삭제를 보호할 비밀번호를 처음 설정해주세요.');
+          if(newPw === null) return;
+          newPw = newPw.trim();
+          if(!newPw) return;
+          setStoredPassword(newPw);
+          stored = newPw;
+        }
+        var input = window.prompt('삭제하려면 비밀번호를 입력하세요.');
+        if(input === null) return;
+        if(input !== stored){
+          alert('비밀번호가 올바르지 않습니다.');
+          return;
+        }
         var i = +btn.dataset.i;
         links.splice(i, 1);
         save(links);
