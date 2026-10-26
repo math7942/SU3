@@ -161,6 +161,7 @@
 <script>
 (function(){
   var KEY = 'su3-work-quicklinks';
+  var DELETE_PASSWORD = '3.141592';
   function load(){
     try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ return []; }
   }
@@ -202,6 +203,12 @@
     }).join('');
     Array.prototype.forEach.call(listEl.querySelectorAll('.quick-link-del'), function(btn){
       btn.addEventListener('click', function(){
+        var input = window.prompt('삭제하려면 비밀번호를 입력하세요.');
+        if(input === null) return;
+        if(input !== DELETE_PASSWORD){
+          alert('비밀번호가 올바르지 않습니다.');
+          return;
+        }
         var i = +btn.dataset.i;
         links.splice(i, 1);
         save(links);
