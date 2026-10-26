@@ -168,6 +168,9 @@
       });
     });
 
+    /* 한 문제씩 푸는 주제만 무작위 출제와 기록 저장 대상입니다. 쪽지시험(sheet)은 인쇄용입니다. */
+    var practice = topics.filter(function (t) { return !t.sheet; });
+
     var state = { topic: null, problem: null, checked: false, selected: null, random: false };
 
     /* 주제 목록 */
@@ -183,7 +186,7 @@
       area.topics.forEach(function (t) {
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = 'topic-btn';
+        b.className = 'topic-btn' + (t.sheet ? ' is-sheet' : '');
         b.dataset.topic = t.id;
         b.innerHTML = '<span class="t-name"></span><span class="t-desc"></span><span class="t-score"></span>';
         b.querySelector('.t-name').innerHTML = t.name;
@@ -202,7 +205,7 @@
     randomBtn.type = 'button';
     randomBtn.className = 'btn';
     randomBtn.textContent = '🎲 전체 주제에서 무작위 출제';
-    randomBtn.addEventListener('click', function () { start(M.pick(topics), true); });
+    randomBtn.addEventListener('click', function () { start(M.pick(practice), true); });
     randomRow.appendChild(randomBtn);
 
     /* 문제 패널 */
@@ -222,6 +225,7 @@
       topics.forEach(function (t) {
         var b = nav.querySelector('.topic-btn[data-topic="' + t.id + '"] .t-score');
         if (!b) { return; }
+        if (t.sheet) { b.textContent = '🖨 A~D 4세트 · 인쇄용'; return; }
         var s = loadScore(S.id, t.id);
         b.textContent = s.total ? '푼 문제 ' + s.total + '개 · 정답 ' + s.right + '개' : '';
       });
@@ -237,13 +241,26 @@
       state.random = !!random;
       state.topic = topic;
       markCurrent(topic);
-      newProblem();
+      if (topic.sheet) {
+        openSheet(topic);
+      } else {
+        newProblem();
+      }
       panel.hidden = false;
       panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    function openSheet(topic) {
+      if (!window.SU3Sheets) {
+        panel.className = 'panel';
+        panel.innerHTML = '<p class="notice">쪽지시험 출력 기능을 불러오지 못했습니다. 페이지를 새로고침해 주세요.</p>';
+        return;
+      }
+      window.SU3Sheets.mount(panel, topic, { typeset: typeset, subject: S });
+    }
+
     function newProblem() {
-      if (state.random) { state.topic = M.pick(topics); }
+      if (state.random) { state.topic = M.pick(practice); }
       var topic = state.topic;
       var p;
       try {
@@ -263,6 +280,7 @@
       var score = loadScore(S.id, topic.id);
 
       panel.innerHTML = '';
+      panel.className = 'panel';
 
       var head = document.createElement('div');
       head.className = 'panel-head';
