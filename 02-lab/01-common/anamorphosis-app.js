@@ -136,16 +136,40 @@
     let activeTab = 'draw';
 
     // ---- 공통 렌더링 함수 (여러 탭의 캔버스가 재사용) ----
-    function fanToCanvas(x, y) { return [FAN_ORIGIN.x + x * FAN_PX_PER_UNIT, FAN_ORIGIN.y + y * FAN_PX_PER_UNIT]; }
+    // 종이 위 그림의 "내용"(어느 칸이 어디로 휘는가)은 항상 설계 각도(45°)로
+    // 고정이지만, 그 종이를 지금 화면에 어떻게 "보여줄지"는 별개다 — 실제로
+    // 체험자가 책상 위의 종이와 거울을 비스듬히 내려다보는 것처럼, 보는 각도·
+    // 돌려보는 방향에 따라 종이도 거울과 함께 기울어 보여야 "내가 직접 돌아다니며
+    // 본다"는 느낌이 난다. sceneProject가 그 하나의 공통 카메라 변환이고,
+    // renderCyl의 밑면 타원(Rs, Rs·sin(elev))과 정확히 같은 식이라 종이와
+    // 거울이 항상 같은 자리에서 자연스럽게 맞물린다.
+    function sceneProject(x, y, elevDeg, azDeg) {
+        const az = (azDeg || 0) * Math.PI / 180;
+        const elev = Math.max(5, Math.min(85, elevDeg == null ? 90 : elevDeg)) * Math.PI / 180;
+        const rx = x * Math.cos(az) - y * Math.sin(az);
+        const ry = x * Math.sin(az) + y * Math.cos(az);
+        return [rx, ry * Math.sin(elev)];
+    }
+    function unprojectFanPoint(px, py, elevDeg, azDeg) {
+        const az = (azDeg || 0) * Math.PI / 180;
+        const elev = Math.max(5, Math.min(85, elevDeg == null ? 90 : elevDeg)) * Math.PI / 180;
+        const ry = py / Math.sin(elev);
+        const rx = px;
+        return { x: rx * Math.cos(az) + ry * Math.sin(az), y: -rx * Math.sin(az) + ry * Math.cos(az) };
+    }
+    function fanToCanvas(x, y, elevDeg, azDeg) {
+        const [px, py] = sceneProject(x, y, elevDeg, azDeg);
+        return [FAN_ORIGIN.x + px * FAN_PX_PER_UNIT, FAN_ORIGIN.y + py * FAN_PX_PER_UNIT];
+    }
 
-    function renderFan(ctx, gridData, viewAngleDeg, showGridLines) {
+    function renderFan(ctx, gridData, showGridLines, elevDeg, azDeg) {
         ctx.clearRect(0, 0, FAN_W, FAN_H);
         ctx.fillStyle = '#faf7ff';
         ctx.fillRect(0, 0, FAN_W, FAN_H);
 
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
-                const poly = M.cellFanPolygon(c, r, viewAngleDeg).map(([x, y]) => fanToCanvas(x, y));
+                const poly = M.cellFanPolygon(c, r, DESIGN_ANGLE).map(([x, y]) => fanToCanvas(x, y, elevDeg, azDeg));
                 const color = gridData[r][c];
                 if (color) {
                     ctx.beginPath();
@@ -171,14 +195,14 @@
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             for (let c = 0; c < COLS; c++) {
                 const { u } = M.cellUV(c, ROWS - 1);
-                const p = M.fanPoint(u, 1.04, viewAngleDeg);
-                const [x, y] = fanToCanvas(p.x, p.y);
+                const p = M.fanPoint(u, 1.04, DESIGN_ANGLE);
+                const [x, y] = fanToCanvas(p.x, p.y, elevDeg, azDeg);
                 ctx.fillText(String(c + 1), x, y);
             }
             for (let r = 0; r < ROWS; r++) {
                 const { v } = M.cellUV(0, r);
-                const p = M.fanPoint(-0.015, v, viewAngleDeg);
-                const [x, y] = fanToCanvas(p.x, p.y);
+                const p = M.fanPoint(-0.015, v, DESIGN_ANGLE);
+                const [x, y] = fanToCanvas(p.x, p.y, elevDeg, azDeg);
                 ctx.fillText(ROW_LABELS[r], x, y);
             }
         }
@@ -340,7 +364,7 @@
 
     function redrawAll() {
         drawDrawCanvas();
-        renderFan(fctx, grid, DESIGN_ANGLE, showGrid);
+        renderFan(fctx, grid, showGrid, eyeAngle, azimuthDeg);
         renderCyl(cctx, grid, showMirror, eyeAngle, azimuthDeg);
         if (activeTab === 'light') redrawLightTab();
     }
@@ -377,8 +401,11 @@
         const rect = fanCanvas.getBoundingClientRect();
         const px = (e.clientX - rect.left) * (FAN_W / rect.width);
         const py = (e.clientY - rect.top) * (FAN_H / rect.height);
-        const dx = (px - FAN_ORIGIN.x) / FAN_PX_PER_UNIT;
-        const dy = (py - FAN_ORIGIN.y) / FAN_PX_PER_UNIT;
+        const projX = (px - FAN_ORIGIN.x) / FAN_PX_PER_UNIT;
+        const projY = (py - FAN_ORIGIN.y) / FAN_PX_PER_UNIT;
+        // 지금 화면에 보이는 종이는 보는 각도·돌려보는 방향만큼 기울어/돌아가
+        // 있으므로, 클릭 좌표를 원래(평면) 좌표로 되돌린 다음 칸을 찾는다.
+        const { x: dx, y: dy } = unprojectFanPoint(projX, projY, eyeAngle, azimuthDeg);
         const inv = M.fanInverse(dx, dy);
         if (!inv.inBounds) return null;
         return { col: inv.col, row: inv.row };
@@ -849,7 +876,7 @@
     }
 
     function redrawLightTab() {
-        renderFan(fctxL, grid, DESIGN_ANGLE, true);
+        renderFan(fctxL, grid, true); // 빛의 경로 탭은 늘 위에서 내려다본 평면도로 고정
         renderCyl(cctxL, grid, true, eyeAngle);
         renderRays();
         if (rays.length) ensurePhotonRunning();
@@ -904,7 +931,7 @@
     function renderQuizQuestion() {
         quizAnswered = false;
         const q = QUIZ_BANK[quizOrder[quizIndex]];
-        renderFan(fctxQ, q.grid, DESIGN_ANGLE, true);
+        renderFan(fctxQ, q.grid, true); // 퀴즈 탭도 평면도로 고정(슬라이더가 없다)
         renderCyl(cctxQ, q.grid, false, DESIGN_ANGLE);
         document.getElementById('quizNum').textContent = String(quizIndex + 1);
         document.getElementById('quizScore').textContent = `${quizScore.correct} / ${quizScore.total}`;
