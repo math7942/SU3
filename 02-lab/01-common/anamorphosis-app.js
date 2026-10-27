@@ -17,7 +17,7 @@
 
     // 원기둥의 "보이는 벽면 높이"(화면 픽셀 기준, 보는 각도 φ=0일 때의 최댓값).
     // renderCyl이 이 높이를 cos(φ)만큼 눌러 실제 보이는 몸통 높이로 쓴다.
-    const CYL_H_PX = CYL_RADIUS_PX * 1.1;
+    const CYL_H_PX = CYL_RADIUS_PX * 1.7;
 
     const FAN_W = 720;
     // 몸통(cos항)과 밑면 타원이 앞으로 튀어나오는 정도(sin항)의 합이 어떤
@@ -126,6 +126,8 @@
     let eyeAngle = DESIGN_ANGLE; // "보는 눈의 각도" 슬라이더 값 — 거울 미리보기에만 영향을 준다
     let showMirror = true;
     let showGrid = true;
+    let view3d = false;   // "3D 돌려 보기" 켜짐 여부 — 켜져 있으면 끌어서 원기둥을 좌우로 돌려볼 수 있다
+    let azimuthDeg = 0;   // 원기둥을 좌우로 돌려 보는 방위각 (0 = 정면)
     let selectedColor = PALETTE[0].color;
     let erasing = false;
     let painting = false;
@@ -198,13 +200,14 @@
     //      그 지점이 "현재 보는 각도"에서 종이 위 어느 칸을 반사하고 있는지 계산
     //   3) 그 칸의 색을 읽어와 칠한다
     // — 장식으로 덧그린 캔이 아니라, 실제로 매 프레임 다시 레이캐스팅한 결과다.
-    function renderCyl(ctx, gridData, show, viewingAngleDeg) {
+    function renderCyl(ctx, gridData, show, viewingAngleDeg, azimuthDeg) {
         ctx.clearRect(0, 0, FAN_W, FAN_H);
         if (!show) return;
 
         const cx = FAN_ORIGIN.x, cy = FAN_ORIGIN.y, Rs = CYL_RADIUS_PX;
         const A = Math.max(5, Math.min(85, viewingAngleDeg)) * Math.PI / 180;
         const sa = Math.sin(A), ca = Math.cos(A), tanA = Math.tan(A);
+        const azRad = (azimuthDeg || 0) * Math.PI / 180;
         const topOffPx = ca * CYL_H_PX;           // 현재 보는 각도에서 눈에 보이는 몸통 높이(픽셀)
         const w = Math.ceil(Rs * 2), h = Math.ceil(topOffPx + Rs * sa) + 2;
 
@@ -214,10 +217,13 @@
         const img = ctx.createImageData(w, h);
         const o = img.data;
         for (let ix = 0; ix < w; ix++) {
-            const sp = (ix + 0.5 - Rs) / Rs;           // sin(φ) — 이 화면 열이 원기둥의 어느 방위각인지
+            const sp = (ix + 0.5 - Rs) / Rs;           // sin(φ-az) — 이 화면 열이 원기둥의 어느 방위각인지(카메라 기준)
             if (sp <= -1 || sp >= 1) continue;          // 원기둥 바깥 (투명하게 남겨 둠)
             const cp = Math.sqrt(1 - sp * sp);
-            const u0 = Math.asin(sp) / SPAN_RAD + 0.5;   // 부채꼴의 열(column) 좌표로 환산
+            // 보는 방향을 azRad만큼 옆으로 돌리면(= 원기둥을 손으로 돌려 보면), 화면
+            // 열이 가리키는 "원래(종이 기준) 방위각"은 그만큼 밀려난다 — 부채꼴의
+            // 열(column) 좌표는 이 "원래 방위각"으로 찾아야 돌려 봐도 그림이 바르게 붙어 있다.
+            const u0 = (Math.asin(sp) + azRad) / SPAN_RAD + 0.5;   // 부채꼴의 열(column) 좌표로 환산
             const yb = sa * Rs * cp;                     // 이 열에서 밑면 타원의 앞/뒤 보정
             const shade = 0.86 + 0.14 * cp;               // 원기둥 입체감을 위한 음영(중앙이 밝고 옆이 어둡게)
             for (let iy = 0; iy < h; iy++) {
@@ -333,7 +339,7 @@
     function redrawAll() {
         drawDrawCanvas();
         renderFan(fctx, grid, DESIGN_ANGLE, showGrid);
-        renderCyl(cctx, grid, showMirror, eyeAngle);
+        renderCyl(cctx, grid, showMirror, eyeAngle, azimuthDeg);
         if (activeTab === 'light') redrawLightTab();
     }
 
@@ -361,6 +367,35 @@
     drawCanvas.addEventListener('pointermove', (e) => { if (painting) paintAt(e); });
     drawCanvas.addEventListener('pointerup', () => { painting = false; });
     drawCanvas.addEventListener('pointercancel', () => { painting = false; });
+
+    // ---- 부채꼴 종이 위에 직접 그리기: 종이 위의 한 점 → (이 종이가 거울에
+    // 바르게 비치도록 설계된) 역함수로 어느 칸인지 알아내 같은 칸을 칠한다.
+    // 모눈종이와 부채꼴 종이, 어느 쪽에 그려도 서로 똑같이 반영된다.
+    function fanCellFromEvent(e) {
+        const rect = fanCanvas.getBoundingClientRect();
+        const px = (e.clientX - rect.left) * (FAN_W / rect.width);
+        const py = (e.clientY - rect.top) * (FAN_H / rect.height);
+        const dx = (px - FAN_ORIGIN.x) / FAN_PX_PER_UNIT;
+        const dy = (py - FAN_ORIGIN.y) / FAN_PX_PER_UNIT;
+        const inv = M.fanInverse(dx, dy);
+        if (!inv.inBounds) return null;
+        return { col: inv.col, row: inv.row };
+    }
+    let paintingFan = false;
+    function paintAtFan(e) {
+        const cell = fanCellFromEvent(e);
+        if (!cell) return;
+        grid[cell.row][cell.col] = erasing ? null : selectedColor;
+        redrawAll();
+    }
+    fanCanvas.addEventListener('pointerdown', (e) => {
+        paintingFan = true;
+        fanCanvas.setPointerCapture(e.pointerId);
+        paintAtFan(e);
+    });
+    fanCanvas.addEventListener('pointermove', (e) => { if (paintingFan) paintAtFan(e); });
+    fanCanvas.addEventListener('pointerup', () => { paintingFan = false; });
+    fanCanvas.addEventListener('pointercancel', () => { paintingFan = false; });
 
     const paletteEl = document.getElementById('palette');
     PALETTE.forEach((p, i) => {
@@ -580,6 +615,41 @@
         redrawAll();
     });
 
+    // ---- 3D 돌려 보기: 켜져 있는 동안은 거울 위를 끌면(드래그) 원기둥을 좌우로
+    // 돌려 볼 수 있다. renderCyl의 azimuthDeg가 매 화면 열의 "원래 방위각"을
+    // 밀어내서, 부채꼴 그림은 그대로 둔 채 비친 모습만 돌아간다.
+    const btnView3d = document.getElementById('btnView3d');
+    const fanDrawHint = document.getElementById('fanDrawHint');
+    btnView3d.addEventListener('click', () => {
+        view3d = !view3d;
+        btnView3d.classList.toggle('btn-purple', view3d);
+        btnView3d.textContent = view3d ? '🔄 3D 끄기' : '🔄 3D 돌려 보기';
+        cylCanvas.style.pointerEvents = view3d ? 'auto' : 'none';
+        cylCanvas.style.cursor = view3d ? 'grab' : '';
+        fanDrawHint.textContent = view3d
+            ? '🔄 거울 위를 좌우로 끌어서 돌려 보세요! (원래 각도로 돌아오려면 "3D 끄기")'
+            : '💡 부채꼴 종이 위에 직접 그려도 거울 속에 바로 나타나요!';
+        if (!view3d) { azimuthDeg = 0; redrawAll(); }
+    });
+    let rotating = false, rotateLastX = 0;
+    cylCanvas.addEventListener('pointerdown', (e) => {
+        if (!view3d) return;
+        rotating = true;
+        rotateLastX = e.clientX;
+        cylCanvas.setPointerCapture(e.pointerId);
+        cylCanvas.style.cursor = 'grabbing';
+    });
+    cylCanvas.addEventListener('pointermove', (e) => {
+        if (!rotating) return;
+        const dx = e.clientX - rotateLastX;
+        rotateLastX = e.clientX;
+        azimuthDeg = Math.max(-80, Math.min(80, azimuthDeg - dx * 0.5));
+        redrawAll();
+    });
+    function endRotate() { rotating = false; if (view3d) cylCanvas.style.cursor = 'grab'; }
+    cylCanvas.addEventListener('pointerup', endRotate);
+    cylCanvas.addEventListener('pointercancel', endRotate);
+
     function updateAngleUI() {
         angleVal.textContent = eyeAngle + '°';
         angleVal2.textContent = eyeAngle + '°';
@@ -615,8 +685,39 @@
     const rayCanvasL = document.getElementById('rayCanvasL');
     const rctxL = rayCanvasL.getContext('2d');
     [fanCanvasL, cylCanvasL, rayCanvasL].forEach(c => { c.width = FAN_W; c.height = FAN_H; });
+    const miniPreviewL = document.getElementById('miniPreviewL');
+    const mctxL = miniPreviewL.getContext('2d');
+    const MINI_W = 160, MINI_H = 120;
+    miniPreviewL.width = MINI_W; miniPreviewL.height = MINI_H;
 
     let lastRayClick = null; // {x,y} in fanCanvasL pixel coords
+
+    // "눈에 보이는 거울 속 그림" — 모눈종이(= 거울 속에서 바르게 보일 그림)를
+    // 작게 다시 그리고, 지금 누른 점이 그 그림의 어느 자리(u,v)에 해당하는지
+    // 점으로 표시한다. 거울이 그림을 "바로잡아 보여준다"는 걸 직접 확인할 수 있다.
+    function drawMiniPreview(uv) {
+        mctxL.clearRect(0, 0, MINI_W, MINI_H);
+        mctxL.fillStyle = '#fffaf3';
+        mctxL.fillRect(0, 0, MINI_W, MINI_H);
+        const cw = MINI_W / COLS, ch = MINI_H / ROWS;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const color = grid[r][c];
+                if (color) { mctxL.fillStyle = color; mctxL.fillRect(c * cw, r * ch, cw, ch); }
+            }
+        }
+        mctxL.strokeStyle = 'rgba(91,75,214,0.3)';
+        mctxL.lineWidth = 1;
+        for (let c = 1; c < COLS; c++) { mctxL.beginPath(); mctxL.moveTo(c * cw, 0); mctxL.lineTo(c * cw, MINI_H); mctxL.stroke(); }
+        for (let r = 1; r < ROWS; r++) { mctxL.beginPath(); mctxL.moveTo(0, r * ch); mctxL.lineTo(MINI_W, r * ch); mctxL.stroke(); }
+        if (uv) {
+            mctxL.fillStyle = '#b91c1c';
+            mctxL.beginPath();
+            mctxL.arc(uv.u * MINI_W, (1 - uv.v) * MINI_H, 4, 0, Math.PI * 2);
+            mctxL.fill();
+            mctxL.strokeStyle = 'white'; mctxL.lineWidth = 1.5; mctxL.stroke();
+        }
+    }
 
     function drawEyeMarker(ctx) {
         ctx.save();
@@ -633,13 +734,14 @@
     function renderRay(point) {
         rctxL.clearRect(0, 0, FAN_W, FAN_H);
         drawEyeMarker(rctxL);
-        if (!point) return;
+        if (!point) { drawMiniPreview(null); return; }
 
         const S = point;
         const result = M.reflectOffCircle(S, EYE_POS, FAN_ORIGIN, CYL_RADIUS_PX, M.THETA_SPAN_DEG);
         const infoBox = document.getElementById('rayInfoBox');
         if (!result || !result.valid) {
             infoBox.innerHTML = '<p class="angle-readout-hint">이 위치에서는 거울에 반사되어 눈까지 닿지 않아요. 거울에 더 가까운 곳을 눌러보세요.</p>';
+            drawMiniPreview(null);
             return;
         }
         const P = result.point;
@@ -692,8 +794,10 @@
         if (inv.inBounds) {
             const color = grid[inv.row][inv.col];
             cellInfo = `${ROW_LABELS[inv.row]}행 ${inv.col + 1}열` + (color ? '' : ' (아직 색칠 안 한 칸)');
+            drawMiniPreview(inv);
         } else {
             cellInfo = '그림 영역 밖이라 모눈에는 없어요';
+            drawMiniPreview(null);
         }
 
         infoBox.innerHTML = `
