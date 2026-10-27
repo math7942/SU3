@@ -81,37 +81,67 @@
         return pts.map(p => [p.x, p.y]);
     }
 
-    // 원통 거울에 비친 모습(미리보기)용 좌표. 원기둥을 옆에서 바라본 것처럼
-    // sin(θ)로 가로 위치를, cos(θ)로 폭(원근 압축)을 결정하는 표준적인 "라벨
-    // 감싸기" 투영이다. 세로는 v에 비례(그대로 유지).
-    function cylinderPoint(u, v, previewRadius, previewHeight) {
-        const theta = thetaOf(u);
-        return {
-            x: previewRadius * Math.sin(theta),
-            y: v * previewHeight,
-            foreshorten: Math.cos(theta),
-        };
+    // fanPoint(u,v,...)의 역함수. 부채꼴 위의 한 점(거울 중심 기준 상대좌표 dx,dy,
+    // 둘 다 "단위" 기준, 픽셀이 아님)이 원래 모눈종이의 몇 번째 칸(col,row)에
+    // 해당하는지 되짚어 찾는다. ρ(v) 식이 깔끔한 탄젠트 함수라 정확한 해석적
+    // 역함수가 존재한다.
+    function fanInverse(dx, dy, viewAngleDeg) {
+        const theta = Math.atan2(dx, dy);
+        const u = theta / (THETA_SPAN_DEG * DEG2RAD) + 0.5;
+        const rho = Math.hypot(dx, dy);
+        const phi = clamp(viewAngleDeg, 1, 89) * DEG2RAD;
+        const rhoMax = R_CYL * RHO_MAX_FACTOR;
+        const growth = (rho - R_CYL) / (rhoMax - R_CYL);
+        const v = Math.atan(Math.tan(phi) * growth) / phi;
+        const col = Math.floor(u * COLS);
+        const row = Math.floor(v * ROWS);
+        const inBounds = u >= 0 && u <= 1 && v >= 0 && v <= 1 && col >= 0 && col < COLS && row >= 0 && row < ROWS;
+        return { u, v, rho, theta, col, row, inBounds };
     }
 
-    function cellCylinderPolygon(col, row, previewRadius, previewHeight, subdiv) {
-        subdiv = subdiv || 4;
-        const u0 = col / COLS, u1 = (col + 1) / COLS;
-        const v0 = row / ROWS, v1 = (row + 1) / ROWS;
-        const pts = [];
-        for (let i = 0; i <= subdiv; i++) {
-            const u = u0 + (u1 - u0) * (i / subdiv);
-            pts.push(cylinderPoint(u, v0, previewRadius, previewHeight));
+    function vLen(v) { return Math.hypot(v.x, v.y); }
+    function vNorm(v) { const m = vLen(v) || 1; return { x: v.x / m, y: v.y / m }; }
+    function vAngleDeg(a, b) {
+        const na = vNorm(a), nb = vNorm(b);
+        let c = na.x * nb.x + na.y * nb.y;
+        c = clamp(c, -1, 1);
+        return Math.acos(c) * 180 / Math.PI;
+    }
+
+    // 원(거울 단면)에서 반사되어 S(종이 위의 한 점)에서 나온 빛이 E(눈)로 들어가는
+    // 지점 P를 찾는다. 입사각=반사각 조건을 만족하는 β(원 위의 각도)를, 보이는
+    // 범위(thetaSpanDeg) 안에서 촘촘히 스캔해 오차가 가장 작은 지점으로 근사한다.
+    // (원에서의 반사는 일반적으로 닫힌 형태 해가 없어 수치적으로 탐색한다.)
+    function reflectOffCircle(S, E, center, radius, thetaSpanDeg, samples) {
+        samples = samples || 2000;
+        const halfSpan = (thetaSpanDeg || THETA_SPAN_DEG) / 2;
+        let best = null;
+        for (let i = 0; i <= samples; i++) {
+            const betaDeg = -halfSpan + (2 * halfSpan) * (i / samples);
+            const beta = betaDeg * DEG2RAD;
+            const n = { x: Math.sin(beta), y: Math.cos(beta) };
+            const P = { x: center.x + radius * n.x, y: center.y + radius * n.y };
+            const vIn = vNorm({ x: P.x - S.x, y: P.y - S.y });
+            const dot = vIn.x * n.x + vIn.y * n.y;
+            const reflected = { x: vIn.x - 2 * dot * n.x, y: vIn.y - 2 * dot * n.y };
+            const vOutWanted = vNorm({ x: E.x - P.x, y: E.y - P.y });
+            const err = vAngleDeg(reflected, vOutWanted);
+            if (!best || err < best.err) best = { err, beta, betaDeg, P, n };
         }
-        for (let i = 0; i <= subdiv; i++) {
-            const u = u1 - (u1 - u0) * (i / subdiv);
-            pts.push(cylinderPoint(u, v1, previewRadius, previewHeight));
-        }
-        return pts.map(p => [p.x, p.y]);
+        if (!best) return null;
+        const vToSource = vNorm({ x: S.x - best.P.x, y: S.y - best.P.y });
+        const vToEye = vNorm({ x: E.x - best.P.x, y: E.y - best.P.y });
+        const incidenceDeg = vAngleDeg(vToSource, best.n);
+        const reflectionDeg = vAngleDeg(vToEye, best.n);
+        return {
+            point: best.P, betaDeg: best.betaDeg, errDeg: best.err,
+            incidenceDeg, reflectionDeg, valid: best.err < 1.5,
+        };
     }
 
     return {
         COLS, ROWS, R_CYL, RHO_MAX_FACTOR, THETA_SPAN_DEG,
         cellUV, thetaOf, rhoOf, fanPoint, cellFanPolygon,
-        cylinderPoint, cellCylinderPolygon,
+        fanInverse, reflectOffCircle,
     };
 });

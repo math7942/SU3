@@ -7,26 +7,22 @@
     const DRAW_W = COLS * CELL, DRAW_H = ROWS * CELL;
 
     const FAN_PX_PER_UNIT = 72;
-    // 거울(원통) 그래픽은 fanCanvas와 "똑같은 좌표계" 위에 겹쳐 그린다. 원통의
-    // 밑면 반지름을 R_CYL(부채꼴의 안쪽 가장자리)과 정확히 일치시켜서, 거울
-    // 그림의 아랫부분이 부채꼴의 중심(거울 위치)과 어긋나지 않게 한다.
+    // 거울은 "위에서 내려다본" 원(= 부채꼴 수식이 가정하는 원통의 단면)으로
+    // 그린다. 이 원의 중심·반지름이 부채꼴의 원점(FAN_ORIGIN)·안쪽 가장자리
+    // (R_CYL)와 정확히 같은 값을 쓰므로, 거울의 둘레가 항상 부채꼴의 안쪽 호와
+    // 한 치의 어긋남 없이 맞닿는다 — 비스듬한 3D 느낌의 원기둥 그림 대신, 수식과
+    // 완전히 같은 좌표를 쓰는 원을 그려서 "거울 위치가 호를 따라 놓이는" 것을
+    // 구조적으로 보장한다.
     const CYL_RADIUS_PX = M.R_CYL * FAN_PX_PER_UNIT; // 부채꼴 안쪽 가장자리와 동일
-    const CAN_OUTER_RX = CYL_RADIUS_PX + 10;
-    const CYL_TOP_ELLIPSE_RY = 15;
-    const CYL_HEIGHT_PX = 170; // 원통의 시각적 전체 높이
-    const CYL_PREVIEW_HEIGHT_PX = 138; // 그림이 입혀지는 범위(위쪽 테두리를 살짝 남김)
 
-    // 캔버스 높이는 "원통이 들어갈 자리(CYL_HEIGHT_PX + 여백) + 부채꼴이 뻗어나갈
-    // 최대 길이"를 모두 담을 수 있도록 역산한다. 거울(부채꼴 중심)은 원통 바로
-    // 아래, 즉 원통 높이만큼 아래로 내려온 지점에 위치한다.
     const FAN_W = 720;
-    const ORIGIN_Y = CYL_HEIGHT_PX + 18;
+    const ORIGIN_Y = CYL_RADIUS_PX + 24; // 거울 원이 캔버스 위쪽에 다 들어갈 여백
     const rhoMaxPx = M.R_CYL * M.RHO_MAX_FACTOR * FAN_PX_PER_UNIT;
     const FAN_H = Math.ceil(ORIGIN_Y + rhoMaxPx * 1.06 + 30);
     const FAN_ORIGIN = { x: FAN_W / 2, y: ORIGIN_Y };
-    const CYL_BODY_TOP_Y = FAN_ORIGIN.y - CYL_HEIGHT_PX;
-    const CYL_BODY_BOTTOM_Y = FAN_ORIGIN.y; // = 부채꼴의 중심(거울) 위치
-    const CYL_PREVIEW_TOP_Y = FAN_ORIGIN.y - CYL_PREVIEW_HEIGHT_PX;
+
+    // "빛의 경로" 탭에서 눈(관찰자)의 위치. 부채꼴 바깥, 화면 아래쪽에 고정해 둔다.
+    const EYE_POS = { x: FAN_ORIGIN.x + 150, y: FAN_H - 36 };
 
     const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
     const PALETTE = [
@@ -40,20 +36,70 @@
         { key: 'pink', color: '#ff8fb3', name: '분홍' },
     ];
 
-    // 예시 그림: 스마일 대신 직접 디자인한 고양이 얼굴 (8x6 모눈)
-    const EXAMPLE_CAT = (() => {
-        const fur = '#f5a623', ear = '#5b3a29', eye = '#3fae5a', nose = '#ff8fb3', mouth = '#1b1830', white = '#fff3df';
-        const rows = [
-            ['', 'ear', '', '', '', '', 'ear', ''],
-            ['', 'fur', 'fur', 'fur', 'fur', 'fur', 'fur', ''],
-            ['fur', 'fur', 'eye', 'fur', 'fur', 'eye', 'fur', 'fur'],
-            ['fur', 'white', 'fur', 'nose', 'nose', 'fur', 'white', 'fur'],
-            ['fur', 'fur', 'mouth', 'mouth', 'mouth', 'mouth', 'fur', 'fur'],
-            ['', 'fur', 'fur', 'fur', 'fur', 'fur', 'fur', ''],
-        ];
-        const colorOf = { ear, fur, eye, nose, mouth, white };
+    function gridFromRows(rows, colorOf) {
         return rows.map(r => r.map(k => k ? colorOf[k] : null));
-    })();
+    }
+
+    // 예시 그림: 스마일 대신 직접 디자인한 고양이 얼굴 (8x6 모눈)
+    const EXAMPLE_CAT = gridFromRows([
+        ['', 'ear', '', '', '', '', 'ear', ''],
+        ['', 'fur', 'fur', 'fur', 'fur', 'fur', 'fur', ''],
+        ['fur', 'fur', 'eye', 'fur', 'fur', 'eye', 'fur', 'fur'],
+        ['fur', 'white', 'fur', 'nose', 'nose', 'fur', 'white', 'fur'],
+        ['fur', 'fur', 'mouth', 'mouth', 'mouth', 'mouth', 'fur', 'fur'],
+        ['', 'fur', 'fur', 'fur', 'fur', 'fur', 'fur', ''],
+    ], { ear: '#5b3a29', fur: '#f5a623', eye: '#3fae5a', nose: '#ff8fb3', mouth: '#1b1830', white: '#fff3df' });
+
+    // ---- 숨은그림 퀴즈용 문제 은행 (직접 디자인한 8x6 픽셀 그림 4종) ----
+    const QUIZ_BANK = [
+        {
+            name: '하트', color: '#e2434f',
+            rows: [
+                [0, 1, 1, 0, 0, 1, 1, 0],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 0, 0, 1, 1, 0, 0, 0],
+            ],
+        },
+        {
+            name: '별', color: '#f6d53f',
+            rows: [
+                [0, 0, 0, 1, 1, 0, 0, 0],
+                [0, 1, 0, 1, 1, 0, 1, 0],
+                [0, 0, 1, 1, 1, 1, 0, 0],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 1, 0, 1, 1, 0, 1, 0],
+            ],
+        },
+        {
+            name: '우산', color: '#2a6fbe',
+            rows: [
+                [0, 0, 1, 1, 1, 1, 0, 0],
+                [0, 1, 1, 1, 1, 1, 1, 0],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [0, 0, 0, 1, 1, 0, 0, 0],
+                [0, 0, 0, 1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 0, 0],
+            ],
+        },
+        {
+            name: '물고기', color: '#3fae5a',
+            rows: [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 1, 1, 1, 1, 0, 1],
+                [1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 1, 1, 1, 1, 0, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+        },
+    ];
+    QUIZ_BANK.forEach(q => {
+        q.grid = q.rows.map(row => row.map(v => v ? q.color : null));
+    });
 
     // ---- 상태 ----
     let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -63,8 +109,119 @@
     let selectedColor = PALETTE[0].color;
     let erasing = false;
     let painting = false;
+    let activeTab = 'draw';
 
-    // ---- DOM ----
+    // ---- 공통 렌더링 함수 (여러 탭의 캔버스가 재사용) ----
+    function fanToCanvas(x, y) { return [FAN_ORIGIN.x + x * FAN_PX_PER_UNIT, FAN_ORIGIN.y + y * FAN_PX_PER_UNIT]; }
+
+    function renderFan(ctx, gridData, viewAngleDeg, showGridLines) {
+        ctx.clearRect(0, 0, FAN_W, FAN_H);
+        ctx.fillStyle = '#faf7ff';
+        ctx.fillRect(0, 0, FAN_W, FAN_H);
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const poly = M.cellFanPolygon(c, r, viewAngleDeg).map(([x, y]) => fanToCanvas(x, y));
+                const color = gridData[r][c];
+                if (color) {
+                    ctx.beginPath();
+                    poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                }
+                if (showGridLines) {
+                    ctx.beginPath();
+                    poly.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+                    ctx.closePath();
+                    ctx.strokeStyle = 'rgba(133,88,216,0.35)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        if (showGridLines) {
+            ctx.fillStyle = '#5b4bd6';
+            ctx.font = 'bold 13px "Pretendard Variable", sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            for (let c = 0; c < COLS; c++) {
+                const { u } = M.cellUV(c, ROWS - 1);
+                const p = M.fanPoint(u, 1.04, viewAngleDeg);
+                const [x, y] = fanToCanvas(p.x, p.y);
+                ctx.fillText(String(c + 1), x, y);
+            }
+            for (let r = 0; r < ROWS; r++) {
+                const { v } = M.cellUV(0, r);
+                const p = M.fanPoint(-0.015, v, viewAngleDeg);
+                const [x, y] = fanToCanvas(p.x, p.y);
+                ctx.fillText(ROW_LABELS[r], x, y);
+            }
+        }
+    }
+
+    // fanCanvas와 똑같은 좌표계(FAN_ORIGIN, FAN_PX_PER_UNIT)를 그대로 써서, 원통의
+    // 밑면이 항상 부채꼴의 중심(거울 위치)과 정확히 맞닿도록 그린다.
+    function renderCyl(ctx, gridData, show) {
+        ctx.clearRect(0, 0, FAN_W, FAN_H);
+        if (!show) return;
+
+        const cx = FAN_ORIGIN.x, cy = FAN_ORIGIN.y, R = CYL_RADIUS_PX;
+
+        // 금속 느낌의 원형 거울 (반지름이 부채꼴의 안쪽 호와 정확히 같다)
+        const grad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+        grad.addColorStop(0, '#fbfdff');
+        grad.addColorStop(0.6, '#cfd6e6');
+        grad.addColorStop(1, '#98a3ba');
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // 거울 속에 비친 그림: 사용자가 그린 모눈 그림을 그대로 축소해서, 원
+        // 안에 꼭 맞게 그린다 (= "눈에 보이는, 바르게 보이는 그림").
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.clip();
+        const previewR = R * 0.82;
+        const cell = previewR / Math.hypot(COLS / 2, ROWS / 2);
+        const imgW = COLS * cell, imgH = ROWS * cell;
+        const left = cx - imgW / 2, top = cy - imgH / 2;
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const color = gridData[r][c];
+                if (!color) continue;
+                ctx.fillStyle = color;
+                ctx.fillRect(left + c * cell, top + r * cell, cell + 0.5, cell + 0.5);
+            }
+        }
+        ctx.strokeStyle = 'rgba(30,41,59,0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(left, top, imgW, imgH);
+        ctx.restore();
+
+        // 살짝 광택
+        const sheen = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+        sheen.addColorStop(0, 'rgba(255,255,255,0.4)');
+        sheen.addColorStop(0.3, 'rgba(255,255,255,0)');
+        sheen.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = sheen;
+        ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(27,24,48,0.3)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    // ---- DOM: 그려 보기 탭 ----
     const drawCanvas = document.getElementById('drawCanvas');
     const dctx = drawCanvas.getContext('2d');
     const fanCanvas = document.getElementById('fanCanvas');
@@ -75,11 +232,9 @@
     const angleVal = document.getElementById('angleVal');
     const angleVal2 = document.getElementById('angleVal2');
 
-    drawCanvas.width = DRAW_W; drawCanvas.height = DRAW_H;
-    fanCanvas.width = FAN_W; fanCanvas.height = FAN_H;
-    cylCanvas.width = FAN_W; cylCanvas.height = FAN_H;
+    [drawCanvas].forEach(c => { c.width = DRAW_W; c.height = DRAW_H; });
+    [fanCanvas, cylCanvas].forEach(c => { c.width = FAN_W; c.height = FAN_H; });
 
-    // ---- 그리기 캔버스 (모눈종이 = 거울 속에 보일 그림) ----
     function drawDrawCanvas() {
         dctx.clearRect(0, 0, DRAW_W, DRAW_H);
         dctx.fillStyle = '#fffaf3';
@@ -108,127 +263,13 @@
         dctx.strokeRect(1, 1, DRAW_W - 2, DRAW_H - 2);
     }
 
-    // ---- 부채꼴(종이에 그릴 왜상) 캔버스 ----
-    function fanToCanvas(x, y) { return [FAN_ORIGIN.x + x * FAN_PX_PER_UNIT, FAN_ORIGIN.y + y * FAN_PX_PER_UNIT]; }
-
-    function drawFanCanvas() {
-        fctx.clearRect(0, 0, FAN_W, FAN_H);
-        fctx.fillStyle = '#faf7ff';
-        fctx.fillRect(0, 0, FAN_W, FAN_H);
-
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const poly = M.cellFanPolygon(c, r, viewAngle).map(([x, y]) => fanToCanvas(x, y));
-                const color = grid[r][c];
-                if (color) {
-                    fctx.beginPath();
-                    poly.forEach(([x, y], i) => i === 0 ? fctx.moveTo(x, y) : fctx.lineTo(x, y));
-                    fctx.closePath();
-                    fctx.fillStyle = color;
-                    fctx.fill();
-                }
-                if (showGrid) {
-                    fctx.beginPath();
-                    poly.forEach(([x, y], i) => i === 0 ? fctx.moveTo(x, y) : fctx.lineTo(x, y));
-                    fctx.closePath();
-                    fctx.strokeStyle = 'rgba(133,88,216,0.35)';
-                    fctx.lineWidth = 1;
-                    fctx.stroke();
-                }
-            }
-        }
-
-        if (showGrid) {
-            fctx.fillStyle = '#5b4bd6';
-            fctx.font = 'bold 13px "Pretendard Variable", sans-serif';
-            fctx.textAlign = 'center'; fctx.textBaseline = 'middle';
-            for (let c = 0; c < COLS; c++) {
-                const { u } = M.cellUV(c, ROWS - 1);
-                const p = M.fanPoint(u, 1.04, viewAngle);
-                const [x, y] = fanToCanvas(p.x, p.y);
-                fctx.fillText(String(c + 1), x, y);
-            }
-            for (let r = 0; r < ROWS; r++) {
-                const { v } = M.cellUV(0, r);
-                const p = M.fanPoint(-0.015, v, viewAngle);
-                const [x, y] = fanToCanvas(p.x, p.y);
-                fctx.fillText(ROW_LABELS[r], x, y);
-            }
-        }
-    }
-
-    // ---- 원통 거울 미리보기 ----
-    // fanCanvas와 똑같은 좌표계(FAN_ORIGIN, FAN_PX_PER_UNIT)를 그대로 써서, 원통의
-    // 밑면이 항상 부채꼴의 중심(거울 위치)과 정확히 맞닿도록 그린다.
-    function drawCylCanvas() {
-        cctx.clearRect(0, 0, FAN_W, FAN_H);
-        if (!showMirror) return;
-
-        const cx = FAN_ORIGIN.x;
-        const topY = CYL_BODY_TOP_Y, bottomY = CYL_BODY_BOTTOM_Y;
-
-        function bodyPath() {
-            cctx.beginPath();
-            cctx.moveTo(cx - CAN_OUTER_RX, topY);
-            cctx.lineTo(cx - CAN_OUTER_RX, bottomY);
-            cctx.ellipse(cx, bottomY, CAN_OUTER_RX, CYL_TOP_ELLIPSE_RY, 0, Math.PI, 0, true);
-            cctx.lineTo(cx + CAN_OUTER_RX, topY);
-            cctx.ellipse(cx, topY, CAN_OUTER_RX, CYL_TOP_ELLIPSE_RY, 0, 0, Math.PI, true);
-            cctx.closePath();
-        }
-
-        // 몸통 (금속 느낌 그라디언트)
-        const bodyGrad = cctx.createLinearGradient(cx - CAN_OUTER_RX, 0, cx + CAN_OUTER_RX, 0);
-        bodyGrad.addColorStop(0, '#cfd6e6');
-        bodyGrad.addColorStop(0.5, '#f3f6fb');
-        bodyGrad.addColorStop(1, '#b9c2d6');
-        cctx.fillStyle = bodyGrad;
-        bodyPath();
-        cctx.fill();
-
-        // 비친 그림을 몸통 앞면(보이는 범위)에 클립해서 그린다
-        cctx.save();
-        bodyPath();
-        cctx.clip();
-
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const color = grid[r][c];
-                if (!color) continue;
-                const poly = M.cellCylinderPolygon(c, r, CYL_RADIUS_PX, CYL_PREVIEW_HEIGHT_PX)
-                    .map(([x, y]) => [cx + x, CYL_PREVIEW_TOP_Y + y]);
-                cctx.beginPath();
-                poly.forEach(([x, y], i) => i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y));
-                cctx.closePath();
-                cctx.fillStyle = color;
-                cctx.fill();
-            }
-        }
-        // 살짝 광택
-        const sheen = cctx.createLinearGradient(cx - CAN_OUTER_RX, 0, cx + CAN_OUTER_RX, 0);
-        sheen.addColorStop(0, 'rgba(255,255,255,0.35)');
-        sheen.addColorStop(0.18, 'rgba(255,255,255,0)');
-        sheen.addColorStop(0.82, 'rgba(255,255,255,0)');
-        sheen.addColorStop(1, 'rgba(255,255,255,0.3)');
-        cctx.fillStyle = sheen;
-        cctx.fillRect(cx - CAN_OUTER_RX, topY, CAN_OUTER_RX * 2, bottomY - topY + 24);
-        cctx.restore();
-
-        // 테두리
-        cctx.strokeStyle = 'rgba(27,24,48,0.25)';
-        cctx.lineWidth = 1.4;
-        cctx.beginPath();
-        cctx.ellipse(cx, topY, CAN_OUTER_RX, CYL_TOP_ELLIPSE_RY, 0, 0, Math.PI * 2);
-        cctx.stroke();
-    }
-
     function redrawAll() {
         drawDrawCanvas();
-        drawFanCanvas();
-        drawCylCanvas();
+        renderFan(fctx, grid, viewAngle, showGrid);
+        renderCyl(cctx, grid, showMirror);
+        if (activeTab === 'light') redrawLightTab();
     }
 
-    // ---- 그리기 상호작용 ----
     function cellFromEvent(e) {
         const rect = drawCanvas.getBoundingClientRect();
         const px = (e.clientX - rect.left) * (DRAW_W / rect.width);
@@ -254,7 +295,6 @@
     drawCanvas.addEventListener('pointerup', () => { painting = false; });
     drawCanvas.addEventListener('pointercancel', () => { painting = false; });
 
-    // ---- 팔레트 ----
     const paletteEl = document.getElementById('palette');
     PALETTE.forEach((p, i) => {
         const btn = document.createElement('button');
@@ -337,6 +377,222 @@
         angleVal.textContent = viewAngle + '°';
         angleVal2.textContent = viewAngle + '°';
         redrawAll();
+    });
+
+    // ---- DOM: 빛의 경로 탭 ----
+    const fanCanvasL = document.getElementById('fanCanvasL');
+    const fctxL = fanCanvasL.getContext('2d');
+    const cylCanvasL = document.getElementById('cylCanvasL');
+    const cctxL = cylCanvasL.getContext('2d');
+    const rayCanvasL = document.getElementById('rayCanvasL');
+    const rctxL = rayCanvasL.getContext('2d');
+    [fanCanvasL, cylCanvasL, rayCanvasL].forEach(c => { c.width = FAN_W; c.height = FAN_H; });
+
+    let lastRayClick = null; // {x,y} in fanCanvasL pixel coords
+
+    function drawEyeMarker(ctx) {
+        ctx.save();
+        ctx.fillStyle = '#334155';
+        ctx.font = '20px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('👁', EYE_POS.x, EYE_POS.y);
+        ctx.fillStyle = '#78716c';
+        ctx.font = '11px "Pretendard Variable", sans-serif';
+        ctx.fillText('눈 (멀리서 거울을 봐요)', EYE_POS.x, EYE_POS.y + 18);
+        ctx.restore();
+    }
+
+    function renderRay(point) {
+        rctxL.clearRect(0, 0, FAN_W, FAN_H);
+        drawEyeMarker(rctxL);
+        if (!point) return;
+
+        const S = point;
+        const result = M.reflectOffCircle(S, EYE_POS, FAN_ORIGIN, CYL_RADIUS_PX, M.THETA_SPAN_DEG);
+        const infoBox = document.getElementById('rayInfoBox');
+        if (!result || !result.valid) {
+            infoBox.innerHTML = '<p class="angle-readout-hint">이 위치에서는 거울에 반사되어 눈까지 닿지 않아요. 거울에 더 가까운 곳을 눌러보세요.</p>';
+            return;
+        }
+        const P = result.point;
+
+        // 법선 (점선, 중심을 지나 바깥까지)
+        const nFar = { x: FAN_ORIGIN.x + (P.x - FAN_ORIGIN.x) * 1.5, y: FAN_ORIGIN.y + (P.y - FAN_ORIGIN.y) * 1.5 };
+        rctxL.save();
+        rctxL.setLineDash([4, 4]);
+        rctxL.strokeStyle = '#94a3b8';
+        rctxL.lineWidth = 1.5;
+        rctxL.beginPath();
+        rctxL.moveTo(FAN_ORIGIN.x, FAN_ORIGIN.y);
+        rctxL.lineTo(nFar.x, nFar.y);
+        rctxL.stroke();
+        rctxL.restore();
+        rctxL.fillStyle = '#78716c';
+        rctxL.font = '11px "Pretendard Variable", sans-serif';
+        rctxL.textAlign = 'left';
+        rctxL.fillText('법선', nFar.x + 4, nFar.y);
+
+        // 입사광 (초록, 점 -> 거울)
+        rctxL.strokeStyle = '#15803d';
+        rctxL.lineWidth = 2.5;
+        rctxL.beginPath();
+        rctxL.moveTo(S.x, S.y);
+        rctxL.lineTo(P.x, P.y);
+        rctxL.stroke();
+
+        // 반사광 (파랑, 거울 -> 눈)
+        rctxL.strokeStyle = '#2a6fbe';
+        rctxL.lineWidth = 2.5;
+        rctxL.beginPath();
+        rctxL.moveTo(P.x, P.y);
+        rctxL.lineTo(EYE_POS.x, EYE_POS.y);
+        rctxL.stroke();
+
+        // 클릭한 점 표시
+        rctxL.fillStyle = '#b91c1c';
+        rctxL.beginPath();
+        rctxL.arc(S.x, S.y, 4.5, 0, Math.PI * 2);
+        rctxL.fill();
+        rctxL.strokeStyle = 'white'; rctxL.lineWidth = 1.5; rctxL.stroke();
+
+        drawEyeMarker(rctxL);
+
+        const dxWorld = (S.x - FAN_ORIGIN.x) / FAN_PX_PER_UNIT;
+        const dyWorld = (S.y - FAN_ORIGIN.y) / FAN_PX_PER_UNIT;
+        const inv = M.fanInverse(dxWorld, dyWorld, viewAngle);
+        let cellInfo;
+        if (inv.inBounds) {
+            const color = grid[inv.row][inv.col];
+            cellInfo = `${ROW_LABELS[inv.row]}행 ${inv.col + 1}열` + (color ? '' : ' (아직 색칠 안 한 칸)');
+        } else {
+            cellInfo = '그림 영역 밖이라 모눈에는 없어요';
+        }
+
+        infoBox.innerHTML = `
+            <div class="angle-readout-row">
+                <span class="pair in">입사각 ${result.incidenceDeg.toFixed(0)}°</span>
+                <span class="pair out">반사각 ${result.reflectionDeg.toFixed(0)}°</span>
+            </div>
+            <p class="angle-readout-eq">입사각 = 반사각</p>
+            <p class="hint">${cellInfo}<br>(왼쪽 아래 작은 창의 점)</p>
+        `;
+    }
+
+    function redrawLightTab() {
+        renderFan(fctxL, grid, viewAngle, true);
+        renderCyl(cctxL, grid, true);
+        renderRay(lastRayClick);
+    }
+
+    fanCanvasL.addEventListener('pointerdown', (e) => {
+        const rect = fanCanvasL.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (FAN_W / rect.width);
+        const y = (e.clientY - rect.top) * (FAN_H / rect.height);
+        lastRayClick = { x, y };
+        renderRay(lastRayClick);
+    });
+
+    document.getElementById('btnClearRay').addEventListener('click', () => {
+        lastRayClick = null;
+        renderRay(null);
+        document.getElementById('rayInfoBox').innerHTML = '<p class="angle-readout-hint">아직 누른 점이 없어요. 왼쪽 종이를 눌러보세요.</p>';
+    });
+
+    // ---- DOM: 숨은그림 퀴즈 탭 ----
+    const fanCanvasQ = document.getElementById('fanCanvasQ');
+    const fctxQ = fanCanvasQ.getContext('2d');
+    const cylCanvasQ = document.getElementById('cylCanvasQ');
+    const cctxQ = cylCanvasQ.getContext('2d');
+    [fanCanvasQ, cylCanvasQ].forEach(c => { c.width = FAN_W; c.height = FAN_H; });
+
+    const QUIZ_ANGLE = 48;
+    let quizOrder = [];
+    let quizIndex = 0;
+    let quizScore = { correct: 0, total: 0 };
+    let quizAnswered = false;
+
+    function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    function startQuiz() {
+        quizOrder = shuffle(QUIZ_BANK.map((_, i) => i));
+        quizIndex = 0;
+        quizScore = { correct: 0, total: 0 };
+        quizAnswered = false;
+        document.getElementById('quizTotal').textContent = String(QUIZ_BANK.length);
+        renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+        quizAnswered = false;
+        const q = QUIZ_BANK[quizOrder[quizIndex]];
+        renderFan(fctxQ, q.grid, QUIZ_ANGLE, true);
+        renderCyl(cctxQ, q.grid, false);
+        document.getElementById('quizNum').textContent = String(quizIndex + 1);
+        document.getElementById('quizScore').textContent = `${quizScore.correct} / ${quizScore.total}`;
+        document.getElementById('quizFeedback').textContent = '';
+        document.getElementById('quizFeedback').classList.remove('shown');
+        document.getElementById('btnQuizNext').disabled = true;
+
+        const choicesEl = document.getElementById('quizChoices');
+        choicesEl.innerHTML = '';
+        const choiceNames = shuffle(QUIZ_BANK.map(b => b.name));
+        choiceNames.forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = 'btn quiz-choice';
+            btn.textContent = name;
+            btn.addEventListener('click', () => onQuizChoice(name, btn, q));
+            choicesEl.appendChild(btn);
+        });
+    }
+
+    function onQuizChoice(name, btn, q) {
+        if (quizAnswered) return;
+        quizAnswered = true;
+        quizScore.total++;
+        const correct = name === q.name;
+        if (correct) quizScore.correct++;
+
+        document.querySelectorAll('#quizChoices .quiz-choice').forEach(b => {
+            b.disabled = true;
+            if (b.textContent === q.name) b.classList.add('correct');
+            else if (b === btn) b.classList.add('wrong');
+        });
+
+        const fb = document.getElementById('quizFeedback');
+        fb.textContent = correct ? '🎉 정답이에요!' : '아쉬워요! 거울 속을 보세요.';
+        fb.style.color = correct ? '#15803d' : '#b91c1c';
+        fb.classList.add('shown');
+
+        document.getElementById('quizScore').textContent = `${quizScore.correct} / ${quizScore.total}`;
+        renderCyl(cctxQ, q.grid, true); // 정답 공개(원통 속 모습 보여주기)
+        document.getElementById('btnQuizNext').disabled = false;
+    }
+
+    document.getElementById('btnQuizNext').addEventListener('click', () => {
+        quizIndex = (quizIndex + 1) % quizOrder.length;
+        renderQuizQuestion();
+    });
+    document.getElementById('btnQuizRestart').addEventListener('click', startQuiz);
+
+    // ---- 탭 전환 ----
+    function setActiveTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        document.getElementById('panelDraw').classList.toggle('active', tab === 'draw');
+        document.getElementById('panelLight').classList.toggle('active', tab === 'light');
+        document.getElementById('panelQuiz').classList.toggle('active', tab === 'quiz');
+        if (tab === 'light') redrawLightTab();
+        if (tab === 'quiz' && quizOrder.length === 0) startQuiz();
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
     });
 
     // ---- 초기화 ----
