@@ -15,20 +15,16 @@
     // 구조적으로 보장한다.
     const CYL_RADIUS_PX = M.R_CYL * FAN_PX_PER_UNIT; // 부채꼴 안쪽 가장자리와 동일
 
-    // 거울을 "보는 각도에 따라 기울어 보이는 원기둥"으로 입체적으로 그리기 위한
-    // 장식용 몸통/뚜껑의 "최대" 치수. 실제로 그릴 때는 이 값에 보는 각도(φ)를
-    // 반영한 sin(φ)/cos(φ) 배율을 곱해, 각도를 낮추면 몸통이 더 길게(옆에서 보듯)
-    // 보이고 각도를 높이면 뚜껑이 더 둥글게(위에서 보듯) 보이도록 한다. 반사
-    // 내용이 그려지는 기준 원(center=FAN_ORIGIN, radius=CYL_RADIUS_PX)의 가로
-    // 폭(R)과 중심은 각도와 무관하게 항상 고정되어, 부채꼴과의 정렬은 그대로다.
-    const CAN_BODY_H_MAX = CYL_RADIUS_PX * 0.55;
-    const CAN_TOP_RY_MAX = CYL_RADIUS_PX * 0.32;
+    // 원기둥의 "보이는 벽면 높이"(화면 픽셀 기준, 보는 각도 φ=0일 때의 최댓값).
+    // renderCyl이 이 높이를 cos(φ)만큼 눌러 실제 보이는 몸통 높이로 쓴다.
+    const CYL_H_PX = CYL_RADIUS_PX * 1.1;
 
     const FAN_W = 720;
-    // 몸통(cos항)과 뚜껑(sin항)의 합이 어떤 각도에서도 이 한계를 넘지 않는다
-    // (코시-슈바르츠 부등식: a·cosφ + b·sinφ ≤ √(a²+b²)) — 각도가 바뀌어도
-    // 캔버스 위쪽 밖으로 넘치지 않을 여백을 안전하게 미리 확보해 둔다.
-    const ORIGIN_Y = CYL_RADIUS_PX + Math.hypot(CAN_BODY_H_MAX, CAN_TOP_RY_MAX) + 20;
+    // 몸통(cos항)과 밑면 타원이 앞으로 튀어나오는 정도(sin항)의 합이 어떤
+    // 각도에서도 이 한계를 넘지 않는다 (코시-슈바르츠 부등식:
+    // a·cosφ + b·sinφ ≤ √(a²+b²)) — 각도가 바뀌어도 캔버스 위쪽 밖으로
+    // 넘치지 않을 여백을 안전하게 미리 확보해 둔다.
+    const ORIGIN_Y = CYL_RADIUS_PX + Math.hypot(CYL_H_PX, CYL_RADIUS_PX) + 20;
     const rhoMaxPx = M.R_CYL * M.RHO_MAX_FACTOR * FAN_PX_PER_UNIT;
     const FAN_H = Math.ceil(ORIGIN_Y + rhoMaxPx * 1.06 + 30);
     const FAN_ORIGIN = { x: FAN_W / 2, y: ORIGIN_Y };
@@ -114,6 +110,13 @@
     });
 
     const DESIGN_ANGLE = M.DESIGN_ANGLE_DEG; // 45 — 종이(부채꼴)는 항상 이 각도로 설계되어 고정된다
+    const SPAN_RAD = M.THETA_SPAN_DEG * Math.PI / 180;
+    const TAN_DESIGN = Math.tan(DESIGN_ANGLE * Math.PI / 180);
+
+    function hexToRgb(hex) {
+        const n = parseInt(hex.slice(1), 16);
+        return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    }
 
     // ---- 상태 ----
     // 빈 모눈으로 시작하면 거울 속에 비출 내용이 없어서, 슬라이더를 움직여도
@@ -187,115 +190,102 @@
     // 그 외의 칸은 tan(실제각도)/tan(설계각도) 배만큼 겉보기 높이가 달라져서,
     // 설계보다 높은 각도에서 보면 위쪽(A행 쪽)이 원 밖으로 밀려나 잘려 보이고,
     // 낮은 각도에서 보면 전체가 아래쪽에 눌려 붙어 보인다.
+    // 원기둥 거울 표면에 비친 모습을, 화면 픽셀 하나하나에 대해 실제 반사
+    // 광선을 거꾸로 추적해서 그린다 (정면·위에서 비스듬히 내려다보는 평행
+    // 투영 카메라 가정). 화면 픽셀 (ix,iy)마다:
+    //   1) 그 픽셀이 원기둥 벽면의 어느 지점(방위각 φ, 벽면 높이 0~1)인지 역산
+    //   2) 원통 반사 법칙(법선이 항상 수평 ⇒ 반사는 광선의 수직 성분을 보존)으로
+    //      그 지점이 "현재 보는 각도"에서 종이 위 어느 칸을 반사하고 있는지 계산
+    //   3) 그 칸의 색을 읽어와 칠한다
+    // — 장식으로 덧그린 캔이 아니라, 실제로 매 프레임 다시 레이캐스팅한 결과다.
     function renderCyl(ctx, gridData, show, viewingAngleDeg) {
         ctx.clearRect(0, 0, FAN_W, FAN_H);
         if (!show) return;
 
-        const cx = FAN_ORIGIN.x, cy = FAN_ORIGIN.y, R = CYL_RADIUS_PX;
-        const phi = Math.max(5, Math.min(85, viewingAngleDeg)) * Math.PI / 180;
-        // 보는 각도(φ)가 낮을수록(옆에서 보듯) 원기둥 몸통이 길게 보이고
-        // 뚜껑 타원은 납작해지며, 높을수록(위에서 보듯) 몸통은 짧아지고
-        // 뚜껑은 둥근 원에 가까워진다 — 실제로 각도를 조절하며 원기둥을
-        // 내려다보는 듯한 느낌을 계속 유지한다. 가로 폭(R)과 아래 원의
-        // 중심만은 각도와 무관하게 고정해, 부채꼴과의 정렬은 그대로 지킨다.
-        const bodyH = CAN_BODY_H_MAX * Math.cos(phi);
-        const topRy = CAN_TOP_RY_MAX * Math.sin(phi);
-        const windowRy = R * Math.sin(phi); // 거울 입구를 통해 보이는 안쪽 타원의 세로 반지름
+        const cx = FAN_ORIGIN.x, cy = FAN_ORIGIN.y, Rs = CYL_RADIUS_PX;
+        const A = Math.max(5, Math.min(85, viewingAngleDeg)) * Math.PI / 180;
+        const sa = Math.sin(A), ca = Math.cos(A), tanA = Math.tan(A);
+        const topOffPx = ca * CYL_H_PX;           // 현재 보는 각도에서 눈에 보이는 몸통 높이(픽셀)
+        const w = Math.ceil(Rs * 2), h = Math.ceil(topOffPx + Rs * sa) + 2;
 
-        const topCy = cy - bodyH;
-        const wallGrad = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
-        wallGrad.addColorStop(0, '#7d87a0');
-        wallGrad.addColorStop(0.18, '#c7cfe3');
-        wallGrad.addColorStop(0.5, '#f2f4fa');
-        wallGrad.addColorStop(0.82, '#c7cfe3');
-        wallGrad.addColorStop(1, '#6e7890');
-        ctx.fillStyle = wallGrad;
-        ctx.fillRect(cx - R, topCy, R * 2, cy - topCy);
+        // 칸마다 색을 미리 rgb로 변환해 둔다 (픽셀 루프 안에서 매번 파싱하지 않도록)
+        const rgbGrid = gridData.map(row => row.map(c => c ? hexToRgb(c) : null));
 
-        const capGrad = ctx.createRadialGradient(cx - R * 0.3, topCy - topRy * 0.3, R * 0.1, cx, topCy, R);
+        const img = ctx.createImageData(w, h);
+        const o = img.data;
+        for (let ix = 0; ix < w; ix++) {
+            const sp = (ix + 0.5 - Rs) / Rs;           // sin(φ) — 이 화면 열이 원기둥의 어느 방위각인지
+            if (sp <= -1 || sp >= 1) continue;          // 원기둥 바깥 (투명하게 남겨 둠)
+            const cp = Math.sqrt(1 - sp * sp);
+            const u0 = Math.asin(sp) / SPAN_RAD + 0.5;   // 부채꼴의 열(column) 좌표로 환산
+            const yb = sa * Rs * cp;                     // 이 열에서 밑면 타원의 앞/뒤 보정
+            const shade = 0.86 + 0.14 * cp;               // 원기둥 입체감을 위한 음영(중앙이 밝고 옆이 어둡게)
+            for (let iy = 0; iy < h; iy++) {
+                const zpx = (yb - (iy + 0.5 - topOffPx)) / ca;   // 원기둥 벽면 위의 실제(눌리지 않은) 높이(픽셀)
+                if (zpx < 0 || zpx > CYL_H_PX) continue;          // 몸통 범위 밖 — 투명
+                const zFrac = zpx / CYL_H_PX;                      // 0(밑동) ~ 1(위쪽 끝)
+                // 원통 법선은 항상 수평이라 반사가 광선의 수직 성분을 바꾸지 못한다 ⇒
+                // 벽면의 zFrac 지점이 지금 반사하고 있는 "종이 위 실제 칸(v0)"은
+                // 설계 각도(45°)에서의 비율로 환산하면 tan(설계각)/tan(보는각) 배만큼만 달라진다.
+                const v0 = zFrac * TAN_DESIGN / tanA;
+                let r, g, b;
+                if (u0 >= 0 && u0 <= 1 && v0 >= 0 && v0 <= 1) {
+                    const col = Math.min(COLS - 1, Math.max(0, Math.floor(u0 * COLS)));
+                    const row = Math.min(ROWS - 1, Math.max(0, Math.floor((1 - v0) * ROWS)));
+                    const rgb = rgbGrid[row][col];
+                    if (rgb) { r = rgb.r; g = rgb.g; b = rgb.b; } else { r = 253; g = 250; b = 243; }
+                } else {
+                    r = 206; g = 213; b = 224; // 그림 범위 밖(거울이 반사하는 책상 자리) — 중립 회색
+                }
+                const idx = (iy * w + ix) * 4;
+                o[idx] = r * shade; o[idx + 1] = g * shade; o[idx + 2] = b * shade; o[idx + 3] = 255;
+            }
+        }
+        ctx.putImageData(img, cx - Rs, cy - topOffPx);
+
+        // 레이캐스팅 결과, 각 열(column)마다 "원기둥 뚜껑 너머"에 해당하는
+        // 투명한 빈 자리가 열마다 다른 높이로 남는다(중앙 열일수록 넓게) —
+        // 정확히 뚜껑 타원의 앞쪽 절반 모양이다. destination-over로 그 자리에만
+        // 금속 뚜껑을 채워 넣어, 구멍이 아니라 둥근 뚜껑처럼 보이게 한다.
+        const ry = Rs * sa;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        const capGrad = ctx.createRadialGradient(cx - Rs * 0.3, cy - topOffPx - ry * 0.3, Rs * 0.1, cx, cy - topOffPx, Rs);
         capGrad.addColorStop(0, '#fbfdff');
         capGrad.addColorStop(0.6, '#d7deec');
         capGrad.addColorStop(1, '#8e99b2');
         ctx.beginPath();
-        ctx.ellipse(cx, topCy, R, topRy, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy - topOffPx, Rs, Math.max(ry, 0.6), 0, 0, Math.PI, false);
+        ctx.closePath();
         ctx.fillStyle = capGrad;
         ctx.fill();
-        ctx.strokeStyle = 'rgba(27,24,48,0.3)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // 거울 입구(아래 원 안쪽) — 가로 반지름은 항상 R(부채꼴 안쪽 호와 동일),
-        // 세로 반지름만 보는 각도에 따라 타원으로 눌려서, 비스듬히 내려다보는
-        // 원기둥 입구처럼 보인다.
-        const grad = ctx.createRadialGradient(cx - R * 0.3, cy - windowRy * 0.3, R * 0.1, cx, cy, R);
-        grad.addColorStop(0, '#fbfdff');
-        grad.addColorStop(0.6, '#cfd6e6');
-        grad.addColorStop(1, '#98a3ba');
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
-        ctx.clip();
-
-        // 거울 속에 비친 그림: 각 행(row)을, 그 행이 실제로 설계된 반지름을
-        // 현재 보는 각도로 되짚었을 때의 "겉보기 세로 위치"에 그린다. apparentV=0
-        // (F행, 거울 바로 앞)은 항상 입구 타원의 맨 아래(가장 가까운 안쪽 벽)로
-        // 고정되고, 그 외는 각도에 따라 위로 늘어나거나(설계보다 낮은 각도)
-        // 타원 위로 밀려 잘린다(설계보다 높은 각도) — 타원 클립이 그 잘림을
-        // 자연스럽게 처리해준다. 가로 폭은 각도와 무관하게 항상 일정해서,
-        // 세로만 눌리는 타원 입구와 자연스럽게 어울린다.
-        const previewRx = R * 0.8;
-        const previewRy = windowRy * 0.8;
-        const imgW = previewRx * 2, imgH = previewRy * 2;
-        const cellX = imgW / COLS;
-        const left = cx - imgW / 2, bottom = cy + previewRy;
-        for (let r = 0; r < ROWS; r++) {
-            const { v0, v1 } = M.rowToVSpan(r);
-            const rho0 = M.rhoOf(v0, DESIGN_ANGLE);
-            const rho1 = M.rhoOf(v1, DESIGN_ANGLE);
-            const av0 = M.apparentV(rho0, viewingAngleDeg);
-            const av1 = M.apparentV(rho1, viewingAngleDeg);
-            const yTop = bottom - av1 * imgH, yBottom = bottom - av0 * imgH;
-            for (let c = 0; c < COLS; c++) {
-                const color = gridData[r][c];
-                if (!color) continue;
-                ctx.fillStyle = color;
-                ctx.fillRect(left + c * cellX, yTop - 0.5, cellX + 0.5, (yBottom - yTop) + 1);
-            }
-        }
-        // 테두리: 아래쪽은 항상 고정(F행 안쪽 가장자리), 위쪽은 현재 보는
-        // 각도에서 전체 그림(A행 바깥쪽 가장자리)이 실제로 어디까지 닿는지를
-        // 그대로 보여준다 — 설계 각도와 다르면 테두리 자체가 줄어들거나(낮은
-        // 각도) 타원 위로 넘쳐 잘린다(높은 각도).
-        const rhoMax = M.R_CYL * M.RHO_MAX_FACTOR;
-        const avFull = M.apparentV(rhoMax, viewingAngleDeg);
-        ctx.strokeStyle = 'rgba(30,41,59,0.5)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(left, bottom - avFull * imgH, imgW, avFull * imgH);
         ctx.restore();
 
+        // 밑면 테두리(부채꼴 안쪽 호와 맞닿는 자리)와 위쪽 테두리(현재 각도에서
+        // 보이는 몸통 끝)를 살짝 그려 금속 테두리처럼 보이게 한다.
+        ctx.strokeStyle = 'rgba(27,24,48,0.32)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, Rs, Math.max(ry, 0.6), 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - topOffPx, Rs, Math.max(ry, 0.6), 0, 0, Math.PI * 2);
+        ctx.stroke();
+
         // 살짝 광택
-        const sheen = ctx.createLinearGradient(cx - R, cy - windowRy, cx + R, cy + windowRy);
-        sheen.addColorStop(0, 'rgba(255,255,255,0.4)');
-        sheen.addColorStop(0.3, 'rgba(255,255,255,0)');
+        const sheen = ctx.createLinearGradient(cx - Rs, 0, cx + Rs, 0);
+        sheen.addColorStop(0, 'rgba(255,255,255,0.3)');
+        sheen.addColorStop(0.22, 'rgba(255,255,255,0)');
+        sheen.addColorStop(0.3, 'rgba(255,255,255,0.22)');
+        sheen.addColorStop(0.42, 'rgba(255,255,255,0)');
         sheen.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.save();
         ctx.beginPath();
-        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
+        ctx.rect(cx - Rs, cy - topOffPx - ry, Rs * 2, topOffPx + ry * 2);
         ctx.clip();
         ctx.fillStyle = sheen;
-        ctx.fillRect(cx - R, cy - windowRy, R * 2, windowRy * 2);
+        ctx.fillRect(cx - Rs, cy - topOffPx - ry, Rs * 2, topOffPx + ry * 2);
         ctx.restore();
-
-        ctx.strokeStyle = 'rgba(27,24,48,0.3)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
-        ctx.stroke();
     }
 
     // ---- DOM: 그려 보기 탭 ----
@@ -428,6 +418,147 @@
             showToast('불러오기에 실패했어요.');
         }
     });
+
+    // ---- 사진으로 채우기: 업로드한 사진을 COLS×ROWS 칸의 평균색으로 축소해서 모눈에 채운다 ----
+    function rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+    }
+    function loadPhotoFile(file) {
+        if (!file || file.type.indexOf('image/') !== 0) { showToast('이미지 파일만 불러올 수 있어요.'); return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                // 모눈(8:6 비율)을 꽉 채우도록 사진 가운데를 잘라낸다
+                const targetAR = COLS / ROWS;
+                const srcAR = img.width / img.height;
+                let sx = 0, sy = 0, sw = img.width, sh = img.height;
+                if (srcAR > targetAR) { sw = img.height * targetAR; sx = (img.width - sw) / 2; }
+                else { sh = img.width / targetAR; sy = (img.height - sh) / 2; }
+                const SAMPLE = 16; // 칸마다 이만큼 잘게 나눠 평균색을 구한다
+                const tmp = document.createElement('canvas');
+                tmp.width = COLS * SAMPLE; tmp.height = ROWS * SAMPLE;
+                const tctx = tmp.getContext('2d', { willReadFrequently: true });
+                tctx.drawImage(img, sx, sy, sw, sh, 0, 0, tmp.width, tmp.height);
+                const data = tctx.getImageData(0, 0, tmp.width, tmp.height).data;
+                const next = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        let tr = 0, tg = 0, tb = 0, n = 0;
+                        for (let yy = 0; yy < SAMPLE; yy++) {
+                            for (let xx = 0; xx < SAMPLE; xx++) {
+                                const px = c * SAMPLE + xx, py = r * SAMPLE + yy;
+                                const i = (py * tmp.width + px) * 4;
+                                tr += data[i]; tg += data[i + 1]; tb += data[i + 2]; n++;
+                            }
+                        }
+                        next[r][c] = rgbToHex(tr / n, tg / n, tb / n);
+                    }
+                }
+                grid = next;
+                redrawAll();
+                showToast('사진을 모눈 색으로 채웠어요!');
+            };
+            img.onerror = () => showToast('이미지를 읽을 수 없어요.');
+            img.src = reader.result;
+        };
+        reader.onerror = () => showToast('파일을 읽는 중 문제가 생겼어요.');
+        reader.readAsDataURL(file);
+    }
+    document.getElementById('btnPhoto').addEventListener('click', () => {
+        document.getElementById('photoInput').click();
+    });
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        loadPhotoFile(file);
+    });
+
+    // ---- 인쇄용 전개도: 실제로 인쇄해서 거울을 세워 볼 수 있도록, 부채꼴
+    // 그림을 고해상도로 새로 그려 PNG로 내려받는다. 화면 미리보기용 캔버스와는
+    // 별도로, 같은 부채꼴 수식(M.cellFanPolygon)을 더 큰 배율로 다시 그린다.
+    function exportParchmentPNG() {
+        const SCALE = 160; // px per R_CYL unit — 화면용(72)보다 훨씬 선명하게
+        const rhoMaxPx = M.R_CYL * M.RHO_MAX_FACTOR * SCALE;
+        const halfSpanRad = (M.THETA_SPAN_DEG / 2) * Math.PI / 180;
+        const maxX = rhoMaxPx * Math.sin(halfSpanRad);
+        const W = Math.ceil(maxX * 2 + 100);
+        const originY = M.R_CYL * SCALE + 90;
+        const H = Math.ceil(originY + rhoMaxPx * 1.06 + 90);
+        const originX = W / 2;
+        const toCanvas = (x, y) => [originX + x * SCALE, originY + y * SCALE];
+
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const g = c.getContext('2d');
+        g.fillStyle = '#ffffff';
+        g.fillRect(0, 0, W, H);
+
+        for (let r = 0; r < ROWS; r++) {
+            for (let col = 0; col < COLS; col++) {
+                const poly = M.cellFanPolygon(col, r, DESIGN_ANGLE).map(([x, y]) => toCanvas(x, y));
+                const color = grid[r][col];
+                g.beginPath();
+                poly.forEach(([x, y], i) => i === 0 ? g.moveTo(x, y) : g.lineTo(x, y));
+                g.closePath();
+                if (color) { g.fillStyle = color; g.fill(); }
+                g.strokeStyle = 'rgba(91,75,214,0.45)';
+                g.lineWidth = 1.2;
+                g.stroke();
+            }
+        }
+        g.fillStyle = '#5b4bd6';
+        g.font = 'bold 20px "Pretendard Variable", sans-serif';
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        for (let col = 0; col < COLS; col++) {
+            const { u } = M.cellUV(col, ROWS - 1);
+            const p = M.fanPoint(u, 1.05, DESIGN_ANGLE);
+            const [x, y] = toCanvas(p.x, p.y);
+            g.fillText(String(col + 1), x, y);
+        }
+        for (let r = 0; r < ROWS; r++) {
+            const { v } = M.cellUV(0, r);
+            const p = M.fanPoint(-0.02, v, DESIGN_ANGLE);
+            const [x, y] = toCanvas(p.x, p.y);
+            g.fillText(ROW_LABELS[r], x, y);
+        }
+
+        // 거울을 세울 자리 — 점선 원
+        g.setLineDash([10, 8]);
+        g.strokeStyle = 'rgba(70,70,80,0.65)';
+        g.lineWidth = 2.5;
+        g.beginPath();
+        g.arc(originX, originY, M.R_CYL * SCALE, 0, Math.PI * 2);
+        g.stroke();
+        g.setLineDash([]);
+        g.fillStyle = 'rgba(70,70,80,0.78)';
+        g.font = 'bold 17px "Pretendard Variable", sans-serif';
+        g.fillText('원통 거울', originX, originY - 12);
+        g.fillText('세우는 자리', originX, originY + 12);
+
+        // 안내 문구
+        g.textAlign = 'left'; g.fillStyle = '#26313f';
+        g.font = 'bold 22px "Pretendard Variable", sans-serif';
+        g.fillText('아나모르포시스 전개도 — 원통 거울 왜상', 24, 36);
+        g.font = '15px "Pretendard Variable", sans-serif';
+        g.fillStyle = '#5b6878';
+        g.fillText('점선 원 자리에 원통 모양 컵·캔을 세우고, 45° 각도(비스듬히)에서 내려다보세요.', 24, 62);
+        g.strokeStyle = '#d3dae3'; g.lineWidth = 2; g.strokeRect(1, 1, W - 2, H - 2);
+
+        c.toBlob(blob => {
+            if (!blob) { showToast('내보내기에 실패했어요.'); return; }
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const d = new Date();
+            const z = n => String(n).padStart(2, '0');
+            a.href = url;
+            a.download = `아나모르포시스_전개도_${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}.png`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            showToast('인쇄용 전개도를 저장했어요!');
+        }, 'image/png');
+    }
+    document.getElementById('btnPrint').addEventListener('click', exportParchmentPNG);
 
     function showToast(msg) {
         const el = document.getElementById('toast');
