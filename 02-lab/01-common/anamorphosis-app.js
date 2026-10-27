@@ -104,7 +104,10 @@
     const DESIGN_ANGLE = M.DESIGN_ANGLE_DEG; // 45 — 종이(부채꼴)는 항상 이 각도로 설계되어 고정된다
 
     // ---- 상태 ----
-    let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    // 빈 모눈으로 시작하면 거울 속에 비출 내용이 없어서, 슬라이더를 움직여도
+    // 아무 변화도 안 보여(테두리만 있는 빈 원) 마치 안 바뀌는 것처럼 오해하기
+    // 쉽다. 그래서 처음부터 예시 그림을 채워두고 시작한다.
+    let grid = EXAMPLE_CAT.map(row => row.slice());
     let eyeAngle = DESIGN_ANGLE; // "보는 눈의 각도" 슬라이더 값 — 거울 미리보기에만 영향을 준다
     let showMirror = true;
     let showGrid = true;
