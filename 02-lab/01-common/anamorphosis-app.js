@@ -690,12 +690,19 @@
     const MINI_W = 160, MINI_H = 120;
     miniPreviewL.width = MINI_W; miniPreviewL.height = MINI_H;
 
-    let lastRayClick = null; // {x,y} in fanCanvasL pixel coords
+    // 여러 광선을 동시에 보여준다(최대 5개, 오래된 것부터 밀려남) — 각 점마다
+    // 다른 색으로, 가장 최근 것만 입사각/반사각 표시와 법선을 함께 그린다.
+    const RAY_MAX = 5;
+    const RAY_COLORS = ['#e2434f', '#f5a623', '#2a6fbe', '#3fae5a', '#8558d8'];
+    let rays = []; // { S:{x,y} } in fanCanvasL pixel coords, oldest first
+    let photonT = 0;
+    let photonRunning = false;
 
     // "눈에 보이는 거울 속 그림" — 모눈종이(= 거울 속에서 바르게 보일 그림)를
-    // 작게 다시 그리고, 지금 누른 점이 그 그림의 어느 자리(u,v)에 해당하는지
-    // 점으로 표시한다. 거울이 그림을 "바로잡아 보여준다"는 걸 직접 확인할 수 있다.
-    function drawMiniPreview(uv) {
+    // 작게 다시 그리고, 지금까지 누른 점들이 그 그림의 어느 자리(u,v)에
+    // 해당하는지 각자의 색 점으로 표시한다. 거울이 그림을 "바로잡아 보여준다"는
+    // 걸 직접 확인할 수 있다.
+    function drawMiniPreview(dots) {
         mctxL.clearRect(0, 0, MINI_W, MINI_H);
         mctxL.fillStyle = '#fffaf3';
         mctxL.fillRect(0, 0, MINI_W, MINI_H);
@@ -710,13 +717,13 @@
         mctxL.lineWidth = 1;
         for (let c = 1; c < COLS; c++) { mctxL.beginPath(); mctxL.moveTo(c * cw, 0); mctxL.lineTo(c * cw, MINI_H); mctxL.stroke(); }
         for (let r = 1; r < ROWS; r++) { mctxL.beginPath(); mctxL.moveTo(0, r * ch); mctxL.lineTo(MINI_W, r * ch); mctxL.stroke(); }
-        if (uv) {
-            mctxL.fillStyle = '#b91c1c';
+        (dots || []).forEach(d => {
+            mctxL.fillStyle = d.color;
             mctxL.beginPath();
-            mctxL.arc(uv.u * MINI_W, (1 - uv.v) * MINI_H, 4, 0, Math.PI * 2);
+            mctxL.arc(d.u * MINI_W, (1 - d.v) * MINI_H, 4, 0, Math.PI * 2);
             mctxL.fill();
             mctxL.strokeStyle = 'white'; mctxL.lineWidth = 1.5; mctxL.stroke();
-        }
+        });
     }
 
     function drawEyeMarker(ctx) {
@@ -731,103 +738,135 @@
         ctx.restore();
     }
 
-    function renderRay(point) {
-        rctxL.clearRect(0, 0, FAN_W, FAN_H);
-        drawEyeMarker(rctxL);
-        if (!point) { drawMiniPreview(null); return; }
-
-        const S = point;
+    // 점 하나에 대한 반사 정보를 계산한다 (실패하면 null)
+    function computeRay(S, color) {
         const result = M.reflectOffCircle(S, EYE_POS, FAN_ORIGIN, CYL_RADIUS_PX, M.THETA_SPAN_DEG);
-        const infoBox = document.getElementById('rayInfoBox');
-        if (!result || !result.valid) {
-            infoBox.innerHTML = '<p class="angle-readout-hint">이 위치에서는 거울에 반사되어 눈까지 닿지 않아요. 거울에 더 가까운 곳을 눌러보세요.</p>';
-            drawMiniPreview(null);
-            return;
-        }
-        const P = result.point;
-
-        // 법선 (점선, 중심을 지나 바깥까지)
-        const nFar = { x: FAN_ORIGIN.x + (P.x - FAN_ORIGIN.x) * 1.5, y: FAN_ORIGIN.y + (P.y - FAN_ORIGIN.y) * 1.5 };
-        rctxL.save();
-        rctxL.setLineDash([4, 4]);
-        rctxL.strokeStyle = '#94a3b8';
-        rctxL.lineWidth = 1.5;
-        rctxL.beginPath();
-        rctxL.moveTo(FAN_ORIGIN.x, FAN_ORIGIN.y);
-        rctxL.lineTo(nFar.x, nFar.y);
-        rctxL.stroke();
-        rctxL.restore();
-        rctxL.fillStyle = '#78716c';
-        rctxL.font = '11px "Pretendard Variable", sans-serif';
-        rctxL.textAlign = 'left';
-        rctxL.fillText('법선', nFar.x + 4, nFar.y);
-
-        // 입사광 (초록, 점 -> 거울)
-        rctxL.strokeStyle = '#15803d';
-        rctxL.lineWidth = 2.5;
-        rctxL.beginPath();
-        rctxL.moveTo(S.x, S.y);
-        rctxL.lineTo(P.x, P.y);
-        rctxL.stroke();
-
-        // 반사광 (파랑, 거울 -> 눈)
-        rctxL.strokeStyle = '#2a6fbe';
-        rctxL.lineWidth = 2.5;
-        rctxL.beginPath();
-        rctxL.moveTo(P.x, P.y);
-        rctxL.lineTo(EYE_POS.x, EYE_POS.y);
-        rctxL.stroke();
-
-        // 클릭한 점 표시
-        rctxL.fillStyle = '#b91c1c';
-        rctxL.beginPath();
-        rctxL.arc(S.x, S.y, 4.5, 0, Math.PI * 2);
-        rctxL.fill();
-        rctxL.strokeStyle = 'white'; rctxL.lineWidth = 1.5; rctxL.stroke();
-
-        drawEyeMarker(rctxL);
-
+        if (!result || !result.valid) return null;
         const dxWorld = (S.x - FAN_ORIGIN.x) / FAN_PX_PER_UNIT;
         const dyWorld = (S.y - FAN_ORIGIN.y) / FAN_PX_PER_UNIT;
         const inv = M.fanInverse(dxWorld, dyWorld);
-        let cellInfo;
-        if (inv.inBounds) {
-            const color = grid[inv.row][inv.col];
-            cellInfo = `${ROW_LABELS[inv.row]}행 ${inv.col + 1}열` + (color ? '' : ' (아직 색칠 안 한 칸)');
-            drawMiniPreview(inv);
-        } else {
-            cellInfo = '그림 영역 밖이라 모눈에는 없어요';
-            drawMiniPreview(null);
-        }
+        return { S, P: result.point, result, inv, color };
+    }
 
-        infoBox.innerHTML = `
-            <div class="angle-readout-row">
-                <span class="pair in">입사각 ${result.incidenceDeg.toFixed(0)}°</span>
-                <span class="pair out">반사각 ${result.reflectionDeg.toFixed(0)}°</span>
-            </div>
-            <p class="angle-readout-eq">입사각 = 반사각</p>
-            <p class="hint">${cellInfo}<br>(왼쪽 아래 작은 창의 점)</p>
-        `;
+    function drawRayPath(ctx, ray, isLast) {
+        const { S, P, color } = ray;
+        if (isLast) {
+            const nFar = { x: FAN_ORIGIN.x + (P.x - FAN_ORIGIN.x) * 1.5, y: FAN_ORIGIN.y + (P.y - FAN_ORIGIN.y) * 1.5 };
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(FAN_ORIGIN.x, FAN_ORIGIN.y);
+            ctx.lineTo(nFar.x, nFar.y);
+            ctx.stroke();
+            ctx.restore();
+            ctx.fillStyle = '#78716c';
+            ctx.font = '11px "Pretendard Variable", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('법선', nFar.x + 4, nFar.y);
+        }
+        ctx.save();
+        ctx.globalAlpha = isLast ? 1 : 0.55;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isLast ? 2.5 : 2;
+        ctx.beginPath(); ctx.moveTo(S.x, S.y); ctx.lineTo(P.x, P.y); ctx.stroke();           // 입사광
+        ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(EYE_POS.x, EYE_POS.y); ctx.stroke(); // 반사광
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(S.x, S.y, isLast ? 5 : 4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'white'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+    }
+
+    // 클릭한 점에서 출발해 거울에서 반사되어 눈까지 가는 빛 알갱이가 계속
+    // 움직이는 것처럼 보이도록, 애니메이션 프레임마다 그 위치만 다시 계산한다.
+    function photonPos(ray, t) {
+        const L1 = Math.hypot(ray.P.x - ray.S.x, ray.P.y - ray.S.y);
+        const L2 = Math.hypot(EYE_POS.x - ray.P.x, EYE_POS.y - ray.P.y);
+        const d = t * (L1 + L2);
+        if (d < L1) { const f = d / L1; return { x: ray.S.x + (ray.P.x - ray.S.x) * f, y: ray.S.y + (ray.P.y - ray.S.y) * f }; }
+        const f = (d - L1) / L2;
+        return { x: ray.P.x + (EYE_POS.x - ray.P.x) * f, y: ray.P.y + (EYE_POS.y - ray.P.y) * f };
+    }
+    function drawPhotonGlow(ray) {
+        const pos = photonPos(ray, photonT);
+        const gl = rctxL.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 12);
+        gl.addColorStop(0, 'rgba(255,255,200,1)');
+        gl.addColorStop(0.4, 'rgba(255,230,80,0.85)');
+        gl.addColorStop(1, 'rgba(255,230,80,0)');
+        rctxL.fillStyle = gl;
+        rctxL.beginPath(); rctxL.arc(pos.x, pos.y, 12, 0, Math.PI * 2); rctxL.fill();
+    }
+
+    function renderRays() {
+        rctxL.clearRect(0, 0, FAN_W, FAN_H);
+        const computed = rays.map((S, i) => computeRay(S, RAY_COLORS[i % RAY_COLORS.length])).filter(Boolean);
+        computed.forEach((ray, i) => drawRayPath(rctxL, ray, i === computed.length - 1));
+        const last = computed[computed.length - 1];
+        if (last) drawPhotonGlow(last);
+        drawEyeMarker(rctxL);
+
+        drawMiniPreview(computed.filter(r => r.inv.inBounds).map(r => ({ u: r.inv.u, v: r.inv.v, color: r.color })));
+
+        const infoBox = document.getElementById('rayInfoBox');
+        if (!last) {
+            infoBox.innerHTML = rays.length
+                ? '<p class="angle-readout-hint">이 위치에서는 거울에 반사되어 눈까지 닿지 않아요. 거울에 더 가까운 곳을 눌러보세요.</p>'
+                : '<p class="angle-readout-hint">아직 누른 점이 없어요. 왼쪽 종이를 눌러보세요.</p>';
+        } else {
+            const { inv, result } = last;
+            let cellInfo;
+            if (inv.inBounds) {
+                const color = grid[inv.row][inv.col];
+                cellInfo = `${ROW_LABELS[inv.row]}행 ${inv.col + 1}열` + (color ? '' : ' (아직 색칠 안 한 칸)');
+            } else {
+                cellInfo = '그림 영역 밖이라 모눈에는 없어요';
+            }
+            infoBox.innerHTML = `
+                <div class="angle-readout-row">
+                    <span class="pair in">입사각 ${result.incidenceDeg.toFixed(0)}°</span>
+                    <span class="pair out">반사각 ${result.reflectionDeg.toFixed(0)}°</span>
+                </div>
+                <p class="angle-readout-eq">입사각 = 반사각</p>
+                <p class="hint">${cellInfo}<br>(왼쪽 아래 작은 창의 점)</p>
+            `;
+        }
+        return computed;
+    }
+
+    function photonTick() {
+        if (!photonRunning) return;
+        photonT = (photonT + 0.012) % 1;
+        if (activeTab === 'light' && rays.length) renderRays();
+        requestAnimationFrame(photonTick);
+    }
+    function ensurePhotonRunning() {
+        if (photonRunning) return;
+        photonRunning = true;
+        requestAnimationFrame(photonTick);
     }
 
     function redrawLightTab() {
         renderFan(fctxL, grid, DESIGN_ANGLE, true);
         renderCyl(cctxL, grid, true, eyeAngle);
-        renderRay(lastRayClick);
+        renderRays();
+        if (rays.length) ensurePhotonRunning();
     }
 
     fanCanvasL.addEventListener('pointerdown', (e) => {
         const rect = fanCanvasL.getBoundingClientRect();
         const x = (e.clientX - rect.left) * (FAN_W / rect.width);
         const y = (e.clientY - rect.top) * (FAN_H / rect.height);
-        lastRayClick = { x, y };
-        renderRay(lastRayClick);
+        rays.push({ x, y });
+        if (rays.length > RAY_MAX) rays.shift();
+        renderRays();
+        ensurePhotonRunning();
     });
 
     document.getElementById('btnClearRay').addEventListener('click', () => {
-        lastRayClick = null;
-        renderRay(null);
-        document.getElementById('rayInfoBox').innerHTML = '<p class="angle-readout-hint">아직 누른 점이 없어요. 왼쪽 종이를 눌러보세요.</p>';
+        rays = [];
+        photonRunning = false;
+        renderRays();
     });
 
     // ---- DOM: 숨은그림 퀴즈 탭 ----
@@ -920,6 +959,7 @@
         document.getElementById('panelLight').classList.toggle('active', tab === 'light');
         document.getElementById('panelQuiz').classList.toggle('active', tab === 'quiz');
         if (tab === 'light') redrawLightTab();
+        else photonRunning = false; // 빛의 경로 탭을 벗어나면 애니메이션도 멈춘다
         if (tab === 'quiz' && quizOrder.length === 0) startQuiz();
     }
     document.querySelectorAll('.tab-btn').forEach(btn => {
