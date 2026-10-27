@@ -15,8 +15,14 @@
     // 구조적으로 보장한다.
     const CYL_RADIUS_PX = M.R_CYL * FAN_PX_PER_UNIT; // 부채꼴 안쪽 가장자리와 동일
 
+    // 거울을 "서 있는 원기둥"처럼 입체적으로 보이게 하기 위한 장식용 몸통/뚜껑.
+    // 반사 내용이 그려지는 원(center=FAN_ORIGIN, radius=CYL_RADIUS_PX)은 절대
+    // 건드리지 않고, 그 원 위쪽 여백에 몸통과 위쪽 타원(뚜껑)을 덧그릴 뿐이다.
+    const CAN_BODY_H = CYL_RADIUS_PX * 0.55;
+    const CAN_TOP_RY = CYL_RADIUS_PX * 0.32;
+
     const FAN_W = 720;
-    const ORIGIN_Y = CYL_RADIUS_PX + 24; // 거울 원이 캔버스 위쪽에 다 들어갈 여백
+    const ORIGIN_Y = CYL_RADIUS_PX + CAN_BODY_H + CAN_TOP_RY + 20; // 입체 몸통+뚜껑까지 캔버스 위쪽에 다 들어갈 여백
     const rhoMaxPx = M.R_CYL * M.RHO_MAX_FACTOR * FAN_PX_PER_UNIT;
     const FAN_H = Math.ceil(ORIGIN_Y + rhoMaxPx * 1.06 + 30);
     const FAN_ORIGIN = { x: FAN_W / 2, y: ORIGIN_Y };
@@ -180,6 +186,32 @@
         if (!show) return;
 
         const cx = FAN_ORIGIN.x, cy = FAN_ORIGIN.y, R = CYL_RADIUS_PX;
+
+        // 입체감을 위한 장식용 원기둥 몸통 + 뚜껑 (아래 원의 중심/반지름과는
+        // 무관하게 그 위쪽 여백에만 그린다). 몸통은 뚜껑 타원의 왼쪽/오른쪽 끝에서
+        // 아래 원의 왼쪽/오른쪽 끝(cx∓R, cy)까지 수직으로 내려오는 "옆면"이라,
+        // 아래 원과는 딱 그 두 점에서만 만나고 원 자체를 가리지 않는다.
+        const topCy = cy - CAN_BODY_H;
+        const wallGrad = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
+        wallGrad.addColorStop(0, '#7d87a0');
+        wallGrad.addColorStop(0.18, '#c7cfe3');
+        wallGrad.addColorStop(0.5, '#f2f4fa');
+        wallGrad.addColorStop(0.82, '#c7cfe3');
+        wallGrad.addColorStop(1, '#6e7890');
+        ctx.fillStyle = wallGrad;
+        ctx.fillRect(cx - R, topCy, R * 2, cy - topCy);
+
+        const capGrad = ctx.createRadialGradient(cx - R * 0.3, topCy - CAN_TOP_RY * 0.3, R * 0.1, cx, topCy, R);
+        capGrad.addColorStop(0, '#fbfdff');
+        capGrad.addColorStop(0.6, '#d7deec');
+        capGrad.addColorStop(1, '#8e99b2');
+        ctx.beginPath();
+        ctx.ellipse(cx, topCy, R, CAN_TOP_RY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = capGrad;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(27,24,48,0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
         // 금속 느낌의 원형 거울 (반지름이 부채꼴의 안쪽 호와 정확히 같다)
         const grad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
