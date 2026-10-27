@@ -7,13 +7,26 @@
     const DRAW_W = COLS * CELL, DRAW_H = ROWS * CELL;
 
     const FAN_PX_PER_UNIT = 72;
-    const FAN_W = 720, FAN_H = 400;
-    const FAN_ORIGIN = { x: FAN_W / 2, y: 36 };
+    // 거울(원통) 그래픽은 fanCanvas와 "똑같은 좌표계" 위에 겹쳐 그린다. 원통의
+    // 밑면 반지름을 R_CYL(부채꼴의 안쪽 가장자리)과 정확히 일치시켜서, 거울
+    // 그림의 아랫부분이 부채꼴의 중심(거울 위치)과 어긋나지 않게 한다.
+    const CYL_RADIUS_PX = M.R_CYL * FAN_PX_PER_UNIT; // 부채꼴 안쪽 가장자리와 동일
+    const CAN_OUTER_RX = CYL_RADIUS_PX + 10;
+    const CYL_TOP_ELLIPSE_RY = 15;
+    const CYL_HEIGHT_PX = 170; // 원통의 시각적 전체 높이
+    const CYL_PREVIEW_HEIGHT_PX = 138; // 그림이 입혀지는 범위(위쪽 테두리를 살짝 남김)
 
-    const CYL_W = 300, CYL_H = 250;
-    const CYL_PREVIEW_R = 92;
-    const CYL_PREVIEW_H = 148;
-    const CYL_TOP_Y = 56; // 캔CYL 안에서 몸통(이미지 감싸는 영역) 시작 y
+    // 캔버스 높이는 "원통이 들어갈 자리(CYL_HEIGHT_PX + 여백) + 부채꼴이 뻗어나갈
+    // 최대 길이"를 모두 담을 수 있도록 역산한다. 거울(부채꼴 중심)은 원통 바로
+    // 아래, 즉 원통 높이만큼 아래로 내려온 지점에 위치한다.
+    const FAN_W = 720;
+    const ORIGIN_Y = CYL_HEIGHT_PX + 18;
+    const rhoMaxPx = M.R_CYL * M.RHO_MAX_FACTOR * FAN_PX_PER_UNIT;
+    const FAN_H = Math.ceil(ORIGIN_Y + rhoMaxPx * 1.06 + 30);
+    const FAN_ORIGIN = { x: FAN_W / 2, y: ORIGIN_Y };
+    const CYL_BODY_TOP_Y = FAN_ORIGIN.y - CYL_HEIGHT_PX;
+    const CYL_BODY_BOTTOM_Y = FAN_ORIGIN.y; // = 부채꼴의 중심(거울) 위치
+    const CYL_PREVIEW_TOP_Y = FAN_ORIGIN.y - CYL_PREVIEW_HEIGHT_PX;
 
     const ROW_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
     const PALETTE = [
@@ -64,7 +77,7 @@
 
     drawCanvas.width = DRAW_W; drawCanvas.height = DRAW_H;
     fanCanvas.width = FAN_W; fanCanvas.height = FAN_H;
-    cylCanvas.width = CYL_W; cylCanvas.height = CYL_H;
+    cylCanvas.width = FAN_W; cylCanvas.height = FAN_H;
 
     // ---- 그리기 캔버스 (모눈종이 = 거울 속에 보일 그림) ----
     function drawDrawCanvas() {
@@ -145,46 +158,45 @@
     }
 
     // ---- 원통 거울 미리보기 ----
+    // fanCanvas와 똑같은 좌표계(FAN_ORIGIN, FAN_PX_PER_UNIT)를 그대로 써서, 원통의
+    // 밑면이 항상 부채꼴의 중심(거울 위치)과 정확히 맞닿도록 그린다.
     function drawCylCanvas() {
-        cctx.clearRect(0, 0, CYL_W, CYL_H);
+        cctx.clearRect(0, 0, FAN_W, FAN_H);
         if (!showMirror) return;
 
-        const cx = CYL_W / 2;
-        const topEllipseRy = 16, topEllipseRx = CYL_PREVIEW_R + 14;
-        const bodyBottom = CYL_TOP_Y + CYL_PREVIEW_H;
+        const cx = FAN_ORIGIN.x;
+        const topY = CYL_BODY_TOP_Y, bottomY = CYL_BODY_BOTTOM_Y;
+
+        function bodyPath() {
+            cctx.beginPath();
+            cctx.moveTo(cx - CAN_OUTER_RX, topY);
+            cctx.lineTo(cx - CAN_OUTER_RX, bottomY);
+            cctx.ellipse(cx, bottomY, CAN_OUTER_RX, CYL_TOP_ELLIPSE_RY, 0, Math.PI, 0, true);
+            cctx.lineTo(cx + CAN_OUTER_RX, topY);
+            cctx.ellipse(cx, topY, CAN_OUTER_RX, CYL_TOP_ELLIPSE_RY, 0, 0, Math.PI, true);
+            cctx.closePath();
+        }
 
         // 몸통 (금속 느낌 그라디언트)
-        const bodyGrad = cctx.createLinearGradient(cx - topEllipseRx, 0, cx + topEllipseRx, 0);
+        const bodyGrad = cctx.createLinearGradient(cx - CAN_OUTER_RX, 0, cx + CAN_OUTER_RX, 0);
         bodyGrad.addColorStop(0, '#cfd6e6');
         bodyGrad.addColorStop(0.5, '#f3f6fb');
         bodyGrad.addColorStop(1, '#b9c2d6');
         cctx.fillStyle = bodyGrad;
-        cctx.beginPath();
-        cctx.moveTo(cx - topEllipseRx, CYL_TOP_Y);
-        cctx.lineTo(cx - topEllipseRx, bodyBottom);
-        cctx.ellipse(cx, bodyBottom, topEllipseRx, topEllipseRy, 0, Math.PI, 0, true);
-        cctx.lineTo(cx + topEllipseRx, CYL_TOP_Y);
-        cctx.ellipse(cx, CYL_TOP_Y, topEllipseRx, topEllipseRy, 0, 0, Math.PI, true);
-        cctx.closePath();
+        bodyPath();
         cctx.fill();
 
         // 비친 그림을 몸통 앞면(보이는 범위)에 클립해서 그린다
         cctx.save();
-        cctx.beginPath();
-        cctx.moveTo(cx - topEllipseRx, CYL_TOP_Y);
-        cctx.lineTo(cx - topEllipseRx, bodyBottom);
-        cctx.ellipse(cx, bodyBottom, topEllipseRx, topEllipseRy, 0, Math.PI, 0, true);
-        cctx.lineTo(cx + topEllipseRx, CYL_TOP_Y);
-        cctx.ellipse(cx, CYL_TOP_Y, topEllipseRx, topEllipseRy, 0, 0, Math.PI, true);
-        cctx.closePath();
+        bodyPath();
         cctx.clip();
 
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
                 const color = grid[r][c];
                 if (!color) continue;
-                const poly = M.cellCylinderPolygon(c, r, CYL_PREVIEW_R, CYL_PREVIEW_H)
-                    .map(([x, y]) => [cx + x, CYL_TOP_Y + 8 + y]);
+                const poly = M.cellCylinderPolygon(c, r, CYL_RADIUS_PX, CYL_PREVIEW_HEIGHT_PX)
+                    .map(([x, y]) => [cx + x, CYL_PREVIEW_TOP_Y + y]);
                 cctx.beginPath();
                 poly.forEach(([x, y], i) => i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y));
                 cctx.closePath();
@@ -193,20 +205,20 @@
             }
         }
         // 살짝 광택
-        const sheen = cctx.createLinearGradient(cx - topEllipseRx, 0, cx + topEllipseRx, 0);
+        const sheen = cctx.createLinearGradient(cx - CAN_OUTER_RX, 0, cx + CAN_OUTER_RX, 0);
         sheen.addColorStop(0, 'rgba(255,255,255,0.35)');
         sheen.addColorStop(0.18, 'rgba(255,255,255,0)');
         sheen.addColorStop(0.82, 'rgba(255,255,255,0)');
         sheen.addColorStop(1, 'rgba(255,255,255,0.3)');
         cctx.fillStyle = sheen;
-        cctx.fillRect(cx - topEllipseRx, CYL_TOP_Y, topEllipseRx * 2, CYL_PREVIEW_H + 24);
+        cctx.fillRect(cx - CAN_OUTER_RX, topY, CAN_OUTER_RX * 2, bottomY - topY + 24);
         cctx.restore();
 
         // 테두리
         cctx.strokeStyle = 'rgba(27,24,48,0.25)';
         cctx.lineWidth = 1.4;
         cctx.beginPath();
-        cctx.ellipse(cx, CYL_TOP_Y, topEllipseRx, topEllipseRy, 0, 0, Math.PI * 2);
+        cctx.ellipse(cx, topY, CAN_OUTER_RX, CYL_TOP_ELLIPSE_RY, 0, 0, Math.PI * 2);
         cctx.stroke();
     }
 
