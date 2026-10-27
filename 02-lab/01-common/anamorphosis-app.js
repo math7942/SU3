@@ -169,10 +169,12 @@
     // 밑면이 항상 부채꼴의 중심(거울 위치)과 정확히 맞닿도록 그린다.
     //
     // 종이는 DESIGN_ANGLE(45°)로 고정되어 설계되었지만, 실제로 보는 사람은
-    // viewingAngleDeg(= "보는 눈의 각도" 슬라이더)로 볼 수도 있다. 두 각도가
-    // 다르면, 각 칸이 "원래 의도한 세로 위치(v)"가 아니라 그 각도에서 보였을
-    // "겉보기 위치(apparentV)"에 그려지므로 그림이 위아래로 눌리거나 늘어나
-    // 보인다 — 오직 두 각도가 일치할 때만 정확히 복원된다.
+    // viewingAngleDeg(= "보는 눈의 각도" 슬라이더)로 볼 수도 있다. 원통 옆면의
+    // 법선은 어디서나 수평이라, 거울 바로 앞(F행, 모눈 맨 아랫줄)만 각도에
+    // 상관없이 항상 거울 밑동(= 미리보기 원의 맨 아래)으로 정확히 되비친다.
+    // 그 외의 칸은 tan(실제각도)/tan(설계각도) 배만큼 겉보기 높이가 달라져서,
+    // 설계보다 높은 각도에서 보면 위쪽(A행 쪽)이 원 밖으로 밀려나 잘려 보이고,
+    // 낮은 각도에서 보면 전체가 아래쪽에 눌려 붙어 보인다.
     function renderCyl(ctx, gridData, show, viewingAngleDeg) {
         ctx.clearRect(0, 0, FAN_W, FAN_H);
         if (!show) return;
@@ -189,47 +191,43 @@
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // 거의 수직으로(90°에 가깝게) 내려다보면 원통의 옆면이 거의 보이지
-        // 않아 거울 속 그림을 알아볼 수 없다 (탄젠트 함수가 발산하는 구간).
-        const nearStraightDown = viewingAngleDeg >= 85;
-
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.clip();
 
-        if (nearStraightDown) {
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'bold 13px "Pretendard Variable", sans-serif';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('원통 거울', cx, cy);
-        } else {
-            // 거울 속에 비친 그림: 각 행(row)을, 그 행이 실제로 설계된 반지름을
-            // 현재 보는 각도로 되짚었을 때의 "겉보기 세로 위치"에 그린다.
-            const previewR = R * 0.82;
-            const cell = previewR / Math.hypot(COLS / 2, ROWS / 2);
-            const imgW = COLS * cell, imgH = ROWS * cell;
-            const left = cx - imgW / 2, top = cy - imgH / 2;
-            for (let r = 0; r < ROWS; r++) {
-                const rho0 = M.rhoOf(r / ROWS, DESIGN_ANGLE);
-                const rho1 = M.rhoOf((r + 1) / ROWS, DESIGN_ANGLE);
-                const av0 = M.apparentV(rho0, viewingAngleDeg);
-                const av1 = M.apparentV(rho1, viewingAngleDeg);
-                const y0 = top + av0 * imgH, y1 = top + av1 * imgH;
-                for (let c = 0; c < COLS; c++) {
-                    const color = gridData[r][c];
-                    if (!color) continue;
-                    ctx.fillStyle = color;
-                    ctx.fillRect(left + c * cell, y0, cell + 0.5, (y1 - y0) + 0.5);
-                }
+        // 거울 속에 비친 그림: 각 행(row)을, 그 행이 실제로 설계된 반지름을
+        // 현재 보는 각도로 되짚었을 때의 "겉보기 세로 위치"에 그린다. apparentV=0
+        // (F행, 거울 바로 앞)은 항상 미리보기 원의 맨 아래로 고정되고, 그 외는
+        // 각도에 따라 위로 늘어나거나(설계보다 낮은 각도) 원 위로 밀려 잘린다
+        // (설계보다 높은 각도) — 원형 클립이 그 잘림을 자연스럽게 처리해준다.
+        const previewR = R * 0.82;
+        const cell = previewR / Math.hypot(COLS / 2, ROWS / 2);
+        const imgW = COLS * cell, imgH = ROWS * cell;
+        const left = cx - imgW / 2, top = cy - imgH / 2, bottom = top + imgH;
+        for (let r = 0; r < ROWS; r++) {
+            const { v0, v1 } = M.rowToVSpan(r);
+            const rho0 = M.rhoOf(v0, DESIGN_ANGLE);
+            const rho1 = M.rhoOf(v1, DESIGN_ANGLE);
+            const av0 = M.apparentV(rho0, viewingAngleDeg);
+            const av1 = M.apparentV(rho1, viewingAngleDeg);
+            const yTop = bottom - av1 * imgH, yBottom = bottom - av0 * imgH;
+            for (let c = 0; c < COLS; c++) {
+                const color = gridData[r][c];
+                if (!color) continue;
+                ctx.fillStyle = color;
+                ctx.fillRect(left + c * cell, yTop - 0.5, cell + 0.5, (yBottom - yTop) + 1);
             }
-            // v=0, v=1 두 끝은 보는 각도에 상관없이 항상 제자리로 되짚이므로
-            // (apparentV(rho(0))=0, apparentV(rho(1))=1 항상), 테두리는 각도와
-            // 무관하게 원래 그림 전체 범위를 그대로 나타낸다.
-            ctx.strokeStyle = 'rgba(30,41,59,0.5)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(left, top, imgW, imgH);
         }
+        // 테두리: 아래쪽은 항상 고정(F행 안쪽 가장자리), 위쪽은 현재 보는
+        // 각도에서 전체 그림(A행 바깥쪽 가장자리)이 실제로 어디까지 닿는지를
+        // 그대로 보여준다 — 설계 각도와 다르면 테두리 자체가 줄어들거나(낮은
+        // 각도) 원 위로 넘쳐 잘린다(높은 각도).
+        const rhoMax = M.R_CYL * M.RHO_MAX_FACTOR;
+        const avFull = M.apparentV(rhoMax, viewingAngleDeg);
+        ctx.strokeStyle = 'rgba(30,41,59,0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(left, bottom - avFull * imgH, imgW, avFull * imgH);
         ctx.restore();
 
         // 살짝 광택
@@ -408,14 +406,12 @@
         angleVal2.textContent = eyeAngle + '°';
         const hint = document.getElementById('angleHint');
         const diff = eyeAngle - DESIGN_ANGLE;
-        if (eyeAngle >= 80) {
-            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었어요. 지금처럼 거의 수직으로(<b>${eyeAngle}°</b>) 내려다보면 원통의 옆면이 거의 안 보여서, 거울 속 그림을 알아볼 수 없어요.`;
-        } else if (Math.abs(diff) < 1) {
+        if (Math.abs(diff) < 1) {
             hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었어요. 지금 <b>${eyeAngle}°</b>에서 보고 있으니, 거울 속 그림이 정확하게 보여요.`;
         } else if (diff > 0) {
-            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었는데, 지금은 그보다 높은 <b>${eyeAngle}°</b>에서 보고 있어요. 그래서 거울 속 그림이 위아래로 눌리거나 어긋나 보여요.`;
+            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었는데, 지금은 그보다 높은 <b>${eyeAngle}°</b>에서 보고 있어요. 그래서 거울 속 그림의 윗부분(F행에서 먼 쪽)이 거울 밖으로 밀려나 잘려 보여요.`;
         } else {
-            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었는데, 지금은 그보다 낮은 <b>${eyeAngle}°</b>에서 보고 있어요. 그래서 거울 속 그림이 위아래로 늘어나거나 어긋나 보여요.`;
+            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었는데, 지금은 그보다 낮은 <b>${eyeAngle}°</b>에서 보고 있어요. 그래서 거울 속 그림 전체가 거울 밑동 쪽에 납작하게 눌려 보여요.`;
         }
     }
 

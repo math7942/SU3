@@ -36,8 +36,18 @@
 
     function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
+    // row는 모눈종이의 위에서부터 센 행 번호(0 = 맨 윗줄 A). v는 "거울로부터
+    // 얼마나 먼가"(0 = 거울 바로 앞, 1 = 가장 먼 가장자리)이므로, 실제 참고
+    // 자료를 살펴보면 맨 아랫줄(F, 턱 쪽)이 거울에 가장 가깝게 그려지고
+    // 맨 윗줄(A, 이마 쪽)이 가장 멀리 펼쳐진다 — row가 커질수록(아래로
+    // 내려갈수록) v는 작아진다(거울과 가까워진다).
+    function rowToVSpan(row) {
+        return { v0: 1 - (row + 1) / ROWS, v1: 1 - row / ROWS };
+    }
+
     function cellUV(col, row) {
-        return { u: (col + 0.5) / COLS, v: (row + 0.5) / ROWS };
+        const { v0, v1 } = rowToVSpan(row);
+        return { u: (col + 0.5) / COLS, v: (v0 + v1) / 2 };
     }
 
     function thetaOf(u) {
@@ -66,7 +76,7 @@
     function cellFanPolygon(col, row, viewAngleDeg, subdiv) {
         subdiv = subdiv || 5;
         const u0 = col / COLS, u1 = (col + 1) / COLS;
-        const v0 = row / ROWS, v1 = (row + 1) / ROWS;
+        const { v0, v1 } = rowToVSpan(row);
         const pts = [];
         for (let i = 0; i <= subdiv; i++) { // 안쪽 호 (v0, u0->u1)
             const u = u0 + (u1 - u0) * (i / subdiv);
@@ -87,27 +97,45 @@
         return pts.map(p => [p.x, p.y]);
     }
 
-    // rhoOf(v, ...)의 역함수: 반지름 ρ에서 v를 되짚는다. ρ(v) 식이 깔끔한
+    // rhoOf(v, DESIGN_ANGLE_DEG)의 역함수: 종이 위 반지름 ρ에서, 그 점이 설계상
+    // 원래 나타내려던 v(거울로부터의 거리 비율)를 되짚는다. ρ(v) 식이 깔끔한
     // 탄젠트 함수라 정확한 해석적 역함수가 존재한다.
-    function apparentV(rho, viewAngleDeg) {
-        const phi = clamp(viewAngleDeg, 1, 89) * DEG2RAD;
+    function trueVFromRho(rho) {
+        const phi = DESIGN_ANGLE_DEG * DEG2RAD;
         const rhoMax = R_CYL * RHO_MAX_FACTOR;
         const growth = (rho - R_CYL) / (rhoMax - R_CYL);
         return Math.atan(Math.tan(phi) * growth) / phi;
     }
 
+    // 원통의 옆면은 어디서나 법선이 수평(반지름 방향)이어서, 반사는 광선의
+    // "수직" 방향 성분을 전혀 바꾸지 못한다 — 수평 방향만 뒤집는다. 그래서
+    // 눈이 아주 멀리 있고(평행광선 근사) 바닥에서 비스듬히 φ만큼 내려다본다고
+    // 하면, 거울 위 높이 z에서 반사된 광선은 바닥(종이)의 ρ = R + z/tanφ
+    // 지점에서 왔다고 "보인다". 거울 바로 앞(ρ=R, z=0)은 각도에 상관없이 항상
+    // 제자리로 되비치는 유일한 기준점이고, 그 외의 모든 점은 실제로 보는
+      // 각도가 설계 각도와 다르면 tan(실제각도)/tan(설계각도) 배만큼 거울 위
+    // 겉보기 높이가 달라진다 — 비율이 1보다 크면(더 높은 각도) 거울 윗부분
+    // 밖으로 밀려나 안 보이게 되고, 1보다 작으면(더 낮은 각도) 거울 아랫부분에
+    // 눌려 붙어 보인다.
+    function apparentV(rho, viewAngleDeg) {
+        const vTrue = trueVFromRho(rho);
+        const phiDesign = DESIGN_ANGLE_DEG * DEG2RAD;
+        const phiView = clamp(viewAngleDeg, 1, 89) * DEG2RAD;
+        return vTrue * Math.tan(phiView) / Math.tan(phiDesign);
+    }
+
     // fanPoint(u,v,...)의 역함수. 부채꼴 위의 한 점(거울 중심 기준 상대좌표 dx,dy,
     // 둘 다 "단위" 기준, 픽셀이 아님)이 원래 모눈종이의 몇 번째 칸(col,row)에
     // 해당하는지 되짚어 찾는다. (실제로 그려진 종이 자체를 읽을 때 쓰므로 항상
-    // DESIGN_ANGLE_DEG를 기준으로 삼는다 — "거울에 비친 모습이 실제로 어떻게
-    // 보일지"를 구할 때는 apparentV를 보는 각도로 따로 호출한다.)
+    // 설계 각도를 기준으로 삼는다.)
     function fanInverse(dx, dy) {
         const theta = Math.atan2(dx, dy);
         const u = theta / (THETA_SPAN_DEG * DEG2RAD) + 0.5;
         const rho = Math.hypot(dx, dy);
-        const v = apparentV(rho, DESIGN_ANGLE_DEG);
+        const v = trueVFromRho(rho);
         const col = Math.floor(u * COLS);
-        const row = Math.floor(v * ROWS);
+        const rowFrac = 1 - v; // v(거울과의 거리) -> 위에서부터 센 행 위치로 환산
+        const row = Math.floor(rowFrac * ROWS);
         const inBounds = u >= 0 && u <= 1 && v >= 0 && v <= 1 && col >= 0 && col < COLS && row >= 0 && row < ROWS;
         return { u, v, rho, theta, col, row, inBounds };
     }
@@ -154,7 +182,7 @@
 
     return {
         COLS, ROWS, R_CYL, RHO_MAX_FACTOR, THETA_SPAN_DEG, DESIGN_ANGLE_DEG,
-        cellUV, thetaOf, rhoOf, apparentV, fanPoint, cellFanPolygon,
+        cellUV, rowToVSpan, thetaOf, rhoOf, trueVFromRho, apparentV, fanPoint, cellFanPolygon,
         fanInverse, reflectOffCircle,
     };
 });
