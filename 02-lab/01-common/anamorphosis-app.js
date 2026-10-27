@@ -15,14 +15,20 @@
     // 구조적으로 보장한다.
     const CYL_RADIUS_PX = M.R_CYL * FAN_PX_PER_UNIT; // 부채꼴 안쪽 가장자리와 동일
 
-    // 거울을 "서 있는 원기둥"처럼 입체적으로 보이게 하기 위한 장식용 몸통/뚜껑.
-    // 반사 내용이 그려지는 원(center=FAN_ORIGIN, radius=CYL_RADIUS_PX)은 절대
-    // 건드리지 않고, 그 원 위쪽 여백에 몸통과 위쪽 타원(뚜껑)을 덧그릴 뿐이다.
-    const CAN_BODY_H = CYL_RADIUS_PX * 0.55;
-    const CAN_TOP_RY = CYL_RADIUS_PX * 0.32;
+    // 거울을 "보는 각도에 따라 기울어 보이는 원기둥"으로 입체적으로 그리기 위한
+    // 장식용 몸통/뚜껑의 "최대" 치수. 실제로 그릴 때는 이 값에 보는 각도(φ)를
+    // 반영한 sin(φ)/cos(φ) 배율을 곱해, 각도를 낮추면 몸통이 더 길게(옆에서 보듯)
+    // 보이고 각도를 높이면 뚜껑이 더 둥글게(위에서 보듯) 보이도록 한다. 반사
+    // 내용이 그려지는 기준 원(center=FAN_ORIGIN, radius=CYL_RADIUS_PX)의 가로
+    // 폭(R)과 중심은 각도와 무관하게 항상 고정되어, 부채꼴과의 정렬은 그대로다.
+    const CAN_BODY_H_MAX = CYL_RADIUS_PX * 0.55;
+    const CAN_TOP_RY_MAX = CYL_RADIUS_PX * 0.32;
 
     const FAN_W = 720;
-    const ORIGIN_Y = CYL_RADIUS_PX + CAN_BODY_H + CAN_TOP_RY + 20; // 입체 몸통+뚜껑까지 캔버스 위쪽에 다 들어갈 여백
+    // 몸통(cos항)과 뚜껑(sin항)의 합이 어떤 각도에서도 이 한계를 넘지 않는다
+    // (코시-슈바르츠 부등식: a·cosφ + b·sinφ ≤ √(a²+b²)) — 각도가 바뀌어도
+    // 캔버스 위쪽 밖으로 넘치지 않을 여백을 안전하게 미리 확보해 둔다.
+    const ORIGIN_Y = CYL_RADIUS_PX + Math.hypot(CAN_BODY_H_MAX, CAN_TOP_RY_MAX) + 20;
     const rhoMaxPx = M.R_CYL * M.RHO_MAX_FACTOR * FAN_PX_PER_UNIT;
     const FAN_H = Math.ceil(ORIGIN_Y + rhoMaxPx * 1.06 + 30);
     const FAN_ORIGIN = { x: FAN_W / 2, y: ORIGIN_Y };
@@ -186,12 +192,17 @@
         if (!show) return;
 
         const cx = FAN_ORIGIN.x, cy = FAN_ORIGIN.y, R = CYL_RADIUS_PX;
+        const phi = Math.max(5, Math.min(85, viewingAngleDeg)) * Math.PI / 180;
+        // 보는 각도(φ)가 낮을수록(옆에서 보듯) 원기둥 몸통이 길게 보이고
+        // 뚜껑 타원은 납작해지며, 높을수록(위에서 보듯) 몸통은 짧아지고
+        // 뚜껑은 둥근 원에 가까워진다 — 실제로 각도를 조절하며 원기둥을
+        // 내려다보는 듯한 느낌을 계속 유지한다. 가로 폭(R)과 아래 원의
+        // 중심만은 각도와 무관하게 고정해, 부채꼴과의 정렬은 그대로 지킨다.
+        const bodyH = CAN_BODY_H_MAX * Math.cos(phi);
+        const topRy = CAN_TOP_RY_MAX * Math.sin(phi);
+        const windowRy = R * Math.sin(phi); // 거울 입구를 통해 보이는 안쪽 타원의 세로 반지름
 
-        // 입체감을 위한 장식용 원기둥 몸통 + 뚜껑 (아래 원의 중심/반지름과는
-        // 무관하게 그 위쪽 여백에만 그린다). 몸통은 뚜껑 타원의 왼쪽/오른쪽 끝에서
-        // 아래 원의 왼쪽/오른쪽 끝(cx∓R, cy)까지 수직으로 내려오는 "옆면"이라,
-        // 아래 원과는 딱 그 두 점에서만 만나고 원 자체를 가리지 않는다.
-        const topCy = cy - CAN_BODY_H;
+        const topCy = cy - bodyH;
         const wallGrad = ctx.createLinearGradient(cx - R, 0, cx + R, 0);
         wallGrad.addColorStop(0, '#7d87a0');
         wallGrad.addColorStop(0.18, '#c7cfe3');
@@ -201,42 +212,47 @@
         ctx.fillStyle = wallGrad;
         ctx.fillRect(cx - R, topCy, R * 2, cy - topCy);
 
-        const capGrad = ctx.createRadialGradient(cx - R * 0.3, topCy - CAN_TOP_RY * 0.3, R * 0.1, cx, topCy, R);
+        const capGrad = ctx.createRadialGradient(cx - R * 0.3, topCy - topRy * 0.3, R * 0.1, cx, topCy, R);
         capGrad.addColorStop(0, '#fbfdff');
         capGrad.addColorStop(0.6, '#d7deec');
         capGrad.addColorStop(1, '#8e99b2');
         ctx.beginPath();
-        ctx.ellipse(cx, topCy, R, CAN_TOP_RY, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, topCy, R, topRy, 0, 0, Math.PI * 2);
         ctx.fillStyle = capGrad;
         ctx.fill();
         ctx.strokeStyle = 'rgba(27,24,48,0.3)';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // 금속 느낌의 원형 거울 (반지름이 부채꼴의 안쪽 호와 정확히 같다)
-        const grad = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+        // 거울 입구(아래 원 안쪽) — 가로 반지름은 항상 R(부채꼴 안쪽 호와 동일),
+        // 세로 반지름만 보는 각도에 따라 타원으로 눌려서, 비스듬히 내려다보는
+        // 원기둥 입구처럼 보인다.
+        const grad = ctx.createRadialGradient(cx - R * 0.3, cy - windowRy * 0.3, R * 0.1, cx, cy, R);
         grad.addColorStop(0, '#fbfdff');
         grad.addColorStop(0.6, '#cfd6e6');
         grad.addColorStop(1, '#98a3ba');
         ctx.beginPath();
-        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
         ctx.clip();
 
         // 거울 속에 비친 그림: 각 행(row)을, 그 행이 실제로 설계된 반지름을
         // 현재 보는 각도로 되짚었을 때의 "겉보기 세로 위치"에 그린다. apparentV=0
-        // (F행, 거울 바로 앞)은 항상 미리보기 원의 맨 아래로 고정되고, 그 외는
-        // 각도에 따라 위로 늘어나거나(설계보다 낮은 각도) 원 위로 밀려 잘린다
-        // (설계보다 높은 각도) — 원형 클립이 그 잘림을 자연스럽게 처리해준다.
-        const previewR = R * 0.82;
-        const cell = previewR / Math.hypot(COLS / 2, ROWS / 2);
-        const imgW = COLS * cell, imgH = ROWS * cell;
-        const left = cx - imgW / 2, top = cy - imgH / 2, bottom = top + imgH;
+        // (F행, 거울 바로 앞)은 항상 입구 타원의 맨 아래(가장 가까운 안쪽 벽)로
+        // 고정되고, 그 외는 각도에 따라 위로 늘어나거나(설계보다 낮은 각도)
+        // 타원 위로 밀려 잘린다(설계보다 높은 각도) — 타원 클립이 그 잘림을
+        // 자연스럽게 처리해준다. 가로 폭은 각도와 무관하게 항상 일정해서,
+        // 세로만 눌리는 타원 입구와 자연스럽게 어울린다.
+        const previewRx = R * 0.8;
+        const previewRy = windowRy * 0.8;
+        const imgW = previewRx * 2, imgH = previewRy * 2;
+        const cellX = imgW / COLS;
+        const left = cx - imgW / 2, bottom = cy + previewRy;
         for (let r = 0; r < ROWS; r++) {
             const { v0, v1 } = M.rowToVSpan(r);
             const rho0 = M.rhoOf(v0, DESIGN_ANGLE);
@@ -248,13 +264,13 @@
                 const color = gridData[r][c];
                 if (!color) continue;
                 ctx.fillStyle = color;
-                ctx.fillRect(left + c * cell, yTop - 0.5, cell + 0.5, (yBottom - yTop) + 1);
+                ctx.fillRect(left + c * cellX, yTop - 0.5, cellX + 0.5, (yBottom - yTop) + 1);
             }
         }
         // 테두리: 아래쪽은 항상 고정(F행 안쪽 가장자리), 위쪽은 현재 보는
         // 각도에서 전체 그림(A행 바깥쪽 가장자리)이 실제로 어디까지 닿는지를
         // 그대로 보여준다 — 설계 각도와 다르면 테두리 자체가 줄어들거나(낮은
-        // 각도) 원 위로 넘쳐 잘린다(높은 각도).
+        // 각도) 타원 위로 넘쳐 잘린다(높은 각도).
         const rhoMax = M.R_CYL * M.RHO_MAX_FACTOR;
         const avFull = M.apparentV(rhoMax, viewingAngleDeg);
         ctx.strokeStyle = 'rgba(30,41,59,0.5)';
@@ -263,22 +279,22 @@
         ctx.restore();
 
         // 살짝 광택
-        const sheen = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+        const sheen = ctx.createLinearGradient(cx - R, cy - windowRy, cx + R, cy + windowRy);
         sheen.addColorStop(0, 'rgba(255,255,255,0.4)');
         sheen.addColorStop(0.3, 'rgba(255,255,255,0)');
         sheen.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.save();
         ctx.beginPath();
-        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
         ctx.clip();
         ctx.fillStyle = sheen;
-        ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+        ctx.fillRect(cx - R, cy - windowRy, R * 2, windowRy * 2);
         ctx.restore();
 
         ctx.strokeStyle = 'rgba(27,24,48,0.3)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(cx, cy, R, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, R, windowRy, 0, 0, Math.PI * 2);
         ctx.stroke();
     }
 
