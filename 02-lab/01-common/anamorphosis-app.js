@@ -101,9 +101,11 @@
         q.grid = q.rows.map(row => row.map(v => v ? q.color : null));
     });
 
+    const DESIGN_ANGLE = M.DESIGN_ANGLE_DEG; // 45 — 종이(부채꼴)는 항상 이 각도로 설계되어 고정된다
+
     // ---- 상태 ----
     let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-    let viewAngle = 45;
+    let eyeAngle = DESIGN_ANGLE; // "보는 눈의 각도" 슬라이더 값 — 거울 미리보기에만 영향을 준다
     let showMirror = true;
     let showGrid = true;
     let selectedColor = PALETTE[0].color;
@@ -162,7 +164,13 @@
 
     // fanCanvas와 똑같은 좌표계(FAN_ORIGIN, FAN_PX_PER_UNIT)를 그대로 써서, 원통의
     // 밑면이 항상 부채꼴의 중심(거울 위치)과 정확히 맞닿도록 그린다.
-    function renderCyl(ctx, gridData, show) {
+    //
+    // 종이는 DESIGN_ANGLE(45°)로 고정되어 설계되었지만, 실제로 보는 사람은
+    // viewingAngleDeg(= "보는 눈의 각도" 슬라이더)로 볼 수도 있다. 두 각도가
+    // 다르면, 각 칸이 "원래 의도한 세로 위치(v)"가 아니라 그 각도에서 보였을
+    // "겉보기 위치(apparentV)"에 그려지므로 그림이 위아래로 눌리거나 늘어나
+    // 보인다 — 오직 두 각도가 일치할 때만 정확히 복원된다.
+    function renderCyl(ctx, gridData, show, viewingAngleDeg) {
         ctx.clearRect(0, 0, FAN_W, FAN_H);
         if (!show) return;
 
@@ -178,27 +186,47 @@
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // 거울 속에 비친 그림: 사용자가 그린 모눈 그림을 그대로 축소해서, 원
-        // 안에 꼭 맞게 그린다 (= "눈에 보이는, 바르게 보이는 그림").
+        // 거의 수직으로(90°에 가깝게) 내려다보면 원통의 옆면이 거의 보이지
+        // 않아 거울 속 그림을 알아볼 수 없다 (탄젠트 함수가 발산하는 구간).
+        const nearStraightDown = viewingAngleDeg >= 85;
+
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.clip();
-        const previewR = R * 0.82;
-        const cell = previewR / Math.hypot(COLS / 2, ROWS / 2);
-        const imgW = COLS * cell, imgH = ROWS * cell;
-        const left = cx - imgW / 2, top = cy - imgH / 2;
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
-                const color = gridData[r][c];
-                if (!color) continue;
-                ctx.fillStyle = color;
-                ctx.fillRect(left + c * cell, top + r * cell, cell + 0.5, cell + 0.5);
+
+        if (nearStraightDown) {
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 13px "Pretendard Variable", sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('원통 거울', cx, cy);
+        } else {
+            // 거울 속에 비친 그림: 각 행(row)을, 그 행이 실제로 설계된 반지름을
+            // 현재 보는 각도로 되짚었을 때의 "겉보기 세로 위치"에 그린다.
+            const previewR = R * 0.82;
+            const cell = previewR / Math.hypot(COLS / 2, ROWS / 2);
+            const imgW = COLS * cell, imgH = ROWS * cell;
+            const left = cx - imgW / 2, top = cy - imgH / 2;
+            for (let r = 0; r < ROWS; r++) {
+                const rho0 = M.rhoOf(r / ROWS, DESIGN_ANGLE);
+                const rho1 = M.rhoOf((r + 1) / ROWS, DESIGN_ANGLE);
+                const av0 = M.apparentV(rho0, viewingAngleDeg);
+                const av1 = M.apparentV(rho1, viewingAngleDeg);
+                const y0 = top + av0 * imgH, y1 = top + av1 * imgH;
+                for (let c = 0; c < COLS; c++) {
+                    const color = gridData[r][c];
+                    if (!color) continue;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(left + c * cell, y0, cell + 0.5, (y1 - y0) + 0.5);
+                }
             }
+            // v=0, v=1 두 끝은 보는 각도에 상관없이 항상 제자리로 되짚이므로
+            // (apparentV(rho(0))=0, apparentV(rho(1))=1 항상), 테두리는 각도와
+            // 무관하게 원래 그림 전체 범위를 그대로 나타낸다.
+            ctx.strokeStyle = 'rgba(30,41,59,0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(left, top, imgW, imgH);
         }
-        ctx.strokeStyle = 'rgba(30,41,59,0.5)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(left, top, imgW, imgH);
         ctx.restore();
 
         // 살짝 광택
@@ -265,8 +293,8 @@
 
     function redrawAll() {
         drawDrawCanvas();
-        renderFan(fctx, grid, viewAngle, showGrid);
-        renderCyl(cctx, grid, showMirror);
+        renderFan(fctx, grid, DESIGN_ANGLE, showGrid);
+        renderCyl(cctx, grid, showMirror, eyeAngle);
         if (activeTab === 'light') redrawLightTab();
     }
 
@@ -372,10 +400,32 @@
         redrawAll();
     });
 
+    function updateAngleUI() {
+        angleVal.textContent = eyeAngle + '°';
+        angleVal2.textContent = eyeAngle + '°';
+        const hint = document.getElementById('angleHint');
+        const diff = eyeAngle - DESIGN_ANGLE;
+        if (eyeAngle >= 80) {
+            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었어요. 지금처럼 거의 수직으로(<b>${eyeAngle}°</b>) 내려다보면 원통의 옆면이 거의 안 보여서, 거울 속 그림을 알아볼 수 없어요.`;
+        } else if (Math.abs(diff) < 1) {
+            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었어요. 지금 <b>${eyeAngle}°</b>에서 보고 있으니, 거울 속 그림이 정확하게 보여요.`;
+        } else if (diff > 0) {
+            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었는데, 지금은 그보다 높은 <b>${eyeAngle}°</b>에서 보고 있어요. 그래서 거울 속 그림이 위아래로 눌리거나 어긋나 보여요.`;
+        } else {
+            hint.innerHTML = `이 종이는 <b>${DESIGN_ANGLE}°</b>에서 보도록 설계되었는데, 지금은 그보다 낮은 <b>${eyeAngle}°</b>에서 보고 있어요. 그래서 거울 속 그림이 위아래로 늘어나거나 어긋나 보여요.`;
+        }
+    }
+
     angleSlider.addEventListener('input', () => {
-        viewAngle = Number(angleSlider.value);
-        angleVal.textContent = viewAngle + '°';
-        angleVal2.textContent = viewAngle + '°';
+        eyeAngle = Number(angleSlider.value);
+        updateAngleUI();
+        redrawAll();
+    });
+
+    document.getElementById('btnResetAngle').addEventListener('click', () => {
+        eyeAngle = DESIGN_ANGLE;
+        angleSlider.value = eyeAngle;
+        updateAngleUI();
         redrawAll();
     });
 
@@ -459,7 +509,7 @@
 
         const dxWorld = (S.x - FAN_ORIGIN.x) / FAN_PX_PER_UNIT;
         const dyWorld = (S.y - FAN_ORIGIN.y) / FAN_PX_PER_UNIT;
-        const inv = M.fanInverse(dxWorld, dyWorld, viewAngle);
+        const inv = M.fanInverse(dxWorld, dyWorld);
         let cellInfo;
         if (inv.inBounds) {
             const color = grid[inv.row][inv.col];
@@ -479,8 +529,8 @@
     }
 
     function redrawLightTab() {
-        renderFan(fctxL, grid, viewAngle, true);
-        renderCyl(cctxL, grid, true);
+        renderFan(fctxL, grid, DESIGN_ANGLE, true);
+        renderCyl(cctxL, grid, true, eyeAngle);
         renderRay(lastRayClick);
     }
 
@@ -505,7 +555,6 @@
     const cctxQ = cylCanvasQ.getContext('2d');
     [fanCanvasQ, cylCanvasQ].forEach(c => { c.width = FAN_W; c.height = FAN_H; });
 
-    const QUIZ_ANGLE = 48;
     let quizOrder = [];
     let quizIndex = 0;
     let quizScore = { correct: 0, total: 0 };
@@ -532,8 +581,8 @@
     function renderQuizQuestion() {
         quizAnswered = false;
         const q = QUIZ_BANK[quizOrder[quizIndex]];
-        renderFan(fctxQ, q.grid, QUIZ_ANGLE, true);
-        renderCyl(cctxQ, q.grid, false);
+        renderFan(fctxQ, q.grid, DESIGN_ANGLE, true);
+        renderCyl(cctxQ, q.grid, false, DESIGN_ANGLE);
         document.getElementById('quizNum').textContent = String(quizIndex + 1);
         document.getElementById('quizScore').textContent = `${quizScore.correct} / ${quizScore.total}`;
         document.getElementById('quizFeedback').textContent = '';
@@ -571,7 +620,7 @@
         fb.classList.add('shown');
 
         document.getElementById('quizScore').textContent = `${quizScore.correct} / ${quizScore.total}`;
-        renderCyl(cctxQ, q.grid, true); // 정답 공개(원통 속 모습 보여주기)
+        renderCyl(cctxQ, q.grid, true, DESIGN_ANGLE); // 정답 공개(원통 속 모습 보여주기)
         document.getElementById('btnQuizNext').disabled = false;
     }
 
@@ -596,8 +645,7 @@
     });
 
     // ---- 초기화 ----
-    angleSlider.value = viewAngle;
-    angleVal.textContent = viewAngle + '°';
-    angleVal2.textContent = viewAngle + '°';
+    angleSlider.value = eyeAngle;
+    updateAngleUI();
     redrawAll();
 })();

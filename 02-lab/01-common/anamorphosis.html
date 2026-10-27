@@ -72,6 +72,13 @@
     .angle-row input[type="range"] { flex: 1 1 220px; max-width: 320px; accent-color: #7e22ce; }
     .angle-row .readout { font-weight: 900; color: #7e22ce; min-width: 3em; text-align: center; }
     .angle-hint { text-align: center; font-size: 0.76rem; color: #78716c; margin: 4px 0 0; }
+    .angle-track-labels {
+        position: relative; display: flex; justify-content: space-between; margin-top: -4px;
+        font-size: 0.7rem; color: #a8a29e; padding: 0 4px;
+    }
+    .angle-track-labels .design-mark {
+        position: absolute; left: 50%; transform: translateX(-50%); color: #e2434f; font-weight: 700;
+    }
 
     .tray-label { font-size: 0.8rem; font-weight: 700; color: #7e22ce; text-align: center; }
     #drawCanvas { display: block; margin: 0 auto; width: 100%; max-width: 368px; height: auto; border: 2px solid #a855f7; border-radius: 8px; background: #fffaf3; touch-action: none; cursor: crosshair; }
@@ -135,7 +142,8 @@
         <div class="intro-box">
             <h3>📐 원리 — 가까운 곳은 촘촘하게, 먼 곳은 듬성듬성하게</h3>
             <p>오른쪽 모눈종이에 그린 그림이 "거울 속에서 보고 싶은, 비뚤어지지 않은 원래 모습"입니다. 이 그림의 각 칸을 <b>각도(가로 위치)</b>와 <b>거울로부터의 거리(세로 위치)</b> 두 가지로 바꿔서 생각하면, 거울에 바로 붙어야 할 부분(윗줄 A)은 아주 좁게, 거울에서 멀리 떨어져야 할 부분(아랫줄 F)은 훨씬 넓게 종이 위에 펼쳐 그려야 한다는 걸 알 수 있습니다.</p>
-            <p>이 도구에서는 그 펼쳐지는 정도를 <span class="formula">ρ(v) = R + (R_최대−R) × tan(vφ) / tan(φ)</span> 라는 탄젠트 함수로 계산합니다. 여기서 v는 세로 위치 비율(0~1), φ는 아래에서 조절하는 <b>보는 각도</b>입니다. φ가 클수록(더 위에서 내려다볼수록) 바깥쪽이 훨씬 급격하게 벌어집니다 — 탄젠트 함수가 90°에 가까워질수록 무한히 커지는 성질을 이용한 것입니다.</p>
+            <p>이 도구에서는 그 펼쳐지는 정도를 <span class="formula">ρ(v) = R + (R_최대−R) × tan(vφ) / tan(φ)</span> 라는 탄젠트 함수로 계산합니다. 여기서 v는 세로 위치 비율(0~1), φ는 <b>설계 각도(45°로 고정)</b>입니다. 이 종이는 딱 한 각도에서 보도록 한 번 설계되면 모양이 바뀌지 않습니다 — 탄젠트 함수가 90°에 가까워질수록 무한히 커지는 성질을 이용해, 거울과 가까운 부분은 아주 좁게, 먼 부분은 훨씬 넓게 미리 계산해 둔 것입니다.</p>
+            <p>그렇다면 <b>"보는 눈의 각도"</b> 슬라이더는 무슨 역할일까요? 바로 "실제로 보는 사람"의 위치를 바꿔봅니다. 종이는 45°에서 보도록 설계되어 그대로인데, 보는 각도가 그와 다르면 거울 속 그림이 어떻게 어긋나 보이는지 시뮬레이션해 보여줍니다 — 설계 각도와 실제로 보는 각도가 정확히 같을 때만 그림이 완벽하게 복원됩니다.</p>
         </div>
     </div>
 
@@ -158,11 +166,17 @@
                         <canvas id="cylCanvas"></canvas>
                     </div>
                     <div class="angle-row">
-                        <span style="font-size:0.82rem; color:#57534e; font-weight:700;">보는 각도</span>
-                        <input type="range" id="angleSlider" min="10" max="80" step="1">
+                        <span style="font-size:0.82rem; color:#57534e; font-weight:700;">보는 눈의 각도</span>
+                        <input type="range" id="angleSlider" min="5" max="85" step="1">
                         <span class="readout" id="angleVal">45°</span>
+                        <button class="btn btn-outline" id="btnResetAngle" style="flex:0 0 auto; padding:7px 10px; font-size:0.76rem;">↺ 설계 각도로</button>
                     </div>
-                    <p class="angle-hint">※ 왼쪽 종이 위의 부채꼴 그림이, 이 각도로 내려다볼 때 원통 거울 속에서 바르게 보이도록 계산한 모양입니다. (현재 <span id="angleVal2">45°</span>)</p>
+                    <div class="angle-track-labels">
+                        <span>낮게</span>
+                        <span class="design-mark">▲ 설계 45°</span>
+                        <span>위에서</span>
+                    </div>
+                    <p class="angle-hint" id="angleHint">이 종이는 <b>45°</b>에서 보도록 설계되었어요. 지금 <b><span id="angleVal2">45°</span></b>에서 보고 있으니, 거울 속 그림이 정확하게 보여요.</p>
                 </div>
                 <div class="draw-side">
                     <div class="tray-label">원래 그림 그리기 — 모눈종이 = 거울 속에 보일 그림</div>
@@ -234,8 +248,8 @@
         <h2>🧭 더 탐구해 보기</h2>
         <div class="extend-list">
             <div class="extend-item">
-                <h4>1. 보는 각도를 가장 낮게(10°) 또는 가장 높게(80°) 맞추면?</h4>
-                <p>각도를 바꿔가며 부채꼴 모양이 어떻게 달라지는지 관찰해보세요. 각도가 낮을수록 부채꼴이 거의 고른 간격으로, 각도가 높을수록 바깥쪽 줄(F)이 극단적으로 넓어지는 걸 확인할 수 있어요. 왜 그런지 탄젠트 함수의 그래프 모양과 연결 지어 설명해보세요.</p>
+                <h4>1. "보는 눈의 각도"를 45°에서 벗어나게 움직이면?</h4>
+                <p>왼쪽 종이(부채꼴)의 모양은 전혀 바뀌지 않는다는 걸 확인해보세요 — 종이는 45°용으로 딱 한 번 설계된 뒤로는 그대로입니다. 대신 거울 원 안의 재구성된 그림만 바뀝니다. 슬라이더를 낮추거나 높일 때 그림이 어떻게 어긋나는지, 그리고 80° 이상으로 거의 수직에 가까워지면 왜 아예 알아볼 수 없게 되는지 관찰해보세요.</p>
             </div>
             <div class="extend-item">
                 <h4>2. 그림을 인쇄해서 실제로 확인해보기</h4>

@@ -26,6 +26,12 @@
     const RHO_MAX_FACTOR = 4.6; // 부채꼴이 뻗어나가는 최대 반지름 = R_CYL * 이 값
     const THETA_SPAN_DEG = 168; // 부채꼴이 펼쳐지는 전체 각도 (거의 반원)
 
+    // 종이(부채꼴) 위의 왜상은 "이 각도에서 보면 바르게 보이도록" 딱 한 번
+    // 설계되어 고정된다. 보는 사람이 실제로는 다른 각도에서 보면(= 아래
+    // "보는 눈의 각도" 슬라이더), 설계 각도와 실제로 보는 각도가 달라서
+    // 거울 속 모습이 어긋나 보인다 — 이게 이 도구가 보여주려는 핵심이다.
+    const DESIGN_ANGLE_DEG = 45;
+
     const DEG2RAD = Math.PI / 180;
 
     function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
@@ -81,18 +87,25 @@
         return pts.map(p => [p.x, p.y]);
     }
 
-    // fanPoint(u,v,...)의 역함수. 부채꼴 위의 한 점(거울 중심 기준 상대좌표 dx,dy,
-    // 둘 다 "단위" 기준, 픽셀이 아님)이 원래 모눈종이의 몇 번째 칸(col,row)에
-    // 해당하는지 되짚어 찾는다. ρ(v) 식이 깔끔한 탄젠트 함수라 정확한 해석적
-    // 역함수가 존재한다.
-    function fanInverse(dx, dy, viewAngleDeg) {
-        const theta = Math.atan2(dx, dy);
-        const u = theta / (THETA_SPAN_DEG * DEG2RAD) + 0.5;
-        const rho = Math.hypot(dx, dy);
+    // rhoOf(v, ...)의 역함수: 반지름 ρ에서 v를 되짚는다. ρ(v) 식이 깔끔한
+    // 탄젠트 함수라 정확한 해석적 역함수가 존재한다.
+    function apparentV(rho, viewAngleDeg) {
         const phi = clamp(viewAngleDeg, 1, 89) * DEG2RAD;
         const rhoMax = R_CYL * RHO_MAX_FACTOR;
         const growth = (rho - R_CYL) / (rhoMax - R_CYL);
-        const v = Math.atan(Math.tan(phi) * growth) / phi;
+        return Math.atan(Math.tan(phi) * growth) / phi;
+    }
+
+    // fanPoint(u,v,...)의 역함수. 부채꼴 위의 한 점(거울 중심 기준 상대좌표 dx,dy,
+    // 둘 다 "단위" 기준, 픽셀이 아님)이 원래 모눈종이의 몇 번째 칸(col,row)에
+    // 해당하는지 되짚어 찾는다. (실제로 그려진 종이 자체를 읽을 때 쓰므로 항상
+    // DESIGN_ANGLE_DEG를 기준으로 삼는다 — "거울에 비친 모습이 실제로 어떻게
+    // 보일지"를 구할 때는 apparentV를 보는 각도로 따로 호출한다.)
+    function fanInverse(dx, dy) {
+        const theta = Math.atan2(dx, dy);
+        const u = theta / (THETA_SPAN_DEG * DEG2RAD) + 0.5;
+        const rho = Math.hypot(dx, dy);
+        const v = apparentV(rho, DESIGN_ANGLE_DEG);
         const col = Math.floor(u * COLS);
         const row = Math.floor(v * ROWS);
         const inBounds = u >= 0 && u <= 1 && v >= 0 && v <= 1 && col >= 0 && col < COLS && row >= 0 && row < ROWS;
@@ -140,8 +153,8 @@
     }
 
     return {
-        COLS, ROWS, R_CYL, RHO_MAX_FACTOR, THETA_SPAN_DEG,
-        cellUV, thetaOf, rhoOf, fanPoint, cellFanPolygon,
+        COLS, ROWS, R_CYL, RHO_MAX_FACTOR, THETA_SPAN_DEG, DESIGN_ANGLE_DEG,
+        cellUV, thetaOf, rhoOf, apparentV, fanPoint, cellFanPolygon,
         fanInverse, reflectOffCircle,
     };
 });
