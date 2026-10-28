@@ -8,7 +8,7 @@
 //   const stop = HallStore.subscribe('blendRecords', 20, (records) => { ... });
 //   await HallStore.clear(['blendRecords', 'festivalFeedback']);
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
   authDomain: "su3su3-e2669.firebaseapp.com",
   projectId: "su3su3-e2669",
@@ -17,7 +17,7 @@ const firebaseConfig = {
   appId: "1:989821997199:web:da319f053c098ea30560fa"
 };
 
-const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+export const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
 const configured = !Object.values(firebaseConfig).some((v) => /^YOUR_/.test(v));
 
 // ---- localStorage 대체 구현 (설정 전이거나 Firebase를 쓸 수 없을 때) ----

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제출 확인 · 수학문제 · 수수의 수학</title>
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="assets/problems.css">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script type="module" src="../assets/firebase-submit.js"></script>
+<style>
+  .t-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 0 0 14px; }
+  .t-tools select, .t-tools input[type="text"] { padding: 7px 10px; font: inherit; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+  .t-card { padding: 16px 0; border-top: 1px solid var(--line); }
+  .t-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; }
+  .t-who { font-weight: 800; }
+  .t-meta { color: var(--muted); font-size: 0.82rem; }
+  .t-card textarea { width: 100%; box-sizing: border-box; min-height: 70px; padding: 9px 11px; font: inherit; border: 1px solid var(--line); border-radius: 10px; resize: vertical; }
+  .t-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .t-done { font-size: 0.8rem; font-weight: 700; color: #2f7a1f; }
+</style>
+</head>
+<body class="g7">
+<div class="page">
+
+  <header class="group-head">
+    <a class="back" href="index.html">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M8 2.5 4.5 6 8 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      수학문제
+    </a>
+    <span class="badge" aria-hidden="true">🧑‍🏫</span>
+    <h1>제출 확인 · 피드백</h1>
+    <p>학생이 제출한 답안을 보고 피드백을 남기는 교사용 화면입니다. 교사 계정으로 로그인했을 때만 내용이 보입니다.</p>
+  </header>
+
+  <main>
+    <div class="panel" id="root"><p class="hint">불러오는 중…</p></div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var root = document.getElementById('root');
+  var user = null;
+  var all = [];
+  var stop = null;
+  var state = { subject: '', onlyNew: false, query: '' };
+
+  function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+
+  function loginView(msg) {
+    root.innerHTML = '<p>' + esc(msg) + '</p><button type="button" class="btn" id="login">구글로 로그인</button>';
+    root.querySelector('#login').addEventListener('click', function () {
+      SU3Submit.login().catch(function (e) { alert('로그인하지 못했습니다. (' + (e && e.code || '오류') + ')'); });
+    });
+  }
+
+  function start() {
+    SU3Submit.onAuth(function (u, err) {
+      if (err) { root.innerHTML = '<p class="notice">로그인 기능을 불러오지 못했습니다.</p>'; return; }
+      user = u;
+      if (stop) { stop(); stop = null; }
+      if (!u) { loginView('교사 계정으로 로그인하세요.'); return; }
+      root.innerHTML = '<p class="hint">불러오는 중…</p>';
+      stop = SU3Submit.listAll(function (list, e) {
+        if (e) {
+          root.innerHTML = '<p class="notice">제출 내역을 볼 수 없습니다. 교사 계정(' + esc(u.email) + ')이 아니거나 보안 규칙이 아직 설정되지 않았습니다.</p>' +
+            '<button type="button" class="reset-link" id="out">다른 계정으로 로그인</button>';
+          root.querySelector('#out').addEventListener('click', function () { SU3Submit.logout(); });
+          return;
+        }
+        all = list;
+        draw();
+      });
+    });
+  }
+
+  function draw() {
+    var subjects = {};
+    all.forEach(function (r) { subjects[r.subjectId] = r.subjectName; });
+    var q = state.query.trim();
+    var rows = all.filter(function (r) {
+      if (state.subject && r.subjectId !== state.subject) { return false; }
+      if (state.onlyNew && r.feedback) { return false; }
+      if (q && String(r.studentId).indexOf(q) < 0) { return false; }
+      return true;
+    });
+
+    var focusQuery = document.activeElement && document.activeElement.id === 'f-query';
+    var html = '<div class="t-tools">' +
+      '<span class="t-meta">' + esc(user.email) + '</span>' +
+      '<select id="f-subject"><option value="">전체 과목</option>' +
+      Object.keys(subjects).map(function (id) {
+        return '<option value="' + esc(id) + '"' + (state.subject === id ? ' selected' : '') + '>' + esc(subjects[id]) + '</option>';
+      }).join('') + '</select>' +
+      '<input type="text" id="f-query" placeholder="학번 검색" value="' + esc(state.query) + '" size="10">' +
+      '<label><input type="checkbox" id="f-new"' + (state.onlyNew ? ' checked' : '') + '> 피드백 안 쓴 것만</label>' +
+      '<button type="button" class="reset-link" id="out">로그아웃</button></div>' +
+      '<p class="hint">' + rows.length + '개 (전체 ' + all.length + '개, 최근 300개까지 표시)</p>';
+
+    rows.forEach(function (r) {
+      var d = new Date(r.createdAt);
+      html += '<div class="t-card" data-id="' + esc(r.id) + '">' +
+        '<div class="t-head"><span class="t-who">' + esc(r.studentId) + ' · ' + esc(r.subjectName) + '</span>' +
+        '<span class="t-meta">' + esc(r.email) + ' · ' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('ko-KR') + '</span></div>' +
+        '<p class="t-meta">' + esc(r.topicName) + '</p>' +
+        '<div class="q-body">' + SU3Submit.safeHtml(r.problemHtml) + '</div>' +
+        '<p class="sub-line">학생 답: <strong>' + esc(r.studentAnswer || '(없음)') + '</strong> · ' +
+        (r.correct === true ? '<span class="ok-text">자동채점 정답</span>' : '<span class="no-text">자동채점 오답</span>') +
+        ' · 정답: <span class="correct-ans">' + SU3Submit.safeHtml(r.correctAnswer) + '</span></p>' +
+        '<textarea placeholder="피드백을 입력하세요">' + esc(r.feedback || '') + '</textarea>' +
+        '<div class="t-actions"><button type="button" class="btn save">피드백 저장</button>' +
+        (r.feedback ? '<span class="t-done">작성됨</span>' : '') + '</div></div>';
+    });
+    if (!rows.length) { html += '<p class="hint">조건에 맞는 제출이 없습니다.</p>'; }
+
+    /* 피드백을 쓰는 도중 새 제출이 들어와 화면이 다시 그려져도 입력 중인 글을 지키기 위해 보존한다. */
+    var drafts = {};
+    Array.prototype.forEach.call(root.querySelectorAll('.t-card'), function (c) {
+      var ta = c.querySelector('textarea');
+      var rec = all.filter(function (x) { return x.id === c.dataset.id; })[0];
+      if (ta && rec && ta.value !== (rec.feedback || '')) { drafts[c.dataset.id] = ta.value; }
+    });
+
+    root.innerHTML = html;
+    Array.prototype.forEach.call(root.querySelectorAll('.t-card'), function (c) {
+      if (drafts[c.dataset.id] !== undefined) { c.querySelector('textarea').value = drafts[c.dataset.id]; }
+      c.querySelector('.save').addEventListener('click', function (ev) {
+        var btn = ev.currentTarget;
+        btn.disabled = true;
+        SU3Submit.setFeedback(c.dataset.id, c.querySelector('textarea').value.trim()).then(function () {
+          btn.disabled = false;
+        }).catch(function (e) {
+          console.error(e);
+          btn.disabled = false;
+          alert('저장하지 못했습니다. 교사 계정으로 로그인했는지 확인하세요.');
+        });
+      });
+    });
+    root.querySelector('#f-subject').addEventListener('change', function (e) { state.subject = e.target.value; draw(); });
+    root.querySelector('#f-new').addEventListener('change', function (e) { state.onlyNew = e.target.checked; draw(); });
+    root.querySelector('#f-query').addEventListener('input', function (e) { state.query = e.target.value; draw(); });
+    root.querySelector('#out').addEventListener('click', function () { SU3Submit.logout(); });
+    if (focusQuery) { var qi = root.querySelector('#f-query'); qi.focus(); qi.setSelectionRange(qi.value.length, qi.value.length); }
+    if (window.MathJax && window.MathJax.typesetPromise) { window.MathJax.typesetPromise([root]).catch(function () {}); }
+  }
+
+  if (window.SU3Submit) { start(); } else { document.addEventListener('su3submit-ready', start); }
+})();
+</script>
+</body>
+</html>
