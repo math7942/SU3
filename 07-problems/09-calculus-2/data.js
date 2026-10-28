@@ -5,6 +5,7 @@
   window.SU3_SUBJECT = {
     id: 'calculus-2',
     name: '미적분Ⅱ',
+    submit: true,
     areas: [
       {
         name: '수열의 극한',

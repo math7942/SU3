@@ -349,3 +349,23 @@
 
 .topic-btn.is-sheet { border-style: dashed; }
 .topic-btn.is-sheet .t-score { color: var(--muted); }
+
+/* ---------- 답안 제출 · 피드백 (S.submit 이 켜진 과목) ---------- */
+.submit-bar { margin-bottom: 18px; }
+.submit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.submit-who { flex: 1 1 220px; font-size: 0.9rem; color: var(--ink-soft); word-break: break-all; }
+.submit-id { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; font-weight: 700; }
+.submit-id input {
+  width: 8em; padding: 7px 10px; font: inherit; border: 1px solid var(--line); border-radius: 9px; background: #fff;
+}
+.my-submissions { margin-top: 22px; }
+.sub-item { padding: 14px 0; border-top: 1px solid var(--line); }
+.sub-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.sub-time { color: var(--muted); font-size: 0.8rem; }
+.sub-item details { margin: 8px 0; }
+.sub-item summary { cursor: pointer; font-size: 0.84rem; font-weight: 700; color: var(--accent); }
+.sub-line { margin: 6px 0; font-size: 0.92rem; }
+.ok-text { color: #2f7a1f; font-weight: 700; }
+.no-text { color: #b23b3b; font-weight: 700; }
+.sub-feedback { margin-top: 8px; padding: 10px 14px; border-radius: 11px; background: var(--accent-soft); }
+.sub-feedback p { margin: 4px 0 0; }

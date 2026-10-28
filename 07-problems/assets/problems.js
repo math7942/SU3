@@ -237,6 +237,135 @@
       });
     }
 
+    /* ---------- 답안 제출 (S.submit 이 true 인 과목만) ---------- */
+    var submitOn = !!S.submit;
+    var me = null;
+    var submitReady = false;
+    var bar = null;
+    var mine = null;
+    if (submitOn) { mountSubmit(); }
+
+    function esc(str) {
+      var d = document.createElement('div');
+      d.textContent = str == null ? '' : String(str);
+      return d.innerHTML;
+    }
+
+    function getStudentId() {
+      var el = bar && bar.querySelector('#student-id');
+      var v = el ? el.value.trim() : '';
+      try { if (v) { localStorage.setItem('su3-student-id', v); } } catch (e) { /* 무시 */ }
+      return v;
+    }
+
+    function mountSubmit() {
+      bar = document.createElement('div');
+      bar.className = 'panel submit-bar';
+      app.parentNode.insertBefore(bar, app);
+      mine = document.createElement('div');
+      mine.className = 'panel my-submissions';
+      mine.hidden = true;
+      app.parentNode.insertBefore(mine, app.nextSibling);
+      drawBar();
+
+      function wire() {
+        submitReady = true;
+        window.SU3Submit.onAuth(function (user, err) {
+          if (err) { bar.innerHTML = '<p class="notice">로그인 기능을 불러오지 못했습니다. 페이지를 새로고침해 주세요.</p>'; return; }
+          me = user;
+          drawBar();
+          var stop = mine._stop; if (stop) { stop(); mine._stop = null; }
+          if (user) {
+            mine._stop = window.SU3Submit.listMine(drawMine);
+          } else {
+            mine.hidden = true;
+          }
+        });
+      }
+      if (window.SU3Submit) { wire(); } else { document.addEventListener('su3submit-ready', wire); }
+    }
+
+    function drawBar() {
+      if (!bar) { return; }
+      var prevId = '';
+      var old = bar.querySelector('#student-id');
+      if (old) { prevId = old.value; }
+      if (!prevId) { try { prevId = localStorage.getItem('su3-student-id') || ''; } catch (e) { /* 무시 */ } }
+      if (me) {
+        bar.innerHTML =
+          '<div class="submit-row"><span class="submit-who"><strong>' + esc(S.name) + '</strong> · ' + esc(me.email || me.displayName || '') + '</span>' +
+          '<label class="submit-id">학번 <input id="student-id" type="text" maxlength="20" autocomplete="off" placeholder="예: 10101"></label>' +
+          '<button type="button" class="reset-link" id="logout-btn">로그아웃</button></div>' +
+          '<p class="hint">채점한 뒤 &lsquo;선생님께 제출&rsquo;을 누르면 선생님이 풀이를 확인하고 피드백을 써 줍니다.</p>';
+        bar.querySelector('#student-id').value = prevId;
+        bar.querySelector('#logout-btn').addEventListener('click', function () { window.SU3Submit.logout(); });
+      } else {
+        bar.innerHTML =
+          '<div class="submit-row"><span class="submit-who">선생님께 답안을 제출하려면 구글 계정으로 로그인하세요.</span>' +
+          '<button type="button" class="btn" id="login-btn">구글로 로그인</button></div>' +
+          '<p class="hint">로그인하지 않아도 문제 풀이와 채점은 그대로 할 수 있습니다.</p>';
+        bar.querySelector('#login-btn').addEventListener('click', function () {
+          if (!window.SU3Submit) { return; }
+          window.SU3Submit.login().catch(function (e) {
+            alert('로그인하지 못했습니다. (' + (e && e.code ? e.code : '알 수 없는 오류') + ')');
+          });
+        });
+      }
+    }
+
+    function drawMine(list, err) {
+      if (err) { mine.hidden = false; mine.innerHTML = '<p class="notice">제출 내역을 불러오지 못했습니다.</p>'; return; }
+      mine.hidden = false;
+      var html = '<div class="panel-head"><div><h2>내 제출 · 선생님 피드백</h2><p class="where">' + list.length + '개 제출</p></div></div>';
+      if (!list.length) {
+        html += '<p class="hint">아직 제출한 답안이 없습니다.</p>';
+      }
+      list.forEach(function (r) {
+        var d = new Date(r.createdAt);
+        html += '<div class="sub-item">' +
+          '<div class="sub-top"><strong>' + esc(r.topicName) + '</strong><span class="sub-time">' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('ko-KR') + '</span></div>' +
+          '<details><summary>문제 보기</summary><div class="q-body">' + window.SU3Submit.safeHtml(r.problemHtml) + '</div></details>' +
+          '<p class="sub-line">내 답: <strong>' + esc(r.studentAnswer || '(없음)') + '</strong> · ' +
+          (r.correct === true ? '<span class="ok-text">정답</span>' : '<span class="no-text">오답</span>') + '</p>' +
+          (r.feedback
+            ? '<div class="sub-feedback"><strong>선생님 피드백</strong><p>' + esc(r.feedback).replace(/\n/g, '<br>') + '</p></div>'
+            : '<p class="hint">아직 피드백이 없습니다.</p>') +
+          '</div>';
+      });
+      mine.innerHTML = html;
+      typeset(mine);
+    }
+
+    function submitCurrent(btn, fb) {
+      if (!me) { fb.className = 'feedback warn'; fb.textContent = '먼저 위에서 구글로 로그인해 주세요.'; return; }
+      var sid = getStudentId();
+      if (!sid) { fb.className = 'feedback warn'; fb.textContent = '위쪽 칸에 학번을 입력해 주세요.'; return; }
+      var p = state.problem;
+      var r = state.result || { ok: false, answer: '' };
+      btn.disabled = true;
+      btn.textContent = '제출 중…';
+      window.SU3Submit.submit({
+        studentId: sid.slice(0, 20),
+        subjectId: S.id,
+        subjectName: S.name,
+        topicId: state.topic.id,
+        topicName: String(state.topic.name).slice(0, 200),
+        problemHtml: String(p.q).slice(0, 20000),
+        studentAnswer: String(r.answer).slice(0, 500),
+        correctAnswer: answerText(p).slice(0, 500),
+        correct: !!r.ok
+      }).then(function () {
+        btn.textContent = '제출 완료';
+        state.submitted = true;
+      }).catch(function (e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.textContent = '선생님께 제출';
+        fb.className = 'feedback warn';
+        fb.textContent = '제출하지 못했습니다. 잠시 뒤 다시 시도해 주세요.';
+      });
+    }
+
     function start(topic, random) {
       state.random = !!random;
       state.topic = topic;
@@ -271,6 +400,8 @@
       state.problem = p;
       state.checked = false;
       state.selected = null;
+      state.result = null;
+      state.submitted = false;
       render();
     }
 
@@ -401,6 +532,17 @@
       row.appendChild(checkBtn);
       row.appendChild(solBtn);
       row.appendChild(nextBtn);
+      if (submitOn) {
+        var subBtn = document.createElement('button');
+        subBtn.type = 'button';
+        subBtn.id = 'submit-btn';
+        subBtn.className = 'btn';
+        subBtn.textContent = state.submitted ? '제출 완료' : '선생님께 제출';
+        subBtn.disabled = state.submitted || !state.checked;
+        subBtn.title = '먼저 채점하기를 눌러 주세요';
+        subBtn.addEventListener('click', function () { submitCurrent(subBtn, panel.querySelector('#feedback')); });
+        row.appendChild(subBtn);
+      }
       row.appendChild(resetBtn);
       panel.appendChild(row);
 
@@ -445,6 +587,14 @@
       }
 
       state.checked = true;
+      state.result = {
+        ok: ok,
+        answer: p.type === 'choice'
+          ? '(' + (state.selected + 1) + ') ' + p.choices[state.selected]
+          : panel.querySelector('#answer-input').value.trim()
+      };
+      var subNow = panel.querySelector('#submit-btn');
+      if (subNow && !state.submitted) { subNow.disabled = false; }
       var score = loadScore(S.id, state.topic.id);
       score.total += 1;
       if (ok) { score.right += 1; }
@@ -479,6 +629,9 @@
 
       if (countAsGiveUp && !state.checked) {
         state.checked = true;
+        state.result = { ok: false, answer: '(해설을 먼저 봄)' };
+        var subGive = panel.querySelector('#submit-btn');
+        if (subGive && !state.submitted) { subGive.disabled = false; }
         var score = loadScore(S.id, state.topic.id);
         score.total += 1;
         saveScore(S.id, state.topic.id, score);
