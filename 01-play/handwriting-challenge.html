@@ -895,7 +895,7 @@
         }
 
         // 결과 저장
-        function saveRecord() {
+        async function saveRecord() {
             const predictedDigit = parseInt(document.getElementById('predictedDigit').textContent);
 
             if (myDigit === null || predictedDigit === myDigit) return;
@@ -914,10 +914,13 @@
                 confidence: currentPrediction[predictedDigit]
             };
 
-            let records = JSON.parse(localStorage.getItem('handwritingRecords')) || [];
-            records.unshift(record);
-            if (records.length > 20) records.pop();
-            localStorage.setItem('handwritingRecords', JSON.stringify(records));
+            try {
+                await HallStore.add('handwritingRecords', record, 20);
+            } catch (e) {
+                console.error(e);
+                alert('❌ 저장하지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+                return;
+            }
 
             alert('✨ 명예의 전당에 등록되었습니다!');
             document.getElementById('saveBtn').style.display = 'none';
@@ -931,5 +934,6 @@
             resetConfidenceGrid();
         });
     </script>
+<script type="module" src="../assets/firebase-store.js"></script>
 </body>
 </html>

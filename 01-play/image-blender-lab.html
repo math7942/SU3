@@ -1164,7 +1164,7 @@
         }
 
         // 명예의 전당에 등록
-        function saveToHallOfFame() {
+        async function saveToHallOfFame() {
             const alpha = parseInt(document.getElementById('alphaSlider').value);
             const name = (document.getElementById('hallName').value || '').trim().slice(0, 20) || '익명';
 
@@ -1178,10 +1178,13 @@
                 description: `${alpha}% : ${100 - alpha}% 블렌딩`
             };
 
-            let records = JSON.parse(localStorage.getItem('blendRecords')) || [];
-            records.unshift(record);
-            if (records.length > 20) records.pop();
-            localStorage.setItem('blendRecords', JSON.stringify(records));
+            try {
+                await HallStore.add('blendRecords', record, 20);
+            } catch (e) {
+                console.error(e);
+                alert('❌ 저장하지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+                return;
+            }
 
             alert('✨ 명예의 전당에 등록되었습니다!');
             document.getElementById('saveHallBtn').style.display = 'none';
@@ -1245,5 +1248,6 @@
             setupUploadAreas();
         });
     </script>
+<script type="module" src="../assets/firebase-store.js"></script>
 </body>
 </html>
