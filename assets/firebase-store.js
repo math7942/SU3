@@ -9,12 +9,12 @@
 //   await HallStore.clear(['blendRecords', 'festivalFeedback']);
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
+  authDomain: "su3su3-e2669.firebaseapp.com",
+  projectId: "su3su3-e2669",
+  storageBucket: "su3su3-e2669.firebasestorage.app",
+  messagingSenderId: "989821997199",
+  appId: "1:989821997199:web:da319f053c098ea30560fa"
 };
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
