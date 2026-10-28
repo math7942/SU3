@@ -1624,7 +1624,7 @@
         }
 
         // 체험 소감 저장
-        function submitFeedback() {
+        async function submitFeedback() {
             const nameInput = document.getElementById('feedbackName');
             const textInput = document.getElementById('feedbackText');
             const text = (textInput.value || '').trim();
@@ -1643,10 +1643,13 @@
                 timestamp: (() => { const d = new Date(); return `${d.getMonth() + 1}/${d.getDate()} ${d.toLocaleTimeString('ko-KR')}`; })()
             };
 
-            let records = JSON.parse(localStorage.getItem('festivalFeedback')) || [];
-            records.unshift(record);
-            if (records.length > 100) records.pop();
-            localStorage.setItem('festivalFeedback', JSON.stringify(records));
+            try {
+                await HallStore.add('festivalFeedback', record, 100);
+            } catch (e) {
+                console.error(e);
+                alert('❌ 저장하지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.');
+                return;
+            }
 
             document.getElementById('feedbackFormWrap').style.display = 'none';
             document.getElementById('feedbackThanks').style.display = 'block';
@@ -1684,5 +1687,6 @@
             goToStage(1);
         });
     </script>
+<script type="module" src="../assets/firebase-store.js"></script>
 </body>
 </html>
