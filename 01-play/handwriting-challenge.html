@@ -456,6 +456,7 @@
 
         // 그림, 인식 결과, 행렬 보기를 모두 깨끗한 상태로 되돌림
         function resetDrawingState() {
+            isDrawing = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             document.getElementById('predictedDigit').textContent = '-';
             document.getElementById('achievement').classList.remove('show', 'fail');
@@ -487,34 +488,42 @@
             resetDrawingState();
         }
 
-        // 그리기 이벤트
-        canvas.addEventListener('mousedown', (e) => { isDrawing = true; });
-        canvas.addEventListener('mouseup', () => { isDrawing = false; });
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isDrawing) return;
+        function drawDotAt(clientX, clientY) {
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
             ctx.fillStyle = '#000';
             ctx.beginPath();
             ctx.arc(x, y, 8, 0, Math.PI * 2);
             ctx.fill();
+        }
+
+        // 그리기 이벤트
+        // mouseup은 window에 걸어둔다 — 캔버스 "안"에서만 버튼을 떼는 게 아니라
+        // 캔버스 밖으로 나간 채 버튼을 놓는 경우도 많은데, 그 mouseup은 캔버스에
+        // 전달되지 않아 isDrawing이 true로 남는다. 그 상태에서 지우기를 누른 뒤
+        // 캔버스 위로 마우스를 가져가기만 해도(클릭 없이) 점이 찍히는 버그였다.
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; drawDotAt(e.clientX, e.clientY); });
+        window.addEventListener('mouseup', () => { isDrawing = false; });
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing || e.buttons !== 1) { isDrawing = false; return; }
+            drawDotAt(e.clientX, e.clientY);
         });
 
-        // 터치 지원
-        canvas.addEventListener('touchstart', (e) => { isDrawing = true; e.preventDefault(); });
+        // 터치 지원 (touchcancel도 처리해 전화 수신 등으로 터치가 끊겨도 상태가 안 남게 함)
+        canvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            e.preventDefault();
+            const t = e.touches[0];
+            drawDotAt(t.clientX, t.clientY);
+        });
         canvas.addEventListener('touchend', () => { isDrawing = false; });
+        canvas.addEventListener('touchcancel', () => { isDrawing = false; });
         canvas.addEventListener('touchmove', (e) => {
             if (!isDrawing) return;
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            const x = touch.clientX - rect.left;
-            const y = touch.clientY - rect.top;
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(x, y, 8, 0, Math.PI * 2);
-            ctx.fill();
+            const t = e.touches[0];
+            drawDotAt(t.clientX, t.clientY);
         });
 
         // 신뢰도 그리드 초기화
