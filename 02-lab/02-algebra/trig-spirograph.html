@@ -1,0 +1,422 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>삼각함수 스피로그래프 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* 레이아웃: 상단 이름 + 탭 막대, 아래에 왼쪽 캔버스 / 오른쪽 조작판. 좁은 화면에서는 세로로 쌓는다. */
+:root{
+  --bg:#f3f6f8; --panel:#ffffff; --fg:#17212b; --muted:#5a6a78; --line:#d3dce3;
+  --accent:#0d7c86; --accent-fg:#ffffff; --c1:#d6336c; --c2:#2f6fdd; --grid:#e3e9ee; --ink:#26323d;
+  --ok:#1f8a4c; --bad:#c2410c;
+  --font:"Noto Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#18222b; --fg:#e7eef3; --muted:#93a4b3; --line:#2b3a47;
+  --accent:#43c3cd; --accent-fg:#06262a; --c1:#ff6f9f; --c2:#6ea8ff; --grid:#22303b; --ink:#cfdbe5;
+  --ok:#5fd18c; --bad:#ff9a5c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#18222b; --fg:#e7eef3; --muted:#93a4b3; --line:#2b3a47;
+  --accent:#43c3cd; --accent-fg:#06262a; --c1:#ff6f9f; --c2:#6ea8ff; --grid:#22303b; --ink:#cfdbe5;
+  --ok:#5fd18c; --bad:#ff9a5c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1080px;margin:0 auto}
+header h1{font-size:26px;line-height:1.25;margin:0 0 4px;font-weight:700;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:64ch}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 14px}
+nav button{font:inherit;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+nav button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+canvas{display:block;width:100%;border-radius:6px}
+h2{font-size:17px;margin:0 0 6px}
+h3{font-size:13px;margin:14px 0 6px;color:var(--muted);letter-spacing:.04em;font-weight:700}
+.ctl{display:grid;grid-template-columns:6.4em minmax(0,1fr) 3.6em;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+.ctl label{white-space:nowrap}
+.ctl output{font-family:var(--mono);font-size:13px;text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+.read{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;font-size:14px;margin-top:6px}
+.read div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.read b{font-family:var(--mono);font-weight:600;font-size:13px;text-align:right}
+.ask{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+.ask li{margin:3px 0}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+.code{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre;margin:6px 0 0;line-height:1.5}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.chk:last-child{border-bottom:0}
+.chk .mark{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;border:1.5px solid var(--line);color:var(--muted)}
+.chk.ok .mark{background:var(--ok);border-color:var(--ok);color:#fff}
+.chk small{display:block;color:var(--muted);font-size:12.5px}
+.layer{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
+.layer header{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.layer header strong{font-size:14px}
+.sw{width:14px;height:14px;border-radius:50%;display:inline-block}
+.tab{display:none}.tab.on{display:block}
+footer{margin-top:20px;color:var(--muted);font-size:13px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>삼각함수 스피로그래프 실험실</h1>
+  <p>단위원의 점이 그리는 사인곡선에서 시작해, 삼각함수 두 개를 더해 스피로그래프를 만드는 다섯 가지 실험입니다. 슬라이더를 움직이며 식과 그림이 어떻게 이어지는지 확인하세요.</p>
+</header>
+<nav id="tabs" role="tablist">
+  <button role="tab" data-t="unit">1 단위원과 사인곡선</button>
+  <button role="tab" data-t="wave">2 진폭·주기·위상</button>
+  <button role="tab" data-t="lis">3 리사주 곡선</button>
+  <button role="tab" data-t="spiro">4 스피로그래프</button>
+  <button role="tab" data-t="design">5 나만의 무늬 설계</button>
+</nav>
+
+<!-- 1 -->
+<section class="tab" id="t-unit">
+ <div class="grid">
+  <div class="card"><canvas id="cu" style="aspect-ratio:16/7"></canvas></div>
+  <div class="card">
+   <h2>점 P(cos θ, sin θ)</h2>
+   <div id="u-ctl"></div>
+   <div class="row"><button class="btn pri" id="u-play">재생</button><button class="btn" id="u-reset">처음으로</button></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>θ (라디안)</span><b id="u-rad"></b></div><div><span>θ (도)</span><b id="u-deg"></b></div>
+    <div><span>cos θ</span><b id="u-cos"></b></div><div><span>sin θ</span><b id="u-sin"></b></div>
+   </div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>θ = π/6일 때 P의 좌표는?</li><li>sin θ = 1/2인 θ는 0 ≤ θ ≤ 2π에서 몇 개인가?</li><li>사인곡선의 주기와 최댓값, 최솟값은?</li><li>사인곡선과 코사인곡선은 어떤 관계인가?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 2 -->
+<section class="tab" id="t-wave">
+ <div class="grid">
+  <div class="card">
+   <canvas id="cw" style="aspect-ratio:16/8"></canvas>
+   <p class="note">회색 점선은 y = sin x, 색선은 f(x) = a sin(bx + c) + d 입니다.</p>
+   <h2 style="margin-top:14px">두 사인곡선의 합</h2>
+   <canvas id="cs" style="aspect-ratio:16/5"></canvas>
+   <p class="note">색선은 g(x) = sin x + sin kx 입니다. 연한 선은 두 곡선의 포락선 ±2cos((k−1)x/2) 입니다.</p>
+  </div>
+  <div class="card">
+   <h2>f(x) = a sin(bx + c) + d</h2>
+   <div id="w-ctl"></div>
+   <div class="row"><button class="btn" id="w-reset">초기화</button></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>진폭 |a|</span><b id="w-amp"></b></div><div><span>주기 2π/|b|</span><b id="w-per"></b></div>
+    <div><span>x축 이동 −c/b</span><b id="w-sh"></b></div><div><span>중심선 y = d</span><b id="w-mid"></b></div>
+    <div><span>최댓값</span><b id="w-max"></b></div><div><span>최솟값</span><b id="w-min"></b></div>
+   </div>
+   <h3>합 g(x) = sin x + sin kx</h3>
+   <div id="s-ctl"></div>
+   <div class="read"><div style="grid-column:1/3"><span>g의 주기</span><b id="s-per"></b></div></div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>a를 2배로 하면? b를 2배로 하면 주기는?</li><li>c를 π/2 늘리면 그래프는 어느 쪽으로 얼마나 움직이는가?</li><li>k = 1.1일 때 진폭이 커졌다 작아졌다 하는 까닭은?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 3 -->
+<section class="tab" id="t-lis">
+ <div class="grid">
+  <div class="card"><canvas id="cl" style="aspect-ratio:1/1;max-width:560px;margin:0 auto"></canvas></div>
+  <div class="card">
+   <h2>x = sin(at), y = sin(bt + δ)</h2>
+   <div id="l-ctl"></div>
+   <div class="row"><button class="btn pri" id="l-redraw">다시 그리기</button><button class="btn" id="l-full">전체 보기</button></div>
+   <h3>예시 값</h3>
+   <div class="row" id="l-pre" style="margin-top:0"></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>GCD(a, b)</span><b id="l-g"></b></div><div><span>닫히는 t 범위</span><b id="l-end"></b></div>
+    <div style="grid-column:1/3"><span>모양</span><b id="l-kind"></b></div>
+   </div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>a = b = 1에서 δ를 0, π/2, π로 바꾸면 모양은?</li><li>(a, b) = (1, 2), (2, 3), (3, 4)일 때 곡선의 모양은?</li><li>a = b일 때 δ에 따라 모양이 바뀌는 까닭은?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 4 -->
+<section class="tab" id="t-spiro">
+ <div class="grid">
+  <div class="card"><canvas id="cp" style="aspect-ratio:1/1;max-width:640px;margin:0 auto"></canvas></div>
+  <div class="card">
+   <h2>스피로그래프 (R, r, d)</h2>
+   <div id="p-ctl"></div>
+   <div class="row"><button class="btn pri" id="p-play">다시 그리기</button><button class="btn" id="p-full">완성된 곡선</button></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>g = GCD(R, r)</span><b id="p-g"></b></div><div><span>꼭지 수 R/g</span><b id="p-n"></b></div>
+    <div><span>닫히는 끝값</span><b id="p-end"></b></div><div><span>작은 원의 자전</span><b id="p-k"></b></div>
+    <div style="grid-column:1/3"><span>곡선의 종류</span><b id="p-kind"></b></div>
+   </div>
+   <h3>식</h3>
+   <div class="code" id="p-eq"></div>
+   <h3>GeoGebra 입력</h3>
+   <div class="code" id="p-gg"></div>
+   <div class="row"><button class="btn" id="p-copy">명령어 복사</button></div>
+   <ol class="ask"><li>R과 r이 서로소이면 곡선은 몇 바퀴 만에 닫히는가?</li><li>d를 r보다 작게, 같게, 크게 하면 무엇이 달라지는가?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 5 -->
+<section class="tab" id="t-design">
+ <div class="grid">
+  <div class="card"><canvas id="cd" style="aspect-ratio:1/1;max-width:640px;margin:0 auto"></canvas></div>
+  <div class="card">
+   <h2>곡선 겹쳐 그리기</h2>
+   <div id="d-layers"></div>
+   <h3>도전 과제 (곡선 1 기준)</h3>
+   <div id="d-chal"></div>
+   <div class="row"><button class="btn" id="d-star">별 예시</button><button class="btn" id="d-flower">꽃 예시</button></div>
+   <p class="note">작품은 화면을 캡처해 저장하세요. 설계한 값과 까닭은 활동지 5에 적습니다.</p>
+  </div>
+ </div>
+</section>
+
+<footer>스피로그래프: x = (R−r)cos t + d·cos((R−r)t/r), y = (R−r)sin t − d·sin((R−r)t/r). g = GCD(R, r)일 때 t를 0에서 2πr/g까지 그리면 곡선이 닫히고, 바깥으로 뻗은 부분은 R/g개입니다.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const PI=Math.PI, TAU=2*PI;
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b]}return a};
+function fit(c){const dpr=Math.min(window.devicePixelRatio||1,2),w=c.clientWidth,h=c.clientHeight;
+  const W=Math.round(w*dpr),H=Math.round(h*dpr); if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+  const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h); return [g,w,h]}
+function piFrac(t){ if(Math.abs(t)<1e-9) return '0';
+  for(const q of [1,2,3,4,6,12]){const p=Math.round(t/PI*q); if(p!==0&&Math.abs(t-p*PI/q)<1e-6){const d=gcd(p,q),n=p/d,m=q/d;
+    const s=(Math.abs(n)===1?(n<0?'−':''):String(n).replace('-','−'))+'π'; return m===1?s:s+'/'+m}}
+  return t.toFixed(2)}
+const f2=x=>{const s=(Math.round(x*1000)/1000).toString();return s.replace('-','−')};
+
+/* ---------- 슬라이더 묶음 ---------- */
+function mount(el,specs,st,cb){
+  el.innerHTML=''; const outs={}, ins={};
+  specs.forEach(s=>{
+    const row=document.createElement('div'); row.className='ctl';
+    row.innerHTML=`<label for="${el.id}-${s.k}">${s.label}</label><input type="range" id="${el.id}-${s.k}" min="${s.min}" max="${s.max}" step="${s.step}"><output></output>`;
+    const inp=row.querySelector('input'), out=row.querySelector('output'); ins[s.k]=inp; outs[s.k]=out;
+    inp.value=st[s.k]; const show=()=>{out.textContent=s.fmt?s.fmt(st[s.k]):f2(st[s.k])}; show();
+    inp.addEventListener('input',()=>{st[s.k]=parseFloat(inp.value); show(); cb(s.k)});
+    el.appendChild(row); s.show=show;
+  });
+  return {set(k,v){st[k]=v;ins[k].value=v;specs.find(s=>s.k===k).show()}, setMax(k,m){ins[k].max=m; if(st[k]>m){this.set(k,m)}}, refresh(){specs.forEach(s=>{ins[s.k].value=st[s.k];s.show()})}};
+}
+
+/* ---------- 공통 그래프 ---------- */
+function axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,xstep,fmtX){
+  g.save(); g.lineWidth=1; g.font='11px '+css('--mono'); g.fillStyle=css('--muted');
+  const grid=css('--grid'), ink=css('--ink');
+  for(let x=Math.ceil(xmin/xstep)*xstep;x<=xmax+1e-9;x+=xstep){g.strokeStyle=grid;g.beginPath();g.moveTo(X(x),0);g.lineTo(X(x),h);g.stroke();
+    if(Math.abs(x)>1e-9){g.textAlign='center';g.fillText(fmtX(x),X(x),Y(0)+13)}}
+  for(let y=Math.ceil(ymin);y<=ymax;y+=1){g.strokeStyle=grid;g.beginPath();g.moveTo(0,Y(y));g.lineTo(w,Y(y));g.stroke();
+    if(y!==0){g.textAlign='right';g.fillText(String(y).replace('-','−'),X(0)-4,Y(y)+4)}}
+  g.strokeStyle=ink;g.lineWidth=1.3;g.beginPath();g.moveTo(0,Y(0));g.lineTo(w,Y(0));g.moveTo(X(0),0);g.lineTo(X(0),h);g.stroke(); g.restore();
+}
+function plotFn(g,X,Y,fn,x0,x1,col,wd,dash){
+  g.save();g.strokeStyle=col;g.lineWidth=wd;g.setLineDash(dash||[]);g.lineJoin='round';g.beginPath();
+  const n=900; for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,y=fn(x); i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))} g.stroke();g.restore();
+}
+function dot(g,x,y,r,col){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle=css('--panel');g.lineWidth=2;g.stroke()}
+
+/* ================= 1 단위원 ================= */
+const U={deg:30,playing:false,cos:true};
+const uc=mount($('#u-ctl'),[{k:'deg',label:'θ',min:0,max:360,step:1,fmt:v=>v+'°'}],U,()=>drawU());
+const uCos=document.createElement('label'); uCos.style.cssText='display:flex;gap:6px;align-items:center;font-size:14px;margin-top:6px';
+uCos.innerHTML='<input type="checkbox" id="u-cb" checked> 코사인곡선도 보기'; $('#u-ctl').appendChild(uCos);
+$('#u-cb').addEventListener('change',e=>{U.cos=e.target.checked;drawU()});
+function drawU(){ if(!$('#cu').clientWidth)return;
+  const [g,w,h]=fit($('#cu')); const th=U.deg*PI/180, rho=Math.min(h*0.36,w*0.17), cx=rho+22, cy=h/2;
+  const x0=cx+rho+46, gw=Math.max(60,w-x0-14);
+  const X=t=>x0+t/TAU*gw, Y=y=>cy-y*rho; const ink=css('--ink'), c1=css('--c1'), c2=css('--c2'), grid=css('--grid'), mu=css('--muted');
+  g.font='11px '+css('--mono');
+  // 그래프 격자와 눈금
+  g.lineWidth=1;g.strokeStyle=grid; for(let k=1;k<=4;k++){g.beginPath();g.moveTo(X(k*PI/2),Y(1.15));g.lineTo(X(k*PI/2),Y(-1.15));g.stroke()}
+  g.strokeStyle=ink;g.lineWidth=1.3;g.beginPath();g.moveTo(X(0)-6,cy);g.lineTo(x0+gw,cy);g.moveTo(X(0),Y(1.25));g.lineTo(X(0),Y(-1.25));g.stroke();
+  g.fillStyle=mu;g.textAlign='center'; ['π/2','π','3π/2','2π'].forEach((s,i)=>g.fillText(s,X((i+1)*PI/2),cy+16)); g.textAlign='right';g.fillText('1',X(0)-5,Y(1)+4);g.fillText('−1',X(0)-5,Y(-1)+4);
+  // 단위원
+  g.strokeStyle=ink;g.lineWidth=1.3;g.beginPath();g.arc(cx,cy,rho,0,TAU);g.stroke();
+  g.strokeStyle=grid;g.beginPath();g.moveTo(cx-rho-12,cy);g.lineTo(cx+rho+12,cy);g.moveTo(cx,cy-rho-12);g.lineTo(cx,cy+rho+12);g.stroke();
+  // 각 호
+  g.strokeStyle=c2;g.lineWidth=2;g.beginPath();g.arc(cx,cy,rho*0.28,0,-th,true);g.stroke();
+  const px=cx+rho*Math.cos(th), py=cy-rho*Math.sin(th);
+  g.strokeStyle=ink;g.lineWidth=1.5;g.beginPath();g.moveTo(cx,cy);g.lineTo(px,py);g.stroke();
+  // 사인곡선 (전체 연하게, 지나온 부분 진하게)
+  plotFn(g,X,Y,Math.sin,0,TAU,css('--line'),1.5); plotFn(g,X,Y,Math.sin,0,th,c1,2.6);
+  if(U.cos){plotFn(g,X,Y,Math.cos,0,TAU,css('--line'),1.2,[4,4]); plotFn(g,X,Y,Math.cos,0,th,c2,2,[5,3]); dot(g,X(th),Y(Math.cos(th)),4,c2)}
+  g.setLineDash([4,4]);g.strokeStyle=c1;g.lineWidth=1.2;g.beginPath();g.moveTo(px,py);g.lineTo(X(th),Y(Math.sin(th)));g.stroke();
+  g.beginPath();g.moveTo(px,py);g.lineTo(px,cy);g.stroke();g.setLineDash([]);
+  dot(g,px,py,5.5,c1); dot(g,X(th),Y(Math.sin(th)),5,c1);
+  g.fillStyle=c1;g.textAlign='left';g.font='bold 12px '+css('--font');g.fillText('P',px+8,py-8);
+  g.fillStyle=mu;g.font='12px '+css('--font');g.fillText('y = sin θ',x0+gw-58,Y(1)-8);
+  if(U.cos){g.fillStyle=c2;g.fillText('y = cos θ',X(PI*0.04),Y(1)-8)}
+  $('#u-rad').textContent=piFrac(th); $('#u-deg').textContent=U.deg+'°';
+  $('#u-cos').textContent=f2(+Math.cos(th).toFixed(3)); $('#u-sin').textContent=f2(+Math.sin(th).toFixed(3));
+}
+let uT=0;function uLoop(ts){ if(!U.playing||cur!=='unit'){U.playing=false;$('#u-play').textContent='재생';return} if(!uT)uT=ts; const dt=(ts-uT)/1000;uT=ts; U.deg=(U.deg+dt*40)%360.0001; uc.set('deg',Math.round(U.deg)); drawU(); requestAnimationFrame(uLoop)}
+$('#u-play').addEventListener('click',e=>{U.playing=!U.playing;e.target.textContent=U.playing?'멈춤':'재생';uT=0;if(U.playing)requestAnimationFrame(uLoop)});
+$('#u-reset').addEventListener('click',()=>{U.deg=0;uc.set('deg',0);drawU()});
+
+/* ================= 2 진폭·주기·위상 ================= */
+const W0={a:1,b:1,c:0,d:0}, W={...W0}, S={k:1.25};
+const wc=mount($('#w-ctl'),[
+ {k:'a',label:'a (진폭)',min:-3,max:3,step:0.1},{k:'b',label:'b (주기)',min:-4,max:4,step:0.1},
+ {k:'c',label:'c (위상)',min:-6.3,max:6.3,step:0.1,fmt:v=>piFrac(v)==v.toFixed(2)?f2(v):piFrac(v)},{k:'d',label:'d (이동)',min:-3,max:3,step:0.1}],W,()=>drawW());
+const sc=mount($('#s-ctl'),[{k:'k',label:'k',min:1,max:3,step:0.05}],S,()=>drawW());
+$('#w-reset').addEventListener('click',()=>{Object.assign(W,W0);wc.refresh();drawW()});
+function drawW(){ if(!$('#cw').clientWidth)return;
+  {const [g,w,h]=fit($('#cw')); const xmin=-TAU,xmax=TAU,ymin=-6,ymax=6; const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+   axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,PI/2,x=>piFrac(x));
+   plotFn(g,X,Y,Math.sin,xmin,xmax,css('--muted'),1.5,[5,4]);
+   plotFn(g,X,Y,x=>W.a*Math.sin(W.b*x+W.c)+W.d,xmin,xmax,css('--c1'),2.8);}
+  {const [g,w,h]=fit($('#cs')); const xmin=0,xmax=16*PI,ymin=-2.5,ymax=2.5; const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+   g.save();g.strokeStyle=css('--ink');g.lineWidth=1.2;g.beginPath();g.moveTo(0,Y(0));g.lineTo(w,Y(0));g.stroke();g.restore();
+   g.font='11px '+css('--mono');g.fillStyle=css('--muted');g.textAlign='center'; for(let x=2*PI;x<=xmax;x+=2*PI){g.fillText(piFrac(x),X(x),Y(0)+13)}
+   const env=x=>2*Math.cos((S.k-1)*x/2);
+   plotFn(g,X,Y,env,xmin,xmax,css('--line'),1.3,[4,3]); plotFn(g,X,Y,x=>-env(x),xmin,xmax,css('--line'),1.3,[4,3]);
+   plotFn(g,X,Y,x=>Math.sin(x)+Math.sin(S.k*x),xmin,xmax,css('--c2'),2);}
+  const a=W.a,b=W.b,c=W.c,d=W.d;
+  $('#w-amp').textContent=f2(Math.abs(a)); $('#w-per').textContent=Math.abs(b)<1e-9?'없음':(piFrac(TAU/Math.abs(b))==(TAU/Math.abs(b)).toFixed(2)?f2(+(TAU/Math.abs(b)).toFixed(3)):piFrac(TAU/Math.abs(b)));
+  $('#w-sh').textContent=Math.abs(b)<1e-9?'-':f2(+(-c/b).toFixed(3)); $('#w-mid').textContent=f2(d);
+  $('#w-max').textContent=f2(+(Math.abs(a)+d).toFixed(3)); $('#w-min').textContent=f2(+(d-Math.abs(a)).toFixed(3));
+  // g의 주기: k = p/q 이면 2π·q
+  let per='주기가 매우 길다(또는 없다)'; for(let q=1;q<=20;q++){const p=Math.round(S.k*q); if(Math.abs(S.k-p/q)<1e-9){const gg=gcd(p,q); per=(q/gg===1)?'2π':(q/gg)+'×2π'; break}}
+  $('#s-per').textContent=per;
+}
+
+/* ================= 3 리사주 ================= */
+const L={a:1,b:2,dl:Math.PI/2}, lst={t:0,full:true};
+const piStep=PI/24;
+const lc=mount($('#l-ctl'),[{k:'a',label:'a',min:1,max:9,step:1},{k:'b',label:'b',min:1,max:9,step:1},
+  {k:'dl',label:'δ',min:0,max:PI,step:piStep,fmt:v=>piFrac(v)}],L,()=>{lst.full=true;drawL();readL()});
+[[1,1,0],[1,1,PI/2],[1,2,PI/2],[2,3,0],[3,4,PI/4],[3,2,PI/2]].forEach(([a,b,dl])=>{
+  const bt=document.createElement('button');bt.className='btn';bt.textContent=`(${a}, ${b}), δ=${piFrac(dl)}`;
+  bt.addEventListener('click',()=>{L.a=a;L.b=b;L.dl=dl;lc.refresh();lst.full=true;drawL();readL()}); $('#l-pre').appendChild(bt)});
+function lEnd(){return TAU/gcd(L.a,L.b)}
+function readL(){const g=gcd(L.a,L.b); $('#l-g').textContent=g; $('#l-end').textContent=g===1?'2π':'2π/'+g;
+  let k='곡선'; const nearly=(x,y)=>Math.abs(x-y)<1e-6;
+  if(L.a===L.b){ if(nearly(L.dl,0)||nearly(L.dl,PI)) k='직선'; else if(nearly(L.dl,PI/2)) k='원'; else k='타원'} else k=`가로 ${L.b}번, 세로 ${L.a}번 닿는 닫힌 곡선`.replace('가로','위·아래').replace('세로','좌·우');
+  $('#l-kind').textContent=k}
+function drawL(){ if(!$('#cl').clientWidth)return;
+  const [g,w,h]=fit($('#cl')); const m=18, X=x=>w/2+x*(w/2-m), Y=y=>h/2-y*(h/2-m);
+  g.strokeStyle=css('--grid');g.lineWidth=1;g.strokeRect(X(-1),Y(1),X(1)-X(-1),Y(-1)-Y(1));
+  g.strokeStyle=css('--ink');g.lineWidth=1;g.beginPath();g.moveTo(X(-1),Y(0));g.lineTo(X(1),Y(0));g.moveTo(X(0),Y(-1));g.lineTo(X(0),Y(1));g.stroke();
+  const end=lEnd(), tt=lst.full?end:Math.min(lst.t,end), n=Math.max(2,Math.round(2400*tt/end));
+  g.strokeStyle=css('--c1');g.lineWidth=2.4;g.lineJoin='round';g.beginPath();
+  for(let i=0;i<=n;i++){const t=tt*i/n; const x=Math.sin(L.a*t), y=Math.sin(L.b*t+L.dl); i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))} g.stroke();
+  dot(g,X(Math.sin(L.a*tt)),Y(Math.sin(L.b*tt+L.dl)),5,css('--c1'));
+}
+let lT=0;function lLoop(ts){ if(lst.full||cur!=='lis')return; if(!lT)lT=ts; const dt=(ts-lT)/1000;lT=ts; lst.t+=dt*lEnd()/6; if(lst.t>=lEnd()){lst.full=true} drawL(); if(!lst.full)requestAnimationFrame(lLoop)}
+$('#l-redraw').addEventListener('click',()=>{lst.t=0;lst.full=false;lT=0;requestAnimationFrame(lLoop)});
+$('#l-full').addEventListener('click',()=>{lst.full=true;drawL()});
+
+/* ================= 4 스피로그래프 ================= */
+const P={R:5,r:3,d:5,hue:330,speed:1};
+const pst={T:0,full:false,t0:0};
+const pc=mount($('#p-ctl'),[
+ {k:'R',label:'R 큰 원',min:2,max:15,step:1},{k:'r',label:'r 작은 원',min:1,max:14,step:1},{k:'d',label:'d 펜 위치',min:0,max:15,step:0.5},
+ {k:'hue',label:'색',min:0,max:360,step:1,fmt:v=>''},{k:'speed',label:'속도',min:0.5,max:4,step:0.5,fmt:v=>'×'+v}],P,k=>{
+   if(k==='R'){pc.setMax('r',P.R-1)}
+   if(k==='hue'||k==='speed'){drawP();return}
+   pRestart(); readP()});
+pc.setMax('r',P.R-1);
+const spiroPt=(Rr,r,d,t)=>{const k=(Rr-r)/r; return [(Rr-r)*Math.cos(t)+d*Math.cos(k*t),(Rr-r)*Math.sin(t)-d*Math.sin(k*t)]};
+const pEnd=()=>TAU*P.r/gcd(P.R,P.r);
+function kindOf(R,r,d){const o=[]; if(d<r)o.push('부드러운 곡선 (d < r)'); else if(d===r)o.push('뾰족한 점이 생김 (d = r)'); else o.push('고리가 생김 (d > r)'); if(d===r&&R===4*r)o[0]='별 모양, 아스트로이드 (d = r, R = 4r)'; if(d===0)o[0]='원 (d = 0)'; return o[0]}
+function readP(){const g=gcd(P.R,P.r); $('#p-g').textContent=g; $('#p-n').textContent=(P.R/g)+'개'; $('#p-end').textContent=(P.r/g===1?'':(P.r/g)+'×')+'2π';
+  $('#p-k').textContent=f2(+((P.R-P.r)/P.r).toFixed(3))+'배'; $('#p-kind').textContent=kindOf(P.R,P.r,P.d);
+  $('#p-eq').textContent=`x = ${P.R-P.r}cos t + ${f2(P.d)}cos(${P.R-P.r}t/${P.r})\ny = ${P.R-P.r}sin t − ${f2(P.d)}sin(${P.R-P.r}t/${P.r})\n0 ≤ t ≤ 2π×${P.r}/${g}`;
+  $('#p-gg').textContent=`R = ${P.R}\nr = ${P.r}\nd = ${f2(P.d)}\ng = GCD(R, r)\nCurve((R-r)cos(t) + d cos((R-r)t/r),\n      (R-r)sin(t) - d sin((R-r)t/r), t, 0, 2π r/g)`;}
+function pDraw(g,w,h,R,r,d,Tcur,full,col,wd,s,showRoll){
+  const cx=w/2, cy=h/2, X=x=>cx+x*s, Y=y=>cy-y*s, end=TAU*r/gcd(R,r), tt=full?end:Math.min(Tcur,end);
+  const n=Math.max(2,Math.round(Math.max(2400,end*70)*tt/end));
+  g.strokeStyle=col;g.lineWidth=wd;g.lineJoin='round';g.beginPath();
+  for(let i=0;i<=n;i++){const [x,y]=spiroPt(R,r,d,tt*i/n); i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))} g.stroke();
+  if(showRoll){const k=(R-r)/r, ccx=(R-r)*Math.cos(tt), ccy=(R-r)*Math.sin(tt), [px,py]=spiroPt(R,r,d,tt);
+    g.strokeStyle=css('--ink');g.lineWidth=1.3;g.beginPath();g.arc(cx,cy,R*s,0,TAU);g.stroke();
+    g.strokeStyle=css('--muted');g.lineWidth=1.3;g.beginPath();g.arc(X(ccx),Y(ccy),r*s,0,TAU);g.stroke();
+    g.beginPath();g.moveTo(X(ccx),Y(ccy));g.lineTo(X(px),Y(py));g.stroke();
+    dot(g,X(ccx),Y(ccy),3,css('--muted')); dot(g,X(px),Y(py),5,col)}
+}
+function drawP(){ if(!$('#cp').clientWidth)return;
+  const [g,w,h]=fit($('#cp')); const E=Math.max(P.R,(P.R-P.r)+P.d), s=(Math.min(w,h)/2-10)/E;
+  pDraw(g,w,h,P.R,P.r,P.d,pst.T,pst.full,`hsl(${P.hue} 78% ${document.documentElement.dataset.theme==='dark'||matchMedia('(prefers-color-scheme: dark)').matches?'62%':'46%'})`,2,s,!pst.full);
+}
+let pLast=0; function pLoop(ts){ if(pst.full||cur!=='spiro')return; if(!pLast)pLast=ts; const dt=(ts-pLast)/1000;pLast=ts;
+  const end=pEnd(), dur=Math.min(12,4+end/TAU*0.6)/P.speed; pst.T+=dt*end/dur; if(pst.T>=end){pst.T=end;pst.full=true} drawP(); if(!pst.full)requestAnimationFrame(pLoop)}
+function pRestart(){pst.T=0;pst.full=false;pLast=0;drawP();requestAnimationFrame(pLoop)}
+$('#p-play').addEventListener('click',pRestart);
+$('#p-full').addEventListener('click',()=>{pst.full=true;drawP()});
+$('#p-copy').addEventListener('click',async()=>{const t=$('#p-gg').textContent;const b=$('#p-copy');
+  try{await navigator.clipboard.writeText(t);b.textContent='복사했습니다'}catch(e){const r=document.createRange();r.selectNodeContents($('#p-gg'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);b.textContent='선택했습니다. 직접 복사하세요'}
+  setTimeout(()=>b.textContent='명령어 복사',2200)});
+
+/* ================= 5 설계 ================= */
+const D=[{on:true,R:7,r:3,d:5,hue:330},{on:true,R:5,r:2,d:3,hue:200},{on:false,R:8,r:3,d:6,hue:40}];
+const dui=[];
+function mountLayers(){
+  const host=$('#d-layers'); host.innerHTML='';
+  D.forEach((L,i)=>{
+    const box=document.createElement('div'); box.className='layer';
+    box.innerHTML=`<header><input type="checkbox" id="dl-on${i}" ${L.on?'checked':''}><span class="sw" id="dl-sw${i}"></span><strong>곡선 ${i+1}</strong></header><div id="dl-c${i}"></div>`;
+    host.appendChild(box);
+    const m=mount(box.querySelector('#dl-c'+i),[{k:'R',label:'R',min:2,max:15,step:1},{k:'r',label:'r',min:1,max:14,step:1},{k:'d',label:'d',min:0,max:15,step:0.5},{k:'hue',label:'색',min:0,max:360,step:1,fmt:()=>''}],L,k=>{
+      if(k==='R'){m.setMax('r',L.R-1)} swatch(i); drawD(); chal()});
+    m.setMax('r',L.R-1); dui[i]=m; swatch(i);
+    box.querySelector('#dl-on'+i).addEventListener('change',e=>{L.on=e.target.checked;drawD();chal()});
+  });
+}
+const dark=()=>document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+const hsl=h=>`hsl(${h} 78% ${dark()?'62%':'46%'})`;
+function swatch(i){$('#dl-sw'+i).style.background=hsl(D[i].hue)}
+function drawD(){ if(!$('#cd').clientWidth)return;
+  const [g,w,h]=fit($('#cd')); const act=D.filter(l=>l.on); if(!act.length)return;
+  const E=Math.max(...act.map(l=>Math.max(l.R,(l.R-l.r)+l.d))), s=(Math.min(w,h)/2-10)/E;
+  act.forEach(l=>pDraw(g,w,h,l.R,l.r,l.d,0,true,hsl(l.hue),1.8,s,false));
+}
+const CH=[
+ {t:'꼭지가 7개인 곡선',h:'R/g = 7이 되도록 R과 r을 정한다.',ok:l=>l.R/gcd(l.R,l.r)===7},
+ {t:'꼭지가 6개이고 t = 0~2π에서 닫히는 곡선',h:'r/g = 1이면 2π에서 닫힌다. R/r = 6이다.',ok:l=>l.r/gcd(l.R,l.r)===1&&l.R/gcd(l.R,l.r)===6},
+ {t:'별 모양 (아스트로이드)',h:'d = r 이고 R = 4r 이다.',ok:l=>l.d===l.r&&l.R===4*l.r}];
+function chal(){
+  const l=D[0], g=gcd(l.R,l.r); const host=$('#d-chal'); host.innerHTML='';
+  CH.forEach(c=>{const ok=l.on&&c.ok(l); const el=document.createElement('div'); el.className='chk'+(ok?' ok':'');
+    el.innerHTML=`<span class="mark">${ok?'✓':''}</span><div>${c.t}<small>${ok?`성공: R/g = ${l.R/g}, 끝값 = ${l.r/g===1?'':(l.r/g)+'×'}2π`:'힌트: '+c.h}</small></div>`; host.appendChild(el)});
+}
+function setL0(R,r,d,hue){Object.assign(D[0],{R,r,d,hue,on:true}); mountLayers(); drawD(); chal()}
+$('#d-star').addEventListener('click',()=>{D[1].on=D[2].on=false;setL0(8,2,2,45)});
+$('#d-flower').addEventListener('click',()=>{Object.assign(D[1],{R:7,r:2,d:5,hue:200,on:true});D[2].on=false;setL0(7,3,5,330)});
+
+/* ================= 탭 & 테마 ================= */
+const DRAW={unit:drawU,wave:drawW,lis:()=>{drawL();readL()},spiro:()=>{drawP();readP()},design:drawD};
+function show(name){ if(!DRAW[name])name='unit';
+  $$('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+name)); $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===name));
+  cur=name; requestAnimationFrame(()=>{DRAW[name]();});
+}
+let cur='unit';
+$$('#tabs button').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.t);try{history.replaceState(null,'','#'+b.dataset.t)}catch(e){location.hash=b.dataset.t}}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+window.addEventListener('resize',()=>DRAW[cur]());
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{DRAW[cur]();if(cur==='design')mountLayers()});
+new MutationObserver(()=>{DRAW[cur]();if(cur==='design')mountLayers()}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+mountLayers(); chal(); readL(); readP();
+show(location.hash.slice(1)||'unit');
+if(cur==='spiro'){pRestart()}
+$('#tabs').addEventListener('click',e=>{const t=e.target.dataset?.t; if(t==='spiro'){pst.full=true;requestAnimationFrame(()=>{pRestart()})} if(t==='lis'){lst.full=true;drawL()}});
+</script>
+
+</body></html>
