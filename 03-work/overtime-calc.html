@@ -1,341 +1,314 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>초과근무 계산기</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>초과근무 시간 계산기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <style>
-/* Layout: 엑셀 시트 형태. 제목 띠 → 기준 셀 → 열 문자(A~K)와 행 번호가 있는 격자 → 합계 행 */
-:root {
-  --bg: #ffffff;
-  --fg: #1f2a24;
-  --muted: #5c6b63;
-  --band: #217346;
-  --band-fg: #ffffff;
-  --head: #e9ede9;
-  --head-fg: #3a4a40;
-  --grid: #c9d1cb;
-  --calc: #f3f6f3;
-  --sel: #1b6b41;
-  --total: #e3efe7;
-  --danger: #b3261e;
-  --font-body: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
-  --font-num: Consolas, "SF Mono", Menlo, "Noto Sans Mono", monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #161c18; --fg: #e3ebe5; --muted: #98a89d; --band: #1c5a38; --band-fg: #f1f7f3;
-    --head: #222b25; --head-fg: #b9c7be; --grid: #35423a; --calc: #1c241f; --sel: #5fcf93; --total: #1f3427; --danger: #f08d86;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #161c18; --fg: #e3ebe5; --muted: #98a89d; --band: #1c5a38; --band-fg: #f1f7f3;
-  --head: #222b25; --head-fg: #b9c7be; --grid: #35423a; --calc: #1c241f; --sel: #5fcf93; --total: #1f3427; --danger: #f08d86;
-  color-scheme: dark;
-}
-* { box-sizing: border-box; }
-body {
-  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.4;
-  padding-block: 0 40px; margin: 0;
-  padding-left: max(0px, env(safe-area-inset-left, 0px));
-  padding-right: max(0px, env(safe-area-inset-right, 0px));
-}
-.titlebar { background: var(--band); color: var(--band-fg); padding: 10px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
-.titlebar h1 { margin: 0; font-size: 1.05rem; font-weight: 700; }
-.titlebar span { font-size: 0.82rem; opacity: 0.85; }
-.body { padding: 14px max(16px, env(safe-area-inset-left, 0px)) 0; display: flex; flex-direction: column; gap: 14px; }
-
-.scroll { overflow-x: auto; max-width: 100%; }
-table { border-collapse: collapse; table-layout: fixed; }
-.rules { min-width: 560px; }
-.sheet { min-width: 880px; width: 100%; }
-th, td { border: 1px solid var(--grid); padding: 0; height: 30px; }
-th { background: var(--head); color: var(--head-fg); font-weight: 600; font-size: 0.82rem; text-align: center; padding: 0 6px; }
-th.letter { font-weight: 400; font-size: 0.74rem; color: var(--muted); height: 22px; }
-th.rn { width: 38px; font-weight: 400; color: var(--muted); font-size: 0.78rem; }
-.rules th { text-align: center; }
-.rules td input { text-align: center; }
-.hint { font-size: 0.8rem; color: var(--muted); }
-
-td input, td select {
-  width: 100%; height: 100%; min-height: 28px; border: 0; background: transparent; color: inherit;
-  font: inherit; padding: 0 8px; text-align: center; border-radius: 0;
-}
-td input[type="time"], td input[type="number"], td .mono { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
-td select { text-align-last: center; appearance: none; -webkit-appearance: none; cursor: pointer; }
-td input:focus-visible, td select:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
-td input[type="checkbox"] { width: 18px; min-height: 18px; height: 18px; accent-color: var(--sel); vertical-align: middle; }
-td.in { background: var(--bg); }
-td.calc { background: var(--calc); text-align: right; padding: 0 10px; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
-td.calc.final { font-weight: 700; }
-td.chk { text-align: center; }
-td.x { text-align: center; width: 34px; }
-.del { background: none; border: 0; color: var(--muted); font-size: 1.1rem; line-height: 1; cursor: pointer; width: 100%; height: 100%; }
-.del:hover { color: var(--danger); }
-.del:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
-tfoot td { background: var(--total); font-weight: 700; border-top: 2px solid var(--band); }
-tfoot td.lbl { text-align: center; }
-
-.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.btn { background: var(--head); color: var(--fg); border: 1px solid var(--grid); border-radius: 3px; padding: 6px 14px; font: inherit; cursor: pointer; display: inline-block; text-decoration: none; }
-.btn.main { background: var(--band); color: var(--band-fg); border-color: var(--band); font-weight: 600; }
-.btn:hover { filter: brightness(1.05); }
-.btn:focus-visible { outline: 2px solid var(--sel); outline-offset: 2px; }
-.toast { color: var(--sel); font-size: 0.85rem; min-height: 1.3em; }
-.fallback { width: 100%; min-height: 9rem; font-family: var(--font-num); font-size: 0.8rem; background: var(--bg); border: 1px solid var(--grid); padding: 8px; color: var(--fg); }
-.note { color: var(--muted); font-size: 0.82rem; max-width: 72ch; margin: 0; }
-.note a { color: var(--sel); font-weight: 600; }
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--sub:#6b7280;--line:#e5e7eb;--pri:#2563eb;--pri-d:#1d4ed8;--warn:#b45309;--warn-bg:#fef3c7;--ok:#047857}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--sub);font-size:14px;margin-bottom:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 10px}
+  textarea{width:100%;height:110px;border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.4 monospace;resize:vertical}
+  button{border:0;border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;background:var(--pri);color:#fff}
+  button:hover{background:var(--pri-d)}
+  button.ghost{background:#eef2ff;color:var(--pri)}
+  button.ghost:hover{background:#e0e7ff}
+  button.del{background:#fee2e2;color:#b91c1c;padding:4px 9px;font-size:13px}
+  .row-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .rules label{font-size:12px;color:var(--sub);display:block}
+  .rules input{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:6px 3px;text-align:center;white-space:nowrap}
+  th{background:#f3f4f6;font-weight:600}
+  td input.tm{border:1px solid var(--line);border-radius:6px;padding:3px 4px;font-size:12.5px;width:88px;text-align:center}
+  .rules input.tm{text-align:center}
+  td select{padding:3px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+  .scroll{overflow-x:auto}
+  .num{font-variant-numeric:tabular-nums}
+  .total{font-weight:700;background:#eff6ff}
+  .wk{display:inline-block;background:var(--warn-bg);color:var(--warn);border-radius:4px;padding:0 5px;font-size:11px;margin-left:4px}
+  .empty{color:#9ca3af}
+  .big{font-size:20px;font-weight:700;color:var(--ok)}
+  .note{font-size:12px;color:var(--sub);margin-top:8px}
+  .msg{font-size:13px;margin-top:8px;color:var(--warn)}
+  .drop{border:2px dashed #93c5fd;border-radius:10px;padding:18px;text-align:center;font-size:14px;color:var(--sub);background:#f8fbff}
+  .drop.over{background:#dbeafe}
+  .rn{display:block;font-size:11px;color:var(--warn)}
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;text-decoration:none;margin-bottom:12px}
+  .back:hover{color:var(--pri)}
 </style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← 업무 도구</a>
+  <h1>초과근무 시간 계산기</h1>
+  <div class="sub">NEIS 초과근무목록 화면을 캡처해 넣고, 방과후 차시를 고르면 일별 인정 시간을 계산해 엑셀로 내려받습니다.</div>
 
-<div class="titlebar">
-  <h1>초과근무 계산기</h1>
-  <span>시작·완료시간과 방과후 차시를 입력하면 회색 칸이 자동 계산됩니다.</span>
-</div>
-
-<div class="body">
-  <p class="note">💾 인터넷 없이 쓰고 싶다면 <a href="downloads/overtime-calc.exe" download="초과근무계산기.exe">Windows용 프로그램(.exe) 내려받기</a> — 같은 계산기를 컴퓨터에 설치해 오프라인으로 쓸 수 있습니다.</p>
-  <div class="scroll">
-    <table class="rules" aria-label="계산 기준">
-      <colgroup><col style="width:38px"><col><col><col><col></colgroup>
-      <tr><th class="rn"></th><th>아침 인정 종료</th><th>오후 인정 시작</th><th>기본 공제(분)</th><th>방과후 1차시(분)</th></tr>
-      <tr>
-        <th class="rn">1</th>
-        <td class="in"><input id="amEnd" type="time" value="08:30" aria-label="아침 인정 종료"></td>
-        <td class="in"><input id="pmStart" type="time" value="16:30" aria-label="오후 인정 시작"></td>
-        <td class="in"><input id="baseMin" type="number" min="0" step="5" value="60" aria-label="기본 공제 분"></td>
-        <td class="in"><input id="slotMin" type="number" min="0" step="5" value="50" aria-label="방과후 1차시 분"></td>
-      </tr>
-    </table>
+  <div class="card">
+    <h2>1. NEIS 화면 캡처 넣기</h2>
+    <div id="drop" class="drop">
+      캡처 이미지를 여기에 <b>끌어다 놓거나</b>, 화면을 클릭한 뒤 <b>Ctrl+V</b>로 붙여넣거나, 아래 버튼으로 파일을 고르세요.
+      <div style="margin-top:8px"><input type="file" id="file" accept="image/*"></div>
+    </div>
+    <div class="note" id="prog"></div>
+    <textarea id="paste" style="display:none"></textarea>
+    <div class="row-actions">
+      <button class="ghost" id="add">행 직접 추가</button>
+      <button class="ghost" id="clear">전체 비우기</button>
+    </div>
+    <div class="msg" id="msg"></div>
   </div>
 
-  <div class="scroll">
-    <table class="sheet" aria-label="날짜별 초과근무">
-      <colgroup>
-        <col style="width:38px"><col style="width:150px"><col style="width:100px"><col style="width:100px"><col style="width:90px"><col style="width:80px">
-        <col style="width:90px"><col style="width:90px"><col style="width:90px"><col style="width:130px"><col style="width:34px">
-      </colgroup>
-      <thead>
-        <tr><th class="letter rn"></th><th class="letter">A</th><th class="letter">B</th><th class="letter">C</th><th class="letter">D</th><th class="letter">E</th><th class="letter">F</th><th class="letter">G</th><th class="letter">H</th><th class="letter">I</th><th class="letter"></th></tr>
-        <tr><th class="rn"></th><th>일자</th><th>시작시간</th><th>완료시간</th><th>방과후(차시)</th><th>기본공제</th><th>합계(분)</th><th>공제(분)</th><th>최종(분)</th><th>최종(시간·분)</th><th></th></tr>
-      </thead>
-      <tbody id="rows"></tbody>
-      <tfoot>
-        <tr>
-          <th class="rn" id="footRn"></th>
-          <td class="lbl" colspan="5">합계</td>
-          <td class="calc" id="tTotal">0</td>
-          <td class="calc" id="tDeduct">0</td>
-          <td class="calc" id="tFinal">0</td>
-          <td class="calc" id="tHm">0분</td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
+  <div class="card">
+    <h2>계산 기준 <span style="font-weight:400;color:var(--sub)">(필요하면 수정)</span></h2>
+    <div class="rules">
+      <div><label>아침 계산 끝 시각</label><input type="text" class="tm" data-tm="1" id="mEnd" value="08:30 AM"></div>
+      <div><label>아침 인정 도착 한계</label><input type="text" class="tm" data-tm="1" id="mLimit" value="07:30 AM"></div>
+      <div><label>오후 계산 시작 시각</label><input type="text" class="tm" data-tm="1" id="aStart" value="04:30 PM"></div>
+      <div><label>저녁시간 차감(분)</label><input type="number" id="dinner" value="60" min="0"></div>
+      <div><label>방과후 1차시(분)</label><input type="number" id="asMin" value="50" min="0"></div>
+    </div>
+    <div class="note">인정 시작 = 신청·실제 시작 중 늦은 시각, 인정 종료 = 신청·실제 종료 중 이른 시각. 아침은 인정 시작이 도착 한계(07:30)보다 늦으면 0분, 오후는 저녁시간과 방과후 시간을 뺍니다.</div>
   </div>
 
-  <div class="actions">
-    <button class="btn main" id="add" type="button">행 추가</button>
-    <button class="btn" id="copy" type="button">표 복사</button>
-    <button class="btn" id="reset" type="button">모두 지우기</button>
-    <span class="toast" id="toast" role="status"></span>
-  </div>
-  <div id="fallbackBox" hidden>
-    <p class="note">자동 복사가 되지 않았습니다. 아래 내용을 선택해서 복사하세요.</p>
-    <textarea class="fallback" id="fallback" readonly></textarea>
+  <div class="card">
+    <h2>2. 일별 계산 <span style="font-weight:400;color:var(--sub)">— 실제 시간이 비어 있으면 계산하지 않고, 입력하면 바로 계산됩니다</span></h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>삭제</th><th>날짜</th><th>신청 시작</th><th>신청 종료</th><th>실제 시작</th><th>실제 종료</th><th>방과후</th>
+              <th>아침(분)</th><th>오후(분)</th><th>저녁 차감</th><th>방과후 차감</th><th>인정시간</th></tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:14px;flex-wrap:wrap">
+      <div>합계 <span class="big" id="sum">0시간 0분</span> <span class="num" id="sumMin" style="color:var(--sub)"></span></div>
+      <button id="xl">엑셀로 내려받기</button>
+    </div>
+    <div class="note">주말 표시가 있는 날(축제·행사 등)은 인정되지 않는 경우 왼쪽 '삭제'로 지우세요.</div>
   </div>
 
-  <p class="note">아침은 시작시간부터 아침 인정 종료까지, 오후는 오후 인정 시작부터 완료시간까지만 셉니다. 합계에서 기본 공제와 방과후 공제(차시 × 차시당 분)를 빼면 최종 시간이 되고, 0 아래로 내려가면 0분으로 표시합니다. 방과후는 하지 않았으면 비워 두고, 했으면 1 또는 2를 고르세요. 입력한 내용은 이 브라우저에만 저장됩니다.</p>
+  <p class="note">💾 인터넷 없이 쓰고 싶다면 <a href="downloads/overtime-calc.exe" download="초과근무계산기.exe">Windows용 프로그램(.exe) 내려받기</a> — 이전 버전 계산기를 컴퓨터에 설치해 오프라인으로 쓸 수 있습니다.</p>
 </div>
 
 <script>
-(function () {
-  var KEY = "overtime-calc-v3";
-  var DAYS = ["일", "월", "화", "수", "목", "금", "토"];
-  var $ = function (id) { return document.getElementById(id); };
-  var rowsEl = $("rows");
+const $ = id => document.getElementById(id);
+const DOW = ['일','월','화','수','목','금','토'];
+let rows = [];   // {date, rs, re, as, ae, n}
 
-  var sample = [{ d: "", s: "", e: "", a: 0, b: true }];
+const toMin = s => { if(!s) return null; const [h,m]=s.split(':').map(Number); return h*60+m; };
+const to12 = t => { if(!t) return ''; const [h,m]=t.split(':').map(Number); return `${String(h%12||12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h<12?'AM':'PM'}`; };
+// 입력 문자열 -> 24시간 "HH:MM" (AM/PM 없으면 24시간제로 해석). 잘못된 입력은 null, 빈칸은 ''
+const from12 = s => {
+  s=String(s||'').trim().toUpperCase().replace(/오전/g,'AM').replace(/오후/g,'PM');
+  if(!s) return '';
+  const ap=/PM/.test(s)?'PM':/AM/.test(s)?'AM':'';
+  const d=s.replace(/[^\d:：.]/g,'').replace(/[：.]/g,':');
+  let h,mi,m;
+  if((m=/^(\d{1,2}):(\d{1,2})$/.exec(d))){h=+m[1];mi=+m[2];}
+  else if((m=/^(\d{1,2})(\d{2})$/.exec(d))){h=+m[1];mi=+m[2];}
+  else if((m=/^(\d{1,2})$/.exec(d))){h=+m[1];mi=0;}
+  else return null;
+  if(mi>59) return null;
+  if(ap){ if(h<1||h>12) return null; h=h%12+(ap==='PM'?12:0); } else if(h>23) return null;
+  return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0');
+};
+const fmt = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+const hm = m => `${Math.floor(m/60)}시간 ${m%60}분`;
+const cfg = () => ({mEnd:toMin(from12($('mEnd').value)), mLimit:toMin(from12($('mLimit').value)), aStart:toMin(from12($('aStart').value)),
+                    dinner:+$('dinner').value||0, asMin:+$('asMin').value||0});
 
-  function load() {
-    try {
-      var raw = localStorage.getItem(KEY);
-      if (raw) {
-        var o = JSON.parse(raw);
-        if (o && Array.isArray(o.rows)) {
-          if (o.rules) {
-            $("amEnd").value = o.rules.am || "08:30";
-            $("pmStart").value = o.rules.pm || "16:30";
-            $("baseMin").value = o.rules.base != null ? o.rules.base : 60;
-            $("slotMin").value = o.rules.slot != null ? o.rules.slot : 50;
-          }
-          return o.rows;
-        }
-      }
-    } catch (err) {}
-    return sample;
-  }
-  function save() {
-    try {
-      localStorage.setItem(KEY, JSON.stringify({
-        rules: { am: $("amEnd").value, pm: $("pmStart").value, base: $("baseMin").value, slot: $("slotMin").value },
-        rows: collect()
-      }));
-    } catch (err) {}
-  }
+function calc(r){
+  const rs=toMin(r.rs), re=toMin(r.re), as=toMin(r.as), ae=toMin(r.ae);
+  if([rs,re,as,ae].some(v=>v===null)) return null;
+  const c=cfg();
+  const s=Math.max(rs,as), e=Math.min(re,ae);
+  if(e<=s) return {morning:0,afternoon:0,dinner:0,after:0,total:0};
+  let morning=0;
+  if(s<c.mEnd && s<=c.mLimit) morning=Math.max(0,Math.min(e,c.mEnd)-s);
+  const raw=Math.max(0,e-Math.max(s,c.aStart));
+  const dinner=Math.min(raw,c.dinner);
+  const after=Math.min(raw-dinner,(+r.n||0)*c.asMin);
+  const afternoon=raw-dinner-after;
+  return {morning,afternoon,dinner,after,total:morning+afternoon};
+}
 
-  function toMin(v) {
-    if (!v || v.indexOf(":") < 0) return null;
-    var p = v.split(":");
-    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
-  }
-  function hm(m) {
-    var h = Math.floor(m / 60), r = m % 60;
-    if (h === 0) return r + "분";
-    if (r === 0) return h + "시간";
-    return h + "시간 " + r + "분";
-  }
-  function fmt(n) { return n.toLocaleString("ko-KR"); }
-  function dayLabel(v) {
-    if (!v) return "";
-    var d = new Date(v + "T00:00:00");
-    return isNaN(d.getTime()) ? "" : "(" + DAYS[d.getDay()] + ")";
-  }
+function dowOf(d){ const t=new Date(d+'T00:00:00'); return isNaN(t)?'':DOW[t.getDay()]; }
 
-  var uid = 0;
-  function addRow(r) {
-    var i = uid++;
-    var tr = document.createElement("tr");
-    tr.innerHTML =
-      '<th class="rn"></th>' +
-      '<td class="in"><input type="date" class="f-d" id="d' + i + '" aria-label="일자" value="' + (r.d || "") + '"></td>' +
-      '<td class="in"><input type="time" class="f-s" id="s' + i + '" aria-label="시작시간" value="' + (r.s || "") + '"></td>' +
-      '<td class="in"><input type="time" class="f-e" id="e' + i + '" aria-label="완료시간" value="' + (r.e || "") + '"></td>' +
-      '<td class="in"><select class="f-a" id="a' + i + '" aria-label="방과후 차시"><option value="0"></option><option value="1">1</option><option value="2">2</option></select></td>' +
-      '<td class="in chk"><input type="checkbox" class="f-b" id="b' + i + '" aria-label="기본 공제 적용"></td>' +
-      '<td class="calc o-total">-</td>' +
-      '<td class="calc o-deduct">-</td>' +
-      '<td class="calc final o-final">-</td>' +
-      '<td class="calc final o-hm">-</td>' +
-      '<td class="x"><button type="button" class="del" aria-label="이 행 삭제">×</button></td>';
-    tr.querySelector(".f-a").value = String(r.a || 0);
-    tr.querySelector(".f-b").checked = r.b !== false;
-    rowsEl.appendChild(tr);
-    return tr;
-  }
+function render(){
+  const tb=$('tb'); tb.innerHTML='';
+  let sum=0, cnt=0;
+  rows.forEach((r,i)=>{
+    const res=calc(r), dw=dowOf(r.date);
+    if(res){sum+=res.total;cnt++;}
+    const wk=(dw==='토'||dw==='일')?'<span class="wk">주말</span>':'';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><button class="del" data-del="${i}" title="이 줄 삭제">✕ 삭제</button></td>
+      <td class="num">${r.date||''} (${dw})${wk}${r.note?`<span class="rn">${r.note}</span>`:''}</td>
+      <td><input type="text" class="tm" value="${to12(r.rs)}" placeholder="--:-- --" data-i="${i}" data-k="rs" data-t="1"></td>
+      <td><input type="text" class="tm" value="${to12(r.re)}" placeholder="--:-- --" data-i="${i}" data-k="re" data-t="1"></td>
+      <td><input type="text" class="tm" value="${to12(r.as)}" placeholder="--:-- --" data-i="${i}" data-k="as" data-t="1"></td>
+      <td><input type="text" class="tm" value="${to12(r.ae)}" placeholder="--:-- --" data-i="${i}" data-k="ae" data-t="1"></td>
+      <td><select data-i="${i}" data-k="n">${[0,1,2,3].map(n=>`<option value="${n}" ${+r.n===n?'selected':''}>${n}차시</option>`).join('')}</select></td>
+      ${res?`<td class="num">${res.morning}</td><td class="num">${res.afternoon}</td><td class="num">-${res.dinner}</td><td class="num">-${res.after}</td><td class="num"><b>${fmt(res.total)}</b></td>`
+           :`<td class="empty" colspan="5">실제 시간을 입력하면 계산됩니다</td>`}
+`;
+    tb.appendChild(tr);
+  });
+  $('sum').textContent=hm(sum);
+  $('sumMin').textContent=`(${sum}분 · ${cnt}일 계산)`;
+}
 
-  function numberRows() {
-    var n = rowsEl.children.length;
-    Array.prototype.forEach.call(rowsEl.children, function (tr, idx) {
-      tr.querySelector(".rn").textContent = String(idx + 2);
-    });
-    $("footRn").textContent = String(n + 2);
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset && t.dataset.t){
+    const v=from12(t.value);
+    if(v===null){ $('msg').textContent='시간 형식을 알 수 없습니다. 예: 07:30 AM, 09:00 PM, 21:30'; }
+    else { rows[+t.dataset.i][t.dataset.k]=v; $('msg').textContent=''; }
+    render();
   }
-
-  function collect() {
-    return Array.prototype.map.call(rowsEl.children, function (tr) {
-      return {
-        d: tr.querySelector(".f-d").value,
-        s: tr.querySelector(".f-s").value,
-        e: tr.querySelector(".f-e").value,
-        a: parseInt(tr.querySelector(".f-a").value, 10) || 0,
-        b: tr.querySelector(".f-b").checked
-      };
-    });
+  else if(t.dataset && t.dataset.i!==undefined){ rows[+t.dataset.i][t.dataset.k]=t.value; render(); }
+  else if(t.dataset && t.dataset.tm){
+    const v=from12(t.value); if(v) t.value=to12(v); else { $('msg').textContent='시간 형식을 알 수 없습니다. 예: 08:30 AM'; t.value={mEnd:'08:30 AM',mLimit:'07:30 AM',aStart:'04:30 PM'}[t.id]; }
+    render();
   }
+});
+document.addEventListener('click',e=>{
+  const d=e.target.dataset && e.target.dataset.del;
+  if(d!==undefined && d!==''){ rows.splice(+d,1); render(); }
+});
 
-  function calc(r) {
-    var s = toMin(r.s), e = toMin(r.e);
-    if (s === null || e === null) return null;
-    var am = toMin($("amEnd").value), pm = toMin($("pmStart").value);
-    var base = parseInt($("baseMin").value, 10) || 0;
-    var slot = parseInt($("slotMin").value, 10) || 0;
-    var morning = Math.max(0, Math.min(am, e) - s);
-    var afternoon = Math.max(0, e - Math.max(pm, s));
-    var total = morning + afternoon;
-    var deduct = (r.b ? base : 0) + r.a * slot;
-    return { total: total, deduct: deduct, final: Math.max(0, total - deduct) };
-  }
-
-  function update() {
-    var sumT = 0, sumF = 0;
-    var data = collect();
-    Array.prototype.forEach.call(rowsEl.children, function (tr, idx) {
-      var c = calc(data[idx]);
-      var T = tr.querySelector(".o-total"), D = tr.querySelector(".o-deduct"), F = tr.querySelector(".o-final"), H = tr.querySelector(".o-hm");
-      if (!c) { T.textContent = D.textContent = F.textContent = H.textContent = "-"; return; }
-      T.textContent = fmt(c.total);
-      D.textContent = c.deduct ? "-" + fmt(c.deduct) : "0";
-      F.textContent = fmt(c.final);
-      H.textContent = hm(c.final);
-      sumT += c.total; sumF += c.final;
-    });
-    $("tTotal").textContent = fmt(sumT);
-    $("tDeduct").textContent = "-" + fmt(sumT - sumF);
-    $("tFinal").textContent = fmt(sumF);
-    $("tHm").textContent = hm(sumF);
-    numberRows();
-    save();
-  }
-
-  function summary() {
-    var lines = ["일자\t시작시간\t완료시간\t합계(분)\t기본공제\t방과후 공제\t최종(분)\t최종(시간·분)"];
-    var base = parseInt($("baseMin").value, 10) || 0, slot = parseInt($("slotMin").value, 10) || 0;
-    var sT = 0, sF = 0;
-    collect().forEach(function (r) {
-      var c = calc(r);
-      if (!c) return;
-      sT += c.total; sF += c.final;
-      lines.push([r.d + dayLabel(r.d), r.s, r.e, c.total, r.b ? -base : 0, r.a ? -(r.a * slot) : 0, c.final, hm(c.final)].join("\t"));
-    });
-    lines.push(["합계", "", "", sT, "", "", sF, hm(sF)].join("\t"));
-    return lines.join("\n");
-  }
-
-  var toastTimer;
-  function toast(msg) {
-    $("toast").textContent = msg;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { $("toast").textContent = ""; }, 2500);
-  }
-
-  rowsEl.addEventListener("input", update);
-  rowsEl.addEventListener("change", update);
-  rowsEl.addEventListener("click", function (ev) {
-    var t = ev.target;
-    if (t && t.classList && t.classList.contains("del")) {
-      rowsEl.removeChild(t.closest("tr"));
-      update();
+// ---- NEIS 붙여넣기 파싱 ----
+function parse(text){
+  const out=[]; const T=/(\d{1,2})\s*[:：'’′.·]\s*(\d{2})/g;
+  const norm=v=>{ const m=/^\s*(\d{1,2})\s*[:：'’′.·]\s*(\d{2})\s*$/.exec(v||''); return m?`${m[1].padStart(2,'0')}:${m[2]}`:''; };
+  text.split(/\r?\n/).forEach(line=>{
+    const dm=/(\d{4})-(\d{2})-(\d{2})/.exec(line); if(!dm) return;
+    const date=dm[0];
+    let rs='',re='',as='',ae='';
+    const cells=line.split('\t');
+    const di=cells.findIndex(c=>c.includes(date));
+    const cand=cells.slice(di+2,di+8).map(norm);   // 종별 다음부터: 신청 3 + 실제 3
+    if(di>=0 && cells.length>=di+8 && cand[0]){
+      [rs,re,,as,ae]=cand;
+    } else {
+      const after=line.slice(line.indexOf(date)+10);
+      const ts=[...after.matchAll(T)].map(m=>`${m[1].padStart(2,'0')}:${m[2]}`);
+      if(ts.length>=6){ rs=ts[0];re=ts[1];as=ts[3];ae=ts[4]; }
+      else if(ts.length>=3){ rs=ts[0];re=ts[1]; }
+      else if(ts.length>=2){ rs=ts[0];re=ts[1]; }
     }
+    out.push({date,rs,re,as,ae,n:0});
   });
-  ["amEnd", "pmStart", "baseMin", "slotMin"].forEach(function (id) { $(id).addEventListener("input", update); });
-
-  $("add").addEventListener("click", function () {
-    var tr = addRow({ d: "", s: "", e: "", a: 0, b: true });
-    update();
-    tr.querySelector(".f-d").focus();
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+}
+// ---- 이미지(OCR) ----
+function parseWords(words){
+  const pad=n=>String(n).padStart(2,'0');
+  const asTime=t=>{
+    t=String(t).trim(); let m;
+    if((m=/^(\d{1,2})\s*[:：;.'’]\s*(\d{2})$/.exec(t))){ const h=+m[1],mi=+m[2]; return h<24&&mi<60?pad(h)+':'+m[2]:null; }
+    if((m=/^(\d{2})(\d{2})$/.exec(t))){ const h=+m[1],mi=+m[2]; return h<24&&mi<60?m[1]+':'+m[2]:null; }
+    return null;
+  };
+  const asDate=t=>{
+    const d=String(t).replace(/[^\d]/g,''); const m=/^(20\d{2})(\d{2})(\d{2})$/.exec(d);
+    if(!m||+m[2]<1||+m[2]>12||+m[3]<1||+m[3]>31) return null; return `${m[1]}-${m[2]}-${m[3]}`;
+  };
+  const dates=words.map(w=>({d:asDate(w.t),y:w.y,x:w.x})).filter(w=>w.d).sort((a,b)=>a.y-b.y);
+  const seen=new Set(), out=[];
+  dates.forEach(dt=>{
+    if(seen.has(dt.d)) return; seen.add(dt.d);
+    const ts=words.filter(w=>!asDate(w.t)&&Math.abs(w.y-dt.y)<=14&&w.x>dt.x+60)
+      .sort((a,b)=>a.x-b.x).map(w=>asTime(w.t)).filter(Boolean);
+    let rs='',re='',as='',ae='',sumR='',sumA='',note='';
+    if(ts.length>=6){[rs,re,sumR,as,ae,sumA]=ts;}
+    else if(ts.length===3){[rs,re,sumR]=ts;}
+    else if(ts.length>=2){[rs,re]=ts; note='시간 인식이 불완전합니다. 확인하세요.';}
+    else note='시간을 인식하지 못했습니다. 직접 입력하세요.';
+    out.push({date:dt.d,rs,re,as,ae,sumR,sumA,n:0,note});
   });
-  $("reset").addEventListener("click", function () {
-    rowsEl.innerHTML = "";
-    addRow({ d: "", s: "", e: "", a: 0, b: true });
-    update();
-    toast("목록을 비웠습니다.");
-  });
-  $("copy").addEventListener("click", function () {
-    var text = summary();
-    function fb() {
-      $("fallbackBox").hidden = false;
-      var ta = $("fallback");
-      ta.value = text; ta.focus(); ta.select();
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+}
+// NEIS 시간합과 비교해 인식 오류를 점검하고, 차이가 50분 단위면 방과후 차시로 추정
+function crossCheck(r){
+  const notes=[];
+  if(r.rs&&r.re&&r.sumR){
+    const x=calc({rs:r.rs,re:r.re,as:r.rs,ae:r.re,n:0});
+    if(x&&x.total===0&&toMin(r.sumR)>0){ /* 안내 없음 */ }
+    else if(x&&x.total!==toMin(r.sumR)) notes.push(`신청 시간합(${r.sumR})과 계산이 달라 인식 확인 필요`);
+  }
+  if(r.as&&r.ae&&r.sumA){
+    const x=calc({...r,n:0}), diff=x?x.total-toMin(r.sumA):0, u=cfg().asMin;
+    if(x&&x.total===0&&toMin(r.sumA)>0){ /* 위 안내로 충분 */ }
+    else if(x&&diff!==0){
+      if(diff>0&&u>0&&diff%u===0&&diff/u<=3){ r.n=diff/u; notes.push(`NEIS 시간합 기준으로 방과후 ${r.n}차시로 추정`); }
+      else notes.push(`실제 시간합(${r.sumA})과 계산이 달라 확인 필요`);
     }
-    try {
-      navigator.clipboard.writeText(text).then(function () {
-        $("fallbackBox").hidden = true;
-        toast("표를 복사했습니다. 엑셀이나 한글에 붙여 넣을 수 있습니다.");
-      }, fb);
-    } catch (err) { fb(); }
-  });
+  }
+  if(notes.length) r.note=[r.note,...notes].filter(Boolean).join(' / ');
+  return r;
+}
+let worker=null;
+async function runOCR(file){
+  if(!file) return;
+  if(typeof Tesseract==='undefined'){ $('msg').textContent='인식 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하세요.'; return; }
+  $('msg').textContent=''; $('prog').textContent='이미지를 읽는 중입니다… (처음에는 인식 데이터를 받느라 조금 걸립니다)';
+  try{
+    if(!worker){
+      worker=await Tesseract.createWorker('eng',1,{logger:m=>{ if(m.status==='recognizing text') $('prog').textContent=`이미지를 읽는 중… ${Math.round(m.progress*100)}%`; }});
+      await worker.setParameters({tessedit_char_whitelist:"0123456789:-'. ",tessedit_pageseg_mode:'11'});
+    }
+    const {data}=await worker.recognize(file,{},{blocks:true});
+    let ws=data.words;
+    if(!ws||!ws.length){ ws=[]; (data.blocks||[]).forEach(b=>b.paragraphs.forEach(p=>p.lines.forEach(l=>l.words.forEach(w=>ws.push(w))))); }
+    const words=ws.map(w=>({t:w.text,x:(w.bbox.x0+w.bbox.x1)/2,y:(w.bbox.y0+w.bbox.y1)/2}));
+    const r=parseWords(words).map(crossCheck);
+    if(!r.length){ $('prog').textContent=''; $('msg').textContent='날짜가 있는 행을 찾지 못했습니다. 표 전체가 보이도록 다시 캡처해 보세요.'; return; }
+    rows=r; $('prog').textContent='';
+    $('msg').textContent=`${r.length}개 행을 읽었습니다. 날짜·시간이 맞는지, 방과후 차시와 삭제할 날짜를 확인하세요.`; render();
+  }catch(err){ $('prog').textContent=''; $('msg').textContent='이미지 인식 중 오류가 발생했습니다: '+err.message; }
+}
+const drop=$('drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{ const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/')); runOCR(f); });
+$('file').addEventListener('change',e=>runOCR(e.target.files[0]));
+document.addEventListener('paste',e=>{
+  const it=[...(e.clipboardData?e.clipboardData.items:[])].find(i=>i.type.startsWith('image/'));
+  if(it){ e.preventDefault(); runOCR(it.getAsFile()); }
+});
+$('add').onclick=()=>{ rows.push({date:new Date().toISOString().slice(0,10),rs:'',re:'',as:'',ae:'',n:0}); render(); };
+$('clear').onclick=()=>{ rows=[]; $('paste').value=''; $('msg').textContent=''; render(); };
 
-  load().forEach(addRow);
-  update();
-})();
+// ---- 엑셀 ----
+$('xl').onclick=()=>{
+  if(!rows.length){ alert('불러온 행이 없습니다.'); return; }
+  const head=['날짜','요일','신청 시작','신청 종료','실제 시작','실제 종료','방과후(차시)','아침(분)','오후(분)','저녁시간 차감(분)','방과후 차감(분)','인정시간(분)','인정시간(시:분)'];
+  const aoa=[head]; let sum=0;
+  rows.forEach(r=>{
+    const res=calc(r);
+    if(res){ sum+=res.total; aoa.push([r.date,dowOf(r.date),to12(r.rs),to12(r.re),to12(r.as),to12(r.ae),+r.n,res.morning,res.afternoon,-res.dinner,-res.after,res.total,fmt(res.total)]); }
+    else aoa.push([r.date,dowOf(r.date),to12(r.rs),to12(r.re),to12(r.as),to12(r.ae),+r.n,'','','','','','(실제시간 미입력)']);
+  });
+  aoa.push([]);
+  aoa.push(['합계','','','','','','','','','','',sum,hm(sum)]);
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[12,6,10,10,10,10,12,10,10,16,14,12,16].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'초과근무');
+  XLSX.writeFile(wb,'초과근무_계산결과.xlsx');
+};
+render();
 </script>
-
-</body></html>
+</body>
+</html>
