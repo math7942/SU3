@@ -1,0 +1,520 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>접선이란?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f6f8; --panel:#ffffff; --fg:#17212b; --muted:#5a6a78; --line:#d3dce3;
+  --accent:#6d4fc7; --accent-fg:#ffffff; --c1:#d6336c; --c2:#2f6fdd; --c3:#1f8a4c; --grid:#e3e9ee; --ink:#26323d;
+  --ok:#1f8a4c; --bad:#c2410c; --warn:#b4790e;
+  --font:"Noto Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --panel:#18222b; --fg:#e7eef3; --muted:#93a4b3; --line:#2b3a47;
+  --accent:#b29bff; --accent-fg:#1a1030; --c1:#ff6f9f; --c2:#6ea8ff; --c3:#5fd18c; --grid:#22303b; --ink:#cfdbe5;
+  --ok:#5fd18c; --bad:#ff9a5c; --warn:#f0c15c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --panel:#18222b; --fg:#e7eef3; --muted:#93a4b3; --line:#2b3a47;
+  --accent:#b29bff; --accent-fg:#1a1030; --c1:#ff6f9f; --c2:#6ea8ff; --c3:#5fd18c; --grid:#22303b; --ink:#cfdbe5;
+  --ok:#5fd18c; --bad:#ff9a5c; --warn:#f0c15c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1080px;margin:0 auto}
+header h1{font-size:26px;line-height:1.25;margin:0 0 4px;font-weight:700;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:68ch}
+nav{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 14px}
+nav button{font:inherit;font-size:13.5px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+nav button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+canvas{display:block;width:100%;border-radius:6px}
+h2{font-size:17px;margin:0 0 6px}
+h3{font-size:13px;margin:14px 0 6px;color:var(--muted);letter-spacing:.04em;font-weight:700}
+.lead{font-size:14px;color:var(--ink);margin:0 0 10px;line-height:1.6}
+.ctl{display:grid;grid-template-columns:6.6em minmax(0,1fr) 4.4em;gap:8px;align-items:center;margin:6px 0;font-size:14px}
+.ctl label{white-space:nowrap}
+.ctl output{font-family:var(--mono);font-size:12.5px;text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0;align-items:center}
+.btn{font:inherit;font-size:14px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:700}
+.read{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;font-size:13.5px;margin-top:6px}
+.read div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding-bottom:3px}
+.read b{font-family:var(--mono);font-weight:600;font-size:12.5px;text-align:right}
+.ask{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13.5px}
+.ask li{margin:3px 0}
+.note{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.verdict{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:600;border:1.5px solid var(--line);background:var(--bg)}
+.verdict.ok{border-color:var(--ok);color:var(--ok)}
+.verdict.bad{border-color:var(--bad);color:var(--bad)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:16px;height:2.5px;border-radius:2px;display:inline-block}
+.tab{display:none}.tab.on{display:block}
+table.sum{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+table.sum th,table.sum td{border:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+table.sum th{background:var(--bg);color:var(--muted);font-weight:700;font-size:12px}
+table.sum td.no{color:var(--bad);font-weight:700;white-space:nowrap}
+table.sum td.yes{color:var(--ok);font-weight:700;white-space:nowrap}
+footer{margin-top:20px;color:var(--muted);font-size:13px}
+.src{font-size:12px;color:var(--muted);margin-top:4px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>접선이란?</h1>
+  <p>원에서 배운 "곡선과 한 점에서 만나는 직선"이라는 접선의 정의는 포물선과 삼차함수로 가면 깨집니다. 반례를 직접 눈으로 확인하면서, 학생들이 실제로 겪는 것처럼 접선 개념을 스스로 고쳐 나가 보세요.</p>
+  <p class="src">임재훈·박교식(2004), 「학교 수학에서 접선 개념 교수 방안 연구」, 수학교육학연구 14(2)를 바탕으로 만든 체험 자료입니다.</p>
+</header>
+<nav id="tabs" role="tablist">
+  <button role="tab" data-t="circle">1 원에서: 할선과 접선</button>
+  <button role="tab" data-t="parabola">2 포물선의 함정</button>
+  <button role="tab" data-t="cubic">3 삼차함수의 반전</button>
+  <button role="tab" data-t="limit">4 할선의 극한</button>
+  <button role="tab" data-t="deriv">5 미분계수</button>
+  <button role="tab" data-t="cusp">6 접선인데 미분은 안 된다?</button>
+</nav>
+
+<!-- 1 원 -->
+<section class="tab" id="t-circle">
+ <div class="grid">
+  <div class="card"><canvas id="c1" style="aspect-ratio:1/1;max-width:520px;margin:0 auto"></canvas></div>
+  <div class="card">
+   <h2>할선 PQ, 그리고 접선</h2>
+   <p class="lead">원 위의 두 점 P, Q를 지나는 직선을 <b>할선(割線)</b>이라 합니다. Q를 P에 가깝게 끌어오면 할선은 점점 어떤 직선에 가까워지는데, 그 직선이 바로 P에서의 <b>접선</b>입니다.</p>
+   <div id="c1-ctl"></div>
+   <div class="row"><button class="btn pri" id="c1-play">Q를 P로 가까이</button><button class="btn" id="c1-reset">처음으로</button></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>두 점 사이 각도 Δθ</span><b id="c1-dth"></b></div><div><span>할선의 기울기</span><b id="c1-sm"></b></div>
+    <div><span>실제 접선의 기울기</span><b id="c1-tm"></b></div><div><span>차이</span><b id="c1-diff"></b></div>
+   </div>
+   <div class="legend">
+    <span><i style="background:var(--c2)"></i>할선 PQ</span>
+    <span><i style="background:var(--c1)"></i>접선(목표)</span>
+   </div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>원에서 접선을 "곡선과 한 점에서만 만나는 직선"이라고 정의하면, 이 정의는 원에서 항상 맞을까요?</li><li>Δθ가 0에 가까워질수록 할선과 접선의 기울기 차이는 어떻게 변하나요?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 2 포물선 -->
+<section class="tab" id="t-parabola">
+ <div class="grid">
+  <div class="card"><canvas id="c2" style="aspect-ratio:4/3"></canvas></div>
+  <div class="card">
+   <h2>세로선은 포물선과 늘 한 점에서만 만난다</h2>
+   <p class="lead">포물선 y = x² 위에 세로선 x = k를 그어 보세요. k를 아무리 바꿔도 이 세로선은 포물선과 <b>딱 한 점</b>에서만 만납니다. 그렇다면 이 세로선은 항상 접선일까요?</p>
+   <div id="c2-ctl"></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>교점 개수</span><b id="c2-n"></b></div><div><span>세로선의 기울기</span><b id="c2-vm"></b></div>
+    <div style="grid-column:1/3"><span>실제 접선의 기울기 (2k)</span><b id="c2-tm"></b></div>
+   </div>
+   <div class="legend">
+    <span><i style="background:var(--c2)"></i>세로선 x=k</span>
+    <span><i style="background:var(--c1)"></i>진짜 접선</span>
+   </div>
+   <div class="verdict bad" id="c2-verdict"></div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>세로선은 k값에 상관없이 늘 한 점에서만 만나는데, 왜 접선이 아닐까요?</li><li>"곡선과 한 점에서 만난다"는 접선이기 위한 조건으로 충분한가요?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 3 삼차함수 -->
+<section class="tab" id="t-cubic">
+ <div class="grid">
+  <div class="card"><canvas id="c3" style="aspect-ratio:4/3"></canvas></div>
+  <div class="card">
+   <h2>진짜 접선인데, 곡선을 뚫고 지나간다?</h2>
+   <p class="lead">y = x³ 위의 점 (a, a³)에서 미분으로 구한 <b>진짜 접선</b>을 그려 봅니다. a를 0으로 가져가 보세요 — 접선이 곡선을 그대로 뚫고 지나가는 순간이 있습니다.</p>
+   <div id="c3-ctl"></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>접점 (a, a³)</span><b id="c3-pt"></b></div><div><span>접선의 기울기 (3a²)</span><b id="c3-m"></b></div>
+   </div>
+   <div class="legend">
+    <span><i style="background:var(--ink)"></i>y = x³</span>
+    <span><i style="background:var(--c1)"></i>접선</span>
+   </div>
+   <div class="verdict" id="c3-verdict"></div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>a = 0일 때 접선은 곡선의 어느 쪽에 있나요? (x &lt; 0 쪽과 x &gt; 0 쪽을 비교해 보세요)</li><li>"곡선을 스치고 지나가지 않는다"는 접선이기 위한 필요조건인가요?</li></ol>
+  </div>
+ </div>
+</section>
+
+<!-- 4 할선의 극한 -->
+<section class="tab" id="t-limit">
+ <div class="grid">
+  <div class="card"><canvas id="c4" style="aspect-ratio:1/1;max-width:520px;margin:0 auto"></canvas></div>
+  <div class="card">
+   <h2>할선의 극한 — 어디서나 통하는 정의</h2>
+   <p class="lead">"한 점에서 만난다"도, "스치고 지나간다"도 곡선에 따라 깨졌습니다. 그런데 <b>할선 PQ에서 Q를 P로 한없이 가까이 보내면 어떤 직선에 가까워진다</b>는 아이디어만은 원·포물선·삼차함수 어디서나 그대로 통합니다.</p>
+   <div class="row" id="c4-curve"></div>
+   <div id="c4-ctl"></div>
+   <div class="row"><button class="btn pri" id="c4-play">Q를 P로 가까이</button><button class="btn" id="c4-reset">처음으로</button></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>할선의 기울기</span><b id="c4-sm"></b></div><div><span>접선의 기울기(수렴값)</span><b id="c4-tm"></b></div>
+   </div>
+   <p class="note">이렇게 "할선의 극한"으로 정의하면, 접선이 곡선을 뚫고 지나가든 아니든, 몇 번을 만나든 상관없이 모든 곡선에 똑같이 적용할 수 있습니다. 이것이 접선의 진짜(기하적) 정의입니다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- 5 미분계수 -->
+<section class="tab" id="t-deriv">
+ <div class="grid">
+  <div class="card"><canvas id="c5" style="aspect-ratio:4/3"></canvas></div>
+  <div class="card">
+   <h2>미분계수 = 접선의 기울기</h2>
+   <p class="lead">할선의 기울기를 식으로 쓰면 <code class="mono">(f(a+h) − f(a)) / h</code> 입니다. h를 0으로 보내는 극한이 바로 <b>미분계수 f'(a)</b>이고, 그 값이 접선의 기울기입니다.</p>
+   <div id="c5-fn"></div>
+   <div id="c5-ctl"></div>
+   <h3>식으로 보기</h3>
+   <div class="read" style="grid-template-columns:1fr">
+    <div style="border:none"><span style="font-family:var(--mono);font-size:13px" id="c5-eq"></span></div>
+   </div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>할선의 기울기</span><b id="c5-sm"></b></div><div><span>f'(a) (실제 미분계수)</span><b id="c5-tm"></b></div>
+   </div>
+   <div class="legend">
+    <span><i style="background:var(--c2)"></i>할선</span>
+    <span><i style="background:var(--c1)"></i>접선 y=f'(a)(x−a)+f(a)</span>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- 6 뾰족점 -->
+<section class="tab" id="t-cusp">
+ <div class="grid">
+  <div class="card"><canvas id="c6" style="aspect-ratio:4/3"></canvas></div>
+  <div class="card">
+   <h2>미분이 안 되는데 접선은 있다?</h2>
+   <p class="lead">미분이 안 되면 접선도 없을까요? 두 그래프를 비교해 보세요. 둘 다 원점에서 미분은 안 되지만, 결과는 서로 다릅니다.</p>
+   <div class="row" id="c6-kind"></div>
+   <div id="c6-ctl"></div>
+   <div class="row"><button class="btn pri" id="c6-play">양쪽에서 가까이</button><button class="btn" id="c6-reset">처음으로</button></div>
+   <h3>읽은 값</h3>
+   <div class="read">
+    <div><span>왼쪽 할선의 기울기</span><b id="c6-lm"></b></div><div><span>오른쪽 할선의 기울기</span><b id="c6-rm"></b></div>
+   </div>
+   <div class="legend">
+    <span><i style="background:var(--c2)"></i>왼쪽에서 오는 할선</span>
+    <span><i style="background:var(--c1)"></i>오른쪽에서 오는 할선</span>
+   </div>
+   <div class="verdict" id="c6-verdict"></div>
+   <h3>생각해 보기</h3>
+   <ol class="ask"><li>y = 2√|x| 는 원점에서 양쪽 할선의 기울기가 +∞, −∞로 서로 다른 부호로 발산하는데, 왜 접선(수직선)이 있다고 할 수 있을까요?</li><li>y = |x| 는 양쪽 할선의 기울기가 각각 −1, +1이라는 "유한한" 값으로 수렴하는데도 왜 접선이 없다고 할까요?</li></ol>
+  </div>
+ </div>
+</section>
+
+<div class="card" style="margin-top:16px">
+  <h2>🗺️ 정리 — 접선 개념이 자라난 지도</h2>
+  <p class="lead">접선의 정의는 "틀렸다가 맞는 것으로 바뀐" 것이 아니라, 새로운 곡선을 만날 때마다 <b>더 넓은 맥락까지 포괄하도록 다듬어진</b> 것입니다.</p>
+  <table class="sum">
+   <thead><tr><th>개념</th><th>정의</th><th>원</th><th>포물선</th><th>삼차함수</th></tr></thead>
+   <tbody>
+    <tr><td>기하적 개념1</td><td>곡선과 한 점에서 만나는 직선</td><td class="yes">성립</td><td class="no">반례 있음 (탭2)</td><td class="no">반례 있음</td></tr>
+    <tr><td>기하적 개념2</td><td>곡선을 스치고 지나가는 직선</td><td class="yes">성립</td><td class="yes">성립</td><td class="no">반례 있음 (탭3)</td></tr>
+    <tr><td>기하적 개념3</td><td><b>할선의 극한</b> (Q→P일 때 할선이 다가가는 직선)</td><td class="yes">성립</td><td class="yes">성립</td><td class="yes">성립</td></tr>
+    <tr><td>함수적 개념</td><td>기울기가 미분계수 f'(a)와 같은 직선</td><td class="yes">성립</td><td class="yes">성립</td><td class="yes">성립 (단, 미분가능할 때만)</td></tr>
+   </tbody>
+  </table>
+  <p class="note">미분가능하면 할선의 극한과 미분계수는 같은 접선을 가리킵니다. 그러나 6번 탭의 뾰족점처럼 미분이 안 되는데도 할선의 극한(수직 접선)은 존재하는 경우가 있습니다 — 즉 <b>미분가능성은 접선이 존재하기 위한 충분조건이지만, 필요조건은 아닙니다.</b></p>
+</div>
+
+<footer>참고: 임재훈·박교식(2004), 「학교 수학에서 접선 개념 교수 방안 연구」, 大韓數學敎育學會誌 數學敎育學硏究 제14권 제2호, 171–185쪽.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const PI=Math.PI;
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function fit(c){const dpr=Math.min(window.devicePixelRatio||1,2),w=c.clientWidth,h=c.clientHeight;
+  const W=Math.round(w*dpr),H=Math.round(h*dpr); if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+  const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,w,h); return [g,w,h]}
+const f2=x=>{if(!isFinite(x))return x>0?'+∞':'−∞'; const s=(Math.round(x*1000)/1000).toString();return s.replace('-','−')};
+const f1=x=>{if(!isFinite(x))return x>0?'+∞':'−∞'; const s=(Math.round(x*100)/100).toString();return s.replace('-','−')};
+
+/* ---------- 슬라이더 묶음 ---------- */
+function mount(el,specs,st,cb){
+  el.innerHTML=''; const ins={};
+  specs.forEach(s=>{
+    const row=document.createElement('div'); row.className='ctl';
+    row.innerHTML=`<label for="${el.id}-${s.k}">${s.label}</label><input type="range" id="${el.id}-${s.k}" min="${s.min}" max="${s.max}" step="${s.step}"><output></output>`;
+    const inp=row.querySelector('input'), out=row.querySelector('output'); ins[s.k]=inp;
+    inp.value=st[s.k]; const show=()=>{out.textContent=s.fmt?s.fmt(st[s.k]):f2(st[s.k])}; show();
+    inp.addEventListener('input',()=>{st[s.k]=parseFloat(inp.value); show(); cb(s.k)});
+    el.appendChild(row); s.show=show;
+  });
+  return {set(k,v){st[k]=v;ins[k].value=v;specs.find(s=>s.k===k).show()}, refresh(){specs.forEach(s=>{ins[s.k].value=st[s.k];s.show()})}};
+}
+function mountChoice(el,opts,get,set){
+  el.innerHTML='';
+  const btns=opts.map(o=>{const b=document.createElement('button'); b.className='btn'; b.textContent=o.label;
+    b.addEventListener('click',()=>{set(o.k); refresh()}); el.appendChild(b); return {b,k:o.k}});
+  function refresh(){btns.forEach(x=>x.b.setAttribute('aria-pressed', x.k===get()?'true':'false'))}
+  refresh(); return {refresh};
+}
+
+/* ---------- 공통 그래프 ---------- */
+function axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,xstep,ystep){
+  g.save(); g.lineWidth=1; g.font='11px '+css('--mono'); g.fillStyle=css('--muted');
+  const grid=css('--grid'), ink=css('--ink');
+  for(let x=Math.ceil(xmin/xstep)*xstep;x<=xmax+1e-9;x+=xstep){g.strokeStyle=grid;g.beginPath();g.moveTo(X(x),0);g.lineTo(X(x),h);g.stroke();
+    if(Math.abs(x)>1e-9){g.textAlign='center';g.fillText(f1(x),X(x),Y(0)+13)}}
+  for(let y=Math.ceil(ymin/ystep)*ystep;y<=ymax+1e-9;y+=ystep){g.strokeStyle=grid;g.beginPath();g.moveTo(0,Y(y));g.lineTo(w,Y(y));g.stroke();
+    if(Math.abs(y)>1e-9){g.textAlign='right';g.fillText(f1(y),X(0)-4,Y(y)+4)}}
+  g.strokeStyle=ink;g.lineWidth=1.3;g.beginPath();g.moveTo(0,Y(0));g.lineTo(w,Y(0));g.moveTo(X(0),0);g.lineTo(X(0),h);g.stroke(); g.restore();
+}
+function plotFn(g,X,Y,fn,x0,x1,col,wd,dash){
+  g.save();g.strokeStyle=col;g.lineWidth=wd;g.setLineDash(dash||[]);g.lineJoin='round';g.beginPath();
+  const n=600; let started=false;
+  for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n,y=fn(x); if(!isFinite(y)){started=false;continue;}
+    if(!started){g.moveTo(X(x),Y(y));started=true} else g.lineTo(X(x),Y(y))} g.stroke();g.restore();
+}
+function dot(g,x,y,r,col){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,2*PI);g.fill();g.strokeStyle=css('--panel');g.lineWidth=2;g.stroke()}
+function lineThrough(g,X,Y,x1,y1,x2,y2,col,wd,dash){
+  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy); if(len<1e-9)return;
+  const ux=dx/len,uy=dy/len,BIG=60;
+  g.save();g.strokeStyle=col;g.lineWidth=wd;g.setLineDash(dash||[]);g.beginPath();
+  g.moveTo(X(x1-ux*BIG),Y(y1-uy*BIG));g.lineTo(X(x1+ux*BIG),Y(y1+uy*BIG));g.stroke();g.restore();
+}
+function lineSlope(g,X,Y,x0,y0,m,col,wd,dash){
+  if(!isFinite(m)){ lineThrough(g,X,Y,x0,y0-1,x0,y0+1,col,wd,dash); return; }
+  lineThrough(g,X,Y,x0-1,y0-m,x0+1,y0+m,col,wd,dash);
+}
+
+/* ================= 1 원: 할선과 접선 ================= */
+const C1={P:40,dth:50,playing:false};
+const c1c=mount($('#c1-ctl'),[
+  {k:'P',label:'점 P (각도)',min:0,max:360,step:1,fmt:v=>v+'°'},
+  {k:'dth',label:'Δθ (Q와의 각도차)',min:0.5,max:120,step:0.5,fmt:v=>v+'°'}],C1,()=>drawC1());
+function drawC1(){ if(!$('#c1').clientWidth)return;
+  const [g,w,h]=fit($('#c1')); const R=Math.min(w,h)*0.36, cx=w/2, cy=h/2;
+  const X=x=>cx+x*R, Y=y=>cy-y*R;
+  axes(g,w,h,X,Y,-1.6,1.6,-1.6,1.6,0.5,0.5);
+  g.strokeStyle=css('--ink');g.lineWidth=1.3;g.beginPath();g.arc(cx,cy,R,0,2*PI);g.stroke();
+  const tp=C1.P*PI/180, tq=tp+C1.dth*PI/180;
+  const Px=Math.cos(tp),Py=Math.sin(tp), Qx=Math.cos(tq),Qy=Math.sin(tq);
+  const trueM=-Math.cos(tp)/Math.sin(tp); // 접선 기울기: 반지름에 수직
+  lineSlope(g,X,Y,Px,Py,trueM,css('--c1'),2,[6,4]);
+  lineThrough(g,X,Y,Px,Py,Qx,Qy,css('--c2'),2.4);
+  dot(g,X(Px),Y(Py),5.5,css('--c1')); dot(g,X(Qx),Y(Qy),5,css('--c2'));
+  g.fillStyle=css('--c1');g.font='bold 12px '+css('--font');g.textAlign='left';g.fillText('P',X(Px)+8,Y(Py)-6);
+  g.fillStyle=css('--c2');g.fillText('Q',X(Qx)+8,Y(Qy)-6);
+  const secM=(Qy-Py)/(Qx-Px);
+  $('#c1-dth').textContent=C1.dth.toFixed(1)+'°';
+  $('#c1-sm').textContent=isFinite(secM)?f2(secM):'(수직)';
+  $('#c1-tm').textContent=isFinite(trueM)?f2(trueM):'(수직)';
+  $('#c1-diff').textContent=(isFinite(secM)&&isFinite(trueM))?f2(Math.abs(secM-trueM)):'-';
+}
+let c1T=0;function c1Loop(ts){ if(!C1.playing||cur!=='circle'){C1.playing=false;$('#c1-play').textContent='Q를 P로 가까이';return}
+  if(!c1T)c1T=ts; const dt=(ts-c1T)/1000;c1T=ts; C1.dth=Math.max(0.5,C1.dth-dt*30); c1c.set('dth',+C1.dth.toFixed(1)); drawC1();
+  if(C1.dth<=0.5){C1.playing=false;$('#c1-play').textContent='Q를 P로 가까이';return}
+  requestAnimationFrame(c1Loop)}
+$('#c1-play').addEventListener('click',e=>{C1.playing=!C1.playing;e.target.textContent=C1.playing?'멈춤':'Q를 P로 가까이';c1T=0;if(C1.playing)requestAnimationFrame(c1Loop)});
+$('#c1-reset').addEventListener('click',()=>{C1.dth=50;c1c.set('dth',50);drawC1()});
+
+/* ================= 2 포물선의 함정 ================= */
+const C2={k:1.6};
+mount($('#c2-ctl'),[{k:'k',label:'k (세로선 x=k)',min:-3,max:3,step:0.1}],C2,()=>drawC2());
+function drawC2(){ if(!$('#c2').clientWidth)return;
+  const [g,w,h]=fit($('#c2')); const xmin=-3.2,xmax=3.2,ymin=-1.5,ymax=9.5;
+  const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+  axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,1,2);
+  plotFn(g,X,Y,x=>x*x,xmin,xmax,css('--ink'),2.4);
+  const k=C2.k, yk=k*k, trueM=2*k;
+  lineThrough(g,X,Y,k,ymin,k,ymax,css('--c2'),2.4);
+  lineSlope(g,X,Y,k,yk,trueM,css('--c1'),2,[6,4]);
+  dot(g,X(k),Y(yk),5.5,css('--ink'));
+  $('#c2-n').textContent='1개';
+  $('#c2-vm').textContent='없음 (수직)';
+  $('#c2-tm').textContent=f2(trueM);
+  const vd=$('#c2-verdict');
+  if(Math.abs(k)<0.05){ vd.className='verdict'; vd.textContent='k = 0일 때만 세로선(x=0)은... 실제 접선(기울기 0, 가로선)과도 다릅니다. 이 세로선은 접선이 아닙니다.'; }
+  else { vd.className='verdict bad'; vd.textContent='세로선 x='+f1(k)+'은 포물선과 한 점에서만 만나지만, 접선이 아닙니다. 진짜 접선의 기울기는 '+f2(trueM)+'로, 수직선과 전혀 다릅니다.'; }
+}
+
+/* ================= 3 삼차함수의 반전 ================= */
+const C3={a:0.9};
+mount($('#c3-ctl'),[{k:'a',label:'a (접점의 x좌표)',min:-1.8,max:1.8,step:0.02}],C3,()=>drawC3());
+function drawC3(){ if(!$('#c3').clientWidth)return;
+  const [g,w,h]=fit($('#c3')); const xmin=-2,xmax=2,ymin=-8.5,ymax=8.5;
+  const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+  axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,0.5,2);
+  plotFn(g,X,Y,x=>x*x*x,xmin,xmax,css('--ink'),2.4);
+  const a=C3.a, fa=a*a*a, m=3*a*a;
+  lineSlope(g,X,Y,a,fa,m,css('--c1'),2.2);
+  dot(g,X(a),Y(fa),5.5,css('--c1'));
+  $('#c3-pt').textContent='('+f2(a)+', '+f2(fa)+')';
+  $('#c3-m').textContent=f2(m);
+  // 접선이 곡선을 뚫는지 판정: 접점 바로 좌/우에서 (f(x)-tangent(x))의 부호 비교
+  const eps=0.08;
+  const diffL=( (a-eps)**3 - (fa + m*(-eps)) );
+  const diffR=( (a+eps)**3 - (fa + m*(eps)) );
+  const crosses = diffL*diffR < 0;
+  const vd=$('#c3-verdict');
+  if(crosses){ vd.className='verdict bad'; vd.textContent='지금 접선이 접점을 가로질러 곡선을 뚫고 지나갑니다! 그래도 이 직선은 미분으로 구한 진짜 접선입니다.'; }
+  else{ vd.className='verdict ok'; vd.textContent='지금은 접선이 곡선을 뚫지 않고 한쪽에서 스치듯 닿아 있습니다. a를 0 쪽으로 옮겨 보세요.'; }
+}
+
+/* ================= 4 할선의 극한 (곡선 선택) ================= */
+const CURVES={
+  circle:{label:'원', xr:[-1.6,1.6], yr:[-1.6,1.6], xstep:0.5, ystep:0.5,
+    pt:t=>[Math.cos(t),Math.sin(t)], range:[0,2*PI], tmin:0,tmax:360,tstep:1,tfmt:v=>v+'°',
+    toRad:v=>v*PI/180, trueM:t=>-Math.cos(t)/Math.sin(t),
+    plot:(g,X,Y)=>{g.save();g.strokeStyle=css('--ink');g.lineWidth=2.2;g.beginPath();
+      const cx=X(0),cy=Y(0),R=X(1)-X(0); g.arc(cx,cy,R,0,2*PI);g.stroke();g.restore();}},
+  parabola:{label:'포물선', xr:[-3.2,3.2], yr:[-1.5,9.5], xstep:1, ystep:2,
+    pt:t=>[t,t*t], range:[-3,3], tmin:-3,tmax:3,tstep:0.02,tfmt:v=>f1(v),
+    toRad:v=>v, trueM:t=>2*t,
+    plot:(g,X,Y)=>plotFn(g,X,Y,x=>x*x,-3.2,3.2,css('--ink'),2.2)},
+  cubic:{label:'삼차함수', xr:[-2,2], yr:[-8.5,8.5], xstep:0.5, ystep:2,
+    pt:t=>[t,t*t*t], range:[-1.9,1.9], tmin:-1.9,tmax:1.9,tstep:0.02,tfmt:v=>f1(v),
+    toRad:v=>v, trueM:t=>3*t*t,
+    plot:(g,X,Y)=>plotFn(g,X,Y,x=>x*x*x,-2,2,css('--ink'),2.2)},
+};
+const C4={curve:'circle',P:40,dth:50,playing:false};
+const c4curveUI=mountChoice($('#c4-curve'),[{k:'circle',label:'원'},{k:'parabola',label:'포물선'},{k:'cubic',label:'삼차함수'}],
+  ()=>C4.curve, k=>{C4.curve=k; const cv=CURVES[k]; C4.P=(cv.tmin+cv.tmax)/2; C4.dth=(cv.tmax-cv.tmin)*0.3;
+    c4c.refresh(); drawC4();});
+let c4c;
+function rebuildC4Ctl(){
+  const cv=CURVES[C4.curve];
+  c4c=mount($('#c4-ctl'),[
+    {k:'P',label:'점 P',min:cv.tmin,max:cv.tmax,step:cv.tstep,fmt:cv.tfmt},
+    {k:'dth',label:'Q와의 간격',min:(cv.tmax-cv.tmin)*0.01,max:(cv.tmax-cv.tmin)*0.6,step:cv.tstep,fmt:cv.tfmt}],C4,()=>drawC4());
+}
+function drawC4(){ if(!$('#c4').clientWidth)return;
+  const cv=CURVES[C4.curve]; const [g,w,h]=fit($('#c4'));
+  const [xmin,xmax]=cv.xr,[ymin,ymax]=cv.yr;
+  const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+  axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,cv.xstep,cv.ystep);
+  cv.plot(g,X,Y);
+  const tp=cv.toRad(C4.P); let tq=cv.toRad(C4.P+C4.dth);
+  const [Px,Py]=cv.pt(tp), [Qx,Qy]=cv.pt(tq);
+  const trueM=cv.trueM(tp);
+  lineSlope(g,X,Y,Px,Py,trueM,css('--c1'),2,[6,4]);
+  lineThrough(g,X,Y,Px,Py,Qx,Qy,css('--c2'),2.4);
+  dot(g,X(Px),Y(Py),5.5,css('--c1')); dot(g,X(Qx),Y(Qy),5,css('--c2'));
+  const secM=(Qy-Py)/(Qx-Px);
+  $('#c4-sm').textContent=isFinite(secM)?f2(secM):'(수직)';
+  $('#c4-tm').textContent=isFinite(trueM)?f2(trueM):'(수직)';
+}
+let c4T=0;function c4Loop(ts){ if(!C4.playing||cur!=='limit'){C4.playing=false;$('#c4-play').textContent='Q를 P로 가까이';return}
+  const cv=CURVES[C4.curve]; const minGap=(cv.tmax-cv.tmin)*0.01;
+  if(!c4T)c4T=ts; const dt=(ts-c4T)/1000;c4T=ts; C4.dth=Math.max(minGap,C4.dth-dt*(cv.tmax-cv.tmin)*0.35); c4c.set('dth',+C4.dth.toFixed(3)); drawC4();
+  if(C4.dth<=minGap){C4.playing=false;$('#c4-play').textContent='Q를 P로 가까이';return}
+  requestAnimationFrame(c4Loop)}
+$('#c4-play').addEventListener('click',e=>{C4.playing=!C4.playing;e.target.textContent=C4.playing?'멈춤':'Q를 P로 가까이';c4T=0;if(C4.playing)requestAnimationFrame(c4Loop)});
+$('#c4-reset').addEventListener('click',()=>{const cv=CURVES[C4.curve]; C4.dth=(cv.tmax-cv.tmin)*0.3; c4c.set('dth',+C4.dth.toFixed(3)); drawC4()});
+rebuildC4Ctl(); c4curveUI.refresh();
+
+/* ================= 5 미분계수 ================= */
+const FNS={
+  sq:{label:'f(x) = x²', f:x=>x*x, df:x=>2*x, xr:[-3.2,3.2], yr:[-1.5,9.5], xstep:1, ystep:2, amin:-3,amax:3},
+  cube:{label:'f(x) = x³', f:x=>x*x*x, df:x=>3*x*x, xr:[-2,2], yr:[-8.5,8.5], xstep:0.5, ystep:2, amin:-1.9,amax:1.9},
+};
+const C5={fn:'sq',a:1.5,h:0.9};
+const c5fnUI=mountChoice($('#c5-fn'),[{k:'sq',label:'f(x) = x²'},{k:'cube',label:'f(x) = x³'}],
+  ()=>C5.fn, k=>{C5.fn=k; const fn=FNS[k]; C5.a=(fn.amin+fn.amax)/2; C5.h=(fn.amax-fn.amin)*0.25; c5c.refresh(); drawC5();});
+let c5c;
+function rebuildC5Ctl(){
+  const fn=FNS[C5.fn];
+  c5c=mount($('#c5-ctl'),[
+    {k:'a',label:'점 x=a',min:fn.amin,max:fn.amax,step:0.02,fmt:f1},
+    {k:'h',label:'h',min:-(fn.amax-fn.amin)*0.5,max:(fn.amax-fn.amin)*0.5,step:0.01,fmt:f2}],C5,()=>drawC5());
+}
+function drawC5(){ if(!$('#c5').clientWidth)return;
+  const fn=FNS[C5.fn]; const [g,w,h]=fit($('#c5'));
+  const [xmin,xmax]=fn.xr,[ymin,ymax]=fn.yr;
+  const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+  axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,fn.xstep,fn.ystep);
+  plotFn(g,X,Y,fn.f,xmin,xmax,css('--ink'),2.2);
+  let hh=C5.h; if(Math.abs(hh)<0.01)hh=hh<0?-0.01:0.01;
+  const a=C5.a, fa=fn.f(a), fah=fn.f(a+hh);
+  const secM=(fah-fa)/hh, trueM=fn.df(a);
+  lineSlope(g,X,Y,a,fa,trueM,css('--c1'),2,[6,4]);
+  lineThrough(g,X,Y,a,fa,a+hh,fah,css('--c2'),2.4);
+  dot(g,X(a),Y(fa),5.5,css('--c1')); dot(g,X(a+hh),Y(fah),5,css('--c2'));
+  $('#c5-sm').textContent=f2(secM);
+  $('#c5-tm').textContent=f2(trueM);
+  $('#c5-eq').textContent=`(f(${f1(a)}+${f2(hh)}) − f(${f1(a)})) / ${f2(hh)} = (${f2(fah)} − ${f2(fa)}) / ${f2(hh)} = ${f2(secM)}  →  h→0 이면  f'(${f1(a)}) = ${f2(trueM)}`;
+}
+
+/* ================= 6 뾰족점 vs 꺾인점 ================= */
+const CUSPS={
+  cusp:{label:'y = 2√|x|  (뾰족점)', f:x=>2*Math.sqrt(Math.abs(x)), xr:[-2,2], yr:[-0.3,3.2], xstep:0.5, ystep:1},
+  corner:{label:'y = |x|  (꺾인점)', f:x=>Math.abs(x), xr:[-2,2], yr:[-0.3,2.2], xstep:0.5, ystep:0.5},
+};
+const C6={kind:'cusp',gap:0.7,playing:false};
+const c6kindUI=mountChoice($('#c6-kind'),[{k:'cusp',label:'뾰족점 (수직접선)'},{k:'corner',label:'꺾인점 (접선 없음)'}],
+  ()=>C6.kind, k=>{C6.kind=k; C6.gap=0.7; c6c.refresh(); drawC6();});
+let c6c;
+function rebuildC6Ctl(){
+  c6c=mount($('#c6-ctl'),[{k:'gap',label:'0에서 거리',min:0.01,max:1.8,step:0.01,fmt:f2}],C6,()=>drawC6());
+}
+function drawC6(){ if(!$('#c6').clientWidth)return;
+  const cv=CUSPS[C6.kind]; const [g,w,h]=fit($('#c6'));
+  const [xmin,xmax]=cv.xr,[ymin,ymax]=cv.yr;
+  const X=x=>(x-xmin)/(xmax-xmin)*w, Y=y=>h-(y-ymin)/(ymax-ymin)*h;
+  axes(g,w,h,X,Y,xmin,xmax,ymin,ymax,cv.xstep,cv.ystep);
+  plotFn(g,X,Y,cv.f,xmin,-0.001,css('--ink'),2.2);
+  plotFn(g,X,Y,cv.f,0.001,xmax,css('--ink'),2.2);
+  dot(g,X(0),Y(0),5.5,css('--ink'));
+  const gap=C6.gap;
+  const lx=-gap, ly=cv.f(lx), rx=gap, ry=cv.f(rx);
+  const lm=(ly-0)/(lx-0), rm=(ry-0)/(rx-0);
+  lineThrough(g,X,Y,0,0,lx,ly,css('--c2'),2.2);
+  lineThrough(g,X,Y,0,0,rx,ry,css('--c1'),2.2);
+  dot(g,X(lx),Y(ly),4.5,css('--c2')); dot(g,X(rx),Y(ry),4.5,css('--c1'));
+  $('#c6-lm').textContent=f2(lm); $('#c6-rm').textContent=f2(rm);
+  const vd=$('#c6-verdict');
+  if(C6.kind==='cusp'){
+    vd.className = gap<0.05 ? 'verdict ok' : 'verdict';
+    vd.textContent='왼쪽 기울기는 −∞로, 오른쪽 기울기는 +∞로 발산하지만, 두 할선 모두 같은 수직선(x=0)에 가까워집니다. 그래서 x=0은 원점에서의 접선입니다 — 미분은 안 되지만 접선은 있습니다.';
+  } else {
+    vd.className = 'verdict bad';
+    vd.textContent='왼쪽 할선은 기울기 −1인 직선에, 오른쪽 할선은 기울기 +1인 직선에 가까워집니다. 서로 다른 직선이므로 두 할선이 하나의 직선으로 수렴하지 않습니다 — 접선이 아예 존재하지 않습니다.';
+  }
+}
+let c6T=0;function c6Loop(ts){ if(!C6.playing||cur!=='cusp'){C6.playing=false;$('#c6-play').textContent='양쪽에서 가까이';return}
+  if(!c6T)c6T=ts; const dt=(ts-c6T)/1000;c6T=ts; C6.gap=Math.max(0.01,C6.gap-dt*0.5); c6c.set('gap',+C6.gap.toFixed(3)); drawC6();
+  if(C6.gap<=0.01){C6.playing=false;$('#c6-play').textContent='양쪽에서 가까이';return}
+  requestAnimationFrame(c6Loop)}
+$('#c6-play').addEventListener('click',e=>{C6.playing=!C6.playing;e.target.textContent=C6.playing?'멈춤':'양쪽에서 가까이';c6T=0;if(C6.playing)requestAnimationFrame(c6Loop)});
+$('#c6-reset').addEventListener('click',()=>{C6.gap=0.7;c6c.set('gap',0.7);drawC6()});
+rebuildC6Ctl(); c6kindUI.refresh();
+rebuildC5Ctl(); c5fnUI.refresh();
+
+/* ================= 탭 & 테마 ================= */
+const DRAW={circle:drawC1,parabola:drawC2,cubic:drawC3,limit:drawC4,deriv:drawC5,cusp:drawC6};
+function show(name){ if(!DRAW[name])name='circle';
+  $$('.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+name)); $$('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===name));
+  cur=name; requestAnimationFrame(()=>{DRAW[name]();});
+}
+let cur='circle';
+$$('#tabs button').forEach(b=>b.addEventListener('click',()=>{show(b.dataset.t);try{history.replaceState(null,'','#'+b.dataset.t)}catch(e){location.hash=b.dataset.t}}));
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+window.addEventListener('resize',()=>DRAW[cur]());
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>DRAW[cur]());
+new MutationObserver(()=>DRAW[cur]()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+show(location.hash.slice(1)||'circle');
+</script>
+
+</body></html>
