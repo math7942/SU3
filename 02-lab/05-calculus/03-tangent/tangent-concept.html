@@ -47,8 +47,15 @@ input[type=range]{width:100%;accent-color:var(--accent);min-width:0}
 .read{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;font-size:13.5px;margin-top:6px}
 .read div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding-bottom:3px}
 .read b{font-family:var(--mono);font-weight:600;font-size:12.5px;text-align:right}
-.ask{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13.5px}
-.ask li{margin:3px 0}
+.ask{margin:8px 0 0}
+.qa{border:1px solid var(--line);border-radius:8px;margin:6px 0;background:var(--bg)}
+.qa summary{padding:9px 10px;cursor:pointer;font-size:13.5px;color:var(--ink);list-style:none;display:flex;gap:7px;align-items:baseline}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:'▸';color:var(--accent);flex:none;font-size:12px;transition:transform .15s}
+.qa[open] summary::before{transform:rotate(90deg)}
+.qa summary:hover{color:var(--accent)}
+.qa .ans{padding:0 12px 10px 27px;font-size:13px;color:var(--muted);line-height:1.65;border-top:1px dashed var(--line);margin-top:2px;padding-top:8px}
+.qa .ans b{color:var(--ink)}
 .note{font-size:12.5px;color:var(--muted);margin:8px 0 0}
 .verdict{margin-top:10px;padding:10px 12px;border-radius:8px;font-size:14px;font-weight:600;border:1.5px solid var(--line);background:var(--bg)}
 .verdict.ok{border-color:var(--ok);color:var(--ok)}
@@ -101,7 +108,10 @@ footer{margin-top:20px;color:var(--muted);font-size:13px}
     <span><i style="background:var(--c1)"></i>접선(목표)</span>
    </div>
    <h3>생각해 보기</h3>
-   <ol class="ask"><li>원에서 접선을 "곡선과 한 점에서만 만나는 직선"이라고 정의하면, 이 정의는 원에서 항상 맞을까요?</li><li>Δθ가 0에 가까워질수록 할선과 접선의 기울기 차이는 어떻게 변하나요?</li></ol>
+   <div class="ask">
+    <details class="qa"><summary>1. 원에서 접선을 "곡선과 한 점에서만 만나는 직선"이라고 정의하면, 이 정의는 원에서 항상 맞을까요?</summary><div class="ans">답: 네, 맞습니다. 원은 닫힌 곡선이라 접선을 아무리 연장해도 원과는 딱 한 점에서만 만납니다(두 점에서 만나면 할선이지 접선이 아니고, 아예 안 만나면 원 밖을 지나는 직선입니다). 그래서 원이라는 좁은 맥락에서는 이 정의가 충분히 통합니다. 문제는 이 정의를 포물선처럼 다른 곡선에 그대로 가져갈 때 생깁니다 — 2번 탭에서 확인해 보세요.</div></details>
+    <details class="qa"><summary>2. Δθ가 0에 가까워질수록 할선과 접선의 기울기 차이는 어떻게 변하나요?</summary><div class="ans">답: Δθ가 작아질수록 할선의 기울기와 접선의 기울기 차이는 점점 0에 가까워집니다 — 즉 할선이 접선에 한없이 가까워집니다. 바로 이 "한없이 가까워진다"는 성질을 이용해서 접선을 <b>할선의 극한</b>으로 정의할 수 있습니다. 4번 탭에서 이 아이디어가 원뿐 아니라 포물선·삼차함수에서도 통한다는 것을 확인합니다.</div></details>
+   </div>
   </div>
  </div>
 </section>
@@ -125,7 +135,10 @@ footer{margin-top:20px;color:var(--muted);font-size:13px}
    </div>
    <div class="verdict bad" id="c2-verdict"></div>
    <h3>생각해 보기</h3>
-   <ol class="ask"><li>세로선은 k값에 상관없이 늘 한 점에서만 만나는데, 왜 접선이 아닐까요?</li><li>"곡선과 한 점에서 만난다"는 접선이기 위한 조건으로 충분한가요?</li></ol>
+   <div class="ask">
+    <details class="qa"><summary>1. 세로선은 k값에 상관없이 늘 한 점에서만 만나는데, 왜 접선이 아닐까요?</summary><div class="ans">답: y=x²는 함수이므로 세로선 x=k는 정의상 그래프와 정확히 한 점 (k, k²)에서만 만납니다 — k가 무엇이든 항상 그렇습니다. 즉 "한 점에서 만난다"는 세로선이기만 하면 자동으로 성립하는 너무 쉬운 조건이라, 접선인지 아닌지를 구별해 주지 못합니다. 진짜 접선은 그 점에서 곡선과 같은 방향(기울기 2k)을 가져야 하는데, 세로선은 기울기가 아예 없죠(수직). 그래서 세로선은 이 포물선의 접선이 될 수 없습니다.</div></details>
+    <details class="qa"><summary>2. "곡선과 한 점에서 만난다"는 접선이기 위한 조건으로 충분한가요?</summary><div class="ans">답: 아닙니다. 세로선은 늘 한 점에서만 만나지만 접선이 아니므로, 이 조건만으로는 접선임을 보장할 수 없습니다 — 즉 <b>충분조건이 아닙니다</b>. 원에서는 통했지만(1번 탭) 포물선에서는 반례가 생긴 것이죠. 조건을 만족해도 결론(접선이다)이 보장되지 않을 때 "충분하지 않다"고 말합니다.</div></details>
+   </div>
   </div>
  </div>
 </section>
@@ -148,7 +161,10 @@ footer{margin-top:20px;color:var(--muted);font-size:13px}
    </div>
    <div class="verdict" id="c3-verdict"></div>
    <h3>생각해 보기</h3>
-   <ol class="ask"><li>a = 0일 때 접선은 곡선의 어느 쪽에 있나요? (x &lt; 0 쪽과 x &gt; 0 쪽을 비교해 보세요)</li><li>"곡선을 스치고 지나가지 않는다"는 접선이기 위한 필요조건인가요?</li></ol>
+   <div class="ask">
+    <details class="qa"><summary>1. a = 0일 때 접선은 곡선의 어느 쪽에 있나요? (x &lt; 0 쪽과 x &gt; 0 쪽을 비교해 보세요)</summary><div class="ans">답: x&lt;0 쪽에서는 곡선 y=x³이 접선 y=0보다 아래(음수)에 있고, x&gt;0 쪽에서는 곡선이 접선보다 위(양수)에 있습니다. 즉 접선을 기준으로 곡선이 아래에서 위로 넘어갑니다 — 접선이 곡선을 뚫고 지나가는 것입니다. a=0은 삼차함수 y=x³의 변곡점이라서 생기는 현상입니다.</div></details>
+    <details class="qa"><summary>2. "곡선을 스치고 지나가지 않는다"는 접선이기 위한 필요조건인가요?</summary><div class="ans">답: 아닙니다. y=0은 미분(3a²=0)으로 구한 틀림없는 진짜 접선인데도 곡선을 뚫고 지나갑니다. 그러므로 "곡선을 스치고 지나가지 않는다"는 접선이기 위해 반드시 있어야 하는 성질, 즉 <b>필요조건이 아닙니다</b>.</div></details>
+   </div>
   </div>
  </div>
 </section>
@@ -217,7 +233,10 @@ footer{margin-top:20px;color:var(--muted);font-size:13px}
    </div>
    <div class="verdict" id="c6-verdict"></div>
    <h3>생각해 보기</h3>
-   <ol class="ask"><li>y = 2√|x| 는 원점에서 양쪽 할선의 기울기가 +∞, −∞로 서로 다른 부호로 발산하는데, 왜 접선(수직선)이 있다고 할 수 있을까요?</li><li>y = |x| 는 양쪽 할선의 기울기가 각각 −1, +1이라는 "유한한" 값으로 수렴하는데도 왜 접선이 없다고 할까요?</li></ol>
+   <div class="ask">
+    <details class="qa"><summary>1. y = 2√|x| 는 원점에서 양쪽 할선의 기울기가 +∞, −∞로 서로 다른 부호로 발산하는데, 왜 접선(수직선)이 있다고 할 수 있을까요?</summary><div class="ans">답: 기울기라는 "숫자"는 왼쪽에서 −∞, 오른쪽에서 +∞로 다르게 발산하지만, 기울기가 −∞로 가는 직선과 +∞로 가는 직선은 사실 <b>같은 수직선(x=0)</b>입니다. 할선이 실제로 다가가는 "직선 자체"를 보면 양쪽에서 똑같이 x=0으로 수렴합니다. 기울기라는 숫자만 보면 달라 보이지만, 직선(기하적 대상)으로 보면 하나로 일치하므로 접선이 존재한다고 할 수 있습니다.</div></details>
+    <details class="qa"><summary>2. y = |x| 는 양쪽 할선의 기울기가 각각 −1, +1이라는 "유한한" 값으로 수렴하는데도 왜 접선이 없다고 할까요?</summary><div class="ans">답: 왼쪽 할선은 기울기 −1인 직선에, 오른쪽 할선은 기울기 +1인 직선에 다가갑니다. 이 둘은 서로 다른 두 직선이고, 하나로 합쳐지지 않습니다. 접선이 있으려면 어느 쪽에서 다가가든 <b>같은 하나의 직선</b>으로 수렴해야 하는데 여기서는 그렇지 않으므로, 원점에는 접선이 없다고 할 수 있습니다.</div></details>
+   </div>
   </div>
  </div>
 </section>
