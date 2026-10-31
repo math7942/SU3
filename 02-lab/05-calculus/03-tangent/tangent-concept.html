@@ -392,7 +392,7 @@ const CURVES={
 const C4={curve:'circle',P:40,dth:50,playing:false};
 const c4curveUI=mountChoice($('#c4-curve'),[{k:'circle',label:'원'},{k:'parabola',label:'포물선'},{k:'cubic',label:'삼차함수'}],
   ()=>C4.curve, k=>{C4.curve=k; const cv=CURVES[k]; C4.P=(cv.tmin+cv.tmax)/2; C4.dth=(cv.tmax-cv.tmin)*0.3;
-    c4c.refresh(); drawC4();});
+    rebuildC4Ctl(); drawC4();});
 let c4c;
 function rebuildC4Ctl(){
   const cv=CURVES[C4.curve];
@@ -432,7 +432,7 @@ const FNS={
 };
 const C5={fn:'sq',a:1.5,h:0.9};
 const c5fnUI=mountChoice($('#c5-fn'),[{k:'sq',label:'f(x) = x²'},{k:'cube',label:'f(x) = x³'}],
-  ()=>C5.fn, k=>{C5.fn=k; const fn=FNS[k]; C5.a=(fn.amin+fn.amax)/2; C5.h=(fn.amax-fn.amin)*0.25; c5c.refresh(); drawC5();});
+  ()=>C5.fn, k=>{C5.fn=k; const fn=FNS[k]; C5.a=(fn.amin+fn.amax)/2; C5.h=(fn.amax-fn.amin)*0.25; rebuildC5Ctl(); drawC5();});
 let c5c;
 function rebuildC5Ctl(){
   const fn=FNS[C5.fn];
@@ -464,7 +464,7 @@ const CUSPS={
 };
 const C6={kind:'cusp',gap:0.7,playing:false};
 const c6kindUI=mountChoice($('#c6-kind'),[{k:'cusp',label:'뾰족점 (수직접선)'},{k:'corner',label:'꺾인점 (접선 없음)'}],
-  ()=>C6.kind, k=>{C6.kind=k; C6.gap=0.7; c6c.refresh(); drawC6();});
+  ()=>C6.kind, k=>{C6.kind=k; C6.gap=0.7; rebuildC6Ctl(); drawC6();});
 let c6c;
 function rebuildC6Ctl(){
   c6c=mount($('#c6-ctl'),[{k:'gap',label:'0에서 거리',min:0.01,max:1.8,step:0.01,fmt:f2}],C6,()=>drawC6());
