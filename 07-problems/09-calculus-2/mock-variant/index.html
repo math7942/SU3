@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>최근 시험 변형 쪽지시험 · 미적분 · 수수의 수학</title>
+<style>
+  :root { --ink:#111; --soft:#555; --line:#bbb; --key:#b3261e; --accent:#5b4bc4; --bg:#f6f5fb; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --ink:#eee; --soft:#aaa; --line:#555; --bg:#1b1a22; } }
+  :root[data-theme="dark"] { --ink:#eee; --soft:#aaa; --line:#555; --bg:#1b1a22; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.3rem; margin: 8px 0 4px; }
+  .lead { color: var(--soft); font-size: .92rem; margin: 0 0 14px; }
+  .panel { background: #fff; color:#111; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .panel { background:#26242f; color:#eee; } }
+  :root[data-theme="dark"] .panel { background:#26242f; color:#eee; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin: 6px 0; }
+  .row label { font-size: .92rem; }
+  select, button { font: inherit; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background:#fff; color:#111; }
+  button.primary { background: var(--accent); color:#fff; border-color: var(--accent); cursor:pointer; font-weight:700; }
+  button { cursor:pointer; }
+  .note { font-size:.85rem; color: var(--soft); }
+  .warn { color: var(--key); font-size:.9rem; }
+  .sheet { background:#fff; color:#111; border-radius: 6px; padding: 18mm 16mm; margin: 0 auto 16px; max-width: 180mm; min-height: 240mm; box-sizing: border-box; box-shadow: 0 4px 18px rgba(0,0,0,.12); page-break-after: always; }
+  .sheet h2 { font-size: 15pt; margin: 0 0 4mm; border-bottom: 1.5px solid #111; padding-bottom: 2mm; }
+  .sheet .idline { font-size: 10pt; text-align: right; margin-bottom: 4mm; }
+  .q { margin: 0 0 8mm; font-size: 11.5pt; line-height: 1.5; }
+  .q .no { font-weight: 800; margin-right: 2mm; }
+  .q .src { display:block; font-size: 8.5pt; color:#666; margin-bottom: 1.5mm; }
+  .choices { display:flex; flex-wrap:wrap; gap: 4mm 8mm; margin-top: 2.5mm; font-size: 11pt; }
+  .choices span.c { white-space: nowrap; }
+  .key { color: var(--key); font-size: 10.5pt; margin-top: 1mm; }
+  .answers { background:#fff; color:#111; border-radius:12px; padding:14px 16px; margin: 14px 0; }
+  table.ans { border-collapse: collapse; width:100%; font-size: .92rem; }
+  table.ans td, table.ans th { border-bottom: 1px solid #ddd; padding: 5px 6px; text-align:left; }
+  @media print {
+    body { background:#fff; }
+    .no-print, .panel, .answers-screen { display:none !important; }
+    .sheet { box-shadow:none; margin:0; max-width:none; min-height:0; padding: 0; page-break-after: always; }
+    .sheet.key-page { page-break-before: auto; }
+    @page { size: A4; margin: 14mm; }
+  }
+</style>
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$','$$'], ['\\[','\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1>최근 시험 변형 쪽지시험 (미적분)</h1>
+  <p class="lead">2027학년도 6월·9월 모의평가, 2026학년도 10월·9월 고3, 2026학년도 수능(홀수형)의 미적분 23~27번을 변형한 문항으로 시험지를 만듭니다. 출처는 각 문항 위에 표시됩니다.</p>
+
+  <div class="panel no-print">
+    <div class="row">
+      <label>문항 수
+        <select id="count">
+          <option value="5">5문항</option>
+          <option value="10">10문항</option>
+          <option value="15">15문항</option>
+          <option value="20">20문항</option>
+          <option value="25" selected>25문항</option>
+        </select>
+      </label>
+      <label>출제 방식
+        <select id="mode">
+          <option value="random">무작위 (전체)</option>
+          <option value="type">같은 유형</option>
+        </select>
+      </label>
+      <label>유형
+        <select id="big">
+          <option value="극한">극한</option>
+          <option value="수열·급수">수열·급수</option>
+          <option value="미분·곡선">미분·곡선</option>
+          <option value="적분">적분</option>
+        </select>
+      </label>
+    </div>
+    <div class="row">
+      <button class="primary" id="make">시험지 만들기</button>
+      <button id="keyBtn">정답표 보기</button>
+      <button id="printBtn">인쇄</button>
+    </div>
+    <p class="note" id="info"></p>
+    <p class="warn" id="warn"></p>
+  </div>
+
+  <div id="out"></div>
+  <div id="keyOut" class="answers" style="display:none"></div>
+</div>
+
+<script src="mock-gen.js"></script>
+<script>
+(function () {
+  'use strict';
+  var G = window.SU3MockGen;
+  var last = null;
+
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  var L = ['①', '②', '③', '④', '⑤'];
+
+  function chooseItems(n) {
+    var mode = document.getElementById('mode').value;
+    var pool = G.ITEMS.slice();
+    var warn = document.getElementById('warn');
+    warn.textContent = '';
+    if (mode === 'type') {
+      var big = document.getElementById('big').value;
+      pool = pool.filter(function (it) { return it.big === big; });
+      if (n > pool.length) {
+        warn.textContent = '이 유형은 ' + pool.length + '문항뿐이라 ' + pool.length + '문항으로 만듭니다.';
+        n = pool.length;
+      }
+    }
+    return shuffle(pool).slice(0, n);
+  }
+
+  function render() {
+    var n = parseInt(document.getElementById('count').value, 10);
+    var items = chooseItems(n);
+    var made = items.map(function (it) {
+      var r = it.gen();
+      return { src: it.src, no: it.no, big: it.big, stmt: r.stmt, choices: r.choices, ans: r.ans, val: r.val };
+    });
+    last = made;
+    var out = document.getElementById('out');
+    out.innerHTML = '';
+    var per = 5;
+    for (var s = 0; s < made.length; s += per) {
+      var sheet = document.createElement('section');
+      sheet.className = 'sheet';
+      var html = '<h2>미적분 변형 쪽지시험 ' + (Math.floor(s / per) + 1) + '</h2>' +
+        '<div class="idline">학년 ____ 반 ____ 번 이름 ________ 점수 ____ / ' + made.length + '</div>';
+      made.slice(s, s + per).forEach(function (q, i) {
+        var num = s + i + 1;
+        html += '<div class="q"><span class="src">출처: ' + q.src + ' ' + q.no + '번 (변형)</span>' +
+          '<span class="no">' + num + '.</span>\\(' + q.stmt + '\\)' +
+          '<div class="choices">' + q.choices.map(function (c, k) {
+            return '<span class="c">' + L[k] + '\\(' + c + '\\)</span>';
+          }).join('') + '</div></div>';
+      });
+      sheet.innerHTML = html;
+      out.appendChild(sheet);
+    }
+    document.getElementById('info').textContent = made.length + '문항, 쪽지 ' + Math.ceil(made.length / per) + '장. 인쇄 창에서 A4, 배율 100%로 인쇄하세요.';
+    buildKey();
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([out]);
+    document.getElementById('keyOut').style.display = 'none';
+  }
+
+  function buildKey() {
+    var k = document.getElementById('keyOut');
+    if (!last) { k.innerHTML = ''; return; }
+    var rows = last.map(function (q, i) {
+      return '<tr><td>' + (i + 1) + '</td><td>' + q.src + ' ' + q.no + '번</td><td>' + L[q.ans - 1] + '</td><td>\\(' + q.val + '\\)</td></tr>';
+    }).join('');
+    k.innerHTML = '<h3>정답표 (교사용)</h3><table class="ans"><tr><th>번호</th><th>출처</th><th>정답</th><th>정답 값</th></tr>' + rows + '</table>';
+    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([k]);
+  }
+
+  document.getElementById('make').addEventListener('click', render);
+  document.getElementById('keyBtn').addEventListener('click', function () {
+    var k = document.getElementById('keyOut');
+    if (!last) { document.getElementById('warn').textContent = '먼저 시험지를 만드세요.'; return; }
+    k.style.display = k.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+  render();
+})();
+</script>
+</body>
+</html>
