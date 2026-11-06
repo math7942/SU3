@@ -78,6 +78,31 @@
       '</div>' + footer(set) + '</section>';
   }
 
+  /* --- 공식 랜덤 쪽지시험 (문제은행에서 뽑은 30문항, 2열 × 15행) --- */
+  function bankCell(it, no, teacher) {
+    var pre = it.pre ? '<div class="bpre">' + it.pre + '</div>' : '';
+    var ask = it.q ? m(it.q + '=') : '';
+    var ans = '';
+    if (teacher) {
+      ans = it.at ? '<div class="bat red">' + it.at + '</div>' : '<span class="red">' + m(it.a) + '</span>';
+    }
+    var line = (ask || ans) ? '<div class="bline">' + (ask ? '<span class="bq">' + ask + '</span>' : '') +
+      (!it.at && teacher ? ans : '') + '</div>' : '';
+    return '<div class="bcell fit"><span class="no">' + no + '.</span><div class="bbody">' + pre + line +
+      (it.at && teacher ? ans : '') + '</div></div>';
+  }
+  function pageBank(sheet, mode, set, teacher) {
+    var left = '', right = '', half = Math.ceil(set.items.length / 2);
+    set.items.forEach(function (it, i) {
+      var cell = bankCell(it, i + 1, teacher);
+      if (i < half) { left += cell; } else { right += cell; }
+    });
+    return '<section class="sheet sheet-bank' + (teacher ? ' is-key' : '') + '">' +
+      header(sheet, mode, set, teacher) +
+      '<div class="bgrid"><div class="bcol">' + left + '</div><div class="bcol">' + right + '</div></div>' +
+      footer(set) + '</section>';
+  }
+
   /* --- 치환적분 · 부분적분 (2열 × 5행) --- */
   function cellQuiz(it, no, teacher) {
     var body;
@@ -144,6 +169,7 @@
   /* 한 세트가 만들어 내는 쪽들 (HTML 문자열 배열) */
   function pagesOf(sheet, mode, set, teacher) {
     if (sheet.layout === 'formula') { return [pageFormula(sheet, mode, set, teacher)]; }
+    if (sheet.layout === 'bank') { return [pageBank(sheet, mode, set, teacher)]; }
     if (sheet.layout === 'quiz') { return [pageQuiz(sheet, mode, set, teacher)]; }
     return pagesSeries(sheet, mode, set, teacher);
   }
