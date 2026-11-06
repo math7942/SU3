@@ -100,6 +100,7 @@
 
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   var L = ['①', '②', '③', '④', '⑤'];
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function chooseItems(n) {
     var mode = document.getElementById('mode').value;
@@ -135,10 +136,10 @@
         '<div class="idline">학년 ____ 반 ____ 번 이름 ________ 점수 ____ / ' + made.length + '</div>';
       made.slice(s, s + per).forEach(function (q, i) {
         var num = s + i + 1;
-        html += '<div class="q"><span class="src">출처: ' + q.src + ' ' + q.no + '번 (변형)</span>' +
-          '<span class="no">' + num + '.</span>\\(' + q.stmt + '\\)' +
+        html += '<div class="q"><span class="src">출처: ' + esc(q.src) + ' ' + q.no + '번 (변형)</span>' +
+          '<span class="no">' + num + '.</span>\\(' + esc(q.stmt) + '\\)' +
           '<div class="choices">' + q.choices.map(function (c, k) {
-            return '<span class="c">' + L[k] + '\\(' + c + '\\)</span>';
+            return '<span class="c">' + L[k] + '\\(' + esc(c) + '\\)</span>';
           }).join('') + '</div></div>';
       });
       sheet.innerHTML = html;
@@ -154,7 +155,7 @@
     var k = document.getElementById('keyOut');
     if (!last) { k.innerHTML = ''; return; }
     var rows = last.map(function (q, i) {
-      return '<tr><td>' + (i + 1) + '</td><td>' + q.src + ' ' + q.no + '번</td><td>' + L[q.ans - 1] + '</td><td>\\(' + q.val + '\\)</td></tr>';
+      return '<tr><td>' + (i + 1) + '</td><td>' + esc(q.src) + ' ' + q.no + '번</td><td>' + L[q.ans - 1] + '</td><td>\\(' + q.val + '\\)</td></tr>';
     }).join('');
     k.innerHTML = '<h3>정답표 (교사용)</h3><table class="ans"><tr><th>번호</th><th>출처</th><th>정답</th><th>정답 값</th></tr>' + rows + '</table>';
     if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([k]);
