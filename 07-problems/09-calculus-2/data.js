@@ -224,6 +224,13 @@
             sheet: window.SU3_SHEETS.formula
           },
           {
+            id: 'sheet-bank',
+            name: '공식 랜덤 쪽지시험 (30문항)',
+            desc: '공식 암기 PDF 문제은행에서 무작위 30문항 · A~D 4세트',
+            concept: '<p>미적분Ⅱ 공식 암기 PDF의 문제(극한·미분·삼각함수 공식·적분·정적분과 급수·넓이와 길이·극값 정의와 정리)를 문제은행으로 삼아, 세트마다 <strong>30문항을 무작위로</strong> 뽑습니다. 한 세트 안에서는 같은 문제가 나오지 않고, A~D형은 서로 되도록 겹치지 않게 뽑습니다. 누를 때마다 새로 뽑히며, 교사용 정답에는 모든 문항의 답이 붙습니다.</p>',
+            sheet: window.SU3_SHEETS.bank
+          },
+          {
             id: 'sheet-substitution',
             name: '치환적분법 쪽지시험',
             desc: '공식 1문항 + 치환적분 9문항 (정적분 2개 포함)',
