@@ -169,7 +169,7 @@
     });
 
     /* 한 문제씩 푸는 주제만 무작위 출제와 기록 저장 대상입니다. 쪽지시험(sheet)은 인쇄용입니다. */
-    var practice = topics.filter(function (t) { return !t.sheet; });
+    var practice = topics.filter(function (t) { return !t.sheet && !t.href; });
 
     var state = { topic: null, problem: null, checked: false, selected: null, random: false };
 
@@ -191,7 +191,7 @@
         b.innerHTML = '<span class="t-name"></span><span class="t-desc"></span><span class="t-score"></span>';
         b.querySelector('.t-name').innerHTML = t.name;
         b.querySelector('.t-desc').innerHTML = t.desc || '';
-        b.addEventListener('click', function () { start(t, false); });
+        b.addEventListener('click', function () { if (t.href) { window.location.href = t.href; return; } start(t, false); });
         grid.appendChild(b);
       });
       block.appendChild(grid);
@@ -226,6 +226,7 @@
         var b = nav.querySelector('.topic-btn[data-topic="' + t.id + '"] .t-score');
         if (!b) { return; }
         if (t.sheet) { b.textContent = '🖨 A~D 4세트 · 인쇄용'; return; }
+        if (t.href) { b.textContent = '🧮 숫자 변형 · 인쇄용'; return; }
         var s = loadScore(S.id, t.id);
         b.textContent = s.total ? '푼 문제 ' + s.total + '개 · 정답 ' + s.right + '개' : '';
       });
