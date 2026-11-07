@@ -105,7 +105,7 @@
     <a class="back" href="index.html">← 업무 도구</a>
     <h1>서논술 쓰리고!</h1>
     <div class="slogan">출제GO · 채점GO · 피드백GO! 서논술 쓰리고!</div>
-    <div class="sub">링크 하나를 선생님들께 보내면, 각자 문서(.docx, .pdf)를 올리고 서로 읽으며 익명으로 의견을 남길 수 있습니다.</div>
+    <div class="sub">링크 하나를 선생님들께 보내면, 각자 문서(.docx)를 올리고 서로 읽으며 의견을 남길 수 있습니다.</div>
     <div class="card">
       <h2>새로 만들기</h2>
       <div class="field">
@@ -132,9 +132,9 @@
       <div class="share-row"><input type="text" id="shareLink2" readonly><button class="small" id="copyBtn2">링크 복사</button></div>
     </div>
     <div class="card">
-      <h2>문서 올리기 (.docx, .pdf)</h2>
-      <input type="file" id="fileInput" accept=".docx,.pdf">
-      <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장"에서 Word(.docx) 또는 PDF로 변환해서 올려주세요 — PDF는 화면에 보이는 그대로 올라갑니다.</div>
+      <h2>문서 올리기 (.docx)</h2>
+      <input type="file" id="fileInput" accept=".docx">
+      <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장"에서 Word(.docx)로 변환해서 올려주세요.</div>
       <div class="msg" id="uploadMsg"></div>
     </div>
     <div class="card">
@@ -546,9 +546,9 @@ $('copyBtn2').addEventListener('click', function(){
 $('fileInput').addEventListener('change', async function(e){
   var file = e.target.files[0];
   if(!file) return;
-  if(!/\.(docx|pdf)$/i.test(file.name)){
+  if(!/\.docx$/i.test(file.name)){
     $('uploadMsg').className = 'msg err';
-    $('uploadMsg').textContent = 'docx 또는 pdf 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장"에서 Word(.docx) 또는 PDF로 바꿔서 올려주세요.';
+    $('uploadMsg').textContent = 'docx 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장"에서 Word(.docx)로 바꿔서 올려주세요.';
     e.target.value = '';
     return;
   }
@@ -587,7 +587,7 @@ function renderFileList(){
           '<h3 style="margin:0">의견 남기기</h3>' +
           '<button class="small ghost" data-act="comments-word">피드백 다운로드</button>' +
         '</div>' +
-        '<div class="note" style="margin:0 0 8px">문서에서 의견을 남기고 싶은 부분을 선택하거나(docx) 클릭해서(pdf) 의견을 남겨보세요.</div>' +
+        '<div class="note" style="margin:0 0 8px">문서에서 의견을 남기고 싶은 부분을 마우스로 선택하면 의견을 남길 수 있습니다.</div>' +
         '<div class="doc-view-wrap">' +
           '<div class="doc-view empty">문서를 불러오는 중...</div>' +
           '<div class="comment-panel">' +
@@ -1209,7 +1209,7 @@ async function buildCommentedDocx(meta, comments){
 async function downloadFileComments(fileId){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   if(!meta) return;
-  var base = meta.filename.replace(/\.(docx|pdf)$/i, '');
+  var base = meta.filename.replace(/\.docx$/i, '');
   try{
     var comments = await getCommentsOnce(fileId);
     if(isPdf(meta.filename)){
