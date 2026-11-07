@@ -587,16 +587,15 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 1. 데이터를 담을 구글 시트를 새로 하나 만듭니다 (예: `문서 피드백 수합 저장소`). 시트는 비워둔
    채로 두면 됩니다 — 아래 코드가 처음 실행될 때 필요한 하위 시트(`Sessions`, `Files`, `Comments`)를
    자동으로 만듭니다.
-   - `Sessions` — 세션(모음) 목록. 열: 아이디, 제목, 비밀번호, 생성일시
+   - `Sessions` — 세션(모음) 목록. 열: 아이디, 제목, 생성일시
    - `Files` — 올라온 문서 목록. 열: 파일아이디(구글드라이브 파일 ID), 세션아이디, 파일명, 업로드일시
    - `Comments` — 코멘트 목록(익명). 열: 아이디, 세션아이디, 파일아이디, 코멘트, 작성일시
    - 원본 파일 자체는 시트가 아니라, Apps Script가 자동으로 만드는 구글 드라이브의
      `문서피드백_원본파일` 폴더 안에 저장됩니다.
 2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기존 코드를 전부 지우고 아래 코드를
-   붙여넣습니다. (관리자 비밀번호는 시트에 저장하지 않고 세션을 만들 때마다 담당자가 직접
-   정하므로, 이 코드에는 따로 바꿀 값이 없습니다. 문서를 올리거나 코멘트를 남기는 것은 누구나
-   링크만 있으면 할 수 있고, 원본 전체 내려받기·코멘트 워드로 저장·문서 삭제처럼 "나중에 정리하는"
-   동작만 세션을 만들 때 정한 비밀번호로 화면에서 가려둡니다.)
+   붙여넣습니다. (비밀번호 없이, 링크만 있으면 문서를 올리고 코멘트를 남기는 것은 물론
+   원본 내려받기·삭제·전체 내보내기까지 누구나 할 수 있습니다. 링크를 아는 사람만 들어올 수
+   있다는 것으로 접근을 제한합니다.)
 
    ```js
    function doGet(e) {
@@ -619,11 +618,6 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
      if (action === "listComments") {
        return json({ ok: true, comments: listComments(ss, e.parameter.fileId) });
      }
-     if (action === "verifyAdmin") {
-       var s2 = findSession(ss, e.parameter.id);
-       if (!s2) return json({ ok: false, error: "세션을 찾을 수 없습니다" });
-       return json({ ok: s2.password === e.parameter.password });
-     }
      return json({ ok: false, error: "알 수 없는 요청입니다" });
    }
 
@@ -634,11 +628,9 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 
      if (action === "createSession") {
        var title = String(payload.title || "").trim();
-       var password = String(payload.password || "");
        if (!title) return json({ ok: false, error: "제목을 입력해주세요" });
-       if (!password) return json({ ok: false, error: "관리자 비밀번호를 입력해주세요" });
        var id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
-       getSheet(ss, "Sessions").appendRow([id, title, password, new Date().toISOString()]);
+       getSheet(ss, "Sessions").appendRow([id, title, new Date().toISOString()]);
        return json({ ok: true, id: id });
      }
 
@@ -661,8 +653,6 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
      }
 
      if (action === "deleteFile") {
-       var session2 = findSession(ss, payload.sessionId);
-       if (!session2 || session2.password !== payload.password) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
        var sheet = getSheet(ss, "Files");
        var data = sheet.getDataRange().getValues();
        for (var r = 1; r < data.length; r++) {
@@ -699,7 +689,7 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
      var sheet = ss.getSheetByName(name);
      if (!sheet) {
        sheet = ss.insertSheet(name);
-       if (name === "Sessions") sheet.appendRow(["아이디", "제목", "비밀번호", "생성일시"]);
+       if (name === "Sessions") sheet.appendRow(["아이디", "제목", "생성일시"]);
        if (name === "Files") sheet.appendRow(["파일아이디", "세션아이디", "파일명", "업로드일시"]);
        if (name === "Comments") sheet.appendRow(["아이디", "세션아이디", "파일아이디", "코멘트", "작성일시"]);
      }
@@ -711,7 +701,7 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
      var data = getSheet(ss, "Sessions").getDataRange().getValues();
      for (var r = 1; r < data.length; r++) {
        if (String(data[r][0]) === String(id)) {
-         return { id: data[r][0], title: data[r][1], password: data[r][2], createdAt: data[r][3] };
+         return { id: data[r][0], title: data[r][1], createdAt: data[r][2] };
        }
      }
      return null;
@@ -757,12 +747,14 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 이미 배포해 두었다면: **배포 → 배포 관리 → 연필(수정) 아이콘 → 버전: 새 버전 → 배포**로
 코드만 새로 반영하면 됩니다 (URL은 그대로 유지).
 
-**사용 흐름**: 담당자가 홈 화면에서 제목과 관리자 비밀번호를 정해 "모음"을 하나 만들면 전용
-링크가 생깁니다. 그 링크를 선생님들께 보내면, 각자 로그인 없이 문서(.docx)를 올릴 수 있고,
-누구나 올라온 문서 이름을 눌러 내용을 읽고 그 아래에 익명으로 코멘트를 남길 수 있습니다(작성자
-이름이 전혀 남지 않습니다). 담당자는 같은 화면 위쪽의 "관리자 모드"에서 비밀번호를 넣으면
-문서별 원본 내려받기·삭제, 원본 전체 zip 내려받기, 코멘트 전체를 워드 파일로 저장하거나
-인쇄하는 기능이 열립니다 — 시점 제한 없이 담당자가 원할 때 언제든 받을 수 있습니다.
+**사용 흐름**: 담당자가 홈 화면에서 제목만 정해 "모음"을 하나 만들면 전용 링크가 생깁니다.
+그 링크를 선생님들께 보내면, 각자 로그인 없이 문서(.docx)를 올릴 수 있고, 누구나 올라온 문서
+이름을 눌러 내용을 읽고 그 아래에 익명으로 코멘트를 남길 수 있습니다(작성자 이름이 전혀
+남지 않습니다). 같은 화면 위쪽의 "관리 기능 보기"를 누르면 문서별 원본 내려받기·삭제, 원본
+전체 zip 내려받기, 코멘트 전체를 워드 파일로 저장하거나 인쇄하는 기능이 열립니다 — 비밀번호
+없이 링크를 아는 사람 누구나 시점 제한 없이 쓸 수 있으니, 링크 자체를 필요한 사람에게만
+전달하는 것으로 접근을 관리해주세요. 삭제 버튼을 누르면 되돌릴 수 없다는 확인 문구가 한 번 더
+뜹니다.
 
 문서는 docx만 지원합니다(한글 문서는 "다른 이름으로 저장 → Word(.docx)"로 바꿔서 올리면 표·서식이
 가장 잘 유지됩니다). 다만 아주 복잡한 레이아웃, 각주, 특수 개체 등은 변환 과정에서 단순화될 수
