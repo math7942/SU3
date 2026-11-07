@@ -336,6 +336,8 @@ $('copyBtn').addEventListener('click', function(){
 // ---------------- 세션(공유) 화면 ----------------
 var isAdmin = false;
 var commentUnsubs = {}; // fileId -> unsub
+var openFileId = null;
+var docHtmlCache = {}; // fileId -> 렌더링된 문서 HTML (파일 목록이 다시 그려져도 다시 불러오지 않도록)
 
 function closeAllCommentListeners(){
   Object.keys(commentUnsubs).forEach(function(id){ commentUnsubs[id](); delete commentUnsubs[id]; });
@@ -343,6 +345,8 @@ function closeAllCommentListeners(){
 
 async function initSession(){
   isAdmin = false;
+  openFileId = null;
+  docHtmlCache = {};
   $('adminTools').hidden = true;
   $('adminToggle').textContent = '관리 기능 보기';
   $('uploadMsg').textContent = '';
@@ -398,13 +402,15 @@ function renderFileList(){
         '<span><span class="name" data-act="toggle">' + esc(f.filename) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
         '<span class="file-admin-actions" hidden>' +
           '<button class="small ghost" data-act="download">원본 다운로드</button>' +
-          '<button class="small ghost" data-act="comments-word">코멘트 워드로 저장</button>' +
           '<button class="small ghost" data-act="delete">삭제</button>' +
         '</span>' +
       '</div>' +
       '<div class="file-body">' +
         '<div class="doc-view empty">문서를 불러오는 중...</div>' +
-        '<h3>익명 코멘트</h3>' +
+        '<div class="row" style="justify-content:space-between;align-items:center">' +
+          '<h3 style="margin:14px 0 6px">익명 코멘트</h3>' +
+          '<button class="small ghost" data-act="comments-word">피드백 다운로드</button>' +
+        '</div>' +
         '<ul class="comment-list"></ul>' +
         '<textarea class="comment-input" placeholder="문서를 읽고 익명으로 의견을 남겨주세요"></textarea>' +
         '<div class="row" style="margin-top:6px"><button class="small comment-submit">코멘트 남기기</button><span class="msg comment-msg"></span></div>' +
@@ -425,28 +431,40 @@ function renderFileList(){
     if(del) del.addEventListener('click', function(){ deleteFile(fileId); });
     row.querySelector('.comment-submit').addEventListener('click', function(){ submitComment(row, fileId); });
   });
+
+  // 파일 목록이 다시 그려져도(관리 기능 토글, 다른 사람의 업로드로 실시간 갱신 등) 열려있던
+  // 패널은 그대로 열린 채로 복원한다.
+  if(openFileId){
+    var reopenRow = null;
+    Array.prototype.forEach.call(el.querySelectorAll('.file-row'), function(r){ if(r.dataset.id === openFileId) reopenRow = r; });
+    if(reopenRow) openFilePanel(reopenRow, openFileId);
+    else openFileId = null; // 그 사이에 삭제된 파일
+  }
 }
 
-async function toggleFile(row, fileId){
-  var body = row.querySelector('.file-body');
-  var wasOpen = body.classList.contains('open');
-  // 다른 패널은 닫아 화면을 간단하게 유지
+function closeAllPanels(){
   Array.prototype.forEach.call(document.querySelectorAll('.file-body.open'), function(b){ b.classList.remove('open'); });
   closeAllCommentListeners();
-  if(wasOpen) return;
-  body.classList.add('open');
+}
+
+async function openFilePanel(row, fileId){
+  row.querySelector('.file-body').classList.add('open');
   var docView = row.querySelector('.doc-view');
-  if(!docView.dataset.loaded){
+  if(docHtmlCache[fileId] !== undefined){
+    docView.classList.remove('empty');
+    docView.innerHTML = docHtmlCache[fileId];
+  } else {
     try{
       var meta = fileCache.find(function(f){ return f.fileId === fileId; });
       var buf = await getFileArrayBuffer(meta);
       var result = await mammoth.convertToHtml({ arrayBuffer: buf });
+      var html = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
+      docHtmlCache[fileId] = html;
       docView.classList.remove('empty');
-      docView.innerHTML = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
+      docView.innerHTML = html;
     }catch(err){
       docView.textContent = '문서를 읽는 중 오류가 발생했습니다: ' + err.message;
     }
-    docView.dataset.loaded = '1';
   }
   var ul = row.querySelector('.comment-list');
   commentUnsubs[fileId] = listenComments(fileId, function(comments){
@@ -455,6 +473,15 @@ async function toggleFile(row, fileId){
       return '<li>' + esc(c.comment) + '<span class="ctime">' + esc(fmtTime(c.createdAt)) + '</span></li>';
     }).join('');
   });
+}
+
+async function toggleFile(row, fileId){
+  var wasOpenForThis = (openFileId === fileId);
+  // 다른 패널은 닫아 화면을 간단하게 유지
+  closeAllPanels();
+  if(wasOpenForThis){ openFileId = null; return; }
+  openFileId = fileId;
+  await openFilePanel(row, fileId);
 }
 
 async function submitComment(row, fileId){
@@ -499,6 +526,8 @@ async function deleteFile(fileId){
   if(!confirm('정말 "' + name + '"와(과) 그 코멘트를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.')) return;
   try{
     await deleteFileEverywhere(meta);
+    delete docHtmlCache[fileId];
+    if(openFileId === fileId) openFileId = null;
   }catch(err){
     alert('삭제하지 못했습니다: ' + err.message);
   }
