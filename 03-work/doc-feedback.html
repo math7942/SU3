@@ -922,8 +922,8 @@ const XML_NS = 'http://www.w3.org/XML/1998/namespace';
 const COMMENTS_REL_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments';
 const COMMENTS_CT = 'application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml';
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-// rPr 안에서 w:highlight 가 와야 하는 자리 뒤에 오는 요소들(스키마 순서 유지용)
-const HIGHLIGHT_AFTER = ['u', 'effect', 'bdr', 'shd', 'fitText', 'vertAlign', 'rtl', 'cs', 'em', 'lang', 'eastAsianLayout', 'specVanish', 'oMath'];
+// Word 문자 서식(rPr)의 스키마 순서. 요소를 넣을 때 이 순서를 지켜야 Word가 무시하지 않는다.
+const RPR_ORDER = ['rStyle','rFonts','b','bCs','i','iCs','caps','smallCaps','strike','dstrike','outline','shadow','emboss','imprint','noProof','snapToGrid','vanish','webHidden','color','spacing','w','kern','position','sz','szCs','highlight','u','effect','bdr','shd','fitText','vertAlign','rtl','cs','em','lang','eastAsianLayout','specVanish','oMath','rPrChange'];
 
 function xmlString(doc){
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + new XMLSerializer().serializeToString(doc.documentElement);
@@ -982,22 +982,26 @@ function childOf(el, name){
   }
   return null;
 }
-function addHighlight(run){
+function setRunFormat(run, name, attrs){
   var doc = run.ownerDocument;
   var rPr = childOf(run, 'rPr');
   if(!rPr){
     rPr = doc.createElementNS(W_NS, 'w:rPr');
     run.insertBefore(rPr, run.firstChild);
   }
-  var old = childOf(rPr, 'highlight');
+  var old = childOf(rPr, name);
   if(old) rPr.removeChild(old);
-  var h = doc.createElementNS(W_NS, 'w:highlight');
-  h.setAttributeNS(W_NS, 'w:val', 'yellow');
-  var before = null;
+  var el = doc.createElementNS(W_NS, 'w:' + name);
+  Object.keys(attrs).forEach(function(k){ el.setAttributeNS(W_NS, 'w:' + k, attrs[k]); });
+  var rank = RPR_ORDER.indexOf(name), before = null;
   for(var c = rPr.firstChild; c; c = c.nextSibling){
-    if(c.nodeType === 1 && c.namespaceURI === W_NS && HIGHLIGHT_AFTER.indexOf(c.localName) !== -1){ before = c; break; }
+    if(c.nodeType === 1 && c.namespaceURI === W_NS && RPR_ORDER.indexOf(c.localName) > rank){ before = c; break; }
   }
-  rPr.insertBefore(h, before);
+  rPr.insertBefore(el, before);
+}
+function addHighlight(run){
+  setRunFormat(run, 'highlight', { val: 'yellow' });
+  setRunFormat(run, 'shd', { val: 'clear', color: 'auto', fill: 'FFFF00' });
 }
 
 // 문단들을 이어 붙인 뒤 글자·숫자만 남긴 색인. 공백·문장부호·수식 차이에 덜 민감하게 찾기 위함.
