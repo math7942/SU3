@@ -922,8 +922,9 @@ const XML_NS = 'http://www.w3.org/XML/1998/namespace';
 const COMMENTS_REL_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments';
 const COMMENTS_CT = 'application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml';
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+// rPr 안에서 w:highlight 가 와야 하는 자리 뒤에 오는 요소들(스키마 순서 유지용)
+const HIGHLIGHT_AFTER = ['u', 'effect', 'bdr', 'shd', 'fitText', 'vertAlign', 'rtl', 'cs', 'em', 'lang', 'eastAsianLayout', 'specVanish', 'oMath'];
 
-function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function xmlString(doc){
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + new XMLSerializer().serializeToString(doc.documentElement);
 }
@@ -945,38 +946,133 @@ function runText(r){
 function paraText(p){
   return runsOf(p).map(runText).join('');
 }
+function runSpans(p){
+  var out = [], off = 0;
+  runsOf(p).forEach(function(r){
+    var len = runText(r).length;
+    out.push({ r: r, s: off, e: off + len });
+    off += len;
+  });
+  return out;
+}
 function setRunText(r, text){
   var t = r.getElementsByTagNameNS(W_NS, 't')[0];
   t.textContent = text;
   t.setAttributeNS(XML_NS, 'xml:space', 'preserve');
 }
 function splitRunAt(p, x){
-  var runs = runsOf(p), off = 0;
-  for(var i = 0; i < runs.length; i++){
-    var r = runs[i], text = runText(r), len = text.length;
-    if(x > off && x < off + len){
+  var spans = runSpans(p);
+  for(var i = 0; i < spans.length; i++){
+    var sp = spans[i];
+    if(x > sp.s && x < sp.e){
+      var r = sp.r;
       if(r.getElementsByTagNameNS(W_NS, 't').length !== 1) return;
+      var text = runText(r);
       var r2 = r.cloneNode(true);
-      setRunText(r, text.slice(0, x - off));
-      setRunText(r2, text.slice(x - off));
+      setRunText(r, text.slice(0, x - sp.s));
+      setRunText(r2, text.slice(x - sp.s));
       r.parentNode.insertBefore(r2, r.nextSibling);
       return;
     }
-    off += len;
   }
 }
-function wrapRange(p, s, e, id){
-  var doc = p.ownerDocument;
-  splitRunAt(p, s);
-  splitRunAt(p, e);
-  var runs = runsOf(p), off = 0, startEl = null, endEl = null;
-  for(var i = 0; i < runs.length; i++){
-    var len = runText(runs[i]).length;
-    if(!startEl && off === s) startEl = runs[i];
-    if(len > 0 && off + len === e) endEl = runs[i];
-    off += len;
+function childOf(el, name){
+  for(var c = el.firstChild; c; c = c.nextSibling){
+    if(c.nodeType === 1 && c.namespaceURI === W_NS && c.localName === name) return c;
   }
-  if(!startEl || !endEl) return false;
+  return null;
+}
+function addHighlight(run){
+  var doc = run.ownerDocument;
+  var rPr = childOf(run, 'rPr');
+  if(!rPr){
+    rPr = doc.createElementNS(W_NS, 'w:rPr');
+    run.insertBefore(rPr, run.firstChild);
+  }
+  var old = childOf(rPr, 'highlight');
+  if(old) rPr.removeChild(old);
+  var h = doc.createElementNS(W_NS, 'w:highlight');
+  h.setAttributeNS(W_NS, 'w:val', 'yellow');
+  var before = null;
+  for(var c = rPr.firstChild; c; c = c.nextSibling){
+    if(c.nodeType === 1 && c.namespaceURI === W_NS && HIGHLIGHT_AFTER.indexOf(c.localName) !== -1){ before = c; break; }
+  }
+  rPr.insertBefore(h, before);
+}
+
+// 문단들을 이어 붙인 뒤 글자·숫자만 남긴 색인. 공백·문장부호·수식 차이에 덜 민감하게 찾기 위함.
+function buildTextIndex(paras){
+  var norm = [], mapP = [], mapO = [];
+  paras.forEach(function(p, pi){
+    var t = paraText(p);
+    for(var j = 0; j < t.length; j++){
+      var ch = t.charAt(j);
+      if(/[\p{L}\p{N}]/u.test(ch)){ norm.push(ch.toLowerCase()); mapP.push(pi); mapO.push(j); }
+    }
+  });
+  return { text: norm.join(''), mapP: mapP, mapO: mapO };
+}
+function normStr(s){
+  return Array.from(String(s)).filter(function(ch){ return /[\p{L}\p{N}]/u.test(ch); }).join('').toLowerCase();
+}
+function findSpan(index, quote, claimed){
+  var tokens = String(quote || '').replace(/…$/, '').split(/\s+/).map(normStr).filter(Boolean);
+  if(!tokens.length) return null;
+  var minLen = Math.min(4, tokens.join('').length);
+  var windows = [];
+  for(var len = tokens.length; len >= 1; len--){
+    windows.push(tokens.slice(0, len).join(''));
+    if(len < tokens.length) windows.push(tokens.slice(tokens.length - len).join(''));
+  }
+  for(var w = 0; w < windows.length; w++){
+    var sub = windows[w];
+    if(sub.length < minLen) continue;
+    var from = 0, idx;
+    while((idx = index.text.indexOf(sub, from)) !== -1){
+      var end = idx + sub.length;
+      var taken = claimed.some(function(k){ return idx < k.e && end > k.s; });
+      if(!taken) return { s: idx, e: end };
+      from = idx + 1;
+    }
+  }
+  return null;
+}
+function htmlText(html){
+  var d = document.createElement('div');
+  d.innerHTML = html;
+  var w = document.createTreeWalker(d, NodeFilter.SHOW_TEXT), out = '', n;
+  while((n = w.nextNode())) out += n.nodeValue;
+  return out;
+}
+function letterPrefixCounts(raw){
+  var cnt = [0], c = 0;
+  for(var i = 0; i < raw.length; i++){
+    if(/[\p{L}\p{N}]/u.test(raw.charAt(i))) c++;
+    cnt.push(c);
+  }
+  return cnt;
+}
+function spanToPositions(index, span){
+  var a = span.s, b = span.e - 1;
+  return { pa: index.mapP[a], sa: index.mapO[a], pb: index.mapP[b], sb: index.mapO[b] + 1 };
+}
+function wrapSpan(paras, pos, id, highlight){
+  var doc = paras[0].ownerDocument;
+  splitRunAt(paras[pos.pa], pos.sa);
+  splitRunAt(paras[pos.pb], pos.sb);
+  var startSp = runSpans(paras[pos.pa]).find(function(x){ return x.s === pos.sa && x.e > x.s; });
+  var endSp = runSpans(paras[pos.pb]).find(function(x){ return x.e === pos.sb && x.e > x.s; });
+  if(!startSp || !endSp) return false;
+  if(highlight){
+    for(var pi = pos.pa; pi <= pos.pb; pi++){
+      runSpans(paras[pi]).forEach(function(x){
+        if(x.e <= x.s) return;
+        var okStart = pi !== pos.pa || x.s >= pos.sa;
+        var okEnd = pi !== pos.pb || x.e <= pos.sb;
+        if(okStart && okEnd) addHighlight(x.r);
+      });
+    }
+  }
   var cs = doc.createElementNS(W_NS, 'w:commentRangeStart');
   cs.setAttributeNS(W_NS, 'w:id', String(id));
   var ce = doc.createElementNS(W_NS, 'w:commentRangeEnd');
@@ -985,40 +1081,17 @@ function wrapRange(p, s, e, id){
   var cr = doc.createElementNS(W_NS, 'w:commentReference');
   cr.setAttributeNS(W_NS, 'w:id', String(id));
   ref.appendChild(cr);
-  startEl.parentNode.insertBefore(cs, startEl);
-  endEl.parentNode.insertBefore(ce, endEl.nextSibling);
+  startSp.r.parentNode.insertBefore(cs, startSp.r);
+  endSp.r.parentNode.insertBefore(ce, endSp.r.nextSibling);
   ce.parentNode.insertBefore(ref, ce.nextSibling);
   return true;
-}
-function placeComment(paras, quote, id, claimed){
-  var q = String(quote || '').replace(/…$/, '').trim();
-  var candidates = [q];
-  var firstLine = q.split(/\n/)[0].trim();
-  if(firstLine && firstLine !== q) candidates.push(firstLine);
-  for(var ci = 0; ci < candidates.length; ci++){
-    var parts = candidates[ci].split(/\s+/).filter(Boolean);
-    if(!parts.length) continue;
-    for(var pi = 0; pi < paras.length; pi++){
-      var text = paraText(paras[pi]);
-      var re = new RegExp(parts.map(escRe).join('\\s*'), 'g');
-      var m;
-      while((m = re.exec(text))){
-        var s = m.index, e = m.index + m[0].length;
-        var overlaps = claimed.some(function(k){ return k.p === pi && s < k.e && e > k.s; });
-        if(overlaps) continue;
-        claimed.push({ p: pi, s: s, e: e });
-        if(wrapRange(paras[pi], s, e, id)) return true;
-      }
-    }
-  }
-  return false;
 }
 function addCommentNode(commentsDoc, id, text, iso){
   var c = commentsDoc.createElementNS(W_NS, 'w:comment');
   c.setAttributeNS(W_NS, 'w:id', String(id));
-  c.setAttributeNS(W_NS, 'w:author', '익명');
+  c.setAttributeNS(W_NS, 'w:author', '');
   c.setAttributeNS(W_NS, 'w:date', iso);
-  c.setAttributeNS(W_NS, 'w:initials', '익');
+  c.setAttributeNS(W_NS, 'w:initials', '');
   String(text).split('\n').forEach(function(line){
     var p = commentsDoc.createElementNS(W_NS, 'w:p');
     var r = commentsDoc.createElementNS(W_NS, 'w:r');
@@ -1032,37 +1105,69 @@ function addCommentNode(commentsDoc, id, text, iso){
   commentsDoc.documentElement.appendChild(c);
 }
 async function buildCommentedDocx(meta, comments){
-  var zip = await JSZip.loadAsync(await getFileArrayBuffer(meta));
+  var buf = await getFileArrayBuffer(meta);
+  var zip = await JSZip.loadAsync(buf);
   var docDom = parseXml(await zip.file('word/document.xml').async('string'));
   var paras = Array.prototype.slice.call(docDom.getElementsByTagNameNS(W_NS, 'p'));
 
-  var commentsDom;
-  if(zip.file('word/comments.xml')){
-    commentsDom = parseXml(await zip.file('word/comments.xml').async('string'));
-  } else {
-    commentsDom = parseXml('<w:comments xmlns:w="' + W_NS + '"/>');
-  }
+  var commentsDom = zip.file('word/comments.xml')
+    ? parseXml(await zip.file('word/comments.xml').async('string'))
+    : parseXml('<w:comments xmlns:w="' + W_NS + '"/>');
   var nextId = 0;
   Array.prototype.forEach.call(commentsDom.getElementsByTagNameNS(W_NS, 'comment'), function(c){
     var n = Number(c.getAttributeNS(W_NS, 'id'));
     if(n >= nextId) nextId = n + 1;
   });
 
+  var index = buildTextIndex(paras);
+  // 화면에 보이던 텍스트 기준으로 저장된 글자 위치를 그대로 쓰면 가장 정확하다(검증 후 사용)
+  var raw = htmlText((await mammoth.convertToHtml({ arrayBuffer: buf.slice(0) })).value);
+  var cnt = letterPrefixCounts(raw);
+  var rawNorm = normStr(raw);
   var claimed = [];
-  var firstTextPara = paras.find(function(p){ return paraText(p).length > 0; });
+  var spanByQuote = {};
+  var placed = [], unplaced = [];
   comments.forEach(function(c){
-    var id = nextId++;
-    var when = c.createdAt || new Date().toISOString();
-    if(c.kind === 'pin' || !c.quote){
-      addCommentNode(commentsDom, id, c.comment, when);
-      if(firstTextPara) wrapRange(firstTextPara, 0, paraText(firstTextPara).length, id);
-      return;
+    var span = null;
+    if(c.kind !== 'pin' && typeof c.startOffset === 'number' && typeof c.endOffset === 'number'){
+      var s0 = cnt[c.startOffset], e0 = cnt[c.endOffset];
+      if(e0 > s0 && index.text.substr(s0, e0 - s0) === rawNorm.substring(s0, e0)) span = { s: s0, e: e0 };
     }
-    if(placeComment(paras, c.quote, id, claimed)){
-      addCommentNode(commentsDom, id, c.comment, when);
-    } else {
-      addCommentNode(commentsDom, id, '[위치 확인 필요] 인용: "' + c.quote + '"\n' + c.comment, when);
-      if(firstTextPara) wrapRange(firstTextPara, 0, paraText(firstTextPara).length, id);
+    if(!span && c.kind !== 'pin' && c.quote){
+      var qk = normStr(c.quote);
+      span = spanByQuote[qk] || null;
+      if(!span){
+        span = findSpan(index, c.quote, claimed);
+        if(span){ spanByQuote[qk] = span; claimed.push(span); }
+      }
+    }
+    if(!span){ unplaced.push(c); return; }
+    placed.push({ c: c, pos: spanToPositions(index, span), key: span.s + ':' + span.e });
+  });
+
+  // 같은 위치에 달린 의견은 "의견1, 의견2 …"로 번호를 붙인다
+  var groupSize = {};
+  placed.forEach(function(x){ groupSize[x.key] = (groupSize[x.key] || 0) + 1; });
+  var groupNo = {};
+  placed.forEach(function(x){
+    var id = nextId++;
+    var text = x.c.comment;
+    if(groupSize[x.key] > 1){
+      groupNo[x.key] = (groupNo[x.key] || 0) + 1;
+      text = '의견' + groupNo[x.key] + ' · ' + text;
+    }
+    addCommentNode(commentsDom, id, text, x.c.createdAt || new Date().toISOString());
+    wrapSpan(paras, x.pos, id, true);
+  });
+
+  // 위치를 찾지 못한 의견은 첫 글자 문단에 메모만 달고, 형광펜은 칠하지 않는다
+  var firstIdx = paras.findIndex(function(p){ return paraText(p).length > 0; });
+  unplaced.forEach(function(c){
+    var id = nextId++;
+    var text = c.quote ? '[위치를 찾지 못함] 인용: "' + c.quote + '"\n' + c.comment : c.comment;
+    addCommentNode(commentsDom, id, text, c.createdAt || new Date().toISOString());
+    if(firstIdx >= 0){
+      wrapSpan(paras, { pa: firstIdx, sa: 0, pb: firstIdx, sb: paraText(paras[firstIdx]).length }, id, false);
     }
   });
 
