@@ -50,14 +50,37 @@
   .file-admin-actions[hidden]{display:none}
   .file-body{display:none;padding:14px;border-top:1px solid var(--line)}
   .file-body.open{display:block}
-  .doc-view{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff;font-size:13.5px}
+  .doc-view-wrap{display:flex;gap:10px;align-items:flex-start;position:relative}
+  .doc-view{flex:1;min-width:0;max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff;font-size:13.5px;position:relative;user-select:text}
   .doc-view table{border-collapse:collapse;width:100%;margin:8px 0}
   .doc-view td,.doc-view th{border:1px solid #ccc;padding:5px 7px;font-size:13px}
   .doc-view img{max-width:100%}
-  .comment-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
-  .comment-list li{background:#f9fafb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px}
-  .comment-list .ctime{display:block;font-size:11px;color:var(--sub);margin-top:3px}
+  .doc-view mark.hl{background:#fff3b0;border-radius:2px;cursor:pointer;transition:background .2s}
+  .doc-view mark.hl.flash{background:#ffd54a}
+  .pdf-page{position:relative;margin-bottom:12px;cursor:crosshair}
+  .pin{position:absolute;width:20px;height:20px;background:var(--pri);color:#fff;border-radius:50% 50% 50% 0;transform:translate(-50%,-100%) rotate(-45deg);cursor:pointer;transition:background .2s}
+  .pin.flash{background:#ffd54a}
+  .add-comment-btn{position:absolute;z-index:5;background:var(--pri);color:#fff;border:0;border-radius:14px;padding:5px 10px;font-size:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.18);white-space:nowrap}
+  .add-comment-btn:hover{background:var(--pri-d)}
+  .comment-panel{width:230px;flex-shrink:0;max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .comment-composer{background:#fff;border:1px solid var(--pri);border-radius:8px;padding:8px}
+  .comment-composer textarea{min-height:60px;font-size:12.5px}
+  .comment-card{background:#f9fafb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer}
+  .comment-card:hover{border-color:var(--pri)}
+  .comment-card.flash{background:#fff3b0}
+  .comment-card .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px;border-left:2px solid var(--line);padding-left:6px}
+  .comment-card .ct{display:block;font-size:11px;color:var(--sub);margin-top:4px}
+  .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px}
   .comment-empty{color:#9ca3af;font-size:13px}
+  @media (max-width:680px){
+    .doc-view-wrap{flex-direction:column}
+    .comment-panel{width:100%;max-height:none}
+  }
+  .session-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+  .si-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .si-title{font-weight:700;color:var(--ink);text-decoration:none;font-size:14.5px}
+  .si-title:hover{color:var(--pri)}
+  .si-time{font-size:11.5px;color:var(--sub);white-space:nowrap}
   .admin-panel{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
   .empty{color:#9ca3af;font-size:13.5px}
   #printArea{display:none}
@@ -82,23 +105,22 @@
     <a class="back" href="index.html">← 업무 도구</a>
     <h1>서논술 쓰리고!</h1>
     <div class="slogan">출제GO · 채점GO · 피드백GO! 서논술 쓰리고!</div>
-    <div class="sub">링크 하나를 선생님들께 보내면, 각자 문서(.docx)를 올리고 서로 읽으며 익명으로 의견을 남길 수 있습니다.</div>
+    <div class="sub">링크 하나를 선생님들께 보내면, 각자 문서(.docx, .pdf)를 올리고 서로 읽으며 익명으로 의견을 남길 수 있습니다.</div>
     <div class="card">
       <h2>새로 만들기</h2>
       <div class="field">
-        <label>제목</label>
+        <label>기수</label>
         <div class="row" style="flex-wrap:nowrap">
-          <input type="text" id="newTitle" placeholder="예: A세트.docx" style="flex:1;min-width:0">
+          <input type="text" id="newTitle" placeholder="예: 1차" style="flex:1;min-width:0">
           <button id="createBtn">만들기</button>
         </div>
       </div>
       <div class="msg" id="createMsg"></div>
     </div>
-    <div class="card" id="shareBox" hidden>
-      <h2>만들어졌습니다</h2>
-      <p class="note">아래 링크 하나만 선생님들께 보내주세요. 이 링크 하나로 문서 올리기·피드백 남기기·원본 다운로드·인쇄까지 전부 할 수 있습니다.</p>
-      <div class="share-row"><input type="text" id="shareLink" readonly><button id="copyBtn">복사</button></div>
-      <button class="ghost" id="goBtn">바로 열기</button>
+    <div class="card">
+      <h2>만든 기수</h2>
+      <div class="note" style="margin:0 0 10px">기수를 누르면 바로 들어가고, 링크를 복사해서 선생님들께 보내면 됩니다.</div>
+      <div id="sessionList"></div>
     </div>
   </div>
 
@@ -110,9 +132,9 @@
       <div class="share-row"><input type="text" id="shareLink2" readonly><button class="small" id="copyBtn2">링크 복사</button></div>
     </div>
     <div class="card">
-      <h2>문서 올리기 (.docx)</h2>
-      <input type="file" id="fileInput" accept=".docx">
-      <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장 → Word(.docx)"로 변환해서 올려주세요. 표·서식이 가장 잘 살아납니다.</div>
+      <h2>문서 올리기 (.docx, .pdf)</h2>
+      <input type="file" id="fileInput" accept=".docx,.pdf">
+      <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장"에서 Word(.docx) 또는 PDF로 변환해서 올려주세요 — PDF는 화면에 보이는 그대로 올라갑니다.</div>
       <div class="msg" id="uploadMsg"></div>
     </div>
     <div class="card">
@@ -122,7 +144,7 @@
       </div>
       <div id="adminTools" class="row admin-panel" hidden>
         <button class="small" id="zipBtn">원본 전체 zip으로 받기</button>
-        <button class="small" id="wordBtn">코멘트 전체 워드로 저장</button>
+        <button class="small" id="wordBtn">의견 전체 워드로 저장</button>
         <button class="small" id="printBtn">인쇄</button>
       </div>
       <div id="fileList" style="margin-top:12px"></div>
@@ -204,6 +226,18 @@ async function uploadFile(sessionId, file){
   await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount: chunks.length, uploadedAt: new Date().toISOString() });
   return ref.id;
 }
+function listenSessions(cb){
+  let unsub = null, stopped = false;
+  loadFirebase().then(({ fs, db }) => {
+    if(stopped) return;
+    unsub = fs.onSnapshot(fs.collection(db, SESSIONS), (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+      cb(list);
+    }, (err) => { console.error(err); cb([]); });
+  });
+  return () => { stopped = true; if(unsub) unsub(); };
+}
 function listenFiles(sessionId, cb){
   let unsub = null, stopped = false;
   loadFirebase().then(({ fs, db }) => {
@@ -223,7 +257,7 @@ function listenComments(fileId, cb){
     if(stopped) return;
     const q = fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileId));
     unsub = fs.onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => d.data());
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
       cb(list);
     }, (err) => { console.error(err); cb([]); });
@@ -233,13 +267,13 @@ function listenComments(fileId, cb){
 async function getCommentsOnce(fileId){
   const { fs, db } = await loadFirebase();
   const snap = await fs.getDocs(fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileId)));
-  const list = snap.docs.map((d) => d.data());
+  const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
   return list;
 }
-async function addComment(sessionId, fileId, comment){
+async function addComment(sessionId, fileId, data){
   const { fs, db } = await loadFirebase();
-  await fs.setDoc(fs.doc(fs.collection(db, COMMENTS)), { sessionId, fileId, comment, createdAt: new Date().toISOString() });
+  await fs.setDoc(fs.doc(fs.collection(db, COMMENTS)), Object.assign({ sessionId, fileId, createdAt: new Date().toISOString() }, data));
 }
 async function getFileArrayBuffer(fileEntry){
   const { fs, db } = await loadFirebase();
@@ -265,6 +299,88 @@ function base64ToArrayBuffer(base64){
   var bytes = new Uint8Array(binary.length);
   for(var i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
   return bytes.buffer;
+}
+function isPdf(filename){ return /\.pdf$/i.test(filename || ''); }
+function mimeTypeFor(filename){
+  return isPdf(filename) ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
+
+// ---------------- PDF 렌더링 ----------------
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.min.mjs';
+const PDFJS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/build/pdf.worker.min.mjs';
+let pdfjsPromise = null;
+function loadPdfJs(){
+  if(!pdfjsPromise){
+    pdfjsPromise = import(/* webpackIgnore: true */ PDFJS_URL).then((mod) => {
+      mod.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL;
+      return mod;
+    });
+  }
+  return pdfjsPromise;
+}
+async function renderPdfToHtml(buf){
+  const pdfjsLib = await loadPdfJs();
+  const pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+  const imgs = [];
+  for(let i = 1; i <= pdfDoc.numPages; i++){
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    imgs.push('<div class="pdf-page" data-page="' + i + '" title="클릭해서 이 위치에 의견 남기기"><img src="' +
+      canvas.toDataURL('image/png') + '" style="display:block;width:100%;border:1px solid #ddd" draggable="false"></div>');
+  }
+  return imgs.join('') || '<p class="empty">(페이지가 없습니다)</p>';
+}
+
+// ---------------- 문서 안의 위치(텍스트 범위) 찾기/표시 ----------------
+// docx는 mammoth가 만든 순수 텍스트이므로, 같은 원본 파일이면 누가 다시 열어도
+// 똑같은 글자 offset이 나온다 — 그 offset을 코멘트의 "위치"로 저장해 재구성한다.
+function textOffsetOf(container, targetNode, targetOffset){
+  var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  var total = 0, node;
+  while((node = walker.nextNode())){
+    if(node === targetNode) return total + targetOffset;
+    total += node.nodeValue.length;
+  }
+  return total;
+}
+function getOffsetsForRange(container, range){
+  return {
+    start: textOffsetOf(container, range.startContainer, range.startOffset),
+    end: textOffsetOf(container, range.endContainer, range.endOffset)
+  };
+}
+function applyHighlight(container, start, end, commentId){
+  if(end <= start) return;
+  var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+  var total = 0, node;
+  var slices = [];
+  while((node = walker.nextNode())){
+    var len = node.nodeValue.length;
+    var nodeStart = total, nodeEnd = total + len;
+    if(nodeEnd > start && nodeStart < end){
+      slices.push({ node: node, from: Math.max(start, nodeStart) - nodeStart, to: Math.min(end, nodeEnd) - nodeStart });
+    }
+    total += len;
+    if(total >= end) break;
+  }
+  slices.forEach(function(s){
+    var middle = s.node.splitText(s.from);
+    middle.splitText(s.to - s.from);
+    var mark = document.createElement('mark');
+    mark.className = 'hl';
+    mark.dataset.cid = commentId;
+    middle.parentNode.insertBefore(mark, middle);
+    mark.appendChild(middle);
+  });
+}
+function flashEl(el){
+  el.classList.add('flash');
+  setTimeout(function(){ el.classList.remove('flash'); }, 900);
 }
 
 // ---------------- 공통 유틸 ----------------
@@ -293,6 +409,7 @@ function downloadBlob(blob, filename){
 // ---------------- 라우팅 ----------------
 var sessionId = null;
 var fileListUnsub = null;
+var sessionListUnsub = null;
 
 function route(){
   var hash = location.hash || '';
@@ -300,6 +417,7 @@ function route(){
   if(fileListUnsub){ fileListUnsub(); fileListUnsub = null; }
   closeAllCommentListeners();
   if(m){
+    if(sessionListUnsub){ sessionListUnsub(); sessionListUnsub = null; }
     sessionId = m[1];
     $('home').hidden = true;
     $('session').hidden = false;
@@ -308,29 +426,47 @@ function route(){
     sessionId = null;
     $('home').hidden = false;
     $('session').hidden = true;
+    if(!sessionListUnsub){
+      sessionListUnsub = listenSessions(renderSessionList);
+    }
   }
 }
 window.addEventListener('hashchange', route);
 
-// ---------------- 홈: 새로 만들기 ----------------
+// ---------------- 홈: 새로 만들기 / 기수 목록 ----------------
+function renderSessionList(list){
+  var el = $('sessionList');
+  if(!list.length){ el.innerHTML = '<p class="empty">아직 만든 기수가 없습니다.</p>'; return; }
+  el.innerHTML = list.map(function(s){
+    var link = location.origin + location.pathname + '#s-' + s.id;
+    return '<div class="session-item">' +
+      '<div class="si-head"><a href="#s-' + esc(s.id) + '" class="si-title">' + esc(s.title) + '</a><span class="si-time">' + esc(fmtTime(s.createdAt)) + '</span></div>' +
+      '<div class="share-row"><input type="text" readonly value="' + esc(link) + '"><button class="small ghost" data-act="copy">복사</button></div>' +
+    '</div>';
+  }).join('');
+  Array.prototype.forEach.call(el.querySelectorAll('.session-item'), function(item){
+    var input = item.querySelector('input');
+    item.querySelector('[data-act=copy]').addEventListener('click', function(){
+      input.select();
+      navigator.clipboard && navigator.clipboard.writeText(input.value);
+    });
+  });
+}
+
 $('createBtn').addEventListener('click', async function(){
   var title = $('newTitle').value.trim();
-  if(!title){ $('createMsg').textContent = '제목을 입력해주세요.'; return; }
+  if(!title){ $('createMsg').textContent = '기수를 입력해주세요.'; return; }
+  $('createMsg').className = 'msg';
   $('createMsg').textContent = '만드는 중...';
   try{
-    var id = await createSession(title);
-    $('createMsg').textContent = '';
-    var link = location.origin + location.pathname + '#s-' + id;
-    $('shareLink').value = link;
-    $('shareBox').hidden = false;
-    $('goBtn').onclick = function(){ location.hash = '#s-' + id; };
+    await createSession(title);
+    $('createMsg').className = 'msg ok';
+    $('createMsg').textContent = '"' + title + '" 만들었습니다. 아래 목록에서 링크를 확인하세요.';
+    $('newTitle').value = '';
   }catch(e){
+    $('createMsg').className = 'msg err';
     $('createMsg').textContent = '오류가 발생했습니다: ' + e.message;
   }
-});
-$('copyBtn').addEventListener('click', function(){
-  $('shareLink').select();
-  navigator.clipboard && navigator.clipboard.writeText($('shareLink').value);
 });
 
 // ---------------- 세션(공유) 화면 ----------------
@@ -372,9 +508,9 @@ $('copyBtn2').addEventListener('click', function(){
 $('fileInput').addEventListener('change', async function(e){
   var file = e.target.files[0];
   if(!file) return;
-  if(!/\.docx$/i.test(file.name)){
+  if(!/\.(docx|pdf)$/i.test(file.name)){
     $('uploadMsg').className = 'msg err';
-    $('uploadMsg').textContent = 'docx 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장 → Word(.docx)"로 바꿔서 올려주세요.';
+    $('uploadMsg').textContent = 'docx 또는 pdf 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장"에서 Word(.docx) 또는 PDF로 바꿔서 올려주세요.';
     e.target.value = '';
     return;
   }
@@ -406,14 +542,18 @@ function renderFileList(){
         '</span>' +
       '</div>' +
       '<div class="file-body">' +
-        '<div class="doc-view empty">문서를 불러오는 중...</div>' +
-        '<div class="row" style="justify-content:space-between;align-items:center">' +
-          '<h3 style="margin:14px 0 6px">익명 코멘트</h3>' +
+        '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">' +
+          '<h3 style="margin:0">의견 남기기</h3>' +
           '<button class="small ghost" data-act="comments-word">피드백 다운로드</button>' +
         '</div>' +
-        '<ul class="comment-list"></ul>' +
-        '<textarea class="comment-input" placeholder="문서를 읽고 익명으로 의견을 남겨주세요"></textarea>' +
-        '<div class="row" style="margin-top:6px"><button class="small comment-submit">코멘트 남기기</button><span class="msg comment-msg"></span></div>' +
+        '<div class="note" style="margin:0 0 8px">문서에서 의견을 남기고 싶은 부분을 선택하거나(docx) 클릭해서(pdf) 의견을 남겨보세요.</div>' +
+        '<div class="doc-view-wrap">' +
+          '<div class="doc-view empty">문서를 불러오는 중...</div>' +
+          '<div class="comment-panel">' +
+            '<div class="composer-slot"></div>' +
+            '<div class="comment-rail"></div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -429,7 +569,6 @@ function renderFileList(){
     if(cw) cw.addEventListener('click', function(){ downloadFileComments(fileId); });
     var del = row.querySelector('[data-act=delete]');
     if(del) del.addEventListener('click', function(){ deleteFile(fileId); });
-    row.querySelector('.comment-submit').addEventListener('click', function(){ submitComment(row, fileId); });
   });
 
   // 파일 목록이 다시 그려져도(관리 기능 토글, 다른 사람의 업로드로 실시간 갱신 등) 열려있던
@@ -450,15 +589,21 @@ function closeAllPanels(){
 async function openFilePanel(row, fileId){
   row.querySelector('.file-body').classList.add('open');
   var docView = row.querySelector('.doc-view');
-  if(docHtmlCache[fileId] !== undefined){
+  var isNewLoad = docHtmlCache[fileId] === undefined;
+  if(!isNewLoad){
     docView.classList.remove('empty');
     docView.innerHTML = docHtmlCache[fileId];
   } else {
     try{
       var meta = fileCache.find(function(f){ return f.fileId === fileId; });
       var buf = await getFileArrayBuffer(meta);
-      var result = await mammoth.convertToHtml({ arrayBuffer: buf });
-      var html = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
+      var html;
+      if(isPdf(meta.filename)){
+        html = await renderPdfToHtml(buf);
+      } else {
+        var result = await mammoth.convertToHtml({ arrayBuffer: buf });
+        html = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
+      }
       docHtmlCache[fileId] = html;
       docView.classList.remove('empty');
       docView.innerHTML = html;
@@ -466,12 +611,9 @@ async function openFilePanel(row, fileId){
       docView.textContent = '문서를 읽는 중 오류가 발생했습니다: ' + err.message;
     }
   }
-  var ul = row.querySelector('.comment-list');
+  setupAnnotation(row, fileId);
   commentUnsubs[fileId] = listenComments(fileId, function(comments){
-    if(!comments.length){ ul.innerHTML = '<li class="comment-empty">아직 코멘트가 없습니다.</li>'; return; }
-    ul.innerHTML = comments.map(function(c){
-      return '<li>' + esc(c.comment) + '<span class="ctime">' + esc(fmtTime(c.createdAt)) + '</span></li>';
-    }).join('');
+    renderCommentRail(row, fileId, comments);
   });
 }
 
@@ -484,19 +626,160 @@ async function toggleFile(row, fileId){
   await openFilePanel(row, fileId);
 }
 
-async function submitComment(row, fileId){
-  var ta = row.querySelector('.comment-input');
-  var msg = row.querySelector('.comment-msg');
-  var text = ta.value.trim();
-  if(!text){ return; }
-  msg.className = 'msg comment-msg';
-  msg.textContent = '등록 중...';
-  try{
-    await addComment(sessionId, fileId, text);
-    ta.value = '';
-    msg.textContent = '';
-  }catch(err){
-    msg.className='msg comment-msg err'; msg.textContent = '오류: ' + err.message;
+// ---------------- 의견(코멘트) 달기: 위치 표시 + 오른쪽 패널 ----------------
+function renderCommentRail(row, fileId, comments){
+  var meta = fileCache.find(function(f){ return f.fileId === fileId; });
+  var docView = row.querySelector('.doc-view');
+  var rail = row.querySelector('.comment-rail');
+  var pdfFile = isPdf(meta && meta.filename);
+
+  if(!pdfFile){
+    // 기존 하이라이트를 지우고(원본 캐시로 되돌리고) 다시 그린다
+    docView.innerHTML = docHtmlCache[fileId];
+  } else {
+    Array.prototype.forEach.call(docView.querySelectorAll('.pin'), function(p){ p.remove(); });
+  }
+
+  var sorted = comments.slice().sort(function(a, b){
+    var av = a.kind === 'pin' ? (a.page * 100000 + a.yPct * 1000) : (a.startOffset || 0);
+    var bv = b.kind === 'pin' ? (b.page * 100000 + b.yPct * 1000) : (b.startOffset || 0);
+    return av - bv;
+  });
+
+  sorted.forEach(function(c){
+    if(!pdfFile && c.kind === 'range' && c.startOffset != null && c.endOffset != null){
+      try{ applyHighlight(docView, c.startOffset, c.endOffset, c.id); }catch(e){}
+    } else if(pdfFile && c.kind === 'pin'){
+      var pageEl = docView.querySelector('.pdf-page[data-page="' + c.page + '"]');
+      if(pageEl){
+        var pin = document.createElement('div');
+        pin.className = 'pin';
+        pin.dataset.cid = c.id;
+        pin.style.left = (c.xPct * 100) + '%';
+        pin.style.top = (c.yPct * 100) + '%';
+        pageEl.appendChild(pin);
+      }
+    }
+  });
+
+  if(!sorted.length){
+    rail.innerHTML = '<p class="comment-empty">아직 의견이 없습니다. 문서에서 의견을 남기고 싶은 부분을 선택하거나 클릭해보세요.</p>';
+  } else {
+    rail.innerHTML = sorted.map(function(c){
+      var q = c.quote ? ('<div class="cq">"' + esc(c.quote) + '"</div>') : (c.kind === 'pin' ? ('<div class="cq">' + esc(c.page) + '페이지 표시 위치</div>') : '');
+      return '<div class="comment-card" data-cid="' + esc(c.id) + '">' + q + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span></div>';
+    }).join('');
+  }
+
+  Array.prototype.forEach.call(docView.querySelectorAll('[data-cid]'), function(markEl){
+    markEl.addEventListener('click', function(){
+      var card = rail.querySelector('.comment-card[data-cid="' + markEl.dataset.cid + '"]');
+      if(card){ card.scrollIntoView({ block: 'center', behavior: 'smooth' }); flashEl(card); }
+    });
+  });
+  Array.prototype.forEach.call(rail.querySelectorAll('.comment-card'), function(card){
+    card.addEventListener('click', function(){
+      var markEl = docView.querySelector('[data-cid="' + card.dataset.cid + '"]');
+      if(markEl){ markEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); flashEl(markEl); }
+    });
+  });
+}
+
+function setupAnnotation(row, fileId){
+  var docView = row.querySelector('.doc-view');
+  if(docView.dataset.annotationBound) return; // 패널을 닫았다 다시 열 때 중복 바인딩 방지
+  docView.dataset.annotationBound = '1';
+
+  var composerSlot = row.querySelector('.composer-slot');
+  var wrap = row.querySelector('.doc-view-wrap');
+  var addBtn = null;
+
+  function removeAddBtn(){ if(addBtn){ addBtn.remove(); addBtn = null; } }
+
+  function openComposer(anchor){
+    composerSlot.innerHTML =
+      '<div class="comment-composer">' +
+        (anchor.quote ? '<div class="cq">"' + esc(anchor.quote) + '"</div>' : (anchor.kind === 'pin' ? '<div class="cq">' + anchor.page + '페이지 표시 위치</div>' : '')) +
+        '<textarea placeholder="의견을 남겨주세요"></textarea>' +
+        '<div class="row" style="margin-top:6px;justify-content:flex-end">' +
+          '<button class="small ghost" data-act="cancel">취소</button>' +
+          '<button class="small" data-act="submit">의견 남기기</button>' +
+        '</div>' +
+        '<div class="msg"></div>' +
+      '</div>';
+    var ta = composerSlot.querySelector('textarea');
+    ta.focus();
+    function closeComposer(){
+      composerSlot.innerHTML = '';
+      if(anchor.pendingPin) anchor.pendingPin.remove();
+    }
+    composerSlot.querySelector('[data-act=cancel]').addEventListener('click', closeComposer);
+    composerSlot.querySelector('[data-act=submit]').addEventListener('click', async function(){
+      var text = ta.value.trim();
+      if(!text) return;
+      var msg = composerSlot.querySelector('.msg');
+      msg.textContent = '등록 중...';
+      try{
+        var data = { comment: text, kind: anchor.kind };
+        if(anchor.kind === 'range'){ data.startOffset = anchor.startOffset; data.endOffset = anchor.endOffset; data.quote = anchor.quote; }
+        else { data.page = anchor.page; data.xPct = anchor.xPct; data.yPct = anchor.yPct; }
+        await addComment(sessionId, fileId, data);
+        closeComposer();
+        window.getSelection().removeAllRanges();
+      }catch(err){
+        msg.className = 'msg err'; msg.textContent = '오류: ' + err.message;
+      }
+    });
+  }
+
+  function showAddBtn(range, onClick){
+    removeAddBtn();
+    var rect = range.getBoundingClientRect();
+    var wrapRect = wrap.getBoundingClientRect();
+    addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'add-comment-btn';
+    addBtn.textContent = '+ 의견 남기기';
+    addBtn.style.left = Math.max(0, rect.left - wrapRect.left) + 'px';
+    addBtn.style.top = (rect.top - wrapRect.top - 30) + 'px';
+    addBtn.addEventListener('mousedown', function(e){ e.preventDefault(); }); // 선택이 풀리지 않게
+    addBtn.addEventListener('click', onClick);
+    wrap.appendChild(addBtn);
+  }
+
+  if(!isPdf(fileCache.find(function(f){ return f.fileId === fileId; }).filename)){
+    docView.addEventListener('mouseup', function(){
+      setTimeout(function(){
+        var sel = window.getSelection();
+        if(!sel || sel.isCollapsed || sel.rangeCount === 0){ removeAddBtn(); return; }
+        var range = sel.getRangeAt(0);
+        if(!docView.contains(range.commonAncestorContainer)){ return; }
+        var text = sel.toString().trim();
+        if(!text){ removeAddBtn(); return; }
+        var offs = getOffsetsForRange(docView, range);
+        var quote = text.length > 160 ? text.slice(0, 160) + '…' : text;
+        showAddBtn(range, function(){
+          sel.removeAllRanges();
+          removeAddBtn();
+          openComposer({ kind: 'range', startOffset: offs.start, endOffset: offs.end, quote: quote });
+        });
+      }, 0);
+    });
+  } else {
+    Array.prototype.forEach.call(docView.querySelectorAll('.pdf-page'), function(pageEl){
+      pageEl.addEventListener('click', function(e){
+        if(e.target.closest('.pin')) return;
+        var r = pageEl.getBoundingClientRect();
+        var xPct = (e.clientX - r.left) / r.width;
+        var yPct = (e.clientY - r.top) / r.height;
+        var pin = document.createElement('div');
+        pin.className = 'pin';
+        pin.style.left = (xPct * 100) + '%';
+        pin.style.top = (yPct * 100) + '%';
+        pageEl.appendChild(pin);
+        openComposer({ kind: 'pin', page: Number(pageEl.dataset.page), xPct: xPct, yPct: yPct, pendingPin: pin });
+      });
+    });
   }
 }
 
@@ -513,7 +796,7 @@ async function downloadOriginal(fileId){
   if(!meta){ return; }
   try{
     var buf = await getFileArrayBuffer(meta);
-    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    var blob = new Blob([buf], { type: mimeTypeFor(meta.filename) });
     downloadBlob(blob, meta.filename || '문서.docx');
   }catch(err){
     alert('원본을 불러오지 못했습니다: ' + err.message);
@@ -523,7 +806,7 @@ async function downloadOriginal(fileId){
 async function deleteFile(fileId){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   var name = (meta && meta.filename) || '이 문서';
-  if(!confirm('정말 "' + name + '"와(과) 그 코멘트를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.')) return;
+  if(!confirm('정말 "' + name + '"와(과) 그 의견을 삭제할까요?\n삭제하면 되돌릴 수 없습니다.')) return;
   try{
     await deleteFileEverywhere(meta);
     delete docHtmlCache[fileId];
@@ -555,10 +838,11 @@ $('zipBtn').addEventListener('click', async function(){
 function buildFileSection(f, comments){
   var parts = ['<h2>' + esc(f.filename) + '</h2>'];
   if(!comments.length){
-    parts.push('<div class="pc">(코멘트 없음)</div>');
+    parts.push('<div class="pc">(의견 없음)</div>');
   } else {
     comments.forEach(function(c){
-      parts.push('<div class="pc">' + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>');
+      var q = c.quote ? ('인용: "' + esc(c.quote) + '" — ') : (c.kind === 'pin' && c.page ? (esc(c.page) + '페이지 표시 위치 — ') : '');
+      parts.push('<div class="pc">' + q + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>');
     });
   }
   return parts.join('');
@@ -571,7 +855,7 @@ async function buildReportInner(){
     var comments = await getCommentsOnce(f.fileId);
     parts.push(buildFileSection(f, comments));
   }
-  return '<h1>' + esc($('sessTitle').textContent) + ' · 코멘트 모음</h1>' + parts.join('');
+  return '<h1>' + esc($('sessTitle').textContent) + ' · 의견 모음</h1>' + parts.join('');
 }
 
 function docHtml(title, inner){
@@ -584,9 +868,9 @@ async function downloadFileComments(fileId){
   if(!meta) return;
   try{
     var comments = await getCommentsOnce(fileId);
-    var inner = '<h1>' + esc($('sessTitle').textContent) + ' · ' + esc(meta.filename) + ' 코멘트</h1>' + buildFileSection(meta, comments);
-    var blob = new Blob(['﻿' + docHtml('코멘트', inner)], { type: 'application/msword' });
-    downloadBlob(blob, meta.filename.replace(/\.docx$/i, '') + '_코멘트.doc');
+    var inner = '<h1>' + esc($('sessTitle').textContent) + ' · ' + esc(meta.filename) + ' 의견</h1>' + buildFileSection(meta, comments);
+    var blob = new Blob(['﻿' + docHtml('의견', inner)], { type: 'application/msword' });
+    downloadBlob(blob, meta.filename.replace(/\.(docx|pdf)$/i, '') + '_의견.doc');
   }catch(err){
     alert('내려받지 못했습니다: ' + err.message);
   }
@@ -596,8 +880,8 @@ $('wordBtn').addEventListener('click', async function(){
   $('wordBtn').disabled = true;
   try{
     var inner = await buildReportInner();
-    var blob = new Blob(['﻿' + docHtml('코멘트 모음', inner)], { type: 'application/msword' });
-    downloadBlob(blob, ($('sessTitle').textContent || '코멘트') + '_코멘트모음.doc');
+    var blob = new Blob(['﻿' + docHtml('의견 모음', inner)], { type: 'application/msword' });
+    downloadBlob(blob, ($('sessTitle').textContent || '의견') + '_의견모음.doc');
   } finally {
     $('wordBtn').disabled = false;
   }
