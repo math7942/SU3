@@ -68,7 +68,7 @@
   .comment-card{background:#f9fafb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer}
   .comment-card:hover{border-color:var(--pri)}
   .comment-card.flash{background:#fff3b0}
-  .comment-card .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px;border-left:2px solid var(--line);padding-left:6px}
+  .comment-card .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px;border-left:2px solid var(--line);padding-left:6px;max-height:4.8em;overflow:hidden}
   .comment-card .ct{display:block;font-size:11px;color:var(--sub);margin-top:4px}
   .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px}
   .comment-empty{color:#9ca3af;font-size:13px}
@@ -808,7 +808,7 @@ function setupAnnotation(row, fileId){
         var text = sel.toString().trim();
         if(!text){ removeAddBtn(); return; }
         var offs = getOffsetsForRange(docView, range);
-        var quote = text.length > 160 ? text.slice(0, 160) + '…' : text;
+        var quote = text.length > 2000 ? text.slice(0, 2000) : text;
         showAddBtn(range, function(){
           sel.removeAllRanges();
           removeAddBtn();
@@ -914,14 +914,205 @@ function docHtml(title, inner){
     '<head><meta charset="utf-8"><title>' + esc(title) + '</title></head><body>' + inner + '</body></html>';
 }
 
+// ---------------- docx에 Word 메모(주석)로 의견 달기 ----------------
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships';
+const CT_NS = 'http://schemas.openxmlformats.org/package/2006/content-types';
+const XML_NS = 'http://www.w3.org/XML/1998/namespace';
+const COMMENTS_REL_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments';
+const COMMENTS_CT = 'application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml';
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function xmlString(doc){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + new XMLSerializer().serializeToString(doc.documentElement);
+}
+function parseXml(str){
+  var d = new DOMParser().parseFromString(str, 'application/xml');
+  if(d.getElementsByTagName('parsererror').length) throw new Error('문서 구조를 읽지 못했습니다.');
+  return d;
+}
+function runsOf(p){
+  return Array.prototype.filter.call(p.getElementsByTagNameNS(W_NS, 'r'), function(r){
+    return r.getElementsByTagNameNS(W_NS, 't').length > 0;
+  });
+}
+function runText(r){
+  var ts = r.getElementsByTagNameNS(W_NS, 't'), s = '';
+  for(var i = 0; i < ts.length; i++) s += ts[i].textContent;
+  return s;
+}
+function paraText(p){
+  return runsOf(p).map(runText).join('');
+}
+function setRunText(r, text){
+  var t = r.getElementsByTagNameNS(W_NS, 't')[0];
+  t.textContent = text;
+  t.setAttributeNS(XML_NS, 'xml:space', 'preserve');
+}
+function splitRunAt(p, x){
+  var runs = runsOf(p), off = 0;
+  for(var i = 0; i < runs.length; i++){
+    var r = runs[i], text = runText(r), len = text.length;
+    if(x > off && x < off + len){
+      if(r.getElementsByTagNameNS(W_NS, 't').length !== 1) return;
+      var r2 = r.cloneNode(true);
+      setRunText(r, text.slice(0, x - off));
+      setRunText(r2, text.slice(x - off));
+      r.parentNode.insertBefore(r2, r.nextSibling);
+      return;
+    }
+    off += len;
+  }
+}
+function wrapRange(p, s, e, id){
+  var doc = p.ownerDocument;
+  splitRunAt(p, s);
+  splitRunAt(p, e);
+  var runs = runsOf(p), off = 0, startEl = null, endEl = null;
+  for(var i = 0; i < runs.length; i++){
+    var len = runText(runs[i]).length;
+    if(!startEl && off === s) startEl = runs[i];
+    if(len > 0 && off + len === e) endEl = runs[i];
+    off += len;
+  }
+  if(!startEl || !endEl) return false;
+  var cs = doc.createElementNS(W_NS, 'w:commentRangeStart');
+  cs.setAttributeNS(W_NS, 'w:id', String(id));
+  var ce = doc.createElementNS(W_NS, 'w:commentRangeEnd');
+  ce.setAttributeNS(W_NS, 'w:id', String(id));
+  var ref = doc.createElementNS(W_NS, 'w:r');
+  var cr = doc.createElementNS(W_NS, 'w:commentReference');
+  cr.setAttributeNS(W_NS, 'w:id', String(id));
+  ref.appendChild(cr);
+  startEl.parentNode.insertBefore(cs, startEl);
+  endEl.parentNode.insertBefore(ce, endEl.nextSibling);
+  ce.parentNode.insertBefore(ref, ce.nextSibling);
+  return true;
+}
+function placeComment(paras, quote, id, claimed){
+  var q = String(quote || '').replace(/…$/, '').trim();
+  var candidates = [q];
+  var firstLine = q.split(/\n/)[0].trim();
+  if(firstLine && firstLine !== q) candidates.push(firstLine);
+  for(var ci = 0; ci < candidates.length; ci++){
+    var parts = candidates[ci].split(/\s+/).filter(Boolean);
+    if(!parts.length) continue;
+    for(var pi = 0; pi < paras.length; pi++){
+      var text = paraText(paras[pi]);
+      var re = new RegExp(parts.map(escRe).join('\\s*'), 'g');
+      var m;
+      while((m = re.exec(text))){
+        var s = m.index, e = m.index + m[0].length;
+        var overlaps = claimed.some(function(k){ return k.p === pi && s < k.e && e > k.s; });
+        if(overlaps) continue;
+        claimed.push({ p: pi, s: s, e: e });
+        if(wrapRange(paras[pi], s, e, id)) return true;
+      }
+    }
+  }
+  return false;
+}
+function addCommentNode(commentsDoc, id, text, iso){
+  var c = commentsDoc.createElementNS(W_NS, 'w:comment');
+  c.setAttributeNS(W_NS, 'w:id', String(id));
+  c.setAttributeNS(W_NS, 'w:author', '익명');
+  c.setAttributeNS(W_NS, 'w:date', iso);
+  c.setAttributeNS(W_NS, 'w:initials', '익');
+  String(text).split('\n').forEach(function(line){
+    var p = commentsDoc.createElementNS(W_NS, 'w:p');
+    var r = commentsDoc.createElementNS(W_NS, 'w:r');
+    var t = commentsDoc.createElementNS(W_NS, 'w:t');
+    t.setAttributeNS(XML_NS, 'xml:space', 'preserve');
+    t.textContent = line;
+    r.appendChild(t);
+    p.appendChild(r);
+    c.appendChild(p);
+  });
+  commentsDoc.documentElement.appendChild(c);
+}
+async function buildCommentedDocx(meta, comments){
+  var zip = await JSZip.loadAsync(await getFileArrayBuffer(meta));
+  var docDom = parseXml(await zip.file('word/document.xml').async('string'));
+  var paras = Array.prototype.slice.call(docDom.getElementsByTagNameNS(W_NS, 'p'));
+
+  var commentsDom;
+  if(zip.file('word/comments.xml')){
+    commentsDom = parseXml(await zip.file('word/comments.xml').async('string'));
+  } else {
+    commentsDom = parseXml('<w:comments xmlns:w="' + W_NS + '"/>');
+  }
+  var nextId = 0;
+  Array.prototype.forEach.call(commentsDom.getElementsByTagNameNS(W_NS, 'comment'), function(c){
+    var n = Number(c.getAttributeNS(W_NS, 'id'));
+    if(n >= nextId) nextId = n + 1;
+  });
+
+  var claimed = [];
+  var firstTextPara = paras.find(function(p){ return paraText(p).length > 0; });
+  comments.forEach(function(c){
+    var id = nextId++;
+    var when = c.createdAt || new Date().toISOString();
+    if(c.kind === 'pin' || !c.quote){
+      addCommentNode(commentsDom, id, c.comment, when);
+      if(firstTextPara) wrapRange(firstTextPara, 0, paraText(firstTextPara).length, id);
+      return;
+    }
+    if(placeComment(paras, c.quote, id, claimed)){
+      addCommentNode(commentsDom, id, c.comment, when);
+    } else {
+      addCommentNode(commentsDom, id, '[위치 확인 필요] 인용: "' + c.quote + '"\n' + c.comment, when);
+      if(firstTextPara) wrapRange(firstTextPara, 0, paraText(firstTextPara).length, id);
+    }
+  });
+
+  zip.file('word/document.xml', xmlString(docDom));
+  zip.file('word/comments.xml', xmlString(commentsDom));
+
+  var ctDom = parseXml(await zip.file('[Content_Types].xml').async('string'));
+  var hasOverride = Array.prototype.some.call(ctDom.getElementsByTagNameNS(CT_NS, 'Override'), function(o){
+    return o.getAttribute('PartName') === '/word/comments.xml';
+  });
+  if(!hasOverride){
+    var ov = ctDom.createElementNS(CT_NS, 'Override');
+    ov.setAttribute('PartName', '/word/comments.xml');
+    ov.setAttribute('ContentType', COMMENTS_CT);
+    ctDom.documentElement.appendChild(ov);
+  }
+  zip.file('[Content_Types].xml', xmlString(ctDom));
+
+  var relsDom = parseXml(await zip.file('word/_rels/document.xml.rels').async('string'));
+  var rels = Array.prototype.slice.call(relsDom.getElementsByTagNameNS(REL_NS, 'Relationship'));
+  if(!rels.some(function(r){ return r.getAttribute('Type') === COMMENTS_REL_TYPE; })){
+    var n = 1, rid;
+    do { rid = 'rIdComments' + n++; } while(rels.some(function(r){ return r.getAttribute('Id') === rid; }));
+    var rel = relsDom.createElementNS(REL_NS, 'Relationship');
+    rel.setAttribute('Id', rid);
+    rel.setAttribute('Type', COMMENTS_REL_TYPE);
+    rel.setAttribute('Target', 'comments.xml');
+    relsDom.documentElement.appendChild(rel);
+  }
+  zip.file('word/_rels/document.xml.rels', xmlString(relsDom));
+
+  return zip.generateAsync({ type: 'blob', mimeType: DOCX_MIME });
+}
+
 async function downloadFileComments(fileId){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   if(!meta) return;
+  var base = meta.filename.replace(/\.(docx|pdf)$/i, '');
   try{
     var comments = await getCommentsOnce(fileId);
-    var inner = '<h1>' + esc($('sessTitle').textContent) + ' · ' + esc(meta.filename) + ' 의견</h1>' + buildFileSection(meta, comments);
-    var blob = new Blob(['﻿' + docHtml('의견', inner)], { type: 'application/msword' });
-    downloadBlob(blob, meta.filename.replace(/\.(docx|pdf)$/i, '') + '_의견.doc');
+    if(isPdf(meta.filename)){
+      var inner = comments.map(function(c){
+        var where = c.kind === 'pin' && c.page ? (esc(c.page) + '페이지 — ') : '';
+        return '<div class="pc">' + where + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>';
+      }).join('') || '<div class="pc">(의견 없음)</div>';
+      var blob = new Blob(['﻿' + docHtml('의견', inner)], { type: 'application/msword' });
+      downloadBlob(blob, base + '_의견.doc');
+    } else {
+      downloadBlob(await buildCommentedDocx(meta, comments), base + '_의견.docx');
+    }
   }catch(err){
     alert('내려받지 못했습니다: ' + err.message);
   }
