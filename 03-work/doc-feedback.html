@@ -75,8 +75,7 @@
 <div class="wrap">
 
   <div id="setupBanner" class="setup-banner">
-    ⚠️ 아직 저장소(구글 시트)가 연결되지 않았습니다. 이 페이지 맨 아래 <code>CONFIG.APPS_SCRIPT_URL</code> 값에
-    배포한 Apps Script 웹앱 주소를 넣어야 정상 작동합니다.
+    ⚠️ 저장소(Firebase)에 연결하지 못했습니다. 인터넷 연결을 확인하거나, 잠시 후 다시 시도해주세요.
   </div>
 
   <div id="home">
@@ -128,11 +127,118 @@
   <div id="printArea"></div>
 </div>
 
-<script>
-var CONFIG = {
-  APPS_SCRIPT_URL: ""
+<script type="module">
+// ---------------- Firebase ----------------
+// 이 사이트의 다른 "함께 보는 기록" 도구(명예의 전당 등)와 같은 프로젝트를 재사용한다.
+// (assets/firebase-store.js 참고) apiKey는 비밀값이 아니라 공개되어도 되는 클라이언트 식별자이며,
+// 실제 접근 제어는 Firebase 콘솔의 Firestore/Storage 보안 규칙으로 한다.
+const firebaseConfig = {
+  apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
+  authDomain: "su3su3-e2669.firebaseapp.com",
+  projectId: "su3su3-e2669",
+  storageBucket: "su3su3-e2669.firebasestorage.app",
+  messagingSenderId: "989821997199",
+  appId: "1:989821997199:web:da319f053c098ea30560fa"
 };
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
 
+let fbPromise = null;
+function loadFirebase(){
+  if(!fbPromise){
+    fbPromise = (async () => {
+      const [{ initializeApp }, fs, st] = await Promise.all([
+        import(`${SDK}/firebase-app.js`),
+        import(`${SDK}/firebase-firestore.js`),
+        import(`${SDK}/firebase-storage.js`)
+      ]);
+      const app = initializeApp(firebaseConfig);
+      return { fs, st, db: fs.getFirestore(app), storage: st.getStorage(app) };
+    })();
+  }
+  return fbPromise;
+}
+
+const SESSIONS = 'docFeedbackSessions';
+const FILES = 'docFeedbackFiles';
+const COMMENTS = 'docFeedbackComments';
+
+async function createSession(title){
+  const { fs, db } = await loadFirebase();
+  const ref = fs.doc(fs.collection(db, SESSIONS));
+  await fs.setDoc(ref, { title, createdAt: new Date().toISOString() });
+  return ref.id;
+}
+async function getSessionInfo(id){
+  const { fs, db } = await loadFirebase();
+  const snap = await fs.getDoc(fs.doc(db, SESSIONS, id));
+  return snap.exists() ? snap.data() : null;
+}
+async function uploadFile(sessionId, file){
+  const { fs, st, db, storage } = await loadFirebase();
+  const ref = fs.doc(fs.collection(db, FILES));
+  const storagePath = 'docFeedback/' + sessionId + '/' + ref.id + '.docx';
+  await st.uploadBytes(st.ref(storage, storagePath), file, {
+    contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
+  await fs.setDoc(ref, { sessionId, filename: file.name, storagePath, uploadedAt: new Date().toISOString() });
+  return ref.id;
+}
+function listenFiles(sessionId, cb){
+  let unsub = null, stopped = false;
+  loadFirebase().then(({ fs, db }) => {
+    if(stopped) return;
+    const q = fs.query(fs.collection(db, FILES), fs.where('sessionId', '==', sessionId));
+    unsub = fs.onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => ({ fileId: d.id, ...d.data() }));
+      list.sort((a, b) => (a.uploadedAt < b.uploadedAt ? -1 : 1));
+      cb(list);
+    }, (err) => { console.error(err); cb([]); });
+  });
+  return () => { stopped = true; if(unsub) unsub(); };
+}
+function listenComments(fileId, cb){
+  let unsub = null, stopped = false;
+  loadFirebase().then(({ fs, db }) => {
+    if(stopped) return;
+    const q = fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileId));
+    unsub = fs.onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => d.data());
+      list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      cb(list);
+    }, (err) => { console.error(err); cb([]); });
+  });
+  return () => { stopped = true; if(unsub) unsub(); };
+}
+async function getCommentsOnce(fileId){
+  const { fs, db } = await loadFirebase();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileId)));
+  const list = snap.docs.map((d) => d.data());
+  list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+  return list;
+}
+async function addComment(sessionId, fileId, comment){
+  const { fs, db } = await loadFirebase();
+  await fs.setDoc(fs.doc(fs.collection(db, COMMENTS)), { sessionId, fileId, comment, createdAt: new Date().toISOString() });
+}
+async function getFileArrayBuffer(fileEntry){
+  const { st, storage } = await loadFirebase();
+  const url = await st.getDownloadURL(st.ref(storage, fileEntry.storagePath));
+  const resp = await fetch(url);
+  return await resp.arrayBuffer();
+}
+async function deleteFileEverywhere(fileEntry){
+  const { fs, st, db, storage } = await loadFirebase();
+  try{ await st.deleteObject(st.ref(storage, fileEntry.storagePath)); }catch(e){}
+  await fs.deleteDoc(fs.doc(db, FILES, fileEntry.fileId));
+  const snap = await fs.getDocs(fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileEntry.fileId)));
+  if(snap.docs.length){
+    const batch = fs.writeBatch(db);
+    snap.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+}
+
+// ---------------- 공통 유틸 ----------------
 function $(id){ return document.getElementById(id); }
 function esc(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -147,32 +253,6 @@ function fmtTime(iso){
       +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }catch(e){ return String(iso || ''); }
 }
-
-function apiUrl(params){
-  var u = CONFIG.APPS_SCRIPT_URL + '?' + Object.keys(params).map(function(k){
-    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-  }).join('&');
-  return u;
-}
-async function apiGet(params){
-  var res = await fetch(apiUrl(params));
-  return res.json();
-}
-async function apiPost(body){
-  var res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body)
-  });
-  return res.json();
-}
-
-function base64ToArrayBuffer(base64){
-  var binary = atob(base64);
-  var bytes = new Uint8Array(binary.length);
-  for(var i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
 function downloadBlob(blob, filename){
   var a = document.createElement('a');
   var url = URL.createObjectURL(blob);
@@ -183,10 +263,13 @@ function downloadBlob(blob, filename){
 
 // ---------------- 라우팅 ----------------
 var sessionId = null;
+var fileListUnsub = null;
 
 function route(){
   var hash = location.hash || '';
   var m = /^#s-(.+)$/.exec(hash);
+  if(fileListUnsub){ fileListUnsub(); fileListUnsub = null; }
+  closeAllCommentListeners();
   if(m){
     sessionId = m[1];
     $('home').hidden = true;
@@ -202,18 +285,16 @@ window.addEventListener('hashchange', route);
 
 // ---------------- 홈: 새로 만들기 ----------------
 $('createBtn').addEventListener('click', async function(){
-  if(!CONFIG.APPS_SCRIPT_URL){ $('createMsg').textContent = '저장소가 아직 연결되지 않았습니다.'; return; }
   var title = $('newTitle').value.trim();
   if(!title){ $('createMsg').textContent = '제목을 입력해주세요.'; return; }
   $('createMsg').textContent = '만드는 중...';
   try{
-    var res = await apiPost({ action:'createSession', title: title });
-    if(!res.ok){ $('createMsg').textContent = res.error || '만들지 못했습니다.'; return; }
+    var id = await createSession(title);
     $('createMsg').textContent = '';
-    var link = location.origin + location.pathname + '#s-' + res.id;
+    var link = location.origin + location.pathname + '#s-' + id;
     $('shareLink').value = link;
     $('shareBox').hidden = false;
-    $('goBtn').onclick = function(){ location.hash = '#s-' + res.id; };
+    $('goBtn').onclick = function(){ location.hash = '#s-' + id; };
   }catch(e){
     $('createMsg').textContent = '오류가 발생했습니다: ' + e.message;
   }
@@ -225,18 +306,30 @@ $('copyBtn').addEventListener('click', function(){
 
 // ---------------- 세션(공유) 화면 ----------------
 var isAdmin = false;
-var openFiles = {}; // fileId -> {timer}
+var commentUnsubs = {}; // fileId -> unsub
+
+function closeAllCommentListeners(){
+  Object.keys(commentUnsubs).forEach(function(id){ commentUnsubs[id](); delete commentUnsubs[id]; });
+}
 
 async function initSession(){
   isAdmin = false;
   $('adminTools').hidden = true;
+  $('adminToggle').textContent = '관리 기능 보기';
   $('uploadMsg').textContent = '';
   var link = location.origin + location.pathname + '#s-' + sessionId;
   $('shareLink2').value = link;
-  if(!CONFIG.APPS_SCRIPT_URL) return;
-  var info = await apiGet({ action:'sessionInfo', id: sessionId });
-  $('sessTitle').textContent = info.ok ? info.title : '세션을 찾을 수 없습니다';
-  await refreshFileList();
+  try{
+    var info = await getSessionInfo(sessionId);
+    $('sessTitle').textContent = info ? info.title : '세션을 찾을 수 없습니다';
+  }catch(e){
+    $('sessTitle').textContent = '세션을 불러오지 못했습니다';
+    $('setupBanner').className = 'setup-banner show';
+  }
+  fileListUnsub = listenFiles(sessionId, function(files){
+    fileCache = files;
+    renderFileList();
+  });
 }
 $('copyBtn2').addEventListener('click', function(){
   $('shareLink2').select();
@@ -255,32 +348,17 @@ $('fileInput').addEventListener('change', async function(e){
   $('uploadMsg').className = 'msg';
   $('uploadMsg').textContent = '올리는 중...';
   try{
-    var dataUrl = await new Promise(function(resolve, reject){
-      var r = new FileReader();
-      r.onload = function(){ resolve(r.result); };
-      r.onerror = reject;
-      r.readAsDataURL(file);
-    });
-    var base64 = dataUrl.split(',')[1];
-    var res = await apiPost({ action:'uploadFile', sessionId: sessionId, filename: file.name, dataBase64: base64 });
-    if(!res.ok){ $('uploadMsg').className='msg err'; $('uploadMsg').textContent = res.error || '올리지 못했습니다.'; return; }
+    await uploadFile(sessionId, file);
     $('uploadMsg').className = 'msg ok';
     $('uploadMsg').textContent = '올렸습니다: ' + file.name;
     e.target.value = '';
-    await refreshFileList();
   }catch(err){
     $('uploadMsg').className = 'msg err';
     $('uploadMsg').textContent = '오류가 발생했습니다: ' + err.message;
   }
 });
 
-var fileCache = []; // [{fileId, filename, uploadedAt}]
-
-async function refreshFileList(){
-  var res = await apiGet({ action:'listFiles', id: sessionId });
-  fileCache = res.ok ? res.files : [];
-  renderFileList();
-}
+var fileCache = []; // [{fileId, sessionId, filename, storagePath, uploadedAt}]
 
 function renderFileList(){
   var el = $('fileList');
@@ -291,6 +369,7 @@ function renderFileList(){
         '<span><span class="name" data-act="toggle">' + esc(f.filename) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
         '<span class="file-admin-actions" hidden>' +
           '<button class="small ghost" data-act="download">원본 다운로드</button>' +
+          '<button class="small ghost" data-act="comments-word">코멘트 워드로 저장</button>' +
           '<button class="small ghost" data-act="delete">삭제</button>' +
         '</span>' +
       '</div>' +
@@ -311,8 +390,10 @@ function renderFileList(){
     row.querySelector('[data-act=toggle]').addEventListener('click', function(){ toggleFile(row, fileId); });
     var dl = row.querySelector('[data-act=download]');
     if(dl) dl.addEventListener('click', function(){ downloadOriginal(fileId); });
+    var cw = row.querySelector('[data-act="comments-word"]');
+    if(cw) cw.addEventListener('click', function(){ downloadFileComments(fileId); });
     var del = row.querySelector('[data-act=delete]');
-    if(del) del.addEventListener('click', function(){ deleteFile(fileId, row); });
+    if(del) del.addEventListener('click', function(){ deleteFile(fileId); });
     row.querySelector('.comment-submit').addEventListener('click', function(){ submitComment(row, fileId); });
   });
 }
@@ -322,37 +403,29 @@ async function toggleFile(row, fileId){
   var wasOpen = body.classList.contains('open');
   // 다른 패널은 닫아 화면을 간단하게 유지
   Array.prototype.forEach.call(document.querySelectorAll('.file-body.open'), function(b){ b.classList.remove('open'); });
-  Object.keys(openFiles).forEach(function(id){ clearInterval(openFiles[id].timer); delete openFiles[id]; });
+  closeAllCommentListeners();
   if(wasOpen) return;
   body.classList.add('open');
   var docView = row.querySelector('.doc-view');
   if(!docView.dataset.loaded){
     try{
-      var fres = await apiGet({ action:'getFile', fileId: fileId });
-      if(!fres.ok){ docView.textContent = '문서를 불러오지 못했습니다: ' + (fres.error || ''); }
-      else{
-        var buf = base64ToArrayBuffer(fres.dataBase64);
-        var result = await mammoth.convertToHtml({ arrayBuffer: buf });
-        docView.classList.remove('empty');
-        docView.innerHTML = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
-      }
+      var meta = fileCache.find(function(f){ return f.fileId === fileId; });
+      var buf = await getFileArrayBuffer(meta);
+      var result = await mammoth.convertToHtml({ arrayBuffer: buf });
+      docView.classList.remove('empty');
+      docView.innerHTML = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
     }catch(err){
       docView.textContent = '문서를 읽는 중 오류가 발생했습니다: ' + err.message;
     }
     docView.dataset.loaded = '1';
   }
-  await refreshComments(row, fileId);
-  openFiles[fileId] = { timer: setInterval(function(){ refreshComments(row, fileId); }, 15000) };
-}
-
-async function refreshComments(row, fileId){
-  var res = await apiGet({ action:'listComments', fileId: fileId });
   var ul = row.querySelector('.comment-list');
-  var comments = res.ok ? res.comments : [];
-  if(!comments.length){ ul.innerHTML = '<li class="comment-empty">아직 코멘트가 없습니다.</li>'; return; }
-  ul.innerHTML = comments.map(function(c){
-    return '<li>' + esc(c.comment) + '<span class="ctime">' + esc(fmtTime(c.createdAt)) + '</span></li>';
-  }).join('');
+  commentUnsubs[fileId] = listenComments(fileId, function(comments){
+    if(!comments.length){ ul.innerHTML = '<li class="comment-empty">아직 코멘트가 없습니다.</li>'; return; }
+    ul.innerHTML = comments.map(function(c){
+      return '<li>' + esc(c.comment) + '<span class="ctime">' + esc(fmtTime(c.createdAt)) + '</span></li>';
+    }).join('');
+  });
 }
 
 async function submitComment(row, fileId){
@@ -363,11 +436,9 @@ async function submitComment(row, fileId){
   msg.className = 'msg comment-msg';
   msg.textContent = '등록 중...';
   try{
-    var res = await apiPost({ action:'addComment', sessionId: sessionId, fileId: fileId, comment: text });
-    if(!res.ok){ msg.className='msg comment-msg err'; msg.textContent = res.error || '등록하지 못했습니다.'; return; }
+    await addComment(sessionId, fileId, text);
     ta.value = '';
     msg.textContent = '';
-    await refreshComments(row, fileId);
   }catch(err){
     msg.className='msg comment-msg err'; msg.textContent = '오류: ' + err.message;
   }
@@ -383,20 +454,25 @@ $('adminToggle').addEventListener('click', function(){
 
 async function downloadOriginal(fileId){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
-  var res = await apiGet({ action:'getFile', fileId: fileId });
-  if(!res.ok){ alert('원본을 불러오지 못했습니다: ' + (res.error || '')); return; }
-  var buf = base64ToArrayBuffer(res.dataBase64);
-  var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  downloadBlob(blob, (meta && meta.filename) || res.filename || '문서.docx');
+  if(!meta){ return; }
+  try{
+    var buf = await getFileArrayBuffer(meta);
+    var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    downloadBlob(blob, meta.filename || '문서.docx');
+  }catch(err){
+    alert('원본을 불러오지 못했습니다: ' + err.message);
+  }
 }
 
-async function deleteFile(fileId, row){
+async function deleteFile(fileId){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   var name = (meta && meta.filename) || '이 문서';
   if(!confirm('정말 "' + name + '"와(과) 그 코멘트를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.')) return;
-  var res = await apiPost({ action:'deleteFile', sessionId: sessionId, fileId: fileId });
-  if(!res.ok){ alert(res.error || '삭제하지 못했습니다.'); return; }
-  await refreshFileList();
+  try{
+    await deleteFileEverywhere(meta);
+  }catch(err){
+    alert('삭제하지 못했습니다: ' + err.message);
+  }
 }
 
 $('zipBtn').addEventListener('click', async function(){
@@ -406,41 +482,63 @@ $('zipBtn').addEventListener('click', async function(){
     var zip = new JSZip();
     for(var i=0;i<fileCache.length;i++){
       var f = fileCache[i];
-      var res = await apiGet({ action:'getFile', fileId: f.fileId });
-      if(res.ok) zip.file(f.filename, base64ToArrayBuffer(res.dataBase64));
+      var buf = await getFileArrayBuffer(f);
+      zip.file(f.filename, buf);
     }
     var blob = await zip.generateAsync({ type:'blob' });
     downloadBlob(blob, ($('sessTitle').textContent || '문서') + '_원본모음.zip');
-  }finally{
+  } catch(err){
+    alert('내려받지 못했습니다: ' + err.message);
+  } finally{
     $('zipBtn').disabled = false;
   }
 });
+
+function buildFileSection(f, comments){
+  var parts = ['<h2>' + esc(f.filename) + '</h2>'];
+  if(!comments.length){
+    parts.push('<div class="pc">(코멘트 없음)</div>');
+  } else {
+    comments.forEach(function(c){
+      parts.push('<div class="pc">' + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>');
+    });
+  }
+  return parts.join('');
+}
 
 async function buildReportInner(){
   var parts = [];
   for(var i=0;i<fileCache.length;i++){
     var f = fileCache[i];
-    var cres = await apiGet({ action:'listComments', fileId: f.fileId });
-    var comments = cres.ok ? cres.comments : [];
-    parts.push('<h2>' + esc(f.filename) + '</h2>');
-    if(!comments.length){
-      parts.push('<div class="pc">(코멘트 없음)</div>');
-    } else {
-      comments.forEach(function(c){
-        parts.push('<div class="pc">' + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>');
-      });
-    }
+    var comments = await getCommentsOnce(f.fileId);
+    parts.push(buildFileSection(f, comments));
   }
   return '<h1>' + esc($('sessTitle').textContent) + ' · 코멘트 모음</h1>' + parts.join('');
+}
+
+function docHtml(title, inner){
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+    '<head><meta charset="utf-8"><title>' + esc(title) + '</title></head><body>' + inner + '</body></html>';
+}
+
+async function downloadFileComments(fileId){
+  var meta = fileCache.find(function(f){ return f.fileId === fileId; });
+  if(!meta) return;
+  try{
+    var comments = await getCommentsOnce(fileId);
+    var inner = '<h1>' + esc($('sessTitle').textContent) + ' · ' + esc(meta.filename) + ' 코멘트</h1>' + buildFileSection(meta, comments);
+    var blob = new Blob(['﻿' + docHtml('코멘트', inner)], { type: 'application/msword' });
+    downloadBlob(blob, meta.filename.replace(/\.docx$/i, '') + '_코멘트.doc');
+  }catch(err){
+    alert('내려받지 못했습니다: ' + err.message);
+  }
 }
 
 $('wordBtn').addEventListener('click', async function(){
   $('wordBtn').disabled = true;
   try{
     var inner = await buildReportInner();
-    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
-      '<head><meta charset="utf-8"><title>코멘트 모음</title></head><body>' + inner + '</body></html>';
-    var blob = new Blob(['﻿' + html], { type: 'application/msword' });
+    var blob = new Blob(['﻿' + docHtml('코멘트 모음', inner)], { type: 'application/msword' });
     downloadBlob(blob, ($('sessTitle').textContent || '코멘트') + '_코멘트모음.doc');
   } finally {
     $('wordBtn').disabled = false;
@@ -459,7 +557,6 @@ $('printBtn').addEventListener('click', async function(){
 });
 
 // ---------------- 시작 ----------------
-if(!CONFIG.APPS_SCRIPT_URL){ $('setupBanner').className = 'setup-banner show'; }
 route();
 </script>
 </body>
