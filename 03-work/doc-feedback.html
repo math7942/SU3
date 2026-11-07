@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>문서 익명 피드백 수합</title>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--sub:#6b7280;--line:#e5e7eb;--pri:#2563eb;--pri-d:#1d4ed8;--warn:#b45309;--warn-bg:#fef3c7;--ok:#047857;--err:#b91c1c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:15px;margin:0 0 10px}
+  h3{font-size:13.5px;margin:14px 0 6px;color:var(--sub)}
+  .sub{color:var(--sub);font-size:14px;margin-bottom:18px}
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;text-decoration:none;margin-bottom:12px}
+  .back:hover{color:var(--pri)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:4px}
+  input[type=text],input[type=password],textarea{
+    width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:14px/1.4 inherit;background:#fff;color:var(--ink)
+  }
+  textarea{min-height:70px;resize:vertical}
+  button{border:0;border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;background:var(--pri);color:#fff}
+  button:hover{background:var(--pri-d)}
+  button.ghost{background:#eef2ff;color:var(--pri)}
+  button.ghost:hover{background:#e0e7ff}
+  button.small{padding:5px 10px;font-size:12.5px}
+  button:disabled{opacity:.5;cursor:default}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .share-row{display:flex;gap:8px;margin:8px 0}
+  .share-row input{flex:1;background:#f9fafb;font-size:13px}
+  .note{font-size:12px;color:var(--sub);margin-top:6px}
+  .msg{font-size:13px;margin-top:8px;color:var(--warn)}
+  .msg.ok{color:var(--ok)}
+  .msg.err{color:var(--err)}
+  .setup-banner{display:none;margin:0 0 16px;padding:12px 16px;border:1px solid var(--err);border-radius:10px;background:#fef2f2;color:var(--ink);font-size:13px;line-height:1.6}
+  .setup-banner.show{display:block}
+  .setup-banner code{background:#fff;padding:1px 5px;border-radius:4px}
+  .file-row{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .file-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#f9fafb;flex-wrap:wrap}
+  .file-head .name{font-weight:600;cursor:pointer}
+  .file-head .name:hover{color:var(--pri)}
+  .file-head .time{font-size:12px;color:var(--sub)}
+  .file-admin-actions{display:flex;gap:6px}
+  .file-body{display:none;padding:14px;border-top:1px solid var(--line)}
+  .file-body.open{display:block}
+  .doc-view{max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff;font-size:13.5px}
+  .doc-view table{border-collapse:collapse;width:100%;margin:8px 0}
+  .doc-view td,.doc-view th{border:1px solid #ccc;padding:5px 7px;font-size:13px}
+  .doc-view img{max-width:100%}
+  .comment-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
+  .comment-list li{background:#f9fafb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13.5px}
+  .comment-list .ctime{display:block;font-size:11px;color:var(--sub);margin-top:3px}
+  .comment-empty{color:#9ca3af;font-size:13px}
+  .admin-panel{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .empty{color:#9ca3af;font-size:13.5px}
+  #printArea{display:none}
+  @media print{
+    body *{visibility:hidden}
+    #printArea, #printArea *{visibility:visible}
+    #printArea{display:block;position:absolute;left:0;top:0;width:100%}
+    #printArea h1{font-size:20px}
+    #printArea h2{font-size:15px;border-bottom:1px solid #000;padding-bottom:4px;margin-top:22px}
+    #printArea .pc{border-bottom:1px solid #ddd;padding:6px 0;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="setupBanner" class="setup-banner">
+    ⚠️ 아직 저장소(구글 시트)가 연결되지 않았습니다. 이 페이지 맨 아래 <code>CONFIG.APPS_SCRIPT_URL</code> 값에
+    배포한 Apps Script 웹앱 주소를 넣어야 정상 작동합니다.
+  </div>
+
+  <div id="home">
+    <a class="back" href="index.html">← 업무 도구</a>
+    <h1>문서 익명 피드백 수합</h1>
+    <div class="sub">링크 하나를 선생님들께 보내면, 각자 문서(.docx)를 올리고 서로 읽으며 익명으로 의견을 남길 수 있습니다.</div>
+    <div class="card">
+      <h2>새로 만들기</h2>
+      <div class="field"><label>제목</label><input type="text" id="newTitle" placeholder="예: 3학년 1학기 지도안 동료 피드백"></div>
+      <div class="field"><label>관리자 비밀번호</label><input type="password" id="newPassword" placeholder="나중에 원본·코멘트를 받을 때 필요합니다"></div>
+      <button id="createBtn">만들기</button>
+      <div class="msg" id="createMsg"></div>
+    </div>
+    <div class="card" id="shareBox" hidden>
+      <h2>만들어졌습니다</h2>
+      <p class="note">아래 링크를 선생님들께 보내주세요. 관리자 비밀번호는 잊지 말고 따로 적어두세요.</p>
+      <div class="share-row"><input type="text" id="shareLink" readonly><button id="copyBtn">복사</button></div>
+      <button class="ghost" id="goBtn">바로 열기</button>
+    </div>
+  </div>
+
+  <div id="session" hidden>
+    <a class="back" href="index.html">← 업무 도구</a>
+    <h1 id="sessTitle">·</h1>
+    <div class="sub">여러 선생님이 각자 문서를 올리고, 서로의 문서를 읽으며 익명으로 의견을 남길 수 있습니다.</div>
+    <div class="card">
+      <div class="share-row"><input type="text" id="shareLink2" readonly><button class="small" id="copyBtn2">링크 복사</button></div>
+    </div>
+    <div class="card">
+      <h2>문서 올리기 (.docx)</h2>
+      <input type="file" id="fileInput" accept=".docx">
+      <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장 → Word(.docx)"로 변환해서 올려주세요. 표·서식이 가장 잘 살아납니다.</div>
+      <div class="msg" id="uploadMsg"></div>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <h2>올라온 문서</h2>
+        <button class="ghost small" id="adminToggle">관리자 모드</button>
+      </div>
+      <div id="adminGate" class="row" hidden>
+        <input type="password" id="adminPw" placeholder="관리자 비밀번호" style="max-width:220px">
+        <button class="small" id="adminVerify">확인</button>
+        <span class="msg" id="adminMsg"></span>
+      </div>
+      <div id="adminTools" class="row admin-panel" hidden>
+        <button class="small" id="zipBtn">원본 전체 zip으로 받기</button>
+        <button class="small" id="wordBtn">코멘트 전체 워드로 저장</button>
+        <button class="small" id="printBtn">인쇄</button>
+      </div>
+      <div id="fileList" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+</div>
+
+<script>
+var CONFIG = {
+  APPS_SCRIPT_URL: ""
+};
+
+function $(id){ return document.getElementById(id); }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function fmtTime(iso){
+  try{
+    var d = new Date(iso);
+    if(isNaN(d)) return String(iso || '');
+    return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' '
+      +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }catch(e){ return String(iso || ''); }
+}
+
+function apiUrl(params){
+  var u = CONFIG.APPS_SCRIPT_URL + '?' + Object.keys(params).map(function(k){
+    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+  return u;
+}
+async function apiGet(params){
+  var res = await fetch(apiUrl(params));
+  return res.json();
+}
+async function apiPost(body){
+  var res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function base64ToArrayBuffer(base64){
+  var binary = atob(base64);
+  var bytes = new Uint8Array(binary.length);
+  for(var i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+function downloadBlob(blob, filename){
+  var a = document.createElement('a');
+  var url = URL.createObjectURL(blob);
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+
+// ---------------- 라우팅 ----------------
+var sessionId = null;
+
+function route(){
+  var hash = location.hash || '';
+  var m = /^#s-(.+)$/.exec(hash);
+  if(m){
+    sessionId = m[1];
+    $('home').hidden = true;
+    $('session').hidden = false;
+    initSession();
+  } else {
+    sessionId = null;
+    $('home').hidden = false;
+    $('session').hidden = true;
+  }
+}
+window.addEventListener('hashchange', route);
+
+// ---------------- 홈: 새로 만들기 ----------------
+$('createBtn').addEventListener('click', async function(){
+  if(!CONFIG.APPS_SCRIPT_URL){ $('createMsg').textContent = '저장소가 아직 연결되지 않았습니다.'; return; }
+  var title = $('newTitle').value.trim();
+  var password = $('newPassword').value;
+  if(!title){ $('createMsg').textContent = '제목을 입력해주세요.'; return; }
+  if(!password){ $('createMsg').textContent = '관리자 비밀번호를 입력해주세요.'; return; }
+  $('createMsg').textContent = '만드는 중...';
+  try{
+    var res = await apiPost({ action:'createSession', title: title, password: password });
+    if(!res.ok){ $('createMsg').textContent = res.error || '만들지 못했습니다.'; return; }
+    $('createMsg').textContent = '';
+    var link = location.origin + location.pathname + '#s-' + res.id;
+    $('shareLink').value = link;
+    $('shareBox').hidden = false;
+    $('goBtn').onclick = function(){ location.hash = '#s-' + res.id; };
+  }catch(e){
+    $('createMsg').textContent = '오류가 발생했습니다: ' + e.message;
+  }
+});
+$('copyBtn').addEventListener('click', function(){
+  $('shareLink').select();
+  navigator.clipboard && navigator.clipboard.writeText($('shareLink').value);
+});
+
+// ---------------- 세션(공유) 화면 ----------------
+var isAdmin = false;
+var adminPassword = '';
+var openFiles = {}; // fileId -> {timer}
+
+async function initSession(){
+  isAdmin = false; adminPassword = '';
+  $('adminTools').hidden = true;
+  $('adminGate').hidden = true;
+  $('adminMsg').textContent = '';
+  $('uploadMsg').textContent = '';
+  var link = location.origin + location.pathname + '#s-' + sessionId;
+  $('shareLink2').value = link;
+  if(!CONFIG.APPS_SCRIPT_URL) return;
+  var info = await apiGet({ action:'sessionInfo', id: sessionId });
+  $('sessTitle').textContent = info.ok ? info.title : '세션을 찾을 수 없습니다';
+  await refreshFileList();
+}
+$('copyBtn2').addEventListener('click', function(){
+  $('shareLink2').select();
+  navigator.clipboard && navigator.clipboard.writeText($('shareLink2').value);
+});
+
+$('fileInput').addEventListener('change', async function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  if(!/\.docx$/i.test(file.name)){
+    $('uploadMsg').className = 'msg err';
+    $('uploadMsg').textContent = 'docx 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장 → Word(.docx)"로 바꿔서 올려주세요.';
+    e.target.value = '';
+    return;
+  }
+  $('uploadMsg').className = 'msg';
+  $('uploadMsg').textContent = '올리는 중...';
+  try{
+    var dataUrl = await new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onload = function(){ resolve(r.result); };
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+    var base64 = dataUrl.split(',')[1];
+    var res = await apiPost({ action:'uploadFile', sessionId: sessionId, filename: file.name, dataBase64: base64 });
+    if(!res.ok){ $('uploadMsg').className='msg err'; $('uploadMsg').textContent = res.error || '올리지 못했습니다.'; return; }
+    $('uploadMsg').className = 'msg ok';
+    $('uploadMsg').textContent = '올렸습니다: ' + file.name;
+    e.target.value = '';
+    await refreshFileList();
+  }catch(err){
+    $('uploadMsg').className = 'msg err';
+    $('uploadMsg').textContent = '오류가 발생했습니다: ' + err.message;
+  }
+});
+
+var fileCache = []; // [{fileId, filename, uploadedAt}]
+
+async function refreshFileList(){
+  var res = await apiGet({ action:'listFiles', id: sessionId });
+  fileCache = res.ok ? res.files : [];
+  renderFileList();
+}
+
+function renderFileList(){
+  var el = $('fileList');
+  if(!fileCache.length){ el.innerHTML = '<p class="empty">아직 올라온 문서가 없습니다.</p>'; return; }
+  el.innerHTML = fileCache.map(function(f){
+    return '<div class="file-row" data-id="' + esc(f.fileId) + '">' +
+      '<div class="file-head">' +
+        '<span><span class="name" data-act="toggle">' + esc(f.filename) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
+        '<span class="file-admin-actions" hidden>' +
+          '<button class="small ghost" data-act="download">원본 다운로드</button>' +
+          '<button class="small ghost" data-act="delete">삭제</button>' +
+        '</span>' +
+      '</div>' +
+      '<div class="file-body">' +
+        '<div class="doc-view empty">문서를 불러오는 중...</div>' +
+        '<h3>익명 코멘트</h3>' +
+        '<ul class="comment-list"></ul>' +
+        '<textarea class="comment-input" placeholder="문서를 읽고 익명으로 의견을 남겨주세요"></textarea>' +
+        '<div class="row" style="margin-top:6px"><button class="small comment-submit">코멘트 남기기</button><span class="msg comment-msg"></span></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  Array.prototype.forEach.call(el.querySelectorAll('.file-admin-actions'), function(s){ s.hidden = !isAdmin; });
+
+  Array.prototype.forEach.call(el.querySelectorAll('.file-row'), function(row){
+    var fileId = row.dataset.id;
+    row.querySelector('[data-act=toggle]').addEventListener('click', function(){ toggleFile(row, fileId); });
+    var dl = row.querySelector('[data-act=download]');
+    if(dl) dl.addEventListener('click', function(){ downloadOriginal(fileId); });
+    var del = row.querySelector('[data-act=delete]');
+    if(del) del.addEventListener('click', function(){ deleteFile(fileId, row); });
+    row.querySelector('.comment-submit').addEventListener('click', function(){ submitComment(row, fileId); });
+  });
+}
+
+async function toggleFile(row, fileId){
+  var body = row.querySelector('.file-body');
+  var wasOpen = body.classList.contains('open');
+  // 다른 패널은 닫아 화면을 간단하게 유지
+  Array.prototype.forEach.call(document.querySelectorAll('.file-body.open'), function(b){ b.classList.remove('open'); });
+  Object.keys(openFiles).forEach(function(id){ clearInterval(openFiles[id].timer); delete openFiles[id]; });
+  if(wasOpen) return;
+  body.classList.add('open');
+  var docView = row.querySelector('.doc-view');
+  if(!docView.dataset.loaded){
+    try{
+      var fres = await apiGet({ action:'getFile', fileId: fileId });
+      if(!fres.ok){ docView.textContent = '문서를 불러오지 못했습니다: ' + (fres.error || ''); }
+      else{
+        var buf = base64ToArrayBuffer(fres.dataBase64);
+        var result = await mammoth.convertToHtml({ arrayBuffer: buf });
+        docView.classList.remove('empty');
+        docView.innerHTML = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
+      }
+    }catch(err){
+      docView.textContent = '문서를 읽는 중 오류가 발생했습니다: ' + err.message;
+    }
+    docView.dataset.loaded = '1';
+  }
+  await refreshComments(row, fileId);
+  openFiles[fileId] = { timer: setInterval(function(){ refreshComments(row, fileId); }, 15000) };
+}
+
+async function refreshComments(row, fileId){
+  var res = await apiGet({ action:'listComments', fileId: fileId });
+  var ul = row.querySelector('.comment-list');
+  var comments = res.ok ? res.comments : [];
+  if(!comments.length){ ul.innerHTML = '<li class="comment-empty">아직 코멘트가 없습니다.</li>'; return; }
+  ul.innerHTML = comments.map(function(c){
+    return '<li>' + esc(c.comment) + '<span class="ctime">' + esc(fmtTime(c.createdAt)) + '</span></li>';
+  }).join('');
+}
+
+async function submitComment(row, fileId){
+  var ta = row.querySelector('.comment-input');
+  var msg = row.querySelector('.comment-msg');
+  var text = ta.value.trim();
+  if(!text){ return; }
+  msg.className = 'msg comment-msg';
+  msg.textContent = '등록 중...';
+  try{
+    var res = await apiPost({ action:'addComment', sessionId: sessionId, fileId: fileId, comment: text });
+    if(!res.ok){ msg.className='msg comment-msg err'; msg.textContent = res.error || '등록하지 못했습니다.'; return; }
+    ta.value = '';
+    msg.textContent = '';
+    await refreshComments(row, fileId);
+  }catch(err){
+    msg.className='msg comment-msg err'; msg.textContent = '오류: ' + err.message;
+  }
+}
+
+// ---------------- 관리자 모드 ----------------
+$('adminToggle').addEventListener('click', function(){
+  if(isAdmin){ $('adminTools').scrollIntoView({behavior:'smooth'}); return; }
+  $('adminGate').hidden = !$('adminGate').hidden;
+});
+$('adminVerify').addEventListener('click', async function(){
+  var pw = $('adminPw').value;
+  $('adminMsg').textContent = '확인 중...';
+  try{
+    var res = await apiGet({ action:'verifyAdmin', id: sessionId, password: pw });
+    if(!res.ok){ $('adminMsg').textContent = '비밀번호가 올바르지 않습니다.'; return; }
+    isAdmin = true;
+    adminPassword = pw;
+    $('adminMsg').textContent = '';
+    $('adminGate').hidden = true;
+    $('adminTools').hidden = false;
+    renderFileList();
+  }catch(err){
+    $('adminMsg').textContent = '오류: ' + err.message;
+  }
+});
+
+async function downloadOriginal(fileId){
+  var meta = fileCache.find(function(f){ return f.fileId === fileId; });
+  var res = await apiGet({ action:'getFile', fileId: fileId });
+  if(!res.ok){ alert('원본을 불러오지 못했습니다: ' + (res.error || '')); return; }
+  var buf = base64ToArrayBuffer(res.dataBase64);
+  var blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  downloadBlob(blob, (meta && meta.filename) || res.filename || '문서.docx');
+}
+
+async function deleteFile(fileId, row){
+  if(!confirm('이 문서와 코멘트를 삭제할까요?')) return;
+  var res = await apiPost({ action:'deleteFile', sessionId: sessionId, fileId: fileId, password: adminPassword });
+  if(!res.ok){ alert(res.error || '삭제하지 못했습니다.'); return; }
+  await refreshFileList();
+}
+
+$('zipBtn').addEventListener('click', async function(){
+  if(!fileCache.length){ alert('받을 문서가 없습니다.'); return; }
+  $('zipBtn').disabled = true;
+  try{
+    var zip = new JSZip();
+    for(var i=0;i<fileCache.length;i++){
+      var f = fileCache[i];
+      var res = await apiGet({ action:'getFile', fileId: f.fileId });
+      if(res.ok) zip.file(f.filename, base64ToArrayBuffer(res.dataBase64));
+    }
+    var blob = await zip.generateAsync({ type:'blob' });
+    downloadBlob(blob, ($('sessTitle').textContent || '문서') + '_원본모음.zip');
+  }finally{
+    $('zipBtn').disabled = false;
+  }
+});
+
+async function buildReportInner(){
+  var parts = [];
+  for(var i=0;i<fileCache.length;i++){
+    var f = fileCache[i];
+    var cres = await apiGet({ action:'listComments', fileId: f.fileId });
+    var comments = cres.ok ? cres.comments : [];
+    parts.push('<h2>' + esc(f.filename) + '</h2>');
+    if(!comments.length){
+      parts.push('<div class="pc">(코멘트 없음)</div>');
+    } else {
+      comments.forEach(function(c){
+        parts.push('<div class="pc">' + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>');
+      });
+    }
+  }
+  return '<h1>' + esc($('sessTitle').textContent) + ' · 코멘트 모음</h1>' + parts.join('');
+}
+
+$('wordBtn').addEventListener('click', async function(){
+  $('wordBtn').disabled = true;
+  try{
+    var inner = await buildReportInner();
+    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="utf-8"><title>코멘트 모음</title></head><body>' + inner + '</body></html>';
+    var blob = new Blob(['﻿' + html], { type: 'application/msword' });
+    downloadBlob(blob, ($('sessTitle').textContent || '코멘트') + '_코멘트모음.doc');
+  } finally {
+    $('wordBtn').disabled = false;
+  }
+});
+
+$('printBtn').addEventListener('click', async function(){
+  $('printBtn').disabled = true;
+  try{
+    var inner = await buildReportInner();
+    $('printArea').innerHTML = inner;
+    window.print();
+  } finally {
+    $('printBtn').disabled = false;
+  }
+});
+
+// ---------------- 시작 ----------------
+if(!CONFIG.APPS_SCRIPT_URL){ $('setupBanner').className = 'setup-banner show'; }
+route();
+</script>
+</body>
+</html>

@@ -578,6 +578,196 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 등록부가 만들어지고, 전용 서명 링크가 생깁니다. 그 링크를 연수자들에게 보내면 누구나(로그인
 없이) 자기 줄을 찾아 서명할 수 있습니다.
 
+## 문서 익명 피드백 수합 도구 설정 (`03-work/doc-feedback.html`)
+
+이 도구도 구글 시트 + Apps Script를 저장소로 쓰되, 올라온 문서 원본(.docx)은 시트 칸에
+넣기엔 너무 커서(구글 시트 한 칸은 5만 자 제한) **구글 드라이브**에 파일로 저장하고, 시트에는
+그 위치(파일 아이디)와 코멘트만 둡니다.
+
+1. 데이터를 담을 구글 시트를 새로 하나 만듭니다 (예: `문서 피드백 수합 저장소`). 시트는 비워둔
+   채로 두면 됩니다 — 아래 코드가 처음 실행될 때 필요한 하위 시트(`Sessions`, `Files`, `Comments`)를
+   자동으로 만듭니다.
+   - `Sessions` — 세션(모음) 목록. 열: 아이디, 제목, 비밀번호, 생성일시
+   - `Files` — 올라온 문서 목록. 열: 파일아이디(구글드라이브 파일 ID), 세션아이디, 파일명, 업로드일시
+   - `Comments` — 코멘트 목록(익명). 열: 아이디, 세션아이디, 파일아이디, 코멘트, 작성일시
+   - 원본 파일 자체는 시트가 아니라, Apps Script가 자동으로 만드는 구글 드라이브의
+     `문서피드백_원본파일` 폴더 안에 저장됩니다.
+2. 그 시트를 열고 **확장 프로그램 → Apps Script**로 들어가 기존 코드를 전부 지우고 아래 코드를
+   붙여넣습니다. (관리자 비밀번호는 시트에 저장하지 않고 세션을 만들 때마다 담당자가 직접
+   정하므로, 이 코드에는 따로 바꿀 값이 없습니다. 문서를 올리거나 코멘트를 남기는 것은 누구나
+   링크만 있으면 할 수 있고, 원본 전체 내려받기·코멘트 워드로 저장·문서 삭제처럼 "나중에 정리하는"
+   동작만 세션을 만들 때 정한 비밀번호로 화면에서 가려둡니다.)
+
+   ```js
+   function doGet(e) {
+     var action = e.parameter.action;
+     var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+     if (action === "sessionInfo") {
+       var s = findSession(ss, e.parameter.id);
+       if (!s) return json({ ok: false, error: "세션을 찾을 수 없습니다" });
+       return json({ ok: true, title: s.title, createdAt: s.createdAt });
+     }
+     if (action === "listFiles") {
+       return json({ ok: true, files: listFiles(ss, e.parameter.id) });
+     }
+     if (action === "getFile") {
+       var f = getFileContent(e.parameter.fileId);
+       if (!f) return json({ ok: false, error: "파일을 찾을 수 없습니다" });
+       return json({ ok: true, filename: f.filename, mimeType: f.mimeType, dataBase64: f.dataBase64 });
+     }
+     if (action === "listComments") {
+       return json({ ok: true, comments: listComments(ss, e.parameter.fileId) });
+     }
+     if (action === "verifyAdmin") {
+       var s2 = findSession(ss, e.parameter.id);
+       if (!s2) return json({ ok: false, error: "세션을 찾을 수 없습니다" });
+       return json({ ok: s2.password === e.parameter.password });
+     }
+     return json({ ok: false, error: "알 수 없는 요청입니다" });
+   }
+
+   function doPost(e) {
+     var payload = JSON.parse(e.postData.contents);
+     var ss = SpreadsheetApp.getActiveSpreadsheet();
+     var action = payload.action;
+
+     if (action === "createSession") {
+       var title = String(payload.title || "").trim();
+       var password = String(payload.password || "");
+       if (!title) return json({ ok: false, error: "제목을 입력해주세요" });
+       if (!password) return json({ ok: false, error: "관리자 비밀번호를 입력해주세요" });
+       var id = Utilities.getUuid().replace(/-/g, "").slice(0, 10);
+       getSheet(ss, "Sessions").appendRow([id, title, password, new Date().toISOString()]);
+       return json({ ok: true, id: id });
+     }
+
+     if (action === "uploadFile") {
+       var session = findSession(ss, payload.sessionId);
+       if (!session) return json({ ok: false, error: "세션을 찾을 수 없습니다" });
+       var filename = String(payload.filename || "문서.docx");
+       var bytes = Utilities.base64Decode(payload.dataBase64);
+       var blob = Utilities.newBlob(bytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", filename);
+       var file = getFolder().createFile(blob);
+       getSheet(ss, "Files").appendRow([file.getId(), payload.sessionId, filename, new Date().toISOString()]);
+       return json({ ok: true, fileId: file.getId() });
+     }
+
+     if (action === "addComment") {
+       var comment = String(payload.comment || "").trim();
+       if (!comment) return json({ ok: false, error: "내용을 입력해주세요" });
+       getSheet(ss, "Comments").appendRow([Utilities.getUuid(), payload.sessionId, payload.fileId, comment, new Date().toISOString()]);
+       return json({ ok: true });
+     }
+
+     if (action === "deleteFile") {
+       var session2 = findSession(ss, payload.sessionId);
+       if (!session2 || session2.password !== payload.password) return json({ ok: false, error: "비밀번호가 올바르지 않습니다" });
+       var sheet = getSheet(ss, "Files");
+       var data = sheet.getDataRange().getValues();
+       for (var r = 1; r < data.length; r++) {
+         if (String(data[r][0]) === String(payload.fileId)) {
+           sheet.deleteRow(r + 1);
+           try { DriveApp.getFileById(payload.fileId).setTrashed(true); } catch (err) {}
+           return json({ ok: true });
+         }
+       }
+       return json({ ok: false, error: "대상을 찾지 못했습니다" });
+     }
+
+     return json({ ok: false, error: "알 수 없는 요청입니다" });
+   }
+
+   function getFolder() {
+     var name = "문서피드백_원본파일";
+     var folders = DriveApp.getFoldersByName(name);
+     if (folders.hasNext()) return folders.next();
+     return DriveApp.createFolder(name);
+   }
+
+   function getFileContent(fileId) {
+     try {
+       var file = DriveApp.getFileById(fileId);
+       var blob = file.getBlob();
+       return { filename: file.getName(), mimeType: blob.getContentType(), dataBase64: Utilities.base64Encode(blob.getBytes()) };
+     } catch (err) {
+       return null;
+     }
+   }
+
+   function getSheet(ss, name) {
+     var sheet = ss.getSheetByName(name);
+     if (!sheet) {
+       sheet = ss.insertSheet(name);
+       if (name === "Sessions") sheet.appendRow(["아이디", "제목", "비밀번호", "생성일시"]);
+       if (name === "Files") sheet.appendRow(["파일아이디", "세션아이디", "파일명", "업로드일시"]);
+       if (name === "Comments") sheet.appendRow(["아이디", "세션아이디", "파일아이디", "코멘트", "작성일시"]);
+     }
+     return sheet;
+   }
+
+   function findSession(ss, id) {
+     if (!id) return null;
+     var data = getSheet(ss, "Sessions").getDataRange().getValues();
+     for (var r = 1; r < data.length; r++) {
+       if (String(data[r][0]) === String(id)) {
+         return { id: data[r][0], title: data[r][1], password: data[r][2], createdAt: data[r][3] };
+       }
+     }
+     return null;
+   }
+
+   function listFiles(ss, sessionId) {
+     var data = getSheet(ss, "Files").getDataRange().getValues();
+     var out = [];
+     for (var r = 1; r < data.length; r++) {
+       if (String(data[r][1]) === String(sessionId)) {
+         out.push({ fileId: data[r][0], filename: data[r][2], uploadedAt: data[r][3] });
+       }
+     }
+     return out;
+   }
+
+   function listComments(ss, fileId) {
+     var data = getSheet(ss, "Comments").getDataRange().getValues();
+     var out = [];
+     for (var r = 1; r < data.length; r++) {
+       if (String(data[r][2]) === String(fileId)) {
+         out.push({ comment: data[r][3], createdAt: data[r][4] });
+       }
+     }
+     out.sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; });
+     return out;
+   }
+
+   function json(obj) {
+     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+   }
+   ```
+
+3. 오른쪽 위 **배포 → 새 배포**를 누르고, 유형은 **웹앱**을 선택합니다.
+   - 실행 계정: **나**
+   - 액세스 권한이 있는 사용자: **모든 사용자** (이래야 선생님들이 로그인 없이 올리고 코멘트를 남길 수 있습니다)
+   - 처음 배포할 때 구글 드라이브 접근 권한을 요청하는 승인 창이 뜹니다 — 담당자 본인 계정으로
+     승인해주세요(업로드된 문서가 그 계정의 드라이브에 저장됩니다).
+4. 배포하면 나오는 웹앱 URL(`https://script.google.com/macros/s/.../exec`)을 복사합니다.
+5. `03-work/doc-feedback.html` 파일 맨 위쪽 `<script>`의 `CONFIG.APPS_SCRIPT_URL` 값에
+   그 URL을 붙여넣고 저장합니다.
+
+이미 배포해 두었다면: **배포 → 배포 관리 → 연필(수정) 아이콘 → 버전: 새 버전 → 배포**로
+코드만 새로 반영하면 됩니다 (URL은 그대로 유지).
+
+**사용 흐름**: 담당자가 홈 화면에서 제목과 관리자 비밀번호를 정해 "모음"을 하나 만들면 전용
+링크가 생깁니다. 그 링크를 선생님들께 보내면, 각자 로그인 없이 문서(.docx)를 올릴 수 있고,
+누구나 올라온 문서 이름을 눌러 내용을 읽고 그 아래에 익명으로 코멘트를 남길 수 있습니다(작성자
+이름이 전혀 남지 않습니다). 담당자는 같은 화면 위쪽의 "관리자 모드"에서 비밀번호를 넣으면
+문서별 원본 내려받기·삭제, 원본 전체 zip 내려받기, 코멘트 전체를 워드 파일로 저장하거나
+인쇄하는 기능이 열립니다 — 시점 제한 없이 담당자가 원할 때 언제든 받을 수 있습니다.
+
+문서는 docx만 지원합니다(한글 문서는 "다른 이름으로 저장 → Word(.docx)"로 바꿔서 올리면 표·서식이
+가장 잘 유지됩니다). 다만 아주 복잡한 레이아웃, 각주, 특수 개체 등은 변환 과정에서 단순화될 수
+있습니다.
+
 ## 도구를 추가하려면
 
 1. HTML 파일을 해당 폴더에 넣습니다. 파일 이름에는 공백 대신 `-`를 씁니다.
