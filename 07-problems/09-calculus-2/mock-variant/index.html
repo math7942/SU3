@@ -105,7 +105,7 @@
   function stmtHtml(tex) {
     /* \text{...} 부분은 일반 글자로(줄바꿈 가능), 나머지 수식만 MathJax 로 */
     var out = '', re = /\\text\{([^{}]*)\}/g, last = 0, m, mathBuf;
-    function flushMath(t) { var x = t.trim(); if (x) { out += '\\(' + esc(x) + '\\) '; } }
+    function flushMath(t) { var x = t.trim(); if (x) { out += '\\(\\displaystyle ' + esc(x) + '\\) '; } }
     while ((m = re.exec(tex)) !== null) {
       flushMath(tex.slice(last, m.index));
       out += esc(m[1]) + ' ';
