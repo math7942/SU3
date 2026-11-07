@@ -91,6 +91,10 @@
     #printArea h1{font-size:20px}
     #printArea h2{font-size:15px;border-bottom:1px solid #000;padding-bottom:4px;margin-top:22px}
     #printArea .pc{border-bottom:1px solid #ddd;padding:6px 0;font-size:13px}
+  #printArea mark.hl{background:#fff3b0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea table{border-collapse:collapse}
+  #printArea td,#printArea th{border:1px solid #999;padding:4px 6px;font-size:12px}
+  #printArea .pnum{font-weight:700}
   }
 </style>
 </head>
@@ -144,7 +148,7 @@
       </div>
       <div id="adminTools" class="row admin-panel" hidden>
         <button class="small" id="zipBtn">원본 전체 zip으로 받기</button>
-        <button class="small" id="wordBtn">의견 전체 워드로 저장</button>
+        <button class="small" id="wordBtn">의견 달린 문서 전체 zip으로 받기</button>
         <button class="small" id="printBtn">인쇄</button>
       </div>
       <div id="fileList" style="margin-top:12px"></div>
@@ -886,29 +890,6 @@ $('zipBtn').addEventListener('click', async function(){
   }
 });
 
-function buildFileSection(f, comments){
-  var parts = ['<h2>' + esc(f.filename) + '</h2>'];
-  if(!comments.length){
-    parts.push('<div class="pc">(의견 없음)</div>');
-  } else {
-    comments.forEach(function(c){
-      var q = c.quote ? ('인용: "' + esc(c.quote) + '" — ') : (c.kind === 'pin' && c.page ? (esc(c.page) + '페이지 표시 위치 — ') : '');
-      parts.push('<div class="pc">' + q + esc(c.comment) + ' <span style="color:#888;font-size:12px">(' + esc(fmtTime(c.createdAt)) + ')</span></div>');
-    });
-  }
-  return parts.join('');
-}
-
-async function buildReportInner(){
-  var parts = [];
-  for(var i=0;i<fileCache.length;i++){
-    var f = fileCache[i];
-    var comments = await getCommentsOnce(f.fileId);
-    parts.push(buildFileSection(f, comments));
-  }
-  return '<h1>' + esc($('sessTitle').textContent) + ' · 의견 모음</h1>' + parts.join('');
-}
-
 function docHtml(title, inner){
   return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
     '<head><meta charset="utf-8"><title>' + esc(title) + '</title></head><body>' + inner + '</body></html>';
@@ -1227,22 +1208,72 @@ async function downloadFileComments(fileId){
   }
 }
 
+// 관리 기능: 문서마다 형광펜·메모를 단 docx를 모아 zip으로 받기
 $('wordBtn').addEventListener('click', async function(){
+  if(!fileCache.length){ alert('받을 문서가 없습니다.'); return; }
   $('wordBtn').disabled = true;
   try{
-    var inner = await buildReportInner();
-    var blob = new Blob(['﻿' + docHtml('의견 모음', inner)], { type: 'application/msword' });
-    downloadBlob(blob, ($('sessTitle').textContent || '의견') + '_의견모음.doc');
-  } finally {
+    var zip = new JSZip();
+    for(var i = 0; i < fileCache.length; i++){
+      var f = fileCache[i];
+      var prefix = (i + 1) + '_';
+      if(isPdf(f.filename)){
+        zip.file(prefix + f.filename, await getFileArrayBuffer(f));
+        continue;
+      }
+      var comments = await getCommentsOnce(f.fileId);
+      var blob = await buildCommentedDocx(f, comments);
+      zip.file(prefix + f.filename.replace(/\.docx$/i, '') + '_의견.docx', await blob.arrayBuffer());
+    }
+    downloadBlob(await zip.generateAsync({ type: 'blob' }), ($('sessTitle').textContent || '의견') + '_의견달린문서.zip');
+  }catch(err){
+    alert('내려받지 못했습니다: ' + err.message);
+  }finally{
     $('wordBtn').disabled = false;
   }
 });
 
+// 인쇄: 문서마다 형광펜 표시를 한 원문과 번호 붙은 의견 목록
+async function buildPrintInner(){
+  var parts = ['<h1>' + esc($('sessTitle').textContent) + ' · 의견</h1>'];
+  for(var i = 0; i < fileCache.length; i++){
+    var f = fileCache[i];
+    parts.push('<h2>' + esc(f.filename) + '</h2>');
+    if(isPdf(f.filename)){
+      parts.push('<p>(pdf 파일은 의견 표시를 지원하지 않습니다)</p>');
+      continue;
+    }
+    var comments = await getCommentsOnce(f.fileId);
+    var html = (await mammoth.convertToHtml({ arrayBuffer: await getFileArrayBuffer(f) })).value;
+    var box = document.createElement('div');
+    box.innerHTML = html;
+    var groups = {};
+    comments.forEach(function(c){
+      if(c.kind === 'pin' || typeof c.startOffset !== 'number') return;
+      var key = c.startOffset + ':' + c.endOffset;
+      groups[key] = (groups[key] || 0) + 1;
+    });
+    var seen = {};
+    var notes = comments.map(function(c){
+      var label = '';
+      if(c.kind !== 'pin' && typeof c.startOffset === 'number'){
+        var key = c.startOffset + ':' + c.endOffset;
+        try{ applyHighlight(box, c.startOffset, c.endOffset, c.id); }catch(e){}
+        if(groups[key] > 1){ seen[key] = (seen[key] || 0) + 1; label = '의견' + seen[key] + ' · '; }
+      }
+      var q = c.quote ? '"' + (c.quote.length > 80 ? c.quote.slice(0, 80) + '…' : c.quote) + '" — ' : '';
+      return '<div class="pc">' + label + q + esc(c.comment) + '</div>';
+    }).join('');
+    parts.push('<div>' + box.innerHTML + '</div>');
+    parts.push('<div>' + (notes || '<div class="pc">(의견 없음)</div>') + '</div>');
+  }
+  return parts.join('');
+}
+
 $('printBtn').addEventListener('click', async function(){
   $('printBtn').disabled = true;
   try{
-    var inner = await buildReportInner();
-    $('printArea').innerHTML = inner;
+    $('printArea').innerHTML = await buildPrintInner();
     window.print();
   } finally {
     $('printBtn').disabled = false;
