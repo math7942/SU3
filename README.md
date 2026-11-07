@@ -580,33 +580,30 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 
 ## 서논술 쓰리고! 도구 설정 (`03-work/doc-feedback.html`)
 
-이 도구는 Apps Script가 아니라 **Firebase(Firestore + Storage)**를 저장소로 씁니다.
+이 도구는 Apps Script가 아니라 **Firebase Firestore**만 저장소로 씁니다(Storage는 쓰지
+않습니다 — Firebase Storage는 무료 Spark 플랜에서 쓸 수 없고 결제 계정(Blaze) 연결이
+필요해서, 문서 원본(.docx)도 Storage 대신 Firestore 문서에 base64로 쪼개 담습니다).
 이 사이트가 이미 쓰고 있는 Firebase 프로젝트(`assets/firebase-store.js`, 명예의 전당·축제
-소감 도구가 쓰는 것과 같은 프로젝트)를 그대로 재사용하므로, 보안 규칙이 이미 열려 있다면
-**따로 배포하거나 URL을 붙여넣을 것 없이 바로 작동**합니다.
+소감 도구가 쓰는 것과 같은 프로젝트)를 그대로 재사용하므로, 보안 규칙만 열어주면 **따로
+배포하거나 URL을 붙여넣을 것 없이 바로 작동**합니다.
 
-- Firestore 컬렉션 3개(처음 쓸 때 자동으로 생깁니다): `docFeedbackSessions`(세션/모음),
-  `docFeedbackFiles`(올라온 문서 메타데이터: 세션아이디·파일명·저장경로·업로드일시),
-  `docFeedbackComments`(익명 코멘트: 세션아이디·파일아이디·코멘트·작성일시)
-- 문서 원본(.docx) 자체는 Firestore가 아니라 **Firebase Storage**의
-  `docFeedback/<세션아이디>/<파일아이디>.docx` 경로에 저장됩니다.
+- `docFeedbackSessions` — 세션(모음): 제목·생성일시
+- `docFeedbackFiles` — 올라온 문서 메타데이터: 세션아이디·파일명·청크개수·업로드일시
+- `docFeedbackFileChunks` — 문서 원본을 base64로 쪼갠 조각(문서 하나당 1MB 제한을 피하려고
+  여러 문서로 나눠 담음): 파일아이디·순번·조각데이터
+- `docFeedbackComments` — 익명 코멘트: 세션아이디·파일아이디·코멘트·작성일시
 - 비밀번호는 쓰지 않습니다. 링크를 아는 사람은 누구나 올리기·코멘트·원본 다운로드·삭제·
   전체 내보내기를 할 수 있고, 링크 자체를 필요한 사람에게만 전달하는 것으로 접근을 관리합니다.
 
-**만약 "permission-denied" 오류가 뜨면**: Firebase 콘솔 → Firestore Database → 규칙,
-Storage → 규칙에 아래처럼 이 도구가 쓰는 경로를 열어주는 줄이 있는지 확인하세요 (이미
-전체가 `allow read, write: if true;`로 열려 있다면 손댈 것이 없습니다).
+**"Missing or insufficient permissions" 오류가 뜨면**: 이 프로젝트의 Firestore 규칙은
+컬렉션 이름을 하나하나 허용 목록에 적어두는 방식입니다. Firebase 콘솔 → Firestore
+Database → 규칙에서, `col in [...]` 대괄호 목록에 아래 네 이름이 들어 있는지 확인하고
+없으면 추가한 뒤 **게시**하세요(`allow read`, `allow create`, `allow delete` 세 줄 모두에
+추가해야 합니다. `allow create`에 딸린 `request.resource.data.keys().size() <= 10`
+조건은 그대로 둬도 됩니다 — 이 도구가 쓰는 문서는 전부 필드 10개 미만입니다).
 
 ```
-// Firestore 규칙에 추가
-match /docFeedbackSessions/{id} { allow read, write: if true; }
-match /docFeedbackFiles/{id} { allow read, write: if true; }
-match /docFeedbackComments/{id} { allow read, write: if true; }
-```
-
-```
-// Storage 규칙에 추가
-match /docFeedback/{allPaths=**} { allow read, write: if true; }
+'docFeedbackSessions', 'docFeedbackFiles', 'docFeedbackFileChunks', 'docFeedbackComments'
 ```
 
 **사용 흐름**: 담당자가 홈 화면에서 제목만 정해 "모음"을 하나 만들면 전용 링크가 생깁니다.
