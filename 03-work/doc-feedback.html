@@ -536,9 +536,12 @@ function renderFileList(){
     return '<div class="file-row" data-id="' + esc(f.fileId) + '">' +
       '<div class="file-head">' +
         '<span><span class="name" data-act="toggle">' + esc(f.filename) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
-        '<span class="file-admin-actions" hidden>' +
-          '<button class="small ghost" data-act="download">원본 다운로드</button>' +
-          '<button class="small ghost" data-act="delete">삭제</button>' +
+        '<span class="row" style="gap:6px">' +
+          '<button class="small ghost" data-act="toggle-btn">열기</button>' +
+          '<span class="file-admin-actions" hidden>' +
+            '<button class="small ghost" data-act="download">원본 다운로드</button>' +
+            '<button class="small ghost" data-act="delete">삭제</button>' +
+          '</span>' +
         '</span>' +
       '</div>' +
       '<div class="file-body">' +
@@ -563,6 +566,7 @@ function renderFileList(){
   Array.prototype.forEach.call(el.querySelectorAll('.file-row'), function(row){
     var fileId = row.dataset.id;
     row.querySelector('[data-act=toggle]').addEventListener('click', function(){ toggleFile(row, fileId); });
+    row.querySelector('[data-act="toggle-btn"]').addEventListener('click', function(){ toggleFile(row, fileId); });
     var dl = row.querySelector('[data-act=download]');
     if(dl) dl.addEventListener('click', function(){ downloadOriginal(fileId); });
     var cw = row.querySelector('[data-act="comments-word"]');
@@ -579,6 +583,14 @@ function renderFileList(){
     if(reopenRow) openFilePanel(reopenRow, openFileId);
     else openFileId = null; // 그 사이에 삭제된 파일
   }
+  updateToggleButtons();
+}
+
+function updateToggleButtons(){
+  Array.prototype.forEach.call(document.querySelectorAll('.file-row'), function(row){
+    var btn = row.querySelector('[data-act="toggle-btn"]');
+    if(btn) btn.textContent = (row.dataset.id === openFileId) ? '닫기' : '열기';
+  });
 }
 
 function closeAllPanels(){
@@ -621,8 +633,9 @@ async function toggleFile(row, fileId){
   var wasOpenForThis = (openFileId === fileId);
   // 다른 패널은 닫아 화면을 간단하게 유지
   closeAllPanels();
-  if(wasOpenForThis){ openFileId = null; return; }
+  if(wasOpenForThis){ openFileId = null; updateToggleButtons(); return; }
   openFileId = fileId;
+  updateToggleButtons();
   await openFilePanel(row, fileId);
 }
 
