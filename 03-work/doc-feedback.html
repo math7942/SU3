@@ -131,7 +131,10 @@
 // ---------------- Firebase ----------------
 // 이 사이트의 다른 "함께 보는 기록" 도구(명예의 전당 등)와 같은 프로젝트를 재사용한다.
 // (assets/firebase-store.js 참고) apiKey는 비밀값이 아니라 공개되어도 되는 클라이언트 식별자이며,
-// 실제 접근 제어는 Firebase 콘솔의 Firestore/Storage 보안 규칙으로 한다.
+// 실제 접근 제어는 Firebase 콘솔의 Firestore 보안 규칙으로 한다.
+// Firebase Storage는 결제 계정(Blaze)이 있어야 쓸 수 있어서(무료 Spark 플랜 불가), 쓰지 않는다 —
+// 문서 원본(.docx)도 Firestore 문서에 base64로 쪼개 담는다(문서 하나당 1MB 제한을 피하려고
+// 청크로 나눈다).
 const firebaseConfig = {
   apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
   authDomain: "su3su3-e2669.firebaseapp.com",
@@ -146,13 +149,12 @@ let fbPromise = null;
 function loadFirebase(){
   if(!fbPromise){
     fbPromise = (async () => {
-      const [{ initializeApp }, fs, st] = await Promise.all([
+      const [{ initializeApp }, fs] = await Promise.all([
         import(`${SDK}/firebase-app.js`),
-        import(`${SDK}/firebase-firestore.js`),
-        import(`${SDK}/firebase-storage.js`)
+        import(`${SDK}/firebase-firestore.js`)
       ]);
       const app = initializeApp(firebaseConfig);
-      return { fs, st, db: fs.getFirestore(app), storage: st.getStorage(app) };
+      return { fs, db: fs.getFirestore(app) };
     })();
   }
   return fbPromise;
@@ -160,7 +162,9 @@ function loadFirebase(){
 
 const SESSIONS = 'docFeedbackSessions';
 const FILES = 'docFeedbackFiles';
+const CHUNKS = 'docFeedbackFileChunks';
 const COMMENTS = 'docFeedbackComments';
+const CHUNK_SIZE = 700000; // base64 문자 수 기준. Firestore 문서 1개 한도(1MB)보다 넉넉히 작게 잡음
 
 async function createSession(title){
   const { fs, db } = await loadFirebase();
@@ -173,14 +177,26 @@ async function getSessionInfo(id){
   const snap = await fs.getDoc(fs.doc(db, SESSIONS, id));
   return snap.exists() ? snap.data() : null;
 }
-async function uploadFile(sessionId, file){
-  const { fs, st, db, storage } = await loadFirebase();
-  const ref = fs.doc(fs.collection(db, FILES));
-  const storagePath = 'docFeedback/' + sessionId + '/' + ref.id + '.docx';
-  await st.uploadBytes(st.ref(storage, storagePath), file, {
-    contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
   });
-  await fs.setDoc(ref, { sessionId, filename: file.name, storagePath, uploadedAt: new Date().toISOString() });
+}
+async function uploadFile(sessionId, file){
+  const { fs, db } = await loadFirebase();
+  const base64 = await fileToBase64(file);
+  const chunks = [];
+  for(let i = 0; i < base64.length; i += CHUNK_SIZE) chunks.push(base64.slice(i, i + CHUNK_SIZE));
+  const ref = fs.doc(fs.collection(db, FILES));
+  const batch = fs.writeBatch(db);
+  chunks.forEach((data, index) => {
+    batch.set(fs.doc(db, CHUNKS, ref.id + '_' + index), { fileId: ref.id, index, data });
+  });
+  await batch.commit();
+  await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount: chunks.length, uploadedAt: new Date().toISOString() });
   return ref.id;
 }
 function listenFiles(sessionId, cb){
@@ -221,21 +237,29 @@ async function addComment(sessionId, fileId, comment){
   await fs.setDoc(fs.doc(fs.collection(db, COMMENTS)), { sessionId, fileId, comment, createdAt: new Date().toISOString() });
 }
 async function getFileArrayBuffer(fileEntry){
-  const { st, storage } = await loadFirebase();
-  const url = await st.getDownloadURL(st.ref(storage, fileEntry.storagePath));
-  const resp = await fetch(url);
-  return await resp.arrayBuffer();
+  const { fs, db } = await loadFirebase();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, CHUNKS), fs.where('fileId', '==', fileEntry.fileId)));
+  const chunkDocs = snap.docs.map((d) => d.data()).sort((a, b) => a.index - b.index);
+  const base64 = chunkDocs.map((c) => c.data).join('');
+  return base64ToArrayBuffer(base64);
 }
 async function deleteFileEverywhere(fileEntry){
-  const { fs, st, db, storage } = await loadFirebase();
-  try{ await st.deleteObject(st.ref(storage, fileEntry.storagePath)); }catch(e){}
+  const { fs, db } = await loadFirebase();
   await fs.deleteDoc(fs.doc(db, FILES, fileEntry.fileId));
-  const snap = await fs.getDocs(fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileEntry.fileId)));
-  if(snap.docs.length){
+  const chunkSnap = await fs.getDocs(fs.query(fs.collection(db, CHUNKS), fs.where('fileId', '==', fileEntry.fileId)));
+  const commentSnap = await fs.getDocs(fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileEntry.fileId)));
+  const toDelete = chunkSnap.docs.concat(commentSnap.docs);
+  if(toDelete.length){
     const batch = fs.writeBatch(db);
-    snap.docs.forEach((d) => batch.delete(d.ref));
+    toDelete.forEach((d) => batch.delete(d.ref));
     await batch.commit();
   }
+}
+function base64ToArrayBuffer(base64){
+  var binary = atob(base64);
+  var bytes = new Uint8Array(binary.length);
+  for(var i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
 }
 
 // ---------------- 공통 유틸 ----------------
@@ -358,7 +382,7 @@ $('fileInput').addEventListener('change', async function(e){
   }
 });
 
-var fileCache = []; // [{fileId, sessionId, filename, storagePath, uploadedAt}]
+var fileCache = []; // [{fileId, sessionId, filename, chunkCount, uploadedAt}]
 
 function renderFileList(){
   var el = $('fileList');
