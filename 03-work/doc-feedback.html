@@ -32,8 +32,8 @@
   button.small{padding:5px 10px;font-size:12.5px}
   button:disabled{opacity:.5;cursor:default}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .share-row{display:flex;gap:8px;margin:8px 0}
-  .share-row input{flex:1;background:#f9fafb;font-size:13px}
+  .share-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+  .share-row input{flex:1;min-width:160px;background:#f9fafb;font-size:13px}
   .note{font-size:12px;color:var(--sub);margin-top:6px}
   .msg{font-size:13px;margin-top:8px;color:var(--warn)}
   .msg.ok{color:var(--ok)}
@@ -294,6 +294,22 @@ async function deleteFileEverywhere(fileEntry){
     await batch.commit();
   }
 }
+async function deleteSessionEverywhere(id){
+  const { fs, db } = await loadFirebase();
+  const filesSnap = await fs.getDocs(fs.query(fs.collection(db, FILES), fs.where('sessionId', '==', id)));
+  let toDelete = filesSnap.docs.slice();
+  for(const fileDoc of filesSnap.docs){
+    const chunkSnap = await fs.getDocs(fs.query(fs.collection(db, CHUNKS), fs.where('fileId', '==', fileDoc.id)));
+    const commentSnap = await fs.getDocs(fs.query(fs.collection(db, COMMENTS), fs.where('fileId', '==', fileDoc.id)));
+    toDelete = toDelete.concat(chunkSnap.docs, commentSnap.docs);
+  }
+  for(let i = 0; i < toDelete.length; i += 400){
+    const batch = fs.writeBatch(db);
+    toDelete.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+  await fs.deleteDoc(fs.doc(db, SESSIONS, id));
+}
 function base64ToArrayBuffer(base64){
   var binary = atob(base64);
   var bytes = new Uint8Array(binary.length);
@@ -434,21 +450,43 @@ function route(){
 window.addEventListener('hashchange', route);
 
 // ---------------- 홈: 새로 만들기 / 기수 목록 ----------------
+var SESSION_DELETE_PASSWORD = '3.141592';
+
 function renderSessionList(list){
   var el = $('sessionList');
   if(!list.length){ el.innerHTML = '<p class="empty">아직 만든 기수가 없습니다.</p>'; return; }
   el.innerHTML = list.map(function(s){
     var link = location.origin + location.pathname + '#s-' + s.id;
-    return '<div class="session-item">' +
+    return '<div class="session-item" data-id="' + esc(s.id) + '">' +
       '<div class="si-head"><a href="#s-' + esc(s.id) + '" class="si-title">' + esc(s.title) + '</a><span class="si-time">' + esc(fmtTime(s.createdAt)) + '</span></div>' +
-      '<div class="share-row"><input type="text" readonly value="' + esc(link) + '"><button class="small ghost" data-act="copy">복사</button></div>' +
+      '<div class="share-row">' +
+        '<input type="text" readonly value="' + esc(link) + '">' +
+        '<button class="small ghost" data-act="open">바로가기</button>' +
+        '<button class="small ghost" data-act="copy">복사</button>' +
+        '<button class="small ghost" data-act="delete">삭제</button>' +
+      '</div>' +
     '</div>';
   }).join('');
   Array.prototype.forEach.call(el.querySelectorAll('.session-item'), function(item){
+    var id = item.dataset.id;
     var input = item.querySelector('input');
+    item.querySelector('[data-act=open]').addEventListener('click', function(){
+      location.hash = '#s-' + id;
+    });
     item.querySelector('[data-act=copy]').addEventListener('click', function(){
       input.select();
       navigator.clipboard && navigator.clipboard.writeText(input.value);
+    });
+    item.querySelector('[data-act=delete]').addEventListener('click', async function(){
+      var title = item.querySelector('.si-title').textContent;
+      var pw = window.prompt('"' + title + '" 기수를 삭제하려면 비밀번호를 입력하세요.\n(올라온 문서와 의견이 모두 함께 삭제되며, 되돌릴 수 없습니다.)');
+      if(pw === null) return;
+      if(pw !== SESSION_DELETE_PASSWORD){ alert('비밀번호가 올바르지 않습니다.'); return; }
+      try{
+        await deleteSessionEverywhere(id);
+      }catch(err){
+        alert('삭제하지 못했습니다: ' + err.message);
+      }
     });
   });
 }
