@@ -62,7 +62,10 @@
   .pin.flash{background:#ffd54a}
   .add-comment-btn{position:absolute;z-index:5;background:var(--pri);color:#fff;border:0;border-radius:14px;padding:5px 10px;font-size:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.18);white-space:nowrap}
   .add-comment-btn:hover{background:var(--pri-d)}
-  .comment-panel{width:230px;flex-shrink:0;max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
+  .comment-panel{width:230px;flex-shrink:0;position:relative;overflow:hidden}
+  .comment-rail{position:relative}
+  .comment-rail .comment-card,.comment-rail .comment-composer{position:absolute;left:0;right:0}
+  .comment-composer .cq{max-height:4.8em;overflow:hidden}
   .comment-composer{background:#fff;border:1px solid var(--pri);border-radius:8px;padding:8px}
   .comment-composer textarea{min-height:60px;font-size:12.5px}
   .comment-card{background:#f9fafb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer}
@@ -74,7 +77,9 @@
   .comment-empty{color:#9ca3af;font-size:13px}
   @media (max-width:680px){
     .doc-view-wrap{flex-direction:column}
-    .comment-panel{width:100%;max-height:none}
+    .comment-panel{width:100%;height:auto !important;overflow:visible}
+    .comment-rail{height:auto !important;transform:none !important}
+    .comment-rail .comment-card,.comment-rail .comment-composer{position:static;margin-bottom:8px}
   }
   .session-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
   .si-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
@@ -426,6 +431,12 @@ function downloadBlob(blob, filename){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
 }
 
+window.addEventListener('resize', function(){
+  Array.prototype.forEach.call(document.querySelectorAll('.file-body.open'), function(body){
+    var row = body.closest('.file-row'); if(row) layoutRail(row);
+  });
+});
+
 // ---------------- 라우팅 ----------------
 var sessionId = null;
 var fileListUnsub = null;
@@ -595,7 +606,6 @@ function renderFileList(){
         '<div class="doc-view-wrap">' +
           '<div class="doc-view empty">문서를 불러오는 중...</div>' +
           '<div class="comment-panel">' +
-            '<div class="composer-slot"></div>' +
             '<div class="comment-rail"></div>' +
           '</div>' +
         '</div>' +
@@ -682,6 +692,43 @@ async function toggleFile(row, fileId){
 }
 
 // ---------------- 의견(코멘트) 달기: 위치 표시 + 오른쪽 패널 ----------------
+function contentTop(el, docView){
+  return el.getBoundingClientRect().top - docView.getBoundingClientRect().top + docView.scrollTop;
+}
+function contentTopOfRect(rect, docView){
+  return rect.top - docView.getBoundingClientRect().top + docView.scrollTop;
+}
+// 의견 카드를 해당 글자 높이에 맞추되, 겹치면 아래로 밀어낸다(넓은 화면에서만)
+function layoutRail(row){
+  var docView = row.querySelector('.doc-view');
+  var panel = row.querySelector('.comment-panel');
+  var rail = row.querySelector('.comment-rail');
+  if(!docView || !panel || !rail) return;
+  if(window.matchMedia('(max-width:680px)').matches){
+    panel.style.height = ''; rail.style.height = ''; rail.style.transform = '';
+    var sp0 = docView.querySelector('.rail-spacer'); if(sp0) sp0.style.height = '0px';
+    return;
+  }
+  var items = Array.prototype.slice.call(rail.querySelectorAll('.comment-card, .comment-composer'));
+  items.sort(function(a, b){ return Number(a.dataset.anchorTop) - Number(b.dataset.anchorTop); });
+  var next = 0;
+  items.forEach(function(el){
+    var top = Math.max(Number(el.dataset.anchorTop) || 0, next);
+    el.style.top = top + 'px';
+    next = top + el.offsetHeight + 8;
+  });
+  var spacer = docView.querySelector('.rail-spacer');
+  if(!spacer){
+    spacer = document.createElement('div');
+    spacer.className = 'rail-spacer';
+    docView.appendChild(spacer);
+  }
+  spacer.style.height = '0px';
+  spacer.style.height = Math.max(0, next - docView.scrollHeight + 16) + 'px';
+  panel.style.height = docView.offsetHeight + 'px';
+  rail.style.height = docView.scrollHeight + 'px';
+  rail.style.transform = 'translateY(' + (-docView.scrollTop) + 'px)';
+}
 function renderCommentRail(row, fileId, comments){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   var docView = row.querySelector('.doc-view');
@@ -717,14 +764,22 @@ function renderCommentRail(row, fileId, comments){
     }
   });
 
+  Array.prototype.forEach.call(rail.querySelectorAll('.comment-card, .comment-empty'), function(el){ el.remove(); });
   if(!sorted.length){
-    rail.innerHTML = '<p class="comment-empty">아직 의견이 없습니다. 문서에서 의견을 남기고 싶은 부분을 선택하거나 클릭해보세요.</p>';
+    rail.insertAdjacentHTML('afterbegin', '<p class="comment-empty">아직 의견이 없습니다. 문서에서 의견을 남기고 싶은 부분을 선택하거나 클릭해보세요.</p>');
   } else {
-    rail.innerHTML = sorted.map(function(c){
+    sorted.forEach(function(c){
+      var mark = docView.querySelector('[data-cid="' + c.id + '"]');
+      var card = document.createElement('div');
+      card.className = 'comment-card';
+      card.dataset.cid = c.id;
+      card.dataset.anchorTop = mark ? contentTop(mark, docView) : 0;
       var q = c.quote ? ('<div class="cq">"' + esc(c.quote) + '"</div>') : (c.kind === 'pin' ? ('<div class="cq">' + esc(c.page) + '페이지 표시 위치</div>') : '');
-      return '<div class="comment-card" data-cid="' + esc(c.id) + '">' + q + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span></div>';
-    }).join('');
+      card.innerHTML = q + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span>';
+      rail.appendChild(card);
+    });
   }
+  layoutRail(row);
 
   Array.prototype.forEach.call(docView.querySelectorAll('[data-cid]'), function(markEl){
     markEl.addEventListener('click', function(){
@@ -745,34 +800,41 @@ function setupAnnotation(row, fileId){
   if(docView.dataset.annotationBound) return; // 패널을 닫았다 다시 열 때 중복 바인딩 방지
   docView.dataset.annotationBound = '1';
 
-  var composerSlot = row.querySelector('.composer-slot');
   var wrap = row.querySelector('.doc-view-wrap');
+  docView.addEventListener('scroll', function(){ layoutRail(row); });
   var addBtn = null;
 
   function removeAddBtn(){ if(addBtn){ addBtn.remove(); addBtn = null; } }
 
   function openComposer(anchor){
-    composerSlot.innerHTML =
-      '<div class="comment-composer">' +
-        (anchor.quote ? '<div class="cq">"' + esc(anchor.quote) + '"</div>' : (anchor.kind === 'pin' ? '<div class="cq">' + anchor.page + '페이지 표시 위치</div>' : '')) +
-        '<textarea placeholder="의견을 남겨주세요"></textarea>' +
-        '<div class="row" style="margin-top:6px;justify-content:flex-end">' +
-          '<button class="small ghost" data-act="cancel">취소</button>' +
-          '<button class="small" data-act="submit">의견 남기기</button>' +
-        '</div>' +
-        '<div class="msg"></div>' +
-      '</div>';
-    var ta = composerSlot.querySelector('textarea');
+    var rail = row.querySelector('.comment-rail');
+    var old = rail.querySelector('.comment-composer');
+    if(old) old.remove();
+    var el = document.createElement('div');
+    el.className = 'comment-composer';
+    el.dataset.anchorTop = anchor.anchorTop || 0;
+    el.innerHTML =
+      (anchor.quote ? '<div class="cq">"' + esc(anchor.quote) + '"</div>' : (anchor.kind === 'pin' ? '<div class="cq">' + anchor.page + '페이지 표시 위치</div>' : '')) +
+      '<textarea placeholder="의견을 남겨주세요"></textarea>' +
+      '<div class="row" style="margin-top:6px;justify-content:flex-end">' +
+        '<button class="small ghost" data-act="cancel">취소</button>' +
+        '<button class="small" data-act="submit">의견 남기기</button>' +
+      '</div>' +
+      '<div class="msg"></div>';
+    rail.appendChild(el);
+    layoutRail(row);
+    var ta = el.querySelector('textarea');
     ta.focus();
     function closeComposer(){
-      composerSlot.innerHTML = '';
+      el.remove();
       if(anchor.pendingPin) anchor.pendingPin.remove();
+      layoutRail(row);
     }
-    composerSlot.querySelector('[data-act=cancel]').addEventListener('click', closeComposer);
-    composerSlot.querySelector('[data-act=submit]').addEventListener('click', async function(){
+    el.querySelector('[data-act=cancel]').addEventListener('click', closeComposer);
+    el.querySelector('[data-act=submit]').addEventListener('click', async function(){
       var text = ta.value.trim();
       if(!text) return;
-      var msg = composerSlot.querySelector('.msg');
+      var msg = el.querySelector('.msg');
       msg.textContent = '등록 중...';
       try{
         var data = { comment: text, kind: anchor.kind };
@@ -814,9 +876,10 @@ function setupAnnotation(row, fileId){
         var offs = getOffsetsForRange(docView, range);
         var quote = text.length > 2000 ? text.slice(0, 2000) : text;
         showAddBtn(range, function(){
+          var anchorTop = contentTopOfRect(range.getBoundingClientRect(), docView);
           sel.removeAllRanges();
           removeAddBtn();
-          openComposer({ kind: 'range', startOffset: offs.start, endOffset: offs.end, quote: quote });
+          openComposer({ kind: 'range', startOffset: offs.start, endOffset: offs.end, quote: quote, anchorTop: anchorTop });
         });
       }, 0);
     });
@@ -832,7 +895,7 @@ function setupAnnotation(row, fileId){
         pin.style.left = (xPct * 100) + '%';
         pin.style.top = (yPct * 100) + '%';
         pageEl.appendChild(pin);
-        openComposer({ kind: 'pin', page: Number(pageEl.dataset.page), xPct: xPct, yPct: yPct, pendingPin: pin });
+        openComposer({ kind: 'pin', page: Number(pageEl.dataset.page), xPct: xPct, yPct: yPct, pendingPin: pin, anchorTop: contentTop(pin, pageEl.closest('.doc-view')) });
       });
     });
   }
