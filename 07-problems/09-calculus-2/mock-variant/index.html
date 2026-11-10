@@ -81,6 +81,16 @@
           <option value="적분">적분</option>
         </select>
       </label>
+      <label>출처 시험
+        <select id="exam">
+          <option value="all">전체 (5개 시험)</option>
+          <option value="2027학년도 6월 모의평가">2027학년도 6월 모의평가</option>
+          <option value="2027학년도 9월 모의평가">2027학년도 9월 모의평가</option>
+          <option value="2026학년도 10월 고3 전국연합학력평가">2026학년도 10월 고3 전국연합학력평가</option>
+          <option value="2026학년도 9월 모의평가">2026학년도 9월 모의평가</option>
+          <option value="2026학년도 대학수학능력시험 (홀수형)">2026학년도 수능 (홀수형)</option>
+        </select>
+      </label>
     </div>
     <div class="row">
       <button class="primary" id="make">시험지 만들기</button>
@@ -120,9 +130,14 @@
 
   function chooseItems(n) {
     var mode = document.getElementById('mode').value;
-    var pool = G.ITEMS.slice();
+    var exam = document.getElementById('exam').value;
+    var pool = G.ITEMS.filter(function (it) { return exam === 'all' || it.src === exam; });
     var warn = document.getElementById('warn');
     warn.textContent = '';
+    if (exam !== 'all' && n > pool.length) {
+      warn.textContent = '이 시험은 ' + pool.length + '문항뿐이라 ' + pool.length + '문항으로 만듭니다.';
+      n = pool.length;
+    }
     if (mode === 'type') {
       var big = document.getElementById('big').value;
       pool = pool.filter(function (it) { return it.big === big; });
