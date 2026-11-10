@@ -175,11 +175,24 @@
   }
 
   /* ---------- 수식 조판 ---------- */
+  /* MathJax 스크립트가 아직 내려받는 중이면 준비될 때까지 기다립니다. (최대 timeoutMs) */
+  function mathJaxReady(timeoutMs) {
+    return new Promise(function (res) {
+      var t0 = Date.now();
+      (function check() {
+        var mj = window.MathJax;
+        if (mj && mj.typesetPromise && mj.startup && mj.startup.promise) { res(true); return; }
+        if (Date.now() - t0 > timeoutMs) { res(false); return; }
+        setTimeout(check, 100);
+      })();
+    });
+  }
   function typesetAsync(el) {
-    var mj = window.MathJax;
-    if (!mj || !mj.typesetPromise) { return Promise.resolve(); }
-    var ready = mj.startup && mj.startup.promise ? mj.startup.promise : Promise.resolve();
-    return ready.then(function () { return mj.typesetPromise([el]); }).catch(function () { /* 수식 오류는 무시 */ });
+    return mathJaxReady(15000).then(function (ok) {
+      if (!ok) { return; }
+      var mj = window.MathJax;
+      return mj.startup.promise.then(function () { return mj.typesetPromise([el]); });
+    }).catch(function () { /* 수식 오류는 무시 */ });
   }
 
   /* 칸을 넘치는 줄은 글자 크기를 줄여 칸 안에 넣습니다. (가로·세로 모두) */
@@ -225,7 +238,13 @@
     var root = printRoot();
     var title = document.title;
     root.innerHTML = sets.map(function (s) { return pagesOf(sheet, mode, s, teacher).join(''); }).join('');
-    settle(root).then(function () {
+    mathJaxReady(15000).then(function (ok) {
+      if (!ok && !window.confirm('수식 엔진(MathJax)을 아직 불러오지 못했습니다.\n수식이 깨진 상태로 인쇄될 수 있습니다. 그래도 인쇄할까요?')) {
+        root.innerHTML = '';
+        throw new Error('print-cancelled');
+      }
+      return settle(root);
+    }).then(function () {
       document.body.classList.add('sheet-printing');
       document.title = sheet.title + (mode.sub ? ' ' + mode.sub : '') + (teacher ? ' 교사용' : ' 학생용');
       var done = function () {
@@ -236,6 +255,8 @@
       window.addEventListener('afterprint', done);
       /* 레이아웃이 자리를 잡을 시간을 조금 준 뒤 인쇄 창을 엽니다. */
       setTimeout(function () { window.print(); }, 120);
+    }).catch(function (err) {
+      if (!err || err.message !== 'print-cancelled') { throw err; }
     });
   }
 
