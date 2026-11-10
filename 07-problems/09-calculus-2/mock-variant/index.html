@@ -41,6 +41,8 @@
     .no-print, .panel, .answers-screen { display:none !important; }
     .sheet { box-shadow:none; margin:0; max-width:none; min-height:0; padding: 0; page-break-after: always; }
     .sheet.key-page { page-break-before: auto; }
+    body:not(.key-on) #keyOut { display:none !important; }
+    body.key-on #keyOut { display:block !important; page-break-before: always; box-shadow:none; }
     @page { size: A4; margin: 14mm; }
   }
 </style>
@@ -51,8 +53,8 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>최근 시험 변형 쪽지시험 (미적분)</h1>
-  <p class="lead">2027학년도 6월·9월 모의평가, 2026학년도 10월·9월 고3, 2026학년도 수능(홀수형)의 미적분 23~27번을 변형한 문항으로 시험지를 만듭니다. 출처는 각 문항 위에 표시됩니다.</p>
+  <h1 class="no-print">최근 시험 변형 쪽지시험 (미적분)</h1>
+  <p class="lead no-print">2027학년도 6월·9월 모의평가, 2026학년도 10월·9월 고3, 2026학년도 수능(홀수형)의 미적분 23~27번을 변형한 문항으로 시험지를 만듭니다. 출처는 각 문항 위에 표시됩니다.</p>
 
   <div class="panel no-print">
     <div class="row">
@@ -181,7 +183,11 @@
     if (!last) { document.getElementById('warn').textContent = '먼저 시험지를 만드세요.'; return; }
     k.style.display = k.style.display === 'none' ? 'block' : 'none';
   });
-  document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+  document.getElementById('printBtn').addEventListener('click', function () {
+    var k = document.getElementById('keyOut');
+    document.body.classList.toggle('key-on', !!last && k.style.display !== 'none');
+    window.print();
+  });
   render();
 })();
 </script>
