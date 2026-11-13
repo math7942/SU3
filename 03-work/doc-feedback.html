@@ -1582,67 +1582,123 @@ function stanceMark(list){
   if(stances.indexOf('적합') >= 0) return '■ 적합   □ 보완';
   return '□ 적합   □ 보완';
 }
-function reviewRun(text, o){
+// 문항검토지 워드: 원래 한글 양식(문항 1개 블록)과 같은 구성으로 만든다.
+// 항목 글자와 순서는 양식 그대로이고, 1-3 난이도 행에는 의견 칸이 없어서 그 의견은 '6. 기타'에 모은다.
+const FORM_ITEMS = [
+  {"key":"1-1","kind":"check","label":"1-1. 평가요소 추출이 잘 이루어졌는가? (해당 문항이 근거로 하고 있는 교육과정의 핵심 평가 주제) (성취기준을 반영한 평가요소)","area":"1. 교육과정 및 K-DOT 정합성","span":4},
+  {"key":"1-2","kind":"check","label":"1-2. K-DOT 사고 수준 구분이 잘 이루어졌는가?"},
+  {"key":"1-3a","kind":"difficulty","label":"1-3. 해당 문항의 난이도를 정한다면? (분임별 대면 검토시 비교,검토)"},
+  {"key":"1-3b","kind":"check","label":"1-3. 발문에서 요구하는 반응지시어가 K-DOT 수준에 부합하며 명확한가? (비교하시오, 원인을 분석하시오, 정당성을 입증하시오, 대안을 제안하시오 등)"},
+  {"key":"2-1","kind":"check","label":"2-1. 선다형 문항을 서술형 문항으로 단순히 변형 출제하지 않았는가?","area":"2. 문항 전반","span":3},
+  {"key":"2-2","kind":"check","label":"2-2. 발문이 잘 이루어졌는가? (학생들 수준에서 무엇을 어떻게 적어야 하는지에 대해 명확하게 전달되는가?) (학교급에 맞는 종결어미 사용 등) • 초등: 지시문(~해 봅시다, ~하세요, ~를 쓰세요), 조건(~해야 합니다, ~하세요) • 중등: 지시문(~하시오, ~을 쓰시오), 조건(~할 것)"},
+  {"key":"2-3","kind":"check","label":"2-3. 문항을 푸는 데 적절한 시간을 배당하였는가? (조건의 적절성, 과도한 힌트, 조건)"},
+  {"key":"3-1","kind":"check","label":"3-1. 제시된 자료의 적절성 여부(제시 자료 없이 사전 지식만으로 해결할 수 있는 문항은 아닌가?) (불필요한 제시 자료, 연계성 부족) (해당 성취기준 평가요소와의 관련성, 시의성, 학생들의 수준에 적합한지 여부)","area":"3. 제시 자료","span":4},
+  {"key":"3-2","kind":"check","label":"3-2. 제시된 자료의 난이도 및 자료의 길이 등이 적절한가?"},
+  {"key":"3-3","kind":"check","label":"3-3. 출제 범위 / 수준 / 선행 위반 등 교육과정에 적합한 자료인가? (교육과정 이외의 자료 등의 경우, 어휘 해설(설명) 포함 시, 사용 가능)"},
+  {"key":"3-4","kind":"check","label":"3-4. 제시 자료 자체로 정답이 즉각 노출 되지 않는가? (연결 문항에 간섭이 이루어지는가?) (제시 자료 속에 문구나 구절이 그대로 답이 되지 않는가?)"},
+  {"key":"4-1","kind":"check","label":"4-1. 문항정보의 평가요소와 채점기준의 평가요소가 일치하는가?","area":"4. 채점 기준","span":5},
+  {"key":"4-2","kind":"check","label":"4-2. 채점 기준이 명료하게 작성되었는가? (성취수준별 수행특성으로 기술)"},
+  {"key":"4-3","kind":"check","label":"4-3. 평가 요소 한 개당 하나 이상의 채점 요소가 작성되었는가?"},
+  {"key":"4-4","kind":"check","label":"4-4.배점이 정수 단위(예: 3-2-1-0점)의 명확한 계층적 구조로 나누어져 있는가?"},
+  {"key":"4-5","kind":"check","label":"4-5. 문항의 발문 및 <조건>에서 제시한 요구 사항과 채점 요소 간에 누락이나 불일치가 없는가?"},
+  {"key":"5-1","kind":"check","label":"5-1. 만점 답안뿐만 아니라 모든 부분 점수 및 0점(오답, 무응답)에 해당하는 예시 답안이 빠짐없이 작성되었는가?","area":"5. 예시 답안","span":3},
+  {"key":"5-2","kind":"check","label":"5-2. 각  점수별 예시 답안이 채점기준표에 기술된 '수행 특성'의 단계적 차이를 실제 학생 답안 형태로 뚜렷이 보여주는가?"},
+  {"key":"5-3","kind":"check","label":"5-3. 인정 범위 및 채점 유의사항이 안내되어 있는가?"},
+  {"key":"6","kind":"etc","label":"5. 기타 검토 및 보완 의견 (자료의 출처,","area":"6. 기타","span":1}
+];
+const FORM_WIDTHS = [1500, 3090, 912, 4136]; // 합 9638 twips (A4 본문 폭)
+function fxRun(text, o){
   o = o || {};
   const rPr = '<w:rPr><w:rFonts w:ascii="맑은 고딕" w:hAnsi="맑은 고딕" w:eastAsia="맑은 고딕"/>' +
     (o.bold ? '<w:b/>' : '') + (o.italic ? '<w:i/>' : '') + (o.color ? '<w:color w:val="' + o.color + '"/>' : '') +
-    (o.size ? '<w:sz w:val="' + o.size + '"/><w:szCs w:val="' + o.size + '"/>' : '') + '</w:rPr>';
+    '<w:sz w:val="' + (o.size || 20) + '"/><w:szCs w:val="' + (o.size || 20) + '"/></w:rPr>';
   const parts = String(text).split('\n').map(function(line){ return '<w:t xml:space="preserve">' + esc(line) + '</w:t>'; });
   return '<w:r>' + rPr + parts.join('<w:br/>') + '</w:r>';
 }
-function reviewPara(runs, o){
+function fxPara(runs, o){
   o = o || {};
-  const ppr = '<w:pPr><w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 120 : o.after) + '"/>' +
-    (o.indent ? '<w:ind w:left="' + o.indent + '"/>' : '') + (o.center ? '<w:jc w:val="center"/>' : '') + '</w:pPr>';
-  return '<w:p>' + ppr + runs + '</w:p>';
+  return '<w:p><w:pPr><w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 40 : o.after) + '" w:line="260" w:lineRule="auto"/>' +
+    (o.indent ? '<w:ind w:left="' + o.indent + '"/>' : '') + (o.center ? '<w:jc w:val="center"/>' : '') + '</w:pPr>' + runs + '</w:p>';
 }
-function reviewCell(width, paras){
-  return '<w:tc><w:tcPr><w:tcW w:w="' + width + '" w:type="dxa"/></w:tcPr>' + paras + '</w:tc>';
+function fxCell(width, paras, o){
+  o = o || {};
+  return '<w:tc><w:tcPr><w:tcW w:w="' + width + '" w:type="dxa"/>' +
+    (o.span > 1 ? '<w:gridSpan w:val="' + o.span + '"/>' : '') +
+    (o.vMerge ? (o.vMerge === 'restart' ? '<w:vMerge w:val="restart"/>' : '<w:vMerge/>') : '') +
+    (o.shade ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.shade + '"/>' : '') +
+    '<w:vAlign w:val="center"/></w:tcPr>' + (paras || fxPara(fxRun('', {}))) + '</w:tc>';
 }
-// 검토자 한 명의 의견으로 문항검토지(양식과 같은 표) docx를 만든다
+// 의견 칸: 의견 한 개당 한 문단 (적합/보완 + 내용, 원문 인용이 있으면 한 줄 더)
+function fxOpinionParas(list){
+  if(!list.length) return fxPara(fxRun('', {}));
+  return list.map(function(c){
+    let p = fxPara(fxRun('[' + (c.stance || '-') + '] ' + (c.comment || ''), { size: 20 }), { after: 60 });
+    if(c.quote){
+      const q = c.quote.length > 60 ? c.quote.slice(0, 60) + '…' : c.quote;
+      p += fxPara(fxRun('원문: "' + q + '"', { italic: true, color: '666666', size: 18 }), { after: 60 });
+    }
+    return p;
+  }).join('');
+}
+// 검토 칸: 양식처럼 □ 적합 / □ 보완 (의견에서 고른 판정만 ■)
+function fxCheckParas(list){
+  const yes = list.some(function(c){ return c.stance === '적합'; });
+  const no = list.some(function(c){ return c.stance === '보완'; });
+  return fxPara(fxRun((yes ? '■' : '□') + ' 적합', { size: 20 }), { after: 40 }) +
+         fxPara(fxRun((no ? '■' : '□') + ' 보완', { size: 20 }), { after: 40 });
+}
 async function buildReviewDocx(meta, comments){
-  const title = meta.filename.replace(/\.docx$/i, '');
-  const W = [1900, 3300, 1500, 2938];
-  const grouped = {};
-  comments.forEach(function(c){
-    const k = c.item || '6';
-    (grouped[k] = grouped[k] || []).push(c);
+  const byKey = {};
+  comments.forEach(function(c){ const k = c.item || '6'; (byKey[k] = byKey[k] || []).push(c); });
+  const etcList = (byKey['6'] || []).concat(byKey['1-3a'] || []);
+  const W = FORM_WIDTHS;
+  const bodyParts = [];
+  // 머리글 표: 출제자 / 문항번호 | 성명 / 문항 | 검토자 | 성명
+  const H = [2000, 3500, 1500, 2638];
+  const headRow = '<w:tr>' +
+    fxCell(H[0], fxPara(fxRun('출제자 / 문항번호', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
+    fxCell(H[1], fxPara(fxRun('성명 / ' + labelOf(meta) + ' 문항', {}), { after: 0 })) +
+    fxCell(H[2], fxPara(fxRun('검토자', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
+    fxCell(H[3], fxPara(fxRun('성명', {}), { after: 0 })) + '</w:tr>';
+  const border = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']
+    .map(function(b){ return '<w:' + b + ' w:val="single" w:sz="4" w:space="0" w:color="000000"/>'; }).join('');
+  const tblPr = function(){ return '<w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblBorders>' + border + '</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr>'; };
+  const grid = function(ws){ return '<w:tblGrid>' + ws.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>'; };
+  bodyParts.push('<w:tbl>' + tblPr() + grid(H) + headRow + '</w:tbl>');
+  bodyParts.push(fxPara('', { after: 120 }));
+  // 검토 항목 표: 양식과 같은 4열
+  const headerRow = '<w:tr><w:trPr><w:tblHeader/></w:trPr>' +
+    fxCell(W[0], fxPara(fxRun('검토 영역', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
+    fxCell(W[1], fxPara(fxRun('검토 항목', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
+    fxCell(W[2], fxPara(fxRun('검토', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
+    fxCell(W[3], fxPara(fxRun('검토 및 보완 의견 제안', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) + '</w:tr>';
+  const rowXml = [];
+  let remaining = 0;
+  FORM_ITEMS.forEach(function(it){
+    let vm = null;
+    if(it.area){
+      if(it.span > 1){ vm = 'restart'; remaining = it.span - 1; }
+    } else if(remaining > 0){ vm = 'continue'; remaining -= 1; }
+    const areaCell = it.area
+      ? fxCell(W[0], fxPara(fxRun(it.area, { size: 18 }), { after: 0 }), { vMerge: vm })
+      : fxCell(W[0], fxPara(fxRun('', {}), { after: 0 }), { vMerge: vm });
+    const itemCell = fxCell(W[1], fxPara(fxRun(it.label, { size: 20 }), { after: 0 }));
+    const list = it.key === '6' ? etcList : (byKey[it.key] || []);
+    if(it.kind === 'difficulty'){
+      const lv = fxPara(fxRun('난이도 상', { size: 20 }), { after: 40 }) +
+                 fxPara(fxRun('난이도 중', { size: 20 }), { after: 40 }) +
+                 fxPara(fxRun('난이도 하', { size: 20 }), { after: 40 });
+      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2] + W[3], lv, { span: 2 }) + '</w:tr>');
+    } else if(it.kind === 'etc'){
+      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], null) + fxCell(W[3], fxOpinionParas(etcList)) + '</w:tr>');
+    } else {
+      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], fxCheckParas(list)) + fxCell(W[3], fxOpinionParas(list)) + '</w:tr>');
+    }
   });
-  const body = [];
-  body.push(reviewPara(reviewRun('문항 검토지', { bold: true, size: 32 }), { center: true, after: 240 }));
-  body.push(reviewPara(reviewRun('검토 대상: ' + labelOf(meta) + ' · ' + title, {}), { after: 60 }));
-  body.push(reviewPara(reviewRun('출제자: ______________________', {}), { after: 60 }));
-  body.push(reviewPara(reviewRun('검토자: ______________________', {}), { after: 160 }));
-  body.push(reviewPara(reviewRun('의견 ' + comments.length + '건', { bold: true }), { after: 120 }));
-  const head = ['검토 영역', '검토 항목', '검토', '검토 및 보완 의견 제안'].map(function(t, i){
-    return reviewCell(W[i], reviewPara(reviewRun(t, { bold: true }), { after: 0 }));
-  }).join('');
-  const rows = REVIEW_ITEMS.map(function(it){
-    const list = grouped[it.key] || [];
-    const opinion = list.map(function(c){
-      let p = reviewPara(reviewRun('[' + (c.stance || '-') + '] ' + (c.comment || ''), {}), { after: 40 });
-      if(c.quote){
-        const q = c.quote.length > 60 ? c.quote.slice(0, 60) + '…' : c.quote;
-        p += reviewPara(reviewRun('원문: "' + q + '"', { italic: true, color: '666666', size: 18 }), { after: 60 });
-      }
-      return p;
-    }).join('') || reviewPara(reviewRun(' ', {}), { after: 0 });
-    return '<w:tr>' +
-      reviewCell(W[0], reviewPara(reviewRun(it.area, { size: 18 }), { after: 0 })) +
-      reviewCell(W[1], reviewPara(reviewRun(it.label, { size: 20 }), { after: 0 })) +
-      reviewCell(W[2], reviewPara(reviewRun(stanceMark(list), { size: 20 }), { after: 0 })) +
-      reviewCell(W[3], opinion) +
-      '</w:tr>';
-  }).join('');
-  const borders = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']
-    .map(function(b){ return '<w:' + b + ' w:val="single" w:sz="4" w:space="0" w:color="888888"/>'; }).join('');
-  body.push('<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblBorders>' + borders +
-    '</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>' +
-    W.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>' +
-    '<w:tr><w:trPr><w:tblHeader/></w:trPr>' + head + '</w:tr>' + rows + '</w:tbl>');
+  bodyParts.push('<w:tbl>' + tblPr() + grid(W) + headerRow + rowXml.join('') + '</w:tbl>');
   const docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-    '<w:body>' + body.join('') +
+    '<w:body>' + bodyParts.join('') +
     '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>' +
     '</w:body></w:document>';
   const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
@@ -1657,8 +1713,8 @@ async function buildReviewDocx(meta, comments){
     '</Relationships>';
   const zip = new JSZip();
   zip.file('[Content_Types].xml', ct);
-  zip.file('_rels/.rels', rels);
-  zip.file('word/document.xml', docXml);
+  zip.file('_rels/.rels', rels, { createFolders: false });
+  zip.file('word/document.xml', docXml, { createFolders: false });
   return zip.generateAsync({ type: 'blob', mimeType: DOCX_MIME });
 }
 async function downloadReviewDoc(fileId){
