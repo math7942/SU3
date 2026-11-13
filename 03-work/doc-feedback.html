@@ -1683,72 +1683,78 @@ const FORM_ITEMS = [
   {"key":"5-3","kind":"check","label":"5-3. 인정 범위 및 채점 유의사항이 안내되어 있는가?"},
   {"key":"6","kind":"etc","label":"5. 기타 검토 및 보완 의견 (자료의 출처,","area":"6. 기타","span":1}
 ];
-const FORM_WIDTHS = [1500, 3090, 912, 4136]; // 합 9638 twips (A4 본문 폭)
+const FORM_WIDTHS = [1500, 3090, 1683, 1683, 1682]; // 합 9638 twips (A4 본문 폭). 검토 칸 3개 = 난이도 행의 세 칸
+const FX_FONT = '함초롬돋움';   // 한글 양식의 본문 글꼴
+const FX_BLUE = '0000FF';       // 한글 양식의 항목·체크·의견 글자색
+const FX_BLACK = '000000';      // 머리글, 영역 글자색
 function fxRun(text, o){
   o = o || {};
-  const rPr = '<w:rPr><w:rFonts w:ascii="맑은 고딕" w:hAnsi="맑은 고딕" w:eastAsia="맑은 고딕"/>' +
-    (o.bold ? '<w:b/>' : '') + (o.italic ? '<w:i/>' : '') + (o.color ? '<w:color w:val="' + o.color + '"/>' : '') +
-    '<w:sz w:val="' + (o.size || 20) + '"/><w:szCs w:val="' + (o.size || 20) + '"/></w:rPr>';
+  const font = o.font || FX_FONT;
+  const color = o.color || FX_BLUE;
+  const size = o.size || 20;
+  const rPr = '<w:rPr><w:rFonts w:ascii="' + font + '" w:hAnsi="' + font + '" w:eastAsia="' + font + '"/>' +
+    (o.bold ? '<w:b/>' : '') + (o.italic ? '<w:i/>' : '') +
+    '<w:color w:val="' + color + '"/>' +
+    '<w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/></w:rPr>';
   const parts = String(text).split('\n').map(function(line){ return '<w:t xml:space="preserve">' + esc(line) + '</w:t>'; });
   return '<w:r>' + rPr + parts.join('<w:br/>') + '</w:r>';
 }
+// 문단: 본문 130%, 머리글 160% (양식과 같은 줄간격), 가운데 또는 양쪽 맞춤
 function fxPara(runs, o){
   o = o || {};
-  return '<w:p><w:pPr><w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 40 : o.after) + '" w:line="260" w:lineRule="auto"/>' +
-    (o.indent ? '<w:ind w:left="' + o.indent + '"/>' : '') + (o.center ? '<w:jc w:val="center"/>' : '') + '</w:pPr>' + runs + '</w:p>';
+  const line = o.line || 312;
+  const jc = o.center ? 'center' : 'both';
+  return '<w:p><w:pPr><w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 0 : o.after) + '" w:line="' + line + '" w:lineRule="auto"/>' +
+    (o.indent ? '<w:ind w:left="' + o.indent + '"/>' : '') + '<w:jc w:val="' + jc + '"/></w:pPr>' + runs + '</w:p>';
 }
 function fxCell(width, paras, o){
   o = o || {};
   return '<w:tc><w:tcPr><w:tcW w:w="' + width + '" w:type="dxa"/>' +
     (o.span > 1 ? '<w:gridSpan w:val="' + o.span + '"/>' : '') +
     (o.vMerge ? (o.vMerge === 'restart' ? '<w:vMerge w:val="restart"/>' : '<w:vMerge/>') : '') +
-    (o.shade ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.shade + '"/>' : '') +
     '<w:vAlign w:val="center"/></w:tcPr>' + (paras || fxPara(fxRun('', {}))) + '</w:tc>';
 }
-// 의견 칸: 의견 한 개당 한 문단 (적합/보완 + 내용, 원문 인용이 있으면 한 줄 더)
+// 의견 칸: 의견 한 개당 한 문단 (판정은 검토 칸에만 표시)
 function fxOpinionParas(list){
   if(!list.length) return fxPara(fxRun('', {}));
   return list.map(function(c){
-    let p = fxPara(fxRun(c.comment || '', { size: 20 }), { after: 60 });
-    if(c.quote){
-      const q = c.quote.length > 60 ? c.quote.slice(0, 60) + '…' : c.quote;
-      p += fxPara(fxRun('원문: "' + q + '"', { italic: true, color: '666666', size: 18 }), { after: 60 });
-    }
-    return p;
+    return fxPara(fxRun(c.comment || '', { size: 20 }), { after: 40 });
   }).join('');
 }
 // 검토 칸: 보완을 고른 의견이 있으면 보완, 아니면 적합 (검토자가 고르지 않은 항목은 적합)
 function fxCheckParas(list){
   const no = list.some(function(c){ return c.stance === '보완'; });
   const yes = !no;
-  return fxPara(fxRun((yes ? '■' : '□') + ' 적합', { size: 20 }), { after: 40 }) +
-         fxPara(fxRun((no ? '■' : '□') + ' 보완', { size: 20 }), { after: 40 });
+  return fxPara(fxRun((yes ? '■' : '□') + ' 적합', { size: 20 }), { center: true }) +
+         fxPara(fxRun((no ? '■' : '□') + ' 보완', { size: 20 }), { center: true });
 }
 function reviewDocBody(meta, comments){
   const byKey = {};
   comments.forEach(function(c){ const k = c.item || '6'; (byKey[k] = byKey[k] || []).push(c); });
   const etcList = (byKey['6'] || []).concat(byKey['1-3a'] || []);
   const W = FORM_WIDTHS;
+  const OPW = W[3] + W[4];
   const bodyParts = [];
-  // 머리글 표: 출제자 / 문항번호 | 성명 / 문항 | 검토자 | 성명
+  const hdr = { bold: true, color: FX_BLACK, size: 22 };
+  // 머리글 표: 출제자 / 문항번호 | 성명 / 문항 | 검토자 | 성명 (양식: 굵은 검정 11pt, 성명은 빨강 12pt)
   const H = [2000, 3500, 1500, 2638];
   const headRow = '<w:tr>' +
-    fxCell(H[0], fxPara(fxRun('출제자 / 문항번호', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
-    fxCell(H[1], fxPara(fxRun('성명 / ' + labelOf(meta) + ' 문항', {}), { after: 0 })) +
-    fxCell(H[2], fxPara(fxRun('검토자', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
-    fxCell(H[3], fxPara(fxRun('성명', {}), { after: 0 })) + '</w:tr>';
+    fxCell(H[0], fxPara(fxRun('출제자 / 문항번호', hdr), { center: true, line: 384 })) +
+    fxCell(H[1], fxPara(fxRun('성명 / ' + labelOf(meta) + ' 문항', { font: '함초롬바탕', color: 'FF0000', size: 24 }), { center: true, line: 384 })) +
+    fxCell(H[2], fxPara(fxRun('검토자', hdr), { center: true, line: 384 })) +
+    fxCell(H[3], fxPara(fxRun('성명', { font: '함초롬바탕', color: 'FF0000', size: 24 }), { center: true, line: 384 })) + '</w:tr>';
   const border = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']
     .map(function(b){ return '<w:' + b + ' w:val="single" w:sz="4" w:space="0" w:color="000000"/>'; }).join('');
   const tblPr = function(){ return '<w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblBorders>' + border + '</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr>'; };
   const grid = function(ws){ return '<w:tblGrid>' + ws.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>'; };
   bodyParts.push('<w:tbl>' + tblPr() + grid(H) + headRow + '</w:tbl>');
   bodyParts.push(fxPara('', { after: 120 }));
-  // 검토 항목 표: 양식과 같은 4열
+  // 검토 항목 표: 양식과 같은 구성 (검토 영역 | 검토 항목 | 검토 칸 3개 | 의견 칸)
   const headerRow = '<w:tr><w:trPr><w:tblHeader/></w:trPr>' +
-    fxCell(W[0], fxPara(fxRun('검토 영역', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
-    fxCell(W[1], fxPara(fxRun('검토 항목', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
-    fxCell(W[2], fxPara(fxRun('검토', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) +
-    fxCell(W[3], fxPara(fxRun('검토 및 보완 의견 제안', { bold: true }), { after: 0 }), { shade: 'F2F2F2' }) + '</w:tr>';
+    fxCell(W[0], fxPara(fxRun('검토 영역', hdr), { center: true, line: 384 })) +
+    fxCell(W[1], fxPara(fxRun('검토 항목', hdr), { center: true, line: 384 })) +
+    fxCell(W[2], fxPara(fxRun('검토', hdr), { center: true, line: 384 })) +
+    fxCell(OPW, fxPara(fxRun('검토 및 보완 의견 제안', hdr), { center: true, line: 384 }), { span: 2 }) + '</w:tr>';
   const rowXml = [];
   let remaining = 0;
   FORM_ITEMS.forEach(function(it){
@@ -1756,26 +1762,24 @@ function reviewDocBody(meta, comments){
     if(it.area){
       if(it.span > 1){ vm = 'restart'; remaining = it.span - 1; }
     } else if(remaining > 0){ vm = 'continue'; remaining -= 1; }
-    const areaCell = it.area
-      ? fxCell(W[0], fxPara(fxRun(it.area, { size: 18 }), { after: 0 }), { vMerge: vm })
-      : fxCell(W[0], fxPara(fxRun('', {}), { after: 0 }), { vMerge: vm });
-    const itemCell = fxCell(W[1], fxPara(fxRun(it.label, { size: 20 }), { after: 0 }));
+    const areaCell = fxCell(W[0], fxPara(fxRun(it.area || '', { bold: true, color: FX_BLACK, size: 22 }), { center: true }), { vMerge: vm });
+    const itemCell = fxCell(W[1], fxPara(fxRun(it.label, { size: 20 }), {}));
     const list = it.key === '6' ? etcList : (byKey[it.key] || []);
     if(it.kind === 'difficulty'){
-      const lv = fxPara(fxRun('난이도 상', { size: 20 }), { after: 40 }) +
-                 fxPara(fxRun('난이도 중', { size: 20 }), { after: 40 }) +
-                 fxPara(fxRun('난이도 하', { size: 20 }), { after: 40 });
-      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2] + W[3], lv, { span: 2 }) + '</w:tr>');
+      const cell = function(t){ return fxCell(W[2], fxPara(fxRun(t, { size: 20 }), { center: true })); };
+      rowXml.push('<w:tr>' + areaCell + itemCell +
+        fxCell(W[2], fxPara(fxRun('난이도 상', { size: 20 }), { center: true })) +
+        fxCell(W[3], fxPara(fxRun('난이도 중', { size: 20 }), { center: true })) +
+        fxCell(W[4], fxPara(fxRun('난이도 하', { size: 20 }), { center: true })) + '</w:tr>');
     } else if(it.kind === 'etc'){
-      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], null) + fxCell(W[3], fxOpinionParas(etcList)) + '</w:tr>');
+      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], null) + fxCell(OPW, fxOpinionParas(etcList), { span: 2 }) + '</w:tr>');
     } else {
-      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], fxCheckParas(list)) + fxCell(W[3], fxOpinionParas(list)) + '</w:tr>');
+      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], fxCheckParas(list)) + fxCell(OPW, fxOpinionParas(list), { span: 2 }) + '</w:tr>');
     }
   });
   bodyParts.push('<w:tbl>' + tblPr() + grid(W) + headerRow + rowXml.join('') + '</w:tbl>');
   return bodyParts;
 }
-// 여러 칸을 한 워드 파일에 순서대로 담는다 (칸 사이는 쪽 나눔)
 async function buildReviewDocxMulti(list){
   const bodyParts = [];
   list.forEach(function(it, i){
@@ -1785,7 +1789,7 @@ async function buildReviewDocxMulti(list){
   const docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
     '<w:body>' + bodyParts.join('') +
-    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>' +
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="850" w:right="1134" w:bottom="850" w:left="1134" w:header="425" w:footer="425" w:gutter="0"/></w:sectPr>' +
     '</w:body></w:document>';
   const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
