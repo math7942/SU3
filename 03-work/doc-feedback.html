@@ -144,9 +144,6 @@
     <h1 id="sessTitle">·</h1>
     <div class="sub">여러 선생님이 각자 문서를 올리고, 서로의 문서를 읽으며 익명으로 의견을 남길 수 있습니다.</div>
     <div class="card">
-      <div class="share-row"><input type="text" id="shareLink2" readonly><button class="small" id="copyBtn2">링크 복사</button></div>
-    </div>
-    <div class="card">
       <div class="row" style="justify-content:space-between">
         <h2>교육청 자료 · 참고 링크</h2>
         <button class="ghost small" id="matToggle">자료 올리기 펼치기</button>
@@ -604,8 +601,6 @@ async function initSession(){
   $('adminTools').hidden = true;
   $('adminToggle').textContent = '관리 기능 보기';
   $('uploadMsg').textContent = '';
-  var link = location.origin + location.pathname + '#s-' + sessionId;
-  $('shareLink2').value = link;
   try{
     var info = await getSessionInfo(sessionId);
     $('sessTitle').textContent = info ? info.title : '세션을 찾을 수 없습니다';
@@ -698,10 +693,6 @@ $('matAddBtn').addEventListener('click', async function(){
   }
 });
 
-$('copyBtn2').addEventListener('click', function(){
-  $('shareLink2').select();
-  navigator.clipboard && navigator.clipboard.writeText($('shareLink2').value);
-});
 
 $('fileInput').addEventListener('change', async function(e){
   var file = e.target.files[0];
