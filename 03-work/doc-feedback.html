@@ -102,6 +102,8 @@
   .copy-chip.summary{background:#e8f0ff;border-color:#a9c0f0}
   .review-btn{background:#FFE066;color:#111;border:1px solid #d9b200;border-radius:8px;padding:8px 14px;font:inherit;font-size:0.95rem;font-weight:800;cursor:pointer}
   .review-btn:hover{background:#FFD83B}
+  .letter-btn{min-width:44px;padding:8px 12px;border-radius:8px;border:1px solid #9aa3b2;background:#fff;color:#111;font:inherit;font-size:1rem;font-weight:800;cursor:pointer}
+  .letter-btn:hover{background:#eef2ff}
   .mat-chip-title{color:var(--ink);font-size:13.5px;font-weight:600;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
   .mat-chip-title:hover{color:var(--pri)}
   .mat-del{display:grid;place-items:center;width:20px;height:20px;border:none;border-radius:50%;background:var(--accent-soft,#e0e7ff);color:var(--pri);font-size:.85rem;line-height:1;cursor:pointer;padding:0}
@@ -189,7 +191,6 @@
     <div class="card">
       <div class="row" style="justify-content:space-between">
         <h2>올라온 문서</h2>
-        <button class="small" id="myReviewsBtn">내 검토지 한 파일로 받기</button>
         <button class="ghost small" id="adminToggle">관리 기능 보기</button>
       </div>
       <div id="adminTools" class="row admin-panel" hidden>
@@ -198,6 +199,16 @@
         <button class="small" id="printBtn">인쇄</button>
       </div>
       <div id="fileList" style="margin-top:12px"></div>
+      <div class="review-letters" style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <span style="font-weight:700">검토지 한꺼번에 받기 (내 글자):</span>
+        <button class="letter-btn" data-review-letter="A">A</button>
+        <button class="letter-btn" data-review-letter="B">B</button>
+        <button class="letter-btn" data-review-letter="C">C</button>
+        <button class="letter-btn" data-review-letter="D">D</button>
+        <button class="letter-btn" data-review-letter="E">E</button>
+        <button class="letter-btn" data-review-letter="F">F</button>
+        <button class="letter-btn" data-review-letter="G">G</button>
+      </div>
     </div>
   </div>
 
@@ -826,10 +837,8 @@ $('fileInput').addEventListener('change', async function(e){
 });
 
 var fileCache = []; // [{fileId, sessionId, filename, chunkCount, uploadedAt, label, copyNo, groupId}]
-$('myReviewsBtn').addEventListener('click', function(){
-  const letter = $('uploadLetter').value;
-  if(!letter){ alert('위의 "내 글자"(A~G)를 먼저 고르세요.'); return; }
-  downloadMyReviews(letter);
+document.querySelectorAll('[data-review-letter]').forEach(function(btn){
+  btn.addEventListener('click', function(){ downloadMyReviews(btn.dataset.reviewLetter); });
 });
 $('uploadLetter').addEventListener('change', function(){
   $('uploadHint').textContent = this.value ? ('이번 파일 이름: ' + nextLabel(this.value)) : '';
