@@ -99,6 +99,7 @@
   .copy-chip{display:inline-flex;align-items:center;padding:7px 14px;border:1px solid #d9d0fb;border-radius:999px;background:#f1edff;font:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;color:inherit}
   .copy-chip.author{background:#fff6e5;border-color:#f0d9a8}
   .copy-chip.has-comment{background:#DCEFE0;border-color:#8fc9a0;color:#1E5C2E}
+  .copy-chip.summary{background:#e8f0ff;border-color:#a9c0f0}
   .mat-chip-title{color:var(--ink);font-size:13.5px;font-weight:600;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
   .mat-chip-title:hover{color:var(--pri)}
   .mat-del{display:grid;place-items:center;width:20px;height:20px;border:none;border-radius:50%;background:var(--accent-soft,#e0e7ff);color:var(--pri);font-size:.85rem;line-height:1;cursor:pointer;padding:0}
@@ -287,6 +288,7 @@ function nextLabel(letter){
   return letter + (max + 1);
 }
 function labelOf(f){
+  if(f.role === 'summary') return f.label + ' 의견 종합';
   if(f.label) return f.slot ? (f.label + '-' + f.slot) : f.label;
   return f.copyNo ? ('파일 ' + f.copyNo) : f.filename;
 }
@@ -307,6 +309,10 @@ async function uploadFile(sessionId, file, label, uploaderLetter){
     await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount, uploadedAt, groupId, label: label, slot: slot, role: role });
     if(firstId === null) firstId = ref.id;
   }
+  // 의견 종합: 모든 칸의 의견을 원본에 메모로 모으는 파일
+  const sumRef = fs.doc(fs.collection(db, FILES));
+  const sumChunks = await saveChunks(fs, db, sumRef.id, base64);
+  await fs.setDoc(sumRef, { sessionId, filename: file.name, chunkCount: sumChunks, uploadedAt, groupId, label: label, role: 'summary' });
   return firstId;
 }
 async function addLinkMaterial(sessionId, title, url){
@@ -372,11 +378,11 @@ function listenFiles(sessionId, cb){
           if(pa.L !== pb.L) return pa.L < pb.L ? -1 : 1;
           if(pa.N !== pb.N) return pa.N - pb.N;
           if(a.groupId !== b.groupId) return String(a.groupId) < String(b.groupId) ? -1 : 1;
-          return String(a.slot || '').localeCompare(String(b.slot || ''));
+          return slotRank(a).localeCompare(slotRank(b));
         }
         if(pa) return -1;
         if(pb) return 1;
-        return a.uploadedAt === b.uploadedAt ? String(a.slot || '').localeCompare(String(b.slot || '')) : (a.uploadedAt < b.uploadedAt ? -1 : 1);
+        return a.uploadedAt === b.uploadedAt ? slotRank(a).localeCompare(slotRank(b)) : (a.uploadedAt < b.uploadedAt ? -1 : 1);
       });
       cb(list);
     }, (err) => { console.error(err); cb([]); });
@@ -825,10 +831,10 @@ $('uploadLetter').addEventListener('change', function(){
 function copyStripHtml(first){
   const members = fileCache
     .filter(function(f){ return f.groupId && f.groupId === first.groupId; })
-    .sort(function(a, b){ return String(a.slot || '').localeCompare(String(b.slot || '')); });
+    .sort(function(a, b){ return slotRank(a).localeCompare(slotRank(b)); });
   const chips = members.map(function(m){
     const author = isAuthorCopy(m);
-    return '<button type="button" class="copy-chip' + (author ? ' author' : '') + '" data-target="' + esc(m.fileId) + '">' +
+    return '<button type="button" class="copy-chip' + (author ? ' author' : '') + (isSummaryCopy(m) ? ' summary' : '') + '" data-target="' + esc(m.fileId) + '">' +
       esc(labelOf(m)) + (author ? '(출제자)' : '') + '</button>';
   }).join('');
   return '<div class="copy-group-title">' + esc(first.label || '') + ' · ' + esc(first.filename) + '</div>' +
@@ -861,12 +867,12 @@ function renderFileList(){
       '</div>' +
       '<div class="file-body">' +
         '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">' +
-          '<h3 style="margin:0">' + (isAuthorCopy(f) ? '출제자용 (검토 의견 모음)' : '의견 남기기') + '</h3>' +
+          '<h3 style="margin:0">' + (isSummaryCopy(f) ? '의견 종합 (검토 의견 모음)' : '의견 남기기') + '</h3>' +
           (isReviewerCopy(f) ? '<button class="small ghost" data-act="review-word">문항검토지 받기</button>' : '') +
-          '<button class="small ghost" data-act="comments-word">' + (isAuthorCopy(f) ? '의견 모음 워드 받기' : '피드백 다운로드') + '</button>' +
+          '<button class="small ghost" data-act="comments-word">' + (isSummaryCopy(f) ? '의견 모음 워드 받기' : '피드백 다운로드') + '</button>' +
         '</div>' +
-        (isAuthorCopy(f)
-          ? '<div class="note" style="margin:0 0 8px">이 파일은 검토를 쓰는 파일이 아닙니다. 파일 1~6에 쓴 의견이 원본 위치에 메모로 모입니다.</div>'
+        (isSummaryCopy(f)
+          ? '<div class="note" style="margin:0 0 8px">이 파일은 검토를 쓰는 파일이 아닙니다. 모든 칸의 의견이 원본 위치에 메모로 모입니다.</div>'
           : '<div class="note" style="margin:0 0 8px">문서에서 의견을 남기고 싶은 부분을 마우스로 선택하면 의견을 남길 수 있습니다. 검토 항목과 적합/보완을 함께 고릅니다.</div>') +
         '<div class="doc-view-wrap">' +
           '<div class="doc-view empty">문서를 불러오는 중...</div>' +
@@ -1086,7 +1092,7 @@ function renderCommentRail(row, fileId, comments){
 
 function setupAnnotation(row, fileId){
   var docView = row.querySelector('.doc-view');
-  if(isAuthorCopyId(fileId)) return; // 출제자용 파일은 의견을 쓰지 않는다
+  if(isSummaryCopyId(fileId)) return; // 의견 종합 파일은 의견을 쓰지 않는다
   if(docView.dataset.annotationBound) return; // 패널을 닫았다 다시 열 때 중복 바인딩 방지
   docView.dataset.annotationBound = '1';
 
@@ -1593,7 +1599,13 @@ const REVIEW_ITEMS = [
   { key: '6', area: '6. 기타', label: '6. 기타 검토 및 보완 의견' }
 ];
 function isAuthorCopy(f){ return !!f && f.role === 'author'; }
-function isReviewerCopy(f){ return !!f && f.role === 'reviewer'; }
+function isSummaryCopy(f){ return !!f && f.role === 'summary'; }
+function isSummaryCopyId(fileId){
+  return isSummaryCopy(fileCache.find(function(f){ return f.fileId === fileId; }));
+}
+// 정렬: A~G 칸 순서, 의견 종합은 맨 뒤
+function slotRank(f){ return f.role === 'summary' ? 'Z' : String(f.slot || ''); }
+function isReviewerCopy(f){ return !!f && (f.role === 'reviewer' || f.role === 'author'); }
 function isAuthorCopyId(fileId){
   return isAuthorCopy(fileCache.find(function(f){ return f.fileId === fileId; }));
 }
@@ -1608,7 +1620,7 @@ function reviewItemOptions(){
 function siblingsOf(meta){
   return fileCache
     .filter(function(f){ return !!meta.groupId && f.groupId === meta.groupId && isReviewerCopy(f); })
-    .sort(function(a, b){ return String(a.slot || '').localeCompare(String(b.slot || '')); });
+    .sort(function(a, b){ return slotRank(a).localeCompare(slotRank(b)); });
 }
 // 출제자용 파일(7번): 1~6번의 의견을 모아서 원본 위치에 메모로 단다
 async function aggregatedComments(meta){
@@ -1781,7 +1793,7 @@ async function downloadFileComments(fileId){
   if(!meta) return;
   var base = meta.filename.replace(/\.docx$/i, '');
   try{
-    var comments = isAuthorCopy(meta) ? await aggregatedComments(meta) : await getCommentsOnce(fileId);
+    var comments = isSummaryCopy(meta) ? await aggregatedComments(meta) : await getCommentsOnce(fileId);
     if(isPdf(meta.filename)){
       var inner = comments.map(function(c){
         var where = c.kind === 'pin' && c.page ? (esc(c.page) + '페이지 — ') : '';
@@ -1811,7 +1823,7 @@ $('wordBtn').addEventListener('click', async function(){
         continue;
       }
       if(isReviewerCopy(f)) continue;
-      var comments = isAuthorCopy(f) ? await aggregatedComments(f) : await getCommentsOnce(f.fileId);
+      var comments = isSummaryCopy(f) ? await aggregatedComments(f) : await getCommentsOnce(f.fileId);
       var blob = await buildCommentedDocx(f, comments);
       zip.file(prefix + f.filename.replace(/\.docx$/i, '') + '_의견.docx', await blob.arrayBuffer());
     }
