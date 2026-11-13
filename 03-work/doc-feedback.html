@@ -92,6 +92,10 @@
   .si-time{font-size:11.5px;color:var(--sub);white-space:nowrap}
   .mat-chips{display:flex;flex-wrap:wrap;gap:8px}
   .mat-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 8px 7px 14px;border:1px solid #d9d0fb;border-radius:999px;background:#f1edff}
+  .copy-group-title{font-weight:700;margin:14px 0 6px;font-size:0.95rem}
+  .copy-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .copy-chip{display:inline-flex;align-items:center;padding:7px 14px;border:1px solid #d9d0fb;border-radius:999px;background:#f1edff;font:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;color:inherit}
+  .copy-chip.author{background:#fff6e5;border-color:#f0d9a8}
   .mat-chip-title{color:var(--ink);font-size:13.5px;font-weight:600;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
   .mat-chip-title:hover{color:var(--pri)}
   .mat-del{display:grid;place-items:center;width:20px;height:20px;border:none;border-radius:50%;background:var(--accent-soft,#e0e7ff);color:var(--pri);font-size:.85rem;line-height:1;cursor:pointer;padding:0}
@@ -163,6 +167,15 @@
     </div>
     <div class="card">
       <h2>문서 올리기 (.docx)</h2>
+      <div class="row" style="gap:8px;align-items:center;margin-bottom:8px">
+        <label>내 글자
+          <select id="uploadLetter">
+            <option value="">고르세요</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option><option>F</option><option>G</option>
+          </select>
+        </label>
+        <span class="note" id="uploadHint" style="margin:0"></span>
+      </div>
       <input type="file" id="fileInput" accept=".docx">
       <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장"에서 Word(.docx)로 변환해서 올려주세요.</div>
       <div class="msg" id="uploadMsg"></div>
@@ -259,7 +272,25 @@ async function saveChunks(fs, db, fileId, base64){
 // 7번: 출제자에게 주는 파일. 1~6번 의견이 원본에 메모로 모인다.
 const REVIEW_COPIES = 7;
 const AUTHOR_COPY = 7;
-async function uploadFile(sessionId, file){
+// 이름 규칙: 올린 사람 글자 + 올린 순서 (A1, A2, B1 …). 복사본은 A1-1 … A1-7. 7번은 출제자용.
+function nextLabel(letter){
+  let max = 0;
+  fileCache.forEach(function(f){
+    if(!f.label || f.label.charAt(0) !== letter) return;
+    const n = parseInt(f.label.slice(1), 10);
+    if(n > max) max = n;
+  });
+  return letter + (max + 1);
+}
+function labelOf(f){
+  if(f.label) return f.copyNo ? (f.label + '-' + f.copyNo) : f.label;
+  return f.copyNo ? ('파일 ' + f.copyNo) : f.filename;
+}
+function displayName(f){
+  if(f.label) return labelOf(f) + (f.copyNo === AUTHOR_COPY ? ' (출제자)' : '');
+  return f.copyNo ? ('파일 ' + f.copyNo + (f.copyNo === AUTHOR_COPY ? ' (출제자)' : '') + ' · ' + f.filename) : f.filename;
+}
+async function uploadFile(sessionId, file, label){
   const { fs, db } = await loadFirebase();
   const base64 = await fileToBase64(file);
   const uploadedAt = new Date().toISOString();
@@ -268,7 +299,7 @@ async function uploadFile(sessionId, file){
   for(let n = 1; n <= REVIEW_COPIES; n++){
     const ref = fs.doc(fs.collection(db, FILES));
     const chunkCount = await saveChunks(fs, db, ref.id, base64);
-    await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount, uploadedAt, groupId, copyNo: n });
+    await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount, uploadedAt, groupId, copyNo: n, label: label });
     if(firstId === null) firstId = ref.id;
   }
   return firstId;
@@ -712,6 +743,13 @@ $('matAddBtn').addEventListener('click', async function(){
 $('fileInput').addEventListener('change', async function(e){
   var file = e.target.files[0];
   if(!file) return;
+  const letter = $('uploadLetter').value;
+  if(!letter){
+    $('uploadMsg').className = 'msg err';
+    $('uploadMsg').textContent = '내 글자(A~G)를 먼저 고르세요.';
+    e.target.value = '';
+    return;
+  }
   if(!/\.docx$/i.test(file.name)){
     $('uploadMsg').className = 'msg err';
     $('uploadMsg').textContent = 'docx 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장"에서 Word(.docx)로 바꿔서 올려주세요.';
@@ -721,9 +759,11 @@ $('fileInput').addEventListener('change', async function(e){
   $('uploadMsg').className = 'msg';
   $('uploadMsg').textContent = '올리는 중...';
   try{
-    await uploadFile(sessionId, file);
+    const label = nextLabel(letter);
+    await uploadFile(sessionId, file, label);
     $('uploadMsg').className = 'msg ok';
-    $('uploadMsg').textContent = '올렸습니다: ' + file.name;
+    $('uploadMsg').textContent = '올렸습니다: ' + label + ' (' + file.name + ')';
+    $('uploadHint').textContent = '';
     e.target.value = '';
   }catch(err){
     $('uploadMsg').className = 'msg err';
@@ -731,15 +771,32 @@ $('fileInput').addEventListener('change', async function(e){
   }
 });
 
-var fileCache = []; // [{fileId, sessionId, filename, chunkCount, uploadedAt}]
+var fileCache = []; // [{fileId, sessionId, filename, chunkCount, uploadedAt, label, copyNo, groupId}]
+$('uploadLetter').addEventListener('change', function(){
+  $('uploadHint').textContent = this.value ? ('이번 파일 이름: ' + nextLabel(this.value)) : '';
+});
 
+// 같은 업로드(묶음)의 복사본을 한 줄 칩으로 보여준다. 칩을 누르면 그 파일 패널이 열린다.
+function copyStripHtml(first){
+  const members = fileCache
+    .filter(function(f){ return f.groupId && f.groupId === first.groupId; })
+    .sort(function(a, b){ return (a.copyNo || 0) - (b.copyNo || 0); });
+  const chips = members.map(function(m){
+    const author = isAuthorCopy(m);
+    return '<button type="button" class="copy-chip' + (author ? ' author' : '') + '" data-target="' + esc(m.fileId) + '">' +
+      esc(labelOf(m)) + (author ? ' (출제자)' : '') + '</button>';
+  }).join('');
+  return '<div class="copy-group-title">' + esc(first.label || '') + ' · ' + esc(first.filename) + '</div>' +
+    '<div class="copy-strip">' + chips + '</div>';
+}
 function renderFileList(){
   var el = $('fileList');
   if(!fileCache.length){ el.innerHTML = '<p class="empty">아직 올라온 문서가 없습니다.</p>'; return; }
-  el.innerHTML = fileCache.map(function(f){
-    return '<div class="file-row" data-id="' + esc(f.fileId) + '">' +
+  el.innerHTML = fileCache.map(function(f, idx){
+    const strip = (f.groupId && (idx === 0 || fileCache[idx - 1].groupId !== f.groupId)) ? copyStripHtml(f) : '';
+    return strip + '<div class="file-row" data-id="' + esc(f.fileId) + '">' +
       '<div class="file-head">' +
-        '<span><span class="name" data-act="toggle">' + esc(f.copyNo === AUTHOR_COPY ? ('파일 ' + f.copyNo + ' (출제자) · ' + f.filename) : (f.copyNo ? ('파일 ' + f.copyNo + ' · ' + f.filename) : f.filename)) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
+        '<span><span class="name" data-act="toggle">' + esc(displayName(f)) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
         '<span class="row" style="gap:6px">' +
           '<button class="small ghost" data-act="toggle-btn">열기</button>' +
           '<span class="file-admin-actions" hidden>' +
@@ -768,6 +825,15 @@ function renderFileList(){
   }).join('');
 
   Array.prototype.forEach.call(el.querySelectorAll('.file-admin-actions'), function(s){ s.hidden = !isAdmin; });
+  Array.prototype.forEach.call(el.querySelectorAll('.copy-chip'), function(btn){
+    btn.addEventListener('click', function(){
+      const target = btn.dataset.target;
+      const row = el.querySelector('.file-row[data-id="' + target + '"]');
+      if(!row) return;
+      if(openFileId !== target) toggleFile(row, target);
+      row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 
   Array.prototype.forEach.call(el.querySelectorAll('.file-row'), function(row){
     var fileId = row.dataset.id;
@@ -1464,7 +1530,7 @@ async function aggregatedComments(meta){
     const list = await getCommentsOnce(sib.fileId);
     list.forEach(function(c){
       out.push(Object.assign({}, c, {
-        comment: '[파일 ' + sib.copyNo + ' · ' + (c.itemLabel || '항목 미지정') + ' · ' + (c.stance || '-') + '] ' + c.comment
+        comment: '[' + labelOf(sib) + ' · ' + (c.itemLabel || '항목 미지정') + ' · ' + (c.stance || '-') + '] ' + c.comment
       }));
     });
   }
@@ -1504,7 +1570,7 @@ async function buildReviewDocx(meta, comments){
   });
   const body = [];
   body.push(reviewPara(reviewRun('문항 검토지', { bold: true, size: 32 }), { center: true, after: 240 }));
-  body.push(reviewPara(reviewRun('검토 대상: 파일 ' + meta.copyNo + ' · ' + title, {}), { after: 60 }));
+  body.push(reviewPara(reviewRun('검토 대상: ' + labelOf(meta) + ' · ' + title, {}), { after: 60 }));
   body.push(reviewPara(reviewRun('출제자: ______________________', {}), { after: 60 }));
   body.push(reviewPara(reviewRun('검토자: ______________________', {}), { after: 160 }));
   body.push(reviewPara(reviewRun('의견 ' + comments.length + '건', { bold: true }), { after: 120 }));
@@ -1561,7 +1627,7 @@ async function downloadReviewDoc(fileId){
   try{
     const comments = await getCommentsOnce(fileId);
     const base = meta.filename.replace(/\.docx$/i, '');
-    downloadBlob(await buildReviewDocx(meta, comments), base + '_문항검토지_파일' + meta.copyNo + '.docx');
+    downloadBlob(await buildReviewDocx(meta, comments), labelOf(meta) + '_문항검토지.docx');
   }catch(err){
     alert('내려받지 못했습니다: ' + err.message);
   }
