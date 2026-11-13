@@ -189,6 +189,7 @@
     <div class="card">
       <div class="row" style="justify-content:space-between">
         <h2>올라온 문서</h2>
+        <button class="small" id="myReviewsBtn">내 검토지 한 파일로 받기</button>
         <button class="ghost small" id="adminToggle">관리 기능 보기</button>
       </div>
       <div id="adminTools" class="row admin-panel" hidden>
@@ -825,6 +826,11 @@ $('fileInput').addEventListener('change', async function(e){
 });
 
 var fileCache = []; // [{fileId, sessionId, filename, chunkCount, uploadedAt, label, copyNo, groupId}]
+$('myReviewsBtn').addEventListener('click', function(){
+  const letter = $('uploadLetter').value;
+  if(!letter){ alert('위의 "내 글자"(A~G)를 먼저 고르세요.'); return; }
+  downloadMyReviews(letter);
+});
 $('uploadLetter').addEventListener('change', function(){
   $('uploadHint').textContent = this.value ? ('이번 파일 이름: ' + nextLabel(this.value)) : '';
 });
@@ -1709,7 +1715,7 @@ function fxCheckParas(list){
   return fxPara(fxRun((yes ? '■' : '□') + ' 적합', { size: 20 }), { after: 40 }) +
          fxPara(fxRun((no ? '■' : '□') + ' 보완', { size: 20 }), { after: 40 });
 }
-async function buildReviewDocx(meta, comments){
+function reviewDocBody(meta, comments){
   const byKey = {};
   comments.forEach(function(c){ const k = c.item || '6'; (byKey[k] = byKey[k] || []).push(c); });
   const etcList = (byKey['6'] || []).concat(byKey['1-3a'] || []);
@@ -1758,6 +1764,15 @@ async function buildReviewDocx(meta, comments){
     }
   });
   bodyParts.push('<w:tbl>' + tblPr() + grid(W) + headerRow + rowXml.join('') + '</w:tbl>');
+  return bodyParts;
+}
+// 여러 칸을 한 워드 파일에 순서대로 담는다 (칸 사이는 쪽 나눔)
+async function buildReviewDocxMulti(list){
+  const bodyParts = [];
+  list.forEach(function(it, i){
+    if(i > 0) bodyParts.push('<w:p><w:r><w:br w:type="page"/></w:r></w:p>');
+    reviewDocBody(it.meta, it.comments).forEach(function(x){ bodyParts.push(x); });
+  });
   const docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
     '<w:body>' + bodyParts.join('') +
@@ -1779,6 +1794,31 @@ async function buildReviewDocx(meta, comments){
   zip.file('word/document.xml', docXml, { createFolders: false });
   return zip.generateAsync({ type: 'blob', mimeType: DOCX_MIME });
 }
+async function buildReviewDocx(meta, comments){
+  return buildReviewDocxMulti([{ meta: meta, comments: comments }]);
+}
+// 라벨 순서: A1, A2, B1 … (글자, 번호 순)
+function labelSortKey(f){
+  const m = /^([A-Za-z])(\d+)$/.exec(f.label || '');
+  return m ? (m[1].toUpperCase() + String(parseInt(m[2], 10)).padStart(4, '0')) : '~';
+}
+// 내 글자 칸(예: A)의 검토 파일을 순서대로 모아서 워드 한 파일로 받는다
+async function downloadMyReviews(letter){
+  const mine = fileCache
+    .filter(function(f){ return isReviewerCopy(f) && f.slot === letter; })
+    .sort(function(a, b){ return labelSortKey(a).localeCompare(labelSortKey(b)); });
+  if(!mine.length){ alert('내 칸(' + letter + ')으로 된 파일이 없습니다.'); return; }
+  try{
+    const items = [];
+    for(const f of mine){
+      items.push({ meta: f, comments: await getCommentsOnce(f.fileId) });
+    }
+    downloadBlob(await buildReviewDocxMulti(items), letter + '_문항검토지_모음.docx');
+  }catch(err){
+    alert('내려받지 못했습니다: ' + err.message);
+  }
+}
+
 async function downloadReviewDoc(fileId){
   const meta = fileCache.find(function(f){ return f.fileId === fileId; });
   if(!meta || !isReviewerCopy(meta)) return;
