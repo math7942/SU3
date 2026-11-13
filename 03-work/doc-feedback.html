@@ -1709,12 +1709,7 @@ function fxCell(width, paras, o){
 function fxOpinionParas(list){
   if(!list.length) return fxPara(fxRun('', {}));
   return list.map(function(c){
-    let p = fxPara(fxRun(c.comment || '', { size: 20 }), { after: 60 });
-    if(c.quote){
-      const q = c.quote.length > 60 ? c.quote.slice(0, 60) + '…' : c.quote;
-      p += fxPara(fxRun('원문: "' + q + '"', { italic: true, color: '666666', size: 18 }), { after: 60 });
-    }
-    return p;
+    return fxPara(fxRun(c.comment || '', { size: 20 }), { after: 60 });
   }).join('');
 }
 // 검토 칸: 보완을 고른 의견이 있으면 보완, 아니면 적합 (검토자가 고르지 않은 항목은 적합)
