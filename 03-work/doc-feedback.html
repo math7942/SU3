@@ -100,6 +100,8 @@
   .copy-chip.author{background:#fff6e5;border-color:#f0d9a8}
   .copy-chip.has-comment{background:#DCEFE0;border-color:#8fc9a0;color:#1E5C2E}
   .copy-chip.summary{background:#e8f0ff;border-color:#a9c0f0}
+  .review-btn{background:#FFE066;color:#111;border:1px solid #d9b200;border-radius:8px;padding:8px 14px;font:inherit;font-size:0.95rem;font-weight:800;cursor:pointer}
+  .review-btn:hover{background:#FFD83B}
   .mat-chip-title{color:var(--ink);font-size:13.5px;font-weight:600;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
   .mat-chip-title:hover{color:var(--pri)}
   .mat-del{display:grid;place-items:center;width:20px;height:20px;border:none;border-radius:50%;background:var(--accent-soft,#e0e7ff);color:var(--pri);font-size:.85rem;line-height:1;cursor:pointer;padding:0}
@@ -869,7 +871,7 @@ function renderFileList(){
       '<div class="file-body">' +
         '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">' +
           '<h3 style="margin:0">' + (isSummaryCopy(f) ? '의견 종합 (검토 의견 모음)' : '의견 남기기') + '</h3>' +
-          (isReviewerCopy(f) ? '<button class="small ghost" data-act="review-word">문항검토지 받기</button>' : '') +
+          (isReviewerCopy(f) ? '<button class="review-btn" data-act="review-word">문항검토지 받기</button>' : '') +
           '<button class="small ghost" data-act="comments-word">' + (isSummaryCopy(f) ? '의견 모음 워드 받기' : '피드백 다운로드') + '</button>' +
         '</div>' +
         (isSummaryCopy(f)
