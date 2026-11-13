@@ -147,13 +147,18 @@
       <div class="share-row"><input type="text" id="shareLink2" readonly><button class="small" id="copyBtn2">링크 복사</button></div>
     </div>
     <div class="card">
-      <h2>교육청 자료 · 참고 링크</h2>
-      <div class="field"><label>제목</label><input type="text" id="matTitle" placeholder="예: 2026 서논술형 평가 안내 공문"></div>
-      <div class="field"><label>링크 주소</label><input type="text" id="matUrl" placeholder="예: https://www.example.go.kr/..."></div>
-      <div class="field"><label>또는 파일 선택 (10MB 이하)</label><input type="file" id="matFile"></div>
-      <button id="matAddBtn">자료 추가</button>
-      <div class="msg" id="matMsg"></div>
+      <div class="row" style="justify-content:space-between">
+        <h2>교육청 자료 · 참고 링크</h2>
+        <button class="ghost small" id="matToggle">자료 올리기 펼치기</button>
+      </div>
       <div id="materialList" style="margin-top:12px"></div>
+      <div id="matForm" hidden style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)">
+        <div class="field"><label>제목</label><input type="text" id="matTitle" placeholder="예: 2026 서논술형 평가 안내 공문"></div>
+        <div class="field"><label>링크 주소</label><input type="text" id="matUrl" placeholder="예: https://www.example.go.kr/..."></div>
+        <div class="field"><label>또는 파일 선택 (10MB 이하)</label><input type="file" id="matFile"></div>
+        <button id="matAddBtn">자료 추가</button>
+        <div class="msg" id="matMsg"></div>
+      </div>
     </div>
     <div class="card">
       <h2>문서 올리기 (.docx)</h2>
@@ -664,6 +669,11 @@ async function removeMaterial(id){
     alert('삭제하지 못했습니다: ' + err.message);
   }
 }
+$('matToggle').addEventListener('click', function(){
+  var form = $('matForm');
+  form.hidden = !form.hidden;
+  $('matToggle').textContent = form.hidden ? '자료 올리기 펼치기' : '접기';
+});
 $('matAddBtn').addEventListener('click', async function(){
   var title = $('matTitle').value.trim();
   var url = normalizeUrl($('matUrl').value);
