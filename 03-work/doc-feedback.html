@@ -1802,18 +1802,28 @@ function labelSortKey(f){
   const m = /^([A-Za-z])(\d+)$/.exec(f.label || '');
   return m ? (m[1].toUpperCase() + String(parseInt(m[2], 10)).padStart(4, '0')) : '~';
 }
-// 내 글자 칸(예: A)의 검토 파일을 순서대로 모아서 워드 한 파일로 받는다
+// 내 글자 칸(예: B)의 검토를 올린 사람(A, B …)별로 한 파일씩 받는다.
+// 같은 사람이 올린 A1, A2 는 한 파일에 순서대로 들어간다.
 async function downloadMyReviews(letter){
   const mine = fileCache
     .filter(function(f){ return isReviewerCopy(f) && f.slot === letter; })
     .sort(function(a, b){ return labelSortKey(a).localeCompare(labelSortKey(b)); });
   if(!mine.length){ alert('내 칸(' + letter + ')으로 된 파일이 없습니다.'); return; }
+  const byUploader = {};
+  mine.forEach(function(f){
+    const up = f.label.charAt(0);
+    (byUploader[up] = byUploader[up] || []).push(f);
+  });
   try{
-    const items = [];
-    for(const f of mine){
-      items.push({ meta: f, comments: await getCommentsOnce(f.fileId) });
+    const uploaders = Object.keys(byUploader).sort();
+    for(const up of uploaders){
+      const items = [];
+      for(const f of byUploader[up]){
+        items.push({ meta: f, comments: await getCommentsOnce(f.fileId) });
+      }
+      downloadBlob(await buildReviewDocxMulti(items), up + '_문항검토지_' + letter + '.docx');
+      await new Promise(function(r){ setTimeout(r, 400); });
     }
-    downloadBlob(await buildReviewDocxMulti(items), letter + '_문항검토지_모음.docx');
   }catch(err){
     alert('내려받지 못했습니다: ' + err.message);
   }
