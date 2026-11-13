@@ -1004,7 +1004,7 @@ function renderCommentRail(row, fileId, comments){
       card.dataset.cid = c.id;
       card.dataset.anchorTop = mark ? contentTop(mark, docView) : 0;
       var q = c.quote ? ('<div class="cq">"' + esc(c.quote) + '"</div>') : (c.kind === 'pin' ? ('<div class="cq">' + esc(c.page) + '페이지 표시 위치</div>') : '');
-      var tag = c.itemLabel ? '<div class="ctag">' + esc(c.itemLabel) + ' · ' + esc(c.stance || '') + '</div>' : '';
+      var tag = c.item ? '<div class="ctag">' + esc(itemLabelOf(c)) + ' · ' + esc(c.stance || '') + '</div>' : '';
       card.innerHTML = q + tag + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span>';
       rail.appendChild(card);
     });
@@ -1078,7 +1078,7 @@ function setupAnnotation(row, fileId){
       var msg = el.querySelector('.msg');
       msg.textContent = '등록 중...';
       try{
-        var data = { comment: text, kind: anchor.kind, item: itemSel.value, itemLabel: itemSel.options[itemSel.selectedIndex].text, stance: stanceEl.value };
+        var data = { comment: text, kind: anchor.kind, item: itemSel.value, stance: stanceEl.value };
         if(anchor.kind === 'range'){ data.startOffset = anchor.startOffset; data.endOffset = anchor.endOffset; data.quote = anchor.quote; }
         else { data.page = anchor.page; data.xPct = anchor.xPct; data.yPct = anchor.yPct; }
         await addComment(sessionId, fileId, data);
@@ -1521,6 +1521,10 @@ function isReviewerCopy(f){ return !!f && f.role === 'reviewer'; }
 function isAuthorCopyId(fileId){
   return isAuthorCopy(fileCache.find(function(f){ return f.fileId === fileId; }));
 }
+function itemLabelOf(c){
+  const it = REVIEW_ITEMS.find(function(x){ return x.key === c.item; });
+  return it ? it.label : '항목 미지정';
+}
 function reviewItemOptions(){
   return '<option value="">항목을 고르세요</option>' +
     REVIEW_ITEMS.map(function(it){ return '<option value="' + esc(it.key) + '">' + esc(it.label) + '</option>'; }).join('');
@@ -1537,7 +1541,7 @@ async function aggregatedComments(meta){
     const list = await getCommentsOnce(sib.fileId);
     list.forEach(function(c){
       out.push(Object.assign({}, c, {
-        comment: '[' + labelOf(sib) + ' · ' + (c.itemLabel || '항목 미지정') + ' · ' + (c.stance || '-') + '] ' + c.comment
+        comment: '[' + labelOf(sib) + ' · ' + itemLabelOf(c) + ' · ' + (c.stance || '-') + '] ' + c.comment
       }));
     });
   }
