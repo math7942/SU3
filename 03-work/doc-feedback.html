@@ -852,6 +852,7 @@ function renderFileList(){
   var el = $('fileList');
   if(!fileCache.length){ el.innerHTML = '<p class="empty">아직 올라온 문서가 없습니다.</p>'; return; }
   el.innerHTML = fileCache.map(function(f, idx){
+    if(!f.groupId && !isAdmin) return ''; // 묶음 없이 올라온 예전 원본은 관리 기능에서만 보인다
     const strip = (f.groupId && (idx === 0 || fileCache[idx - 1].groupId !== f.groupId)) ? copyStripHtml(f) : '';
     const shown = (f.groupId && f.fileId === openFileId) ? ' show' : '';
     return strip + '<div class="file-row' + (f.groupId ? ' grouped' : '') + shown + '" data-id="' + esc(f.fileId) + '">' +
