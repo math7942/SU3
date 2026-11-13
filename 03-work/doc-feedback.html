@@ -833,6 +833,7 @@ function copyStripHtml(first){
   }).join('');
   return '<div class="copy-group-title">' + esc(first.label || '') + ' · ' + esc(first.filename) + '</div>' +
     '<div class="copy-strip">' + chips + '</div>' +
+    '<div class="note" style="margin:0 0 8px">의견이 하나라도 있으면 초록색으로 바뀝니다.</div>' +
     (isAdmin ? '<div class="group-admin" style="display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px;align-items:center">' +
       '<button class="small" style="background:#dc2626" data-admin-del-group="' + esc(first.groupId) + '">' + esc(first.label || '') + ' 전체 삭제</button>' +
       members.map(function(m){
