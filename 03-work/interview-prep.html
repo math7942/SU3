@@ -333,8 +333,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     </div>
   </section>
 
-  <details class="stage-ref" open>
-    <summary>단계별전형 1차 합격자 발표일 참고 (2027 일정표 기준, 31건)</summary>
+  <details class="stage-ref" open hidden>
+    <summary>단계별전형 1차 합격자 발표일 참고</summary>
     <p class="stage-note">상태: <b>일치</b> 일정표 항목명이 학생 전형과 맞음 · <b>예정</b> 일정표에 예정으로 표기 · <b>추정</b> 같은 대학 여러 항목 중 가장 가까운 것 · <b>없음</b> 일정표에 1단계 없음. 확정 전 학교 공지를 확인하세요.</p>
     <div class="stage-wrap"><table class="stage-table">
       <thead><tr><th>대학</th><th>전형명</th><th>세부유형</th><th>모집단위</th><th>1차 발표일</th><th>시각</th><th>상태</th></tr></thead>
@@ -723,6 +723,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         type1: cellStr(get(row,'전형유형')) || '',
         type2: cellStr(get(row,'전형명(대)')) || '',
         major: cellStr(get(row,'모집단위')) || '',
+        detail: cellStr(get(row,'세부유형')) || '',
         track: cellStr(get(row,'계열')) || '미분류',
         region: cellStr(get(row,'지역')) || '',
         selectType: cellStr(get(row,'선발유형')) || '',
@@ -735,6 +736,26 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       });
     }
     return out;
+  }
+
+  // 참고표는 파일을 올린 뒤에만 보이고, 그 파일의 단계별전형 행(대학·세부유형·모집단위 일치)만 남긴다.
+  function updateStageRef(){
+    var block = document.querySelector('.stage-ref');
+    if(!block) return;
+    var keys = {};
+    state.rows.forEach(function(r){
+      if(String(r.selectType).indexOf('단계') >= 0) keys[r.univ + '|' + r.detail + '|' + r.major] = 1;
+    });
+    var count = 0;
+    block.querySelectorAll('tbody tr').forEach(function(tr){
+      var c = tr.cells;
+      var show = !!keys[c[0].textContent + '|' + c[2].textContent + '|' + c[3].textContent];
+      tr.hidden = !show;
+      if(show) count++;
+    });
+    block.hidden = !state.rows.length || count === 0;
+    var sm = block.querySelector('summary');
+    if(sm) sm.textContent = '단계별전형 1차 합격자 발표일 참고 (이 파일 기준 ' + count + '건)';
   }
 
   fileInput.addEventListener('change', function(e){
@@ -753,6 +774,7 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
         state.currentFilename = file.name;
         state.groupFields = [];
         render();
+        updateStageRef();
       }catch(err){
         console.error(err);
         alert('엑셀 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
