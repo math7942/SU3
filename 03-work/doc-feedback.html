@@ -272,9 +272,10 @@ async function saveChunks(fs, db, fileId, base64){
 // 문서 하나를 올리면 같은 내용의 파일 7개가 생긴다.
 // 1~6번: 검토자 한 명씩 의견을 쓰는 파일 (검토자마다 문항검토지 한 장).
 // 7번: 출제자에게 주는 파일. 1~6번 의견이 원본에 메모로 모인다.
-const REVIEW_COPIES = 7;
-const AUTHOR_COPY = 7;
-// 이름 규칙: 올린 사람 글자 + 올린 순서 (A1, A2, B1 …). 복사본은 A1-1 … A1-7. 7번은 출제자용.
+const SLOTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+// 이름 규칙: 올린 사람 글자 + 올린 순서 (A1, A2, B1 …).
+// 복사본은 칸 글자로 나뉜다. 올린 사람 칸은 (출제자), 나머지는 검토 칸 (A1-B, A1-C …).
+// 선생님은 자기 글자 칸만 보면 된다.
 function nextLabel(letter){
   let max = 0;
   fileCache.forEach(function(f){
@@ -285,23 +286,24 @@ function nextLabel(letter){
   return letter + (max + 1);
 }
 function labelOf(f){
-  if(f.label) return f.copyNo ? (f.label + '-' + f.copyNo) : f.label;
+  if(f.label) return f.slot ? (f.label + '-' + f.slot) : f.label;
   return f.copyNo ? ('파일 ' + f.copyNo) : f.filename;
 }
 function displayName(f){
-  if(f.label) return labelOf(f) + (f.copyNo === AUTHOR_COPY ? ' (출제자)' : '');
-  return f.copyNo ? ('파일 ' + f.copyNo + (f.copyNo === AUTHOR_COPY ? ' (출제자)' : '') + ' · ' + f.filename) : f.filename;
+  if(f.label) return labelOf(f) + (isAuthorCopy(f) ? '(출제자)' : '');
+  return f.copyNo ? ('파일 ' + f.copyNo + ' · ' + f.filename) : f.filename;
 }
-async function uploadFile(sessionId, file, label){
+async function uploadFile(sessionId, file, label, uploaderLetter){
   const { fs, db } = await loadFirebase();
   const base64 = await fileToBase64(file);
   const uploadedAt = new Date().toISOString();
   const groupId = fs.doc(fs.collection(db, FILES)).id;
   let firstId = null;
-  for(let n = 1; n <= REVIEW_COPIES; n++){
+  for(const slot of SLOTS){
     const ref = fs.doc(fs.collection(db, FILES));
     const chunkCount = await saveChunks(fs, db, ref.id, base64);
-    await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount, uploadedAt, groupId, copyNo: n, label: label });
+    const role = slot === uploaderLetter ? 'author' : 'reviewer';
+    await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount, uploadedAt, groupId, label: label, slot: slot, role: role });
     if(firstId === null) firstId = ref.id;
   }
   return firstId;
@@ -361,7 +363,7 @@ function listenFiles(sessionId, cb){
     const q = fs.query(fs.collection(db, FILES), fs.where('sessionId', '==', sessionId));
     unsub = fs.onSnapshot(q, (snap) => {
       const list = snap.docs.map((d) => ({ fileId: d.id, ...d.data() }));
-      list.sort((a, b) => (a.uploadedAt === b.uploadedAt ? ((a.copyNo || 0) - (b.copyNo || 0)) : (a.uploadedAt < b.uploadedAt ? -1 : 1)));
+      list.sort((a, b) => (a.uploadedAt === b.uploadedAt ? String(a.slot || '').localeCompare(String(b.slot || '')) : (a.uploadedAt < b.uploadedAt ? -1 : 1)));
       cb(list);
     }, (err) => { console.error(err); cb([]); });
   });
@@ -762,7 +764,7 @@ $('fileInput').addEventListener('change', async function(e){
   $('uploadMsg').textContent = '올리는 중...';
   try{
     const label = nextLabel(letter);
-    await uploadFile(sessionId, file, label);
+    await uploadFile(sessionId, file, label, letter);
     $('uploadMsg').className = 'msg ok';
     $('uploadMsg').textContent = '올렸습니다: ' + label + ' (' + file.name + ')';
     $('uploadHint').textContent = '';
@@ -782,11 +784,11 @@ $('uploadLetter').addEventListener('change', function(){
 function copyStripHtml(first){
   const members = fileCache
     .filter(function(f){ return f.groupId && f.groupId === first.groupId; })
-    .sort(function(a, b){ return (a.copyNo || 0) - (b.copyNo || 0); });
+    .sort(function(a, b){ return String(a.slot || '').localeCompare(String(b.slot || '')); });
   const chips = members.map(function(m){
     const author = isAuthorCopy(m);
     return '<button type="button" class="copy-chip' + (author ? ' author' : '') + '" data-target="' + esc(m.fileId) + '">' +
-      esc(labelOf(m)) + (author ? ' (출제자)' : '') + '</button>';
+      esc(labelOf(m)) + (author ? '(출제자)' : '') + '</button>';
   }).join('');
   return '<div class="copy-group-title">' + esc(first.label || '') + ' · ' + esc(first.filename) + '</div>' +
     '<div class="copy-strip">' + chips + '</div>';
@@ -1514,8 +1516,8 @@ const REVIEW_ITEMS = [
   { key: '5-3', area: '5. 예시 답안', label: '5-3. 인정 범위 및 채점 유의사항이 안내되어 있는가?' },
   { key: '6', area: '6. 기타', label: '6. 기타 검토 및 보완 의견' }
 ];
-function isAuthorCopy(f){ return !!f && f.copyNo === AUTHOR_COPY; }
-function isReviewerCopy(f){ return !!f && f.copyNo >= 1 && f.copyNo < AUTHOR_COPY; }
+function isAuthorCopy(f){ return !!f && f.role === 'author'; }
+function isReviewerCopy(f){ return !!f && f.role === 'reviewer'; }
 function isAuthorCopyId(fileId){
   return isAuthorCopy(fileCache.find(function(f){ return f.fileId === fileId; }));
 }
@@ -1526,7 +1528,7 @@ function reviewItemOptions(){
 function siblingsOf(meta){
   return fileCache
     .filter(function(f){ return !!meta.groupId && f.groupId === meta.groupId && isReviewerCopy(f); })
-    .sort(function(a, b){ return a.copyNo - b.copyNo; });
+    .sort(function(a, b){ return String(a.slot || '').localeCompare(String(b.slot || '')); });
 }
 // 출제자용 파일(7번): 1~6번의 의견을 모아서 원본 위치에 메모로 단다
 async function aggregatedComments(meta){
