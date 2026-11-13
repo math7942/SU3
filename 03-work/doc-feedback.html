@@ -86,6 +86,12 @@
   .si-title{font-weight:700;color:var(--ink);text-decoration:none;font-size:14.5px}
   .si-title:hover{color:var(--pri)}
   .si-time{font-size:11.5px;color:var(--sub);white-space:nowrap}
+  .mat-chips{display:flex;flex-wrap:wrap;gap:8px}
+  .mat-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 8px 7px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+  .mat-chip-title{color:var(--ink);font-size:13.5px;font-weight:600;text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
+  .mat-chip-title:hover{color:var(--pri)}
+  .mat-del{display:grid;place-items:center;width:20px;height:20px;border:none;border-radius:50%;background:var(--accent-soft,#e0e7ff);color:var(--pri);font-size:.85rem;line-height:1;cursor:pointer;padding:0}
+  .mat-del[hidden]{display:none}
   .admin-panel{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
   .empty{color:#9ca3af;font-size:13.5px}
   #printArea{display:none}
@@ -139,6 +145,15 @@
     <div class="sub">여러 선생님이 각자 문서를 올리고, 서로의 문서를 읽으며 익명으로 의견을 남길 수 있습니다.</div>
     <div class="card">
       <div class="share-row"><input type="text" id="shareLink2" readonly><button class="small" id="copyBtn2">링크 복사</button></div>
+    </div>
+    <div class="card">
+      <h2>교육청 자료 · 참고 링크</h2>
+      <div class="field"><label>제목</label><input type="text" id="matTitle" placeholder="예: 2026 서논술형 평가 안내 공문"></div>
+      <div class="field"><label>링크 주소</label><input type="text" id="matUrl" placeholder="예: https://www.example.go.kr/..."></div>
+      <div class="field"><label>또는 파일 선택 (10MB 이하)</label><input type="file" id="matFile"></div>
+      <button id="matAddBtn">자료 추가</button>
+      <div class="msg" id="matMsg"></div>
+      <div id="materialList" style="margin-top:12px"></div>
     </div>
     <div class="card">
       <h2>문서 올리기 (.docx)</h2>
@@ -200,6 +215,8 @@ const SESSIONS = 'docFeedbackSessions';
 const FILES = 'docFeedbackFiles';
 const CHUNKS = 'docFeedbackFileChunks';
 const COMMENTS = 'docFeedbackComments';
+const MATERIALS = 'docFeedbackMaterials';
+const MAT_MAX_BYTES = 10 * 1024 * 1024;
 const CHUNK_SIZE = 700000; // base64 문자 수 기준. Firestore 문서 1개 한도(1MB)보다 넉넉히 작게 잡음
 
 async function createSession(title){
@@ -221,19 +238,59 @@ function fileToBase64(file){
     r.readAsDataURL(file);
   });
 }
+async function saveChunks(fs, db, fileId, base64){
+  const chunks = [];
+  for(let i = 0; i < base64.length; i += CHUNK_SIZE) chunks.push(base64.slice(i, i + CHUNK_SIZE));
+  const batch = fs.writeBatch(db);
+  chunks.forEach((data, index) => {
+    batch.set(fs.doc(db, CHUNKS, fileId + '_' + index), { fileId, index, data });
+  });
+  await batch.commit();
+  return chunks.length;
+}
 async function uploadFile(sessionId, file){
   const { fs, db } = await loadFirebase();
   const base64 = await fileToBase64(file);
-  const chunks = [];
-  for(let i = 0; i < base64.length; i += CHUNK_SIZE) chunks.push(base64.slice(i, i + CHUNK_SIZE));
   const ref = fs.doc(fs.collection(db, FILES));
-  const batch = fs.writeBatch(db);
-  chunks.forEach((data, index) => {
-    batch.set(fs.doc(db, CHUNKS, ref.id + '_' + index), { fileId: ref.id, index, data });
-  });
-  await batch.commit();
-  await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount: chunks.length, uploadedAt: new Date().toISOString() });
+  const chunkCount = await saveChunks(fs, db, ref.id, base64);
+  await fs.setDoc(ref, { sessionId, filename: file.name, chunkCount, uploadedAt: new Date().toISOString() });
   return ref.id;
+}
+async function addLinkMaterial(sessionId, title, url){
+  const { fs, db } = await loadFirebase();
+  await fs.setDoc(fs.doc(fs.collection(db, MATERIALS)), { sessionId, kind: 'link', title, url, createdAt: new Date().toISOString() });
+}
+async function addFileMaterial(sessionId, title, file){
+  const { fs, db } = await loadFirebase();
+  const base64 = await fileToBase64(file);
+  const ref = fs.doc(fs.collection(db, MATERIALS));
+  const chunkCount = await saveChunks(fs, db, ref.id, base64);
+  await fs.setDoc(ref, { sessionId, kind: 'file', title, filename: file.name, chunkCount, createdAt: new Date().toISOString() });
+}
+function listenMaterials(sessionId, cb){
+  let unsub = null, stopped = false;
+  loadFirebase().then(({ fs, db }) => {
+    if(stopped) return;
+    const q = fs.query(fs.collection(db, MATERIALS), fs.where('sessionId', '==', sessionId));
+    unsub = fs.onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
+      cb(list);
+    }, (err) => { console.error(err); cb([]); });
+  });
+  return () => { stopped = true; if(unsub) unsub(); };
+}
+async function deleteMaterialEverywhere(m){
+  const { fs, db } = await loadFirebase();
+  await fs.deleteDoc(fs.doc(db, MATERIALS, m.id));
+  if(m.kind === 'file'){
+    const snap = await fs.getDocs(fs.query(fs.collection(db, CHUNKS), fs.where('fileId', '==', m.id)));
+    if(snap.docs.length){
+      const batch = fs.writeBatch(db);
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  }
 }
 function listenSessions(cb){
   let unsub = null, stopped = false;
@@ -441,11 +498,14 @@ window.addEventListener('resize', function(){
 var sessionId = null;
 var fileListUnsub = null;
 var sessionListUnsub = null;
+var materialUnsub = null;
+var materialCache = [];
 
 function route(){
   var hash = location.hash || '';
   var m = /^#s-(.+)$/.exec(hash);
   if(fileListUnsub){ fileListUnsub(); fileListUnsub = null; }
+  if(materialUnsub){ materialUnsub(); materialUnsub = null; }
   closeAllCommentListeners();
   if(m){
     if(sessionListUnsub){ sessionListUnsub(); sessionListUnsub = null; }
@@ -552,7 +612,82 @@ async function initSession(){
     fileCache = files;
     renderFileList();
   });
+  materialUnsub = listenMaterials(sessionId, function(list){
+    materialCache = list;
+    renderMaterialList();
+  });
 }
+function normalizeUrl(u){
+  u = String(u || '').trim();
+  if(!u) return '';
+  if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u;
+}
+function renderMaterialList(){
+  var el = $('materialList');
+  if(!materialCache.length){ el.innerHTML = '<p class="empty">아직 올라온 자료가 없습니다.</p>'; return; }
+  el.innerHTML = '<div class="mat-chips">' + materialCache.map(function(m){
+    var hint = m.kind === 'link' ? m.url : m.filename;
+    var title = m.kind === 'link'
+      ? '<a class="mat-chip-title" href="' + esc(m.url) + '" target="_blank" rel="noopener" title="' + esc(hint) + '">' + esc(m.title) + '</a>'
+      : '<button class="mat-chip-title" data-act="mat-download" title="' + esc(hint) + ' 내려받기">' + esc(m.title) + '</button>';
+    return '<span class="mat-chip" data-id="' + esc(m.id) + '">' + title +
+      '<button class="mat-del" data-act="mat-delete" aria-label="' + esc(m.title) + ' 삭제" title="삭제" hidden>×</button>' +
+      '</span>';
+  }).join('') + '</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('.mat-chip'), function(chip){
+    var id = chip.dataset.id;
+    var dl = chip.querySelector('[data-act=mat-download]');
+    if(dl) dl.addEventListener('click', function(){ downloadMaterial(id); });
+    var del = chip.querySelector('[data-act=mat-delete]');
+    del.hidden = !isAdmin;
+    del.addEventListener('click', function(){ removeMaterial(id); });
+  });
+}
+async function downloadMaterial(id){
+  var m = materialCache.find(function(x){ return x.id === id; });
+  if(!m) return;
+  try{
+    var buf = await getFileArrayBuffer({ fileId: m.id });
+    downloadBlob(new Blob([buf]), m.filename || m.title);
+  }catch(err){
+    alert('내려받지 못했습니다: ' + err.message);
+  }
+}
+async function removeMaterial(id){
+  var m = materialCache.find(function(x){ return x.id === id; });
+  if(!m) return;
+  if(!confirm('정말 "' + m.title + '" 자료를 삭제할까요?')) return;
+  try{
+    await deleteMaterialEverywhere(m);
+  }catch(err){
+    alert('삭제하지 못했습니다: ' + err.message);
+  }
+}
+$('matAddBtn').addEventListener('click', async function(){
+  var title = $('matTitle').value.trim();
+  var url = normalizeUrl($('matUrl').value);
+  var file = $('matFile').files[0];
+  var msg = $('matMsg');
+  if(!title){ msg.className = 'msg err'; msg.textContent = '제목을 입력해주세요.'; return; }
+  if(!file && !url){ msg.className = 'msg err'; msg.textContent = '링크 주소를 입력하거나 파일을 선택해주세요.'; return; }
+  if(file && file.size > MAT_MAX_BYTES){ msg.className = 'msg err'; msg.textContent = '파일은 10MB 이하만 올릴 수 있습니다.'; return; }
+  msg.className = 'msg';
+  msg.textContent = '올리는 중...';
+  try{
+    if(file) await addFileMaterial(sessionId, title, file);
+    else await addLinkMaterial(sessionId, title, url);
+    $('matTitle').value = '';
+    $('matUrl').value = '';
+    $('matFile').value = '';
+    msg.className = 'msg ok';
+    msg.textContent = '추가했습니다.';
+  }catch(err){
+    msg.className = 'msg err';
+    msg.textContent = '오류가 발생했습니다: ' + err.message;
+  }
+});
+
 $('copyBtn2').addEventListener('click', function(){
   $('shareLink2').select();
   navigator.clipboard && navigator.clipboard.writeText($('shareLink2').value);
@@ -907,6 +1042,7 @@ $('adminToggle').addEventListener('click', function(){
   $('adminTools').hidden = !isAdmin;
   $('adminToggle').textContent = isAdmin ? '관리 기능 숨기기' : '관리 기능 보기';
   renderFileList();
+  renderMaterialList();
 });
 
 async function downloadOriginal(fileId){

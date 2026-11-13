@@ -591,6 +591,7 @@ AI와 함께하는 수학교사의 1학기 살이는 `04-festival/`에 8단계 �
 - `docFeedbackFiles` — 올라온 문서 메타데이터: 세션아이디·파일명·청크개수·업로드일시
 - `docFeedbackFileChunks` — 문서 원본을 base64로 쪼갠 조각(문서 하나당 1MB 제한을 피하려고
   여러 문서로 나눠 담음): 파일아이디·순번·조각데이터
+- `docFeedbackMaterials` — 교육청 자료·참고 링크: 세션아이디·제목·종류(link/file)·링크 주소 또는 파일명·청크개수
 - `docFeedbackComments` — 익명 의견. 공통: 세션아이디·파일아이디·의견내용·작성일시·종류(kind).
   docx 문서를 선택해서 남긴 의견(`kind:"range"`)은 글자 위치(`startOffset`/`endOffset`)와
   인용문(`quote`)을 함께 담아 다시 열었을 때 같은 자리에 표시하고, pdf 문서를 클릭해서 남긴
@@ -610,7 +611,7 @@ Database → 규칙에서, `col in [...]` 대괄호 목록에 아래 네 이름�
 조건은 그대로 둬도 됩니다 — 이 도구가 쓰는 문서는 전부 필드 10개 미만입니다).
 
 ```
-'docFeedbackSessions', 'docFeedbackFiles', 'docFeedbackFileChunks', 'docFeedbackComments'
+'docFeedbackSessions', 'docFeedbackFiles', 'docFeedbackFileChunks', 'docFeedbackComments', 'docFeedbackMaterials'
 ```
 
 **사용 흐름**: 담당자가 홈 화면에서 "기수"(예: 1차, 2차 — 여러 차례에 걸쳐 작업할 때 회차를
