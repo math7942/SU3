@@ -364,7 +364,20 @@ function listenFiles(sessionId, cb){
     const q = fs.query(fs.collection(db, FILES), fs.where('sessionId', '==', sessionId));
     unsub = fs.onSnapshot(q, (snap) => {
       const list = snap.docs.map((d) => ({ fileId: d.id, ...d.data() }));
-      list.sort((a, b) => (a.uploadedAt === b.uploadedAt ? String(a.slot || '').localeCompare(String(b.slot || '')) : (a.uploadedAt < b.uploadedAt ? -1 : 1)));
+      // 라벨(A1, A2, B1 …) 알파벳·번호 순 → 같은 라벨 안에서는 슬롯(A~G) 순. 라벨 없는 옛 문서는 맨 뒤에 올린 순으로.
+      const parse = (f) => { const m = /^([A-Za-z])(\d+)$/.exec(f.label || ''); return m ? { L: m[1].toUpperCase(), N: parseInt(m[2], 10) } : null; };
+      list.sort((a, b) => {
+        const pa = parse(a), pb = parse(b);
+        if(pa && pb){
+          if(pa.L !== pb.L) return pa.L < pb.L ? -1 : 1;
+          if(pa.N !== pb.N) return pa.N - pb.N;
+          if(a.groupId !== b.groupId) return String(a.groupId) < String(b.groupId) ? -1 : 1;
+          return String(a.slot || '').localeCompare(String(b.slot || ''));
+        }
+        if(pa) return -1;
+        if(pb) return 1;
+        return a.uploadedAt === b.uploadedAt ? String(a.slot || '').localeCompare(String(b.slot || '')) : (a.uploadedAt < b.uploadedAt ? -1 : 1);
+      });
       cb(list);
     }, (err) => { console.error(err); cb([]); });
   });
@@ -735,7 +748,7 @@ async function downloadMaterial(id){
 async function removeMaterial(id){
   var m = materialCache.find(function(x){ return x.id === id; });
   if(!m) return;
-  if(!confirm('정말 "' + m.title + '" 자료를 삭제할까요?')) return;
+  if(!confirm('⚠ 정말 "' + m.title + '" 자료를 삭제할까요?\n\n삭제하면 복구할 수 없습니다. 되돌릴 수 없습니다.')) return;
   try{
     await deleteMaterialEverywhere(m);
   }catch(err){
@@ -820,7 +833,8 @@ function copyStripHtml(first){
   }).join('');
   return '<div class="copy-group-title">' + esc(first.label || '') + ' · ' + esc(first.filename) + '</div>' +
     '<div class="copy-strip">' + chips + '</div>' +
-    (isAdmin ? '<div class="group-admin" style="display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px">' +
+    (isAdmin ? '<div class="group-admin" style="display:flex;flex-wrap:wrap;gap:6px;margin:-2px 0 10px;align-items:center">' +
+      '<button class="small" style="background:#dc2626" data-admin-del-group="' + esc(first.groupId) + '">' + esc(first.label || '') + ' 전체 삭제</button>' +
       members.map(function(m){
         return '<span class="row" style="gap:4px"><span style="font-size:12px;color:var(--sub)">' + esc(labelOf(m)) + '</span>' +
           '<button class="small ghost" data-admin-dl="' + esc(m.fileId) + '">원본</button>' +
@@ -867,6 +881,9 @@ function renderFileList(){
   applyChipState();
   Array.prototype.forEach.call(el.querySelectorAll('[data-admin-dl]'), function(b){
     b.addEventListener('click', function(){ downloadOriginal(b.dataset.adminDl); });
+  });
+  Array.prototype.forEach.call(el.querySelectorAll('[data-admin-del-group]'), function(b){
+    b.addEventListener('click', function(){ deleteGroup(b.dataset.adminDelGroup); });
   });
   Array.prototype.forEach.call(el.querySelectorAll('[data-admin-del]'), function(b){
     b.addEventListener('click', function(){ deleteFile(b.dataset.adminDel); });
@@ -1207,11 +1224,28 @@ async function downloadOriginal(fileId){
 async function deleteFile(fileId){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   var name = (meta && meta.filename) || '이 문서';
-  if(!confirm('정말 "' + name + '"와(과) 그 의견을 삭제할까요?\n삭제하면 되돌릴 수 없습니다.')) return;
+  if(!confirm('⚠ 정말 "' + name + '"와(과) 그 의견을 삭제할까요?\n\n삭제하면 복구할 수 없습니다. 되돌릴 수 없습니다.')) return;
   try{
     await deleteFileEverywhere(meta);
     delete docHtmlCache[fileId];
     if(openFileId === fileId) openFileId = null;
+  }catch(err){
+    alert('삭제하지 못했습니다: ' + err.message);
+  }
+}
+
+async function deleteGroup(groupId){
+  var members = fileCache.filter(function(f){ return f.groupId === groupId; });
+  if(!members.length) return;
+  var label = members[0].label || '이 묶음';
+  if(!confirm('⚠ "' + label + '" 묶음 전체(' + members.length + '개 파일)와 거기에 달린 모든 의견을 삭제할까요?\n\n' +
+    '문서: ' + (members[0].filename || '') + '\n\n삭제하면 복구할 수 없습니다. 되돌릴 수 없습니다.')) return;
+  try{
+    for(var i = 0; i < members.length; i++){
+      await deleteFileEverywhere(members[i]);
+      delete docHtmlCache[members[i].fileId];
+      if(openFileId === members[i].fileId) openFileId = null;
+    }
   }catch(err){
     alert('삭제하지 못했습니다: ' + err.message);
   }
