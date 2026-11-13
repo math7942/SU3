@@ -293,7 +293,7 @@ function labelOf(f){
   return f.copyNo ? ('파일 ' + f.copyNo) : f.filename;
 }
 function displayName(f){
-  if(f.label) return labelOf(f) + (isAuthorCopy(f) ? '(출제자)' : '');
+  if(f.label) return labelOf(f);
   return f.copyNo ? ('파일 ' + f.copyNo + ' · ' + f.filename) : f.filename;
 }
 async function uploadFile(sessionId, file, label, uploaderLetter){
@@ -834,8 +834,8 @@ function copyStripHtml(first){
     .sort(function(a, b){ return slotRank(a).localeCompare(slotRank(b)); });
   const chips = members.map(function(m){
     const author = isAuthorCopy(m);
-    return '<button type="button" class="copy-chip' + (author ? ' author' : '') + (isSummaryCopy(m) ? ' summary' : '') + '" data-target="' + esc(m.fileId) + '">' +
-      esc(labelOf(m)) + (author ? '(출제자)' : '') + '</button>';
+    return '<button type="button" class="copy-chip' + (isSummaryCopy(m) ? ' summary' : '') + '" data-target="' + esc(m.fileId) + '">' +
+      esc(labelOf(m)) + '</button>';
   }).join('');
   return '<div class="copy-group-title">' + esc(first.label || '') + ' · ' + esc(first.filename) + '</div>' +
     '<div class="copy-strip">' + chips + '</div>' +
