@@ -766,7 +766,8 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
       {id:'major', label:'모집단위'},
       {id:'track', label:'계열'},
       {id:'region', label:'지역'},
-      {id:'selectType', label:'선발방법'}
+      {id:'selectType', label:'선발방법'},
+      {id:'resultDate', label:'1차 합격자 발표일'}
     ];
     var scheduleCols = selectedTypes().map(function(t){
       return {id:'sched_' + t.id, label: t.label + '일자', field: t.id};
@@ -778,12 +779,30 @@ tbody tr:nth-child(even){ background:var(--surface-2); }
     });
   }
 
+  var RESULT_KEY = 'interview-prep-result-dates';
+  function loadResultDates(){
+    try{ return JSON.parse(localStorage.getItem(RESULT_KEY) || '{}'); }catch(e){ return {}; }
+  }
+  function saveResultDate(univ, value){
+    var dates = loadResultDates();
+    if(value) dates[univ] = value; else delete dates[univ];
+    try{ localStorage.setItem(RESULT_KEY, JSON.stringify(dates)); }catch(e){}
+  }
+  document.addEventListener('change', function(e){
+    var t = e.target;
+    if(t && t.classList && t.classList.contains('result-date')){
+      saveResultDate(t.dataset.univ, t.value);
+    }
+  });
+
   function renderLeafTable(rows, activeDimIds){
     var cols = leafColumns(activeDimIds);
+    var resultDates = loadResultDates();
     var head = '<th>학생</th>' + cols.map(function(c){ return '<th>' + c.label + '</th>'; }).join('');
     var body = rows.map(function(r){
       var cells = cols.map(function(c){
         if(c.field) return '<td class="mono sched-cell">' + fmtRange(r[c.field], YEAR_MULTI) + '</td>';
+        if(c.id === 'resultDate') return '<td><input type="date" class="result-date" data-univ="' + esc(r.univ) + '" value="' + esc(resultDates[r.univ] || '') + '"></td>';
         if(c.id === 'track'){
           var color = TRACK_COLOR[r.track] || 'var(--ink-dim)';
           return '<td><span class="track-dot" style="--dot:' + color + '"></span>' + esc(r.track) + '</td>';
