@@ -42,6 +42,8 @@
   .setup-banner.show{display:block}
   .setup-banner code{background:#fff;padding:1px 5px;border-radius:4px}
   .file-row{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  #fileList .file-row.grouped{display:none}
+  #fileList .file-row.grouped.show{display:block}
   .file-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:#f9fafb;flex-wrap:wrap}
   .file-head .name{font-weight:600;cursor:pointer}
   .file-head .name:hover{color:var(--pri)}
@@ -794,7 +796,8 @@ function renderFileList(){
   if(!fileCache.length){ el.innerHTML = '<p class="empty">아직 올라온 문서가 없습니다.</p>'; return; }
   el.innerHTML = fileCache.map(function(f, idx){
     const strip = (f.groupId && (idx === 0 || fileCache[idx - 1].groupId !== f.groupId)) ? copyStripHtml(f) : '';
-    return strip + '<div class="file-row" data-id="' + esc(f.fileId) + '">' +
+    const shown = (f.groupId && f.fileId === openFileId) ? ' show' : '';
+    return strip + '<div class="file-row' + (f.groupId ? ' grouped' : '') + shown + '" data-id="' + esc(f.fileId) + '">' +
       '<div class="file-head">' +
         '<span><span class="name" data-act="toggle">' + esc(displayName(f)) + '</span> <span class="time">' + esc(fmtTime(f.uploadedAt)) + '</span></span>' +
         '<span class="row" style="gap:6px">' +
@@ -869,10 +872,12 @@ function updateToggleButtons(){
 
 function closeAllPanels(){
   Array.prototype.forEach.call(document.querySelectorAll('.file-body.open'), function(b){ b.classList.remove('open'); });
+  Array.prototype.forEach.call(document.querySelectorAll('.file-row.show'), function(r){ r.classList.remove('show'); });
   closeAllCommentListeners();
 }
 
 async function openFilePanel(row, fileId){
+  row.classList.add('show');
   row.querySelector('.file-body').classList.add('open');
   var docView = row.querySelector('.doc-view');
   var isNewLoad = docHtmlCache[fileId] === undefined;
