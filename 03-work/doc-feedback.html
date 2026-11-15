@@ -1659,8 +1659,7 @@ function stanceMark(list){
   if(stances.indexOf('적합') >= 0) return '■ 적합   □ 보완';
   return '□ 적합   □ 보완';
 }
-// 문항검토지 워드: 원래 한글 양식(문항 1개 블록)과 같은 구성으로 만든다.
-// 항목 글자와 순서는 양식 그대로이고, 1-3 난이도 행에는 의견 칸이 없어서 그 의견은 '6. 기타'에 모은다.
+// 문항검토지 항목: 한글 양식(review-form.hwpx)의 항목 순서와 같다. 1-3 난이도 행에는 의견 칸이 없어서 그 의견은 '6. 기타'에 모은다.
 const FORM_ITEMS = [
   {"key":"1-1","kind":"check","label":"1-1. 평가요소 추출이 잘 이루어졌는가? (해당 문항이 근거로 하고 있는 교육과정의 핵심 평가 주제) (성취기준을 반영한 평가요소)","area":"1. 교육과정 및 K-DOT 정합성","span":4},
   {"key":"1-2","kind":"check","label":"1-2. K-DOT 사고 수준 구분이 잘 이루어졌는가?"},
@@ -1683,7 +1682,6 @@ const FORM_ITEMS = [
   {"key":"5-3","kind":"check","label":"5-3. 인정 범위 및 채점 유의사항이 안내되어 있는가?"},
   {"key":"6","kind":"etc","label":"5. 기타 검토 및 보완 의견 (자료의 출처,","area":"6. 기타","span":1}
 ];
-const FORM_WIDTHS = [1500, 3090, 1683, 1683, 1682]; // 합 9638 twips (A4 본문 폭). 검토 칸 3개 = 난이도 행의 세 칸
 const FX_FONT = '함초롬돋움';   // 한글 양식의 본문 글꼴
 const FX_BLUE = '0000FF';       // 한글 양식의 항목·체크·의견 글자색
 const FX_BLACK = '000000';      // 머리글, 영역 글자색
@@ -1696,7 +1694,7 @@ function fxRun(text, o){
     (o.bold ? '<w:b/>' : '') + (o.italic ? '<w:i/>' : '') +
     '<w:color w:val="' + color + '"/>' +
     '<w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/></w:rPr>';
-  const parts = String(text).split('\n').map(function(line){ return '<w:t xml:space="preserve">' + esc(line) + '</w:t>'; });
+  const parts = String(text).split('\n').map(function(line){ return '<w:t xml:space="preserve">' + esc(line.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')) + '</w:t>'; });
   return '<w:r>' + rPr + parts.join('<w:br/>') + '</w:r>';
 }
 // 문단: 본문 130%, 머리글 160% (양식과 같은 줄간격), 가운데 또는 양쪽 맞춤
@@ -1714,101 +1712,199 @@ function fxCell(width, paras, o){
     (o.vMerge ? (o.vMerge === 'restart' ? '<w:vMerge w:val="restart"/>' : '<w:vMerge/>') : '') +
     '<w:vAlign w:val="center"/></w:tcPr>' + (paras || fxPara(fxRun('', {}))) + '</w:tc>';
 }
-// 의견 칸: 의견 한 개당 한 문단 (판정은 검토 칸에만 표시)
-function fxOpinionParas(list){
-  if(!list.length) return fxPara(fxRun('', {}));
-  return list.map(function(c){
-    return fxPara(fxRun(c.comment || '', { size: 20 }), { after: 40 });
-  }).join('');
+// ── 문항검토지 한글(.hwpx): 한글 양식 파일(review-form.hwpx)의 글자·칸·표를 그대로 두고 값만 채운다 ──
+// 양식은 문항 1개 블록(머리글, 체크 18개, 의견 칸, 6 기타)이다. 여러 문항은 블록을 복사해 한 파일에 이어 붙인다.
+// 두 번째 블록부터는 구역 설정(secPr)과 단 설정(colPr)을 뺀다. 도형 번호(zOrder)는 문서 순서대로 다시 매긴다.
+const HWPX_FORM_URL = 'review-form.hwpx';
+const HWPX_NS = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
+const HWPX_FONT_H = 1000, HWPX_LINE_H = 1300, HWPX_BASE_H = 850;
+const HWPX_CHECK_KEYS = FORM_ITEMS.filter(function(it){ return it.kind === 'check'; }).map(function(it){ return it.key; });
+let hwpxFormCache = null;
+async function loadHwpxForm(){
+  if(!hwpxFormCache){
+    const res = await fetch(HWPX_FORM_URL);
+    if(!res.ok) throw new Error('한글 양식(' + HWPX_FORM_URL + ')을 읽지 못했습니다.');
+    hwpxFormCache = await res.arrayBuffer();
+  }
+  return hwpxFormCache;
 }
-// 검토 칸: 보완을 고른 의견이 있으면 보완, 아니면 적합 (검토자가 고르지 않은 항목은 적합)
-function fxCheckParas(list){
-  const no = list.some(function(c){ return c.stance === '보완'; });
-  const yes = !no;
-  return fxPara(fxRun((yes ? '■' : '□') + ' 적합', { size: 20 }), { center: true }) +
-         fxPara(fxRun((no ? '■' : '□') + ' 보완', { size: 20 }), { center: true });
+function hwpxEsc(s){ return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+// 글자 폭(한글·한자·전각은 글자 크기만큼, 그 밖은 절반): 줄바꿈 위치를 미리 계산할 때 쓴다
+function hwpxCharWidth(ch){
+  const c = ch.codePointAt(0);
+  const wide = (c >= 0x1100 && c <= 0x115F) || (c >= 0x2E80 && c <= 0x303E) || (c >= 0x3041 && c <= 0x33FF) ||
+    (c >= 0x3400 && c <= 0x4DBF) || (c >= 0x4E00 && c <= 0x9FFF) || (c >= 0xA000 && c <= 0xA4CF) ||
+    (c >= 0xAC00 && c <= 0xD7A3) || (c >= 0xF900 && c <= 0xFAFF) || (c >= 0xFE30 && c <= 0xFE4F) ||
+    (c >= 0xFF00 && c <= 0xFF60) || (c >= 0xFFE0 && c <= 0xFFE6) || (c >= 0x20000 && c <= 0x3FFFD);
+  return wide ? HWPX_FONT_H : HWPX_FONT_H / 2;
 }
-function reviewDocBody(meta, comments){
+// 줄마다 맨 앞 글자의 위치(글자 수 기준)를 돌려준다
+function hwpxWrap(text, horz){
+  const lines = []; let cur = [], w = 0, idx = 0;
+  for(const ch of text){
+    const cw = hwpxCharWidth(ch);
+    if(cur.length && w + cw > horz){ lines.push(cur); cur = []; w = 0; }
+    cur.push(idx); w += cw; idx += ch.length;
+  }
+  if(cur.length || !lines.length) lines.push(cur);
+  return lines;
+}
+// 문단 하나와 줄 위치 정보(linesegarray). 줄 정보가 실제 줄과 맞아야 한글이 칸을 바르게 그린다.
+function hwpxParagraph(pid, paraPr, charPr, text, horz, vert0){
+  let vp = vert0; const segs = [];
+  hwpxWrap(text, horz).forEach(function(ln){
+    const tp = ln.length ? ln[0] : 0;
+    segs.push('<hp:lineseg textpos="' + tp + '" vertpos="' + vp + '" vertsize="' + HWPX_FONT_H + '" textheight="' + HWPX_FONT_H +
+      '" baseline="' + HWPX_BASE_H + '" spacing="' + (HWPX_LINE_H - HWPX_FONT_H) + '" horzpos="0" horzsize="' + horz + '" flags="393216"/>');
+    vp += HWPX_LINE_H;
+  });
+  return { xml: '<hp:p id="' + pid + '" paraPrIDRef="' + paraPr + '" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">' +
+    '<hp:run charPrIDRef="' + charPr + '"><hp:t>' + hwpxEsc(text) + '</hp:t></hp:run>' +
+    '<hp:linesegarray>' + segs.join('') + '</hp:linesegarray></hp:p>', vp: vp };
+}
+// 의견 한 개를 줄 단위 문단으로 나눈다 (줄바꿈은 문단 나눔으로 살린다)
+function hwpxLines(text){
+  return String(text).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').split(/\r?\n/).filter(function(s){ return s.trim() !== ''; });
+}
+// 의견 칸(열 3)의 문단을 texts로 바꾼다. 칸·표 높이가 모자라면 같은 행의 칸과 표 높이를 함께 늘린다.
+function hwpxFillCell(raw, row, texts){
+  const start = raw.indexOf('검토 영역');
+  const p = raw.indexOf('<hp:cellAddr colAddr="3" rowAddr="' + row + '"/>', start);
+  if(start < 0 || p < 0) throw new Error('양식의 의견 칸을 찾지 못했습니다.');
+  const tcS = raw.lastIndexOf('<hp:tc', p);
+  const tcE = raw.indexOf('</hp:tc>', p) + '</hp:tc>'.length;
+  const tc = raw.slice(tcS, tcE);
+  const subO = tc.indexOf('>', tc.indexOf('<hp:subList')) + 1;
+  const subC = tc.indexOf('</hp:subList>');
+  const inner = tc.slice(subO, subC);
+  const pp = /paraPrIDRef="(\d+)"/.exec(inner)[1];
+  const pid = /<hp:p id="(\d+)"/.exec(inner)[1];
+  const horz = parseInt(/horzsize="(\d+)"/.exec(inner)[1], 10);
+  let vp = 0; const out = [];
+  texts.forEach(function(t){
+    hwpxLines(t).forEach(function(line){
+      const r = hwpxParagraph(pid, pp, '1', line, horz, vp);   // 글자 모양 1: 검은색 10pt 함초롬돋움
+      out.push(r.xml); vp = r.vp;
+    });
+  });
+  const cur = parseInt(/<hp:cellSz width="\d+" height="(\d+)"/.exec(tc)[1], 10);
+  const need = vp + 200;
+  raw = raw.slice(0, tcS) + tc.slice(0, subO) + out.join('') + tc.slice(subC) + raw.slice(tcE);
+  if(need <= cur) return raw;
+  const extra = need - cur;
+  for(let c = 0; c < 4; c++){
+    const q = raw.indexOf('<hp:cellAddr colAddr="' + c + '" rowAddr="' + row + '"/>', start);
+    if(q < 0) continue;
+    const s2 = raw.lastIndexOf('<hp:tc', q), e2 = raw.indexOf('</hp:tc>', q) + 8;
+    const t2 = raw.slice(s2, e2).replace(/(<hp:cellSz width="\d+" height=")(\d+)(")/, function(m, a, b, z){ return a + (parseInt(b, 10) + extra) + z; });
+    raw = raw.slice(0, s2) + t2 + raw.slice(e2);
+  }
+  const tblS = raw.lastIndexOf('<hp:tbl', start);
+  const seg = raw.slice(tblS, start).replace(/(<hp:sz width="\d+" widthRelTo="ABSOLUTE" height=")(\d+)(")/, function(m, a, b, z){ return a + (parseInt(b, 10) + extra) + z; });
+  return raw.slice(0, tblS) + seg + raw.slice(start);
+}
+// 양식 본문에서 검토 항목 행(□ 칸이 있는 18행)과 마지막 행(6 기타)의 행 번호를 찾는다
+function hwpxChecklistRows(sectionXml){
+  const doc = new DOMParser().parseFromString(sectionXml, 'application/xml');
+  if(doc.getElementsByTagName('parsererror').length) throw new Error('한글 양식의 구조를 읽지 못했습니다.');
+  const kids = function(el, name){ return Array.prototype.filter.call(el.childNodes, function(n){ return n.nodeType === 1 && n.localName === name; }); };
+  const tbl = doc.getElementsByTagNameNS(HWPX_NS, 'tbl')[1];
+  const rows = kids(tbl, 'tr').map(function(tr){
+    const tcs = kids(tr, 'tc');
+    const row = parseInt(kids(tcs[0], 'cellAddr')[0].getAttribute('rowAddr'), 10);
+    let text = '';
+    tcs.forEach(function(tc){
+      if(kids(tc, 'cellAddr')[0].getAttribute('colAddr') === '2'){
+        text = Array.prototype.map.call(tc.getElementsByTagNameNS(HWPX_NS, 't'), function(t){ return t.textContent; }).join('');
+      }
+    });
+    return { row: row, text: text };
+  });
+  const chk = rows.filter(function(r){ return /[□■]/.test(r.text); }).map(function(r){ return r.row; });
+  if(chk.length !== HWPX_CHECK_KEYS.length) throw new Error('한글 양식의 체크 항목 수가 맞지 않습니다.');
+  return { chk: chk, last: rows[rows.length - 1].row };
+}
+// 문항 한 개의 채울 내용: 체크 18개(판정·의견)와 6 기타. 고르지 않은 항목은 적합, 의견 없음.
+function hwpxBlockData(meta, comments){
   const byKey = {};
   comments.forEach(function(c){ const k = c.item || '6'; (byKey[k] = byKey[k] || []).push(c); });
-  const etcList = (byKey['6'] || []).concat(byKey['1-3a'] || []);
-  const W = FORM_WIDTHS;
-  const OPW = W[3] + W[4];
-  const bodyParts = [];
-  const hdr = { bold: true, color: FX_BLACK, size: 22 };
-  // 머리글 표: 출제자 / 문항번호 | 성명 / 문항 | 검토자 | 성명 (양식: 굵은 검정 11pt, 성명은 빨강 12pt)
-  const H = [2000, 3500, 1500, 2638];
-  const headRow = '<w:tr>' +
-    fxCell(H[0], fxPara(fxRun('출제자 / 문항번호', hdr), { center: true, line: 384 })) +
-    fxCell(H[1], fxPara(fxRun('성명 / ' + labelOf(meta) + ' 문항', { font: '함초롬바탕', color: 'FF0000', size: 24 }), { center: true, line: 384 })) +
-    fxCell(H[2], fxPara(fxRun('검토자', hdr), { center: true, line: 384 })) +
-    fxCell(H[3], fxPara(fxRun('성명', { font: '함초롬바탕', color: 'FF0000', size: 24 }), { center: true, line: 384 })) + '</w:tr>';
-  const border = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']
-    .map(function(b){ return '<w:' + b + ' w:val="single" w:sz="4" w:space="0" w:color="000000"/>'; }).join('');
-  const tblPr = function(){ return '<w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblBorders>' + border + '</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr>'; };
-  const grid = function(ws){ return '<w:tblGrid>' + ws.map(function(w){ return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>'; };
-  bodyParts.push('<w:tbl>' + tblPr() + grid(H) + headRow + '</w:tbl>');
-  bodyParts.push(fxPara('', { after: 120 }));
-  // 검토 항목 표: 양식과 같은 구성 (검토 영역 | 검토 항목 | 검토 칸 3개 | 의견 칸)
-  const headerRow = '<w:tr><w:trPr><w:tblHeader/></w:trPr>' +
-    fxCell(W[0], fxPara(fxRun('검토 영역', hdr), { center: true, line: 384 })) +
-    fxCell(W[1], fxPara(fxRun('검토 항목', hdr), { center: true, line: 384 })) +
-    fxCell(W[2], fxPara(fxRun('검토', hdr), { center: true, line: 384 })) +
-    fxCell(OPW, fxPara(fxRun('검토 및 보완 의견 제안', hdr), { center: true, line: 384 }), { span: 2 }) + '</w:tr>';
-  const rowXml = [];
-  let remaining = 0;
-  FORM_ITEMS.forEach(function(it){
-    let vm = null;
-    if(it.area){
-      if(it.span > 1){ vm = 'restart'; remaining = it.span - 1; }
-    } else if(remaining > 0){ vm = 'continue'; remaining -= 1; }
-    const areaCell = fxCell(W[0], fxPara(fxRun(it.area || '', { bold: true, color: FX_BLACK, size: 22 }), { center: true }), { vMerge: vm });
-    const itemCell = fxCell(W[1], fxPara(fxRun(it.label, { size: 20 }), {}));
-    const list = it.key === '6' ? etcList : (byKey[it.key] || []);
-    if(it.kind === 'difficulty'){
-      const cell = function(t){ return fxCell(W[2], fxPara(fxRun(t, { size: 20 }), { center: true })); };
-      rowXml.push('<w:tr>' + areaCell + itemCell +
-        fxCell(W[2], fxPara(fxRun('난이도 상', { size: 20 }), { center: true })) +
-        fxCell(W[3], fxPara(fxRun('난이도 중', { size: 20 }), { center: true })) +
-        fxCell(W[4], fxPara(fxRun('난이도 하', { size: 20 }), { center: true })) + '</w:tr>');
-    } else if(it.kind === 'etc'){
-      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], null) + fxCell(OPW, fxOpinionParas(etcList), { span: 2 }) + '</w:tr>');
+  return {
+    label: labelOf(meta),
+    checks: HWPX_CHECK_KEYS.map(function(key){
+      const list = byKey[key] || [];
+      return {
+        stance: list.some(function(c){ return c.stance === '보완'; }) ? '보완' : '적합',
+        texts: list.map(function(c){ return c.comment || ''; })
+      };
+    }),
+    etc: (byKey['6'] || []).concat(byKey['1-3a'] || []).map(function(c){ return c.comment || ''; })
+  };
+}
+// 블록 하나(문항 한 개)를 채운다. 머리글 문항 이름, □→■ 판정, 의견 칸.
+function hwpxFillBlock(unit, blk, chk){
+  const H = '<hp:t>성명 / 1번 문항</hp:t>';
+  if(unit.split(H).length !== 2) throw new Error('양식의 머리글을 찾지 못했습니다.');
+  let u = unit.replace(H, '<hp:t>성명 / ' + hwpxEsc(blk.label) + ' 문항</hp:t>');
+  const YES = '<hp:t>□ 적합</hp:t>', NO = '<hp:t>□ 보완</hp:t>';
+  const positions = function(needle){
+    const out = []; let i = u.indexOf(needle);
+    while(i >= 0){ out.push(i); i = u.indexOf(needle, i + 1); }
+    return out;
+  };
+  const yes = positions(YES), no = positions(NO);
+  if(yes.length !== 18 || no.length !== 18) throw new Error('양식의 판정 칸 수가 맞지 않습니다.');
+  const edits = blk.checks.map(function(c, k){
+    return c.stance === '보완' ? { at: no[k], from: NO, to: '<hp:t>■ 보완</hp:t>' } : { at: yes[k], from: YES, to: '<hp:t>■ 적합</hp:t>' };
+  });
+  edits.sort(function(a, b){ return b.at - a.at; }).forEach(function(e){
+    u = u.slice(0, e.at) + e.to + u.slice(e.at + e.from.length);
+  });
+  blk.checks.forEach(function(c, k){ if(c.texts.length) u = hwpxFillCell(u, chk.chk[k], c.texts); });
+  if(blk.etc.length) u = hwpxFillCell(u, chk.last, blk.etc);
+  return u;
+}
+// 구역 본문 문단의 시작·끝 위치(최상위 <hp:p>)
+function hwpxTopLevelSpans(raw){
+  const m = /<hs:sec[^>]*>/.exec(raw);
+  const re = /<(\/?)hp:p(?=[\s>\/])([^>]*?)(\/?)>/g;
+  re.lastIndex = m.index + m[0].length;
+  const spans = []; let depth = 0, start = 0, t;
+  while((t = re.exec(raw))){
+    if(t[1] !== '/'){
+      if(depth === 0) start = t.index;
+      if(t[3] === '/'){ if(depth === 0) spans.push([start, t.index + t[0].length]); }
+      else depth++;
     } else {
-      rowXml.push('<w:tr>' + areaCell + itemCell + fxCell(W[2], fxCheckParas(list)) + fxCell(OPW, fxOpinionParas(list), { span: 2 }) + '</w:tr>');
+      depth--;
+      if(depth === 0) spans.push([start, t.index + t[0].length]);
     }
-  });
-  bodyParts.push('<w:tbl>' + tblPr() + grid(W) + headerRow + rowXml.join('') + '</w:tbl>');
-  return bodyParts;
+  }
+  return spans;
 }
-async function buildReviewDocxMulti(list){
-  const bodyParts = [];
-  list.forEach(function(it, i){
-    if(i > 0) bodyParts.push('<w:p><w:r><w:br w:type="page"/></w:r></w:p>');
-    reviewDocBody(it.meta, it.comments).forEach(function(x){ bodyParts.push(x); });
-  });
-  const docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-    '<w:body>' + bodyParts.join('') +
-    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="850" w:right="1134" w:bottom="850" w:left="1134" w:header="425" w:footer="425" w:gutter="0"/></w:sectPr>' +
-    '</w:body></w:document>';
-  const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-    '<Default Extension="xml" ContentType="application/xml"/>' +
-    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
-    '</Types>';
-  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
-    '</Relationships>';
-  const zip = new JSZip();
-  zip.file('[Content_Types].xml', ct);
-  zip.file('_rels/.rels', rels, { createFolders: false });
-  zip.file('word/document.xml', docXml, { createFolders: false });
-  return zip.generateAsync({ type: 'blob', mimeType: DOCX_MIME });
+// 두 번째 블록부터 구역 설정과 단 설정을 뺀다 (한 파일에는 한 번만 있어야 한다)
+function hwpxStripSection(unit){
+  return unit.replace(/<hp:secPr[\s\S]*?<\/hp:secPr>/, '').replace(/<hp:ctrl><hp:colPr[^>]*\/><\/hp:ctrl>/, '');
 }
-async function buildReviewDocx(meta, comments){
-  return buildReviewDocxMulti([{ meta: meta, comments: comments }]);
+function hwpxBuildSection(sectionXml, blocks){
+  const spans = hwpxTopLevelSpans(sectionXml);
+  if(spans.length !== 7) throw new Error('한글 양식의 문단 구성이 예상과 다릅니다.');
+  const chk = hwpxChecklistRows(sectionXml);
+  const head = sectionXml.slice(0, spans[0][0]);
+  const unit = sectionXml.slice(spans[0][0], spans[3][1]);   // 블록 1 (문단 0~3)
+  const tail = sectionXml.slice(spans[6][1]);                // 블록 2(문단 4~6)는 버린다
+  const bodies = blocks.map(function(blk, i){ return hwpxFillBlock(i === 0 ? unit : hwpxStripSection(unit), blk, chk); });
+  let z = 0;
+  return (head + bodies.join('') + tail).replace(/zOrder="\d+"/g, function(){ return 'zOrder="' + (z++) + '"'; });
+}
+// items: [{ meta, comments }, …] → 한 파일(.hwpx). 문항마다 한 블록.
+async function buildReviewHwpx(items){
+  const zip = await JSZip.loadAsync(await loadHwpxForm());
+  const secXml = await zip.file('Contents/section0.xml').async('string');
+  const blocks = items.map(function(it){ return hwpxBlockData(it.meta, it.comments); });
+  zip.file('Contents/section0.xml', hwpxBuildSection(secXml, blocks), { createFolders: false, compression: 'DEFLATE' });
+  // mimetype 은 압축하지 않고 맨 앞에 둔다 (한글 규격)
+  zip.file('mimetype', await zip.file('mimetype').async('string'), { createFolders: false, compression: 'STORE' });
+  return zip.generateAsync({ type: 'blob', mimeType: 'application/hwp+zip', compression: 'DEFLATE' });
 }
 // 라벨 순서: A1, A2, B1 … (글자, 번호 순)
 function labelSortKey(f){
@@ -1834,7 +1930,7 @@ async function downloadMyReviews(letter){
       for(const f of byUploader[up]){
         items.push({ meta: f, comments: await getCommentsOnce(f.fileId) });
       }
-      downloadBlob(await buildReviewDocxMulti(items), up + '_문항검토지_' + letter + '.docx');
+      downloadBlob(await buildReviewHwpx(items), up + '_문항검토지_' + letter + '.hwpx');
       await new Promise(function(r){ setTimeout(r, 400); });
     }
   }catch(err){
@@ -1847,8 +1943,7 @@ async function downloadReviewDoc(fileId){
   if(!meta || !isReviewerCopy(meta)) return;
   try{
     const comments = await getCommentsOnce(fileId);
-    const base = meta.filename.replace(/\.docx$/i, '');
-    downloadBlob(await buildReviewDocx(meta, comments), labelOf(meta) + '_문항검토지.docx');
+    downloadBlob(await buildReviewHwpx([{ meta: meta, comments: comments }]), labelOf(meta) + '_문항검토지.hwpx');
   }catch(err){
     alert('내려받지 못했습니다: ' + err.message);
   }
