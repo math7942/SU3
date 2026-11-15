@@ -184,8 +184,8 @@
         </label>
         <span class="note" id="uploadHint" style="margin:0"></span>
       </div>
-      <input type="file" id="fileInput" accept=".docx">
-      <div class="note">한글(hwp)로 작업하셨다면 "다른 이름으로 저장"에서 Word(.docx)로 변환해서 올려주세요.</div>
+      <input type="file" id="fileInput" accept=".docx,.hwpx">
+      <div class="note">docx 또는 hwpx 파일을 올릴 수 있습니다. 한글(hwpx) 파일은 Word 문서로 바꿔서 검토하고, 원본 한글 파일도 함께 보관합니다. 옛 한글(.hwp)은 "다른 이름으로 저장"에서 hwpx나 docx로 바꿔서 올려 주세요.</div>
       <div class="msg" id="uploadMsg"></div>
     </div>
     <div class="card">
@@ -216,6 +216,7 @@
 </div>
 
 <script type="module">
+import { convertHwpxToDocx } from './hwpx-to-docx.js';
 // ---------------- Firebase ----------------
 // 이 사이트의 다른 "함께 보는 기록" 도구(명예의 전당 등)와 같은 프로젝트를 재사용한다.
 // (assets/firebase-store.js 참고) apiKey는 비밀값이 아니라 공개되어도 되는 클라이언트 식별자이며,
@@ -310,7 +311,7 @@ function displayName(f){
   if(f.label) return labelOf(f);
   return f.copyNo ? ('파일 ' + f.copyNo + ' · ' + f.filename) : f.filename;
 }
-async function uploadFile(sessionId, file, label, uploaderLetter){
+async function uploadFile(sessionId, file, label, uploaderLetter, original){
   const { fs, db } = await loadFirebase();
   const base64 = await fileToBase64(file);
   const uploadedAt = new Date().toISOString();
@@ -327,6 +328,12 @@ async function uploadFile(sessionId, file, label, uploaderLetter){
   const sumRef = fs.doc(fs.collection(db, FILES));
   const sumChunks = await saveChunks(fs, db, sumRef.id, base64);
   await fs.setDoc(sumRef, { sessionId, filename: file.name, chunkCount: sumChunks, uploadedAt, groupId, label: label, role: 'summary' });
+  // 한글 원본(hwpx): 검토에는 쓰지 않고 같은 묶음으로 보관만 한다 (화면 카드에는 나오지 않음)
+  if(original){
+    const origRef = fs.doc(fs.collection(db, FILES));
+    const origChunks = await saveChunks(fs, db, origRef.id, await fileToBase64(original));
+    await fs.setDoc(origRef, { sessionId, filename: original.name, chunkCount: origChunks, uploadedAt, groupId, label: label, role: 'original' });
+  }
   return firstId;
 }
 async function addLinkMaterial(sessionId, title, url){
@@ -720,7 +727,8 @@ async function initSession(){
     applyChipState();
   });
   fileListUnsub = listenFiles(sessionId, function(files){
-    fileCache = files;
+    fileCache = files.filter(function(f){ return f.role !== 'original'; });
+    originalCache = files.filter(function(f){ return f.role === 'original'; });
     renderFileList();
   });
   materialUnsub = listenMaterials(sessionId, function(list){
@@ -815,17 +823,38 @@ $('fileInput').addEventListener('change', async function(e){
     e.target.value = '';
     return;
   }
-  if(!/\.docx$/i.test(file.name)){
+  const isHwpx = /\.hwpx$/i.test(file.name);
+  if(!isHwpx && !/\.docx$/i.test(file.name)){
     $('uploadMsg').className = 'msg err';
-    $('uploadMsg').textContent = 'docx 파일만 올릴 수 있습니다. 한글이라면 "다른 이름으로 저장"에서 Word(.docx)로 바꿔서 올려주세요.';
+    $('uploadMsg').textContent = 'docx 또는 hwpx 파일만 올릴 수 있습니다. 옛 한글(.hwp)은 "다른 이름으로 저장"에서 hwpx나 docx로 바꿔서 올려주세요.';
     e.target.value = '';
     return;
   }
   $('uploadMsg').className = 'msg';
-  $('uploadMsg').textContent = '올리는 중...';
   try{
     const label = nextLabel(letter);
-    await uploadFile(sessionId, file, label, letter);
+    let docFile = file, original = null;
+    if(isHwpx){
+      $('uploadMsg').textContent = '한글 파일을 Word 문서로 바꾸는 중...';
+      const conv = await convertHwpxToDocx(await file.arrayBuffer());
+      if(conv.warnings.length){
+        const lines = conv.warnings.slice(0, 8).map(function(w){
+          return '· ' + w.message + (w.near ? ' (근처 글: ' + w.near + ')' : '');
+        });
+        const more = conv.warnings.length > 8 ? '\n· 그 밖에 ' + (conv.warnings.length - 8) + '곳' : '';
+        if(!confirm('한글 파일을 Word로 바꾸면서 확인할 점이 있습니다.\n\n' + lines.join('\n') + more +
+          '\n\n이 상태로 올릴까요? (원본 한글 파일도 함께 보관합니다)')){
+          $('uploadMsg').className = 'msg';
+          $('uploadMsg').textContent = '올리지 않았습니다.';
+          e.target.value = '';
+          return;
+        }
+      }
+      docFile = new File([conv.blob], file.name.replace(/\.hwpx$/i, '.docx'), { type: DOCX_MIME });
+      original = file;
+    }
+    $('uploadMsg').textContent = '올리는 중...';
+    await uploadFile(sessionId, docFile, label, letter, original);
     $('uploadMsg').className = 'msg ok';
     $('uploadMsg').textContent = '올렸습니다: ' + label + ' (' + file.name + ')';
     $('uploadHint').textContent = '';
@@ -837,6 +866,7 @@ $('fileInput').addEventListener('change', async function(e){
 });
 
 var fileCache = []; // [{fileId, sessionId, filename, chunkCount, uploadedAt, label, copyNo, groupId}]
+var originalCache = []; // 한글 원본(hwpx) 기록: 화면에는 나오지 않고 묶음 삭제·관리 기능에서만 쓴다
 document.querySelectorAll('[data-review-letter]').forEach(function(btn){
   btn.addEventListener('click', function(){ downloadMyReviews(btn.dataset.reviewLetter); });
 });
@@ -1262,14 +1292,18 @@ async function deleteFile(fileId){
 async function deleteGroup(groupId){
   var members = fileCache.filter(function(f){ return f.groupId === groupId; });
   if(!members.length) return;
+  var originals = originalCache.filter(function(f){ return f.groupId === groupId; });
   var label = members[0].label || '이 묶음';
-  if(!confirm('⚠ "' + label + '" 묶음 전체(' + members.length + '개 파일)와 거기에 달린 모든 의견을 삭제할까요?\n\n' +
+  if(!confirm('⚠ "' + label + '" 묶음 전체(' + (members.length + originals.length) + '개 파일)와 거기에 달린 모든 의견을 삭제할까요?\n\n' +
     '문서: ' + (members[0].filename || '') + '\n\n삭제하면 복구할 수 없습니다. 되돌릴 수 없습니다.')) return;
   try{
     for(var i = 0; i < members.length; i++){
       await deleteFileEverywhere(members[i]);
       delete docHtmlCache[members[i].fileId];
       if(openFileId === members[i].fileId) openFileId = null;
+    }
+    for(var k = 0; k < originals.length; k++){
+      await deleteFileEverywhere(originals[k]);
     }
   }catch(err){
     alert('삭제하지 못했습니다: ' + err.message);
@@ -1285,6 +1319,10 @@ $('zipBtn').addEventListener('click', async function(){
       var f = fileCache[i];
       var buf = await getFileArrayBuffer(f);
       zip.file(f.filename, buf);
+    }
+    for(var j=0;j<originalCache.length;j++){
+      var o = originalCache[j];
+      zip.file('한글원본/' + (o.label || '') + '_' + o.filename, await getFileArrayBuffer(o));
     }
     var blob = await zip.generateAsync({ type:'blob' });
     downloadBlob(blob, ($('sessTitle').textContent || '문서') + '_원본모음.zip');
