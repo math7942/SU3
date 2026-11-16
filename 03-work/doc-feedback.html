@@ -90,7 +90,9 @@
   .comment-card .ct{display:block;font-size:11px;color:var(--sub);margin-top:4px}
   .doc-view .eqv{display:inline;white-space:nowrap}
   .doc-view .eqv math{font-size:1em}
-  .comment-card .cdel{display:block;margin-top:4px;background:none;border:0;padding:0;font-size:12px;color:#b91c1c;cursor:pointer;text-decoration:underline}
+  .comment-card .cdel{display:inline-block;margin-top:4px;margin-right:12px;background:none;border:0;padding:0;font-size:12px;color:#b91c1c;cursor:pointer;text-decoration:underline}
+  .comment-card .cdel:first-of-type{color:var(--pri)}
+  .comment-card .c-editor textarea{width:100%;box-sizing:border-box;margin-top:6px;font:inherit;font-size:13px}
   .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px}
   .comment-empty{color:#9ca3af;font-size:13px}
   @media (max-width:680px){
@@ -507,6 +509,20 @@ async function deleteMyComment(commentId){
   const { fs, db } = await loadFirebase();
   await fs.deleteDoc(fs.doc(db, COMMENTS, commentId));
   forgetMyComment(commentId);
+}
+// 수정: 데이터베이스는 기존 의견을 고칠 수 없으므로, 같은 위치와 시간으로 새로 쓰고 기존 의견을 지운다
+async function updateMyComment(c, text, item, stance){
+  const { fs, db } = await loadFirebase();
+  const data = {};
+  Object.keys(c).forEach(function(k){ if(k !== 'id') data[k] = c[k]; });
+  data.comment = text;
+  data.item = item;
+  data.stance = stance;
+  const ref = fs.doc(fs.collection(db, COMMENTS));
+  rememberMyComment(ref.id);
+  await fs.setDoc(ref, data);
+  await fs.deleteDoc(fs.doc(db, COMMENTS, c.id));
+  forgetMyComment(c.id);
 }
 async function getFileArrayBuffer(fileEntry){
   const { fs, db } = await loadFirebase();
@@ -1161,6 +1177,47 @@ function layoutRail(row){
   rail.style.height = docView.scrollHeight + 'px';
   rail.style.transform = 'translateY(' + (-docView.scrollTop) + 'px)';
 }
+// 카드 안에서 고치기: 내용, 검토 항목, 적합/보완. 취소하면 원래 카드로 돌아간다.
+function startEditComment(card, c){
+  var saved = Array.prototype.slice.call(card.childNodes);
+  var stanceName = 'estance' + c.id;
+  card.innerHTML = '';
+  var editor = document.createElement('div');
+  editor.className = 'c-editor';
+  editor.innerHTML =
+    '<div class="cfield"><label>검토 항목 <b>(필수)</b></label><select class="c-item">' + reviewItemOptions() + '</select></div>' +
+    '<div class="cfield"><label>검토</label><div class="stance-row">' +
+      '<label><input type="radio" name="' + stanceName + '" value="적합"> 적합</label> &nbsp; ' +
+      '<label><input type="radio" name="' + stanceName + '" value="보완"> 보완</label></div></div>' +
+    '<textarea class="c-edit-text" rows="4"></textarea>' +
+    '<div class="row" style="gap:6px;margin-top:6px"><button type="button" class="small" data-act="save-edit">저장</button>' +
+    '<button type="button" class="small ghost" data-act="cancel-edit">취소</button><span class="msg"></span></div>';
+  editor.addEventListener('click', function(e){ e.stopPropagation(); });
+  card.appendChild(editor);
+  editor.querySelector('.c-edit-text').value = c.comment || '';
+  editor.querySelector('.c-item').value = c.item || '';
+  var sr = editor.querySelector('input[name="' + stanceName + '"][value="' + (c.stance || '') + '"]');
+  if(sr) sr.checked = true;
+  var msg = editor.querySelector('.msg');
+  editor.querySelector('[data-act=cancel-edit]').addEventListener('click', function(){
+    card.innerHTML = '';
+    saved.forEach(function(n){ card.appendChild(n); });
+  });
+  editor.querySelector('[data-act=save-edit]').addEventListener('click', async function(){
+    var text = editor.querySelector('.c-edit-text').value.trim();
+    var item = editor.querySelector('.c-item').value;
+    var st = editor.querySelector('input[name="' + stanceName + '"]:checked');
+    if(!text){ msg.className = 'msg err'; msg.textContent = '내용을 쓰세요.'; return; }
+    if(!item){ msg.className = 'msg err'; msg.textContent = '검토 항목을 고르세요.'; return; }
+    if(!st){ msg.className = 'msg err'; msg.textContent = '적합 또는 보완을 고르세요.'; return; }
+    msg.className = 'msg'; msg.textContent = '저장 중...';
+    try{
+      await updateMyComment(c, text, item, st.value);
+    }catch(err){
+      msg.className = 'msg err'; msg.textContent = '저장하지 못했습니다: ' + err.message;
+    }
+  });
+}
 function renderCommentRail(row, fileId, comments){
   var meta = fileCache.find(function(f){ return f.fileId === fileId; });
   var docView = row.querySelector('.doc-view');
@@ -1210,6 +1267,15 @@ function renderCommentRail(row, fileId, comments){
       var tag = c.item ? '<div class="ctag">' + esc(itemLabelOf(c)) + ' · ' + esc(c.stance || '') + '</div>' : '';
       card.innerHTML = q + tag + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span>';
       if(isMyComment(c.id)){
+        var edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'cdel';
+        edit.textContent = '수정';
+        edit.addEventListener('click', function(e){
+          e.stopPropagation();
+          startEditComment(card, c);
+        });
+        card.appendChild(edit);
         var del = document.createElement('button');
         del.type = 'button';
         del.className = 'cdel';
