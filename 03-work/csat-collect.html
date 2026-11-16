@@ -41,6 +41,7 @@
   .cell { width: 34px; height: 30px; line-height: 30px; text-align: center; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--line); color: var(--muted); }
   .cell.done { background: #d1f0dc; color: #1f5f33; border-color: #8fd1a6; }
   .cell.absent { background: #dbe7ff; color: #1d3f8a; border-color: #9fb9ef; }
+  .cell.missing { background: #fff1a8; color: #6b5300; border-color: #e6c84a; }
   @media (max-width: 480px) { .cell { width: 28px; } }
   .took-row input[type="radio"] { -webkit-appearance: radio; appearance: auto; width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: var(--accent); }
   button { font: inherit; font-size: 16px; min-height: 44px; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
@@ -465,16 +466,14 @@ function drawClassGrid(rows) {
     for (let n = 1; n <= NUM_MAX; n++) {
       const r = byKey.get(`${c}-${n}`);
       if (!r) missing.push(n);
-      const cls = !r ? 'cell' : (r.attended === false ? 'cell absent' : 'cell done');
+      const cls = !r ? 'cell missing' : (r.attended === false ? 'cell absent' : 'cell done');
       const title = r ? `${n}번 ${r.name}${r.attended === false ? ' (미응시)' : ''}` : `${n}번 미제출`;
       cells += `<span class="${cls}" title="${esc(title)}">${n}</span>`;
     }
     html += `<div class="class-row"><div class="class-label">${c}반 <span class="hint">미제출 ${missing.length}명</span></div>`
-      + `<div class="cells">${cells}</div>`
-      + (missing.length ? `<div class="hint">미제출 번호: ${missing.join(', ')}</div>` : '<div class="hint">모두 제출</div>')
-      + '</div>';
+      + `<div class="cells">${cells}</div></div>`;
   }
-  html += '<p class="hint">초록: 제출 · 파랑: 미응시 · 회색: 미제출'
+  html += '<p class="hint">초록: 제출 · 파랑: 미응시 · 노랑: 미제출'
     + (outOfRange ? ` · 반·번호 범위를 벗어난 제출 ${outOfRange}건(목록에서 확인하세요)` : '') + '</p>';
   box.innerHTML = html;
 }
