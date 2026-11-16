@@ -22,6 +22,9 @@ function kids(el, name) { return Array.prototype.filter.call(el.children, (c) =>
 function kid(el, name) { return kids(el, name)[0] || null; }
 function xmlEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function cleanText(s) { return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); }
+// 기호 글꼴의 체크박스 글자(U+F0xx, 예: 체크된 상자)를 화면과 워드에서 보이는 글자로 바꾼다
+const HWP_SYMBOLS = { '\uF0FE': '☑', '\uF0FD': '☒', '\uF0FC': '✓', '\uF06E': '■', '\uF06F': '□', '\uF0A8': '□', '\uF0A7': '■' };
+function mapSymbols(s) { return String(s).replace(/[\uF000-\uF0FF]/g, (ch) => HWP_SYMBOLS[ch] || '□'); }
 function sumRange(arr, from, count) { return arr.slice(from, from + count).reduce((a, b) => a + b, 0); }
 
 function parseXml(text) {
@@ -156,7 +159,7 @@ class Converter {
     const rpr = '<w:rPr><w:rFonts w:ascii="맑은 고딕" w:hAnsi="맑은 고딕" w:eastAsia="맑은 고딕"/>' +
       (cs.bold ? '<w:b/>' : '') + (cs.italic ? '<w:i/>' : '') +
       '<w:color w:val="' + color + '"/><w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/></w:rPr>';
-    const parts = cleanText(text).split('\n').map((line, i) =>
+    const parts = mapSymbols(cleanText(text)).split('\n').map((line, i) =>
       (i ? '<w:br/>' : '') + '<w:t xml:space="preserve">' + xmlEsc(line) + '</w:t>');
     return '<w:r>' + rpr + parts.join('') + '</w:r>';
   }

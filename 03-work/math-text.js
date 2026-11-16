@@ -8,8 +8,8 @@
 const M_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/math';
 const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const EQ_BASE = 0xE000;   // 수식 표시 글자의 시작 (개인 영역 문자)
-const EQ_MAX = 6400;      // 0xE000 ~ 0xF8FF
-const EQ_CHAR = /[-]/g;
+const EQ_MAX = 2048;      // 0xE000 ~ 0xE7FF (기호 글꼴의 체크박스 글자와 겹치지 않게)
+const EQ_CHAR = /[\uE000-\uE7FF]/g;
 
 const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', '−': '⁻', n: 'ⁿ' };
 const SUB = { '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉', '+': '₊', '-': '₋', '−': '₋' };
