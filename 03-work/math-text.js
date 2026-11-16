@@ -129,11 +129,21 @@ function mmlNode(el) {
       return mrow('<mo>' + mmlEsc(open) + '</mo>' + parts.join('<mo>,</mo>') + '<mo>' + mmlEsc(close) + '</mo>');
     }
     case 'nary': {
-      const op = '<mo>' + mmlEsc(chrOf(el, 'naryPr', '∫')) + '</mo>';
+      const chr = chrOf(el, 'naryPr', '∫');
+      const op = '<mo>' + mmlEsc(chr) + '</mo>';
       const sub = kid(el, 'sub'), sup = kid(el, 'sup');
-      const head = (sub || sup)
-        ? '<munderover>' + op + mrow(mmlChildren(sub)) + mrow(mmlChildren(sup)) + '</munderover>'
-        : op;
+      const subXml = mmlChildren(sub), supXml = mmlChildren(sup);
+      const pr = kid(el, 'naryPr');
+      const locEl = pr && kid(pr, 'limLoc');
+      const loc = locEl ? (locEl.getAttributeNS(M_NS, 'val') || locEl.getAttribute('m:val')) : (SIDE_LIMIT_OPS.indexOf(chr) >= 0 ? 'subSup' : 'undOvr');
+      let head = op;
+      if (loc === 'subSup') {
+        if (subXml && supXml) head = '<msubsup>' + op + mrow(subXml) + mrow(supXml) + '</msubsup>';
+        else if (subXml) head = '<msub>' + op + mrow(subXml) + '</msub>';
+        else if (supXml) head = '<msup>' + op + mrow(supXml) + '</msup>';
+      } else if (subXml || supXml) {
+        head = '<munderover>' + op + mrow(subXml) + mrow(supXml) + '</munderover>';
+      }
       return mrow(head + mrow(mmlChildren(kid(el, 'e'))));
     }
     case 'acc':
@@ -269,14 +279,32 @@ const HWP_SYMS = {
   sigma: 'σ', SIGMA: 'Σ', DELTA: 'Δ', omega: 'ω', epsilon: 'ε', pm: '±', approx: '≈', equiv: '≡', deg: '°',
 };
 const HWP_BIG = { int: '∫', sum: '∑', prod: '∏' };
+const SIDE_LIMIT_OPS = ['∫', '∬', '∭', '∮'];   // 적분 기호는 한계를 옆에 쓴다 (한글이 저장할 때와 같다)
 const HWP_FUNCS = /^(ln|log|exp|sin|cos|tan)/;
 
 function xmlEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+// 명령 이름 목록: 붙여 쓴 낱말(sinpix, lnx …)을 이 목록으로 나눈다
+const HWP_KEYWORDS = new Set([
+  ...Object.keys(HWP_SYMS), ...Object.keys(HWP_BIG),
+  'over', 'sqrt', 'LEFT', 'RIGHT', 'left', 'right', 'lim', 'rm', 'RM', 'it', 'IT', 'bold', 'ln', 'log', 'exp', 'sin', 'cos', 'tan',
+]);
+function splitWord(w) {
+  if (w.length <= 1 || HWP_KEYWORDS.has(w)) return [w];
+  for (let k = w.length - 1; k >= 2; k--) {
+    const head = w.slice(0, k);
+    if (HWP_KEYWORDS.has(head)) return [head, ...splitWord(w.slice(k))];
+  }
+  return [w];
+}
 function hwpTokens(script) {
   const s = String(script || '').replace(/[\r\n#`~]/g, ' ');
   const re = /''|[A-Za-z]+|\d+(?:\.\d+)?|\S/g;
-  return s.match(re) || [];
+  const out = [];
+  (s.match(re) || []).forEach((t) => {
+    if (/^[A-Za-z]+$/.test(t)) out.push(...splitWord(t)); else out.push(t);
+  });
+  return out;
 }
 
 // 스크립트 한 개를 나무 구조로 읽는다
@@ -351,8 +379,8 @@ function hwpParse(script) {
       if (T[i] === '_') { i++; sub = parseAtom(stop); }
       return { t: 'limlow', lim: sub };
     }
-    if (t === 'rm') return { t: 'plain', item: parseAtom(stop) };
-    if (t === 'it' || t === 'bold') return parseAtom(stop);
+    if (t === 'rm' || t === 'RM') return { t: 'plain', item: parseAtom(stop) };
+    if (t === 'it' || t === 'IT' || t === 'bold') return parseAtom(stop);
     if (t === "'") return { t: 'text', s: '′' };
     if (t === "''") return { t: 'text', s: '″' };
     if (HWP_SYMS[t]) return { t: 'text', s: HWP_SYMS[t] };
@@ -388,7 +416,7 @@ function ommlNodeXml(n, plain) {
       return '<m:d><m:dPr><m:begChr m:val="' + xmlEsc(n.open) + '"/><m:endChr m:val="' + xmlEsc(n.close) + '"/></m:dPr><m:e>' +
         ommlItemsXml(n.items, plain) + '</m:e></m:d>';
     case 'nary':
-      return '<m:nary><m:naryPr><m:chr m:val="' + xmlEsc(n.chr) + '"/>' +
+      return '<m:nary><m:naryPr><m:chr m:val="' + xmlEsc(n.chr) + '"/><m:limLoc m:val="' + (SIDE_LIMIT_OPS.indexOf(n.chr) >= 0 ? 'subSup' : 'undOvr') + '"/>' +
         (n.sub ? '' : '<m:subHide m:val="1"/>') + (n.sup ? '' : '<m:supHide m:val="1"/>') + '</m:naryPr><m:sub>' +
         (n.sub ? ommlNodeXml(n.sub, plain) : '') + '</m:sub><m:sup>' + (n.sup ? ommlNodeXml(n.sup, plain) : '') +
         '</m:sup><m:e>' + ommlNodeXml(n.body, plain) + '</m:e></m:nary>';
