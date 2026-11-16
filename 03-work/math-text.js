@@ -100,7 +100,8 @@ function mmlRun(text) {
     if (/^\s+$/.test(p)) return '';
     if (/^\d/.test(p)) return '<mn>' + mmlEsc(p) + '</mn>';
     if (/^\p{L}/u.test(p)) return '<mi>' + mmlEsc(p) + '</mi>';
-    if (OP_ONE.test(p)) return '<mo>' + mmlEsc(p) + '</mo>';
+    // 빼기 기호는 짧은 하이픈(-) 대신 긴 빼기 기호(−)로 그려 눈에 잘 띄게 한다
+    if (OP_ONE.test(p)) return '<mo>' + mmlEsc(p === '-' ? '−' : p) + '</mo>';
     return '<mtext>' + mmlEsc(p) + '</mtext>';
   }).join('');
 }
