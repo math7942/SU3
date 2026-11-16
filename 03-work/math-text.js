@@ -21,6 +21,13 @@ function scriptPart(text, map, wrapOpen, wrapClose) {
 function supText(text) { return scriptPart(text, SUP, '^(', ')'); }
 function subText(text) { return scriptPart(text, SUB, '_(', ')'); }
 function unbrace(s) { return String(s).replace(/^\{/, '').replace(/\}$/, ''); }
+// 분수: 숫자끼리면 위·아래 글자로 바꿔 쓴다(4/2 → ⁴⁄₂). 그 밖에는 (분자)/(분모)
+function fracText(num, den) {
+  const plainNum = (t) => /^[0-9]+$/.test(t);
+  if (plainNum(num) && plainNum(den)) return num.split('').map((ch) => SUP[ch]).join('') + '⁄' + den.split('').map((ch) => SUB[ch]).join('');
+  const wrap = (x) => (/^\(.*\)$/.test(x) ? x : '(' + x + ')');
+  return wrap(num) + '/' + wrap(den);
+}
 
 // ---------- Word 수식(OMML) ----------
 function kids(el, name) { return Array.prototype.filter.call(el.children, (c) => c.localName === name); }
@@ -32,8 +39,7 @@ function ommlText(el) {
       return ommlChildren(el);
     case 'r': return kids(el, 't').map((t) => t.textContent).join('');
     case 'f': {
-      const num = ommlText(kid(el, 'num')), den = ommlText(kid(el, 'den'));
-      return '(' + num + ')/(' + den + ')';
+      return fracText(ommlText(kid(el, 'num')), ommlText(kid(el, 'den')));
     }
     case 'sSup': return ommlText(kid(el, 'e')) + supText(ommlText(kid(el, 'sup')));
     case 'sSub': return ommlText(kid(el, 'e')) + subText(ommlText(kid(el, 'sub')));
@@ -112,11 +118,10 @@ export function hwpScriptToText(script) {
   s = s.replace(/_\s*(\{[^{}]*\}|\S)/g, (m, a) => subText(unbrace(a)));
   // over: 앞뒤 항을 분수로 (괄호로 묶인 항, 중괄호 항, 낱말 항을 다룬다)
   const operand = '(\\([^()]*\\)|\\{[^{}]*\\}|[^\\s{}()]+)';
-  const wrap = (x) => (/^\(.*\)$/.test(x) ? x : '(' + x + ')');
   let prev;
   do {
     prev = s;
-    s = s.replace(new RegExp(operand + '\\s+over\\s+' + operand, 'g'), (m, a, b) => wrap(unbrace(a)) + '/' + wrap(unbrace(b)));
+    s = s.replace(new RegExp(operand + '\\s+over\\s+' + operand, 'g'), (m, a, b) => fracText(unbrace(a), unbrace(b)));
   } while (s !== prev);
   s = s.split(/\s+/).map((tok) => WORDS[tok] || tok).join(' ');
   s = s.replace(/[{}]/g, '').replace(/[~`]/g, ' ');
