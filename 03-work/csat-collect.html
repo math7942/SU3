@@ -101,7 +101,7 @@ function loadFirebase() {
         import(`${SDK}/firebase-firestore.js`)
       ]);
       const app = initializeApp(firebaseConfig);
-      return { fs, db: fs.getFirestore(app) };
+      return { fs, db: fs.getFirestore(app), app };
     })();
   }
   return fbPromise;
@@ -346,9 +346,64 @@ function downloadKedi(rows) {
   downloadWorkbook(KEDI_HEADER, sortRows(rows).map((r) => kediRow(r, year)), `가채점_대교협_${year}_${stampNow()}.xlsx`);
 }
 
-function renderTeacher() {
+// 선생님 로그인: 이메일과 비밀번호로 Firebase에 로그인한다 (학생 화면에는 영향 없음)
+let stopWatch = null;
+async function renderTeacher() {
+  app.innerHTML = '<p class="sub">확인하는 중...</p>';
+  let session;
+  try {
+    const fb = await loadFirebase();
+    const am = await import(`${SDK}/firebase-auth.js`);
+    session = { ...fb, am, auth: am.getAuth(fb.app) };
+  } catch (err) {
+    console.error(err);
+    app.innerHTML = '<p class="sub">저장소에 연결하지 못했습니다.</p>';
+    return;
+  }
+  session.am.onAuthStateChanged(session.auth, (user) => {
+    if (user) renderTeacherDashboard(session);
+    else renderTeacherLogin(session);
+  });
+}
+
+function renderTeacherLogin(fb) {
+  if (stopWatch) { stopWatch(); stopWatch = null; }
   app.innerHTML = `
     <h1>수능 가채점 수합 (선생님)</h1>
+    <p class="sub">선생님 계정으로 로그인하세요.</p>
+    <section class="card">
+      <form id="login" novalidate>
+        <div><label for="email">이메일</label><input id="email" type="email" autocomplete="username"></div>
+        <div style="margin-top:10px"><label for="pw">비밀번호</label><input id="pw" type="password" autocomplete="current-password"></div>
+        <div class="err" id="login-err"></div>
+        <button type="submit" id="login-btn" style="margin-top:12px">로그인</button>
+      </form>
+    </section>`;
+  document.getElementById('login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-err');
+    const email = document.getElementById('email').value.trim();
+    const pw = document.getElementById('pw').value;
+    errEl.textContent = '';
+    if (!email || !pw) { errEl.textContent = '이메일과 비밀번호를 입력하세요.'; return; }
+    btn.disabled = true;
+    try {
+      await fb.am.signInWithEmailAndPassword(fb.auth, email, pw);
+      // 로그인에 성공하면 onAuthStateChanged가 선생님 화면을 그린다
+    } catch (err) {
+      console.error(err);
+      errEl.textContent = '로그인하지 못했습니다. 이메일과 비밀번호를 확인하세요.';
+      btn.disabled = false;
+    }
+  });
+}
+
+function renderTeacherDashboard(fb) {
+  if (stopWatch) { stopWatch(); stopWatch = null; }
+  app.innerHTML = `
+    <h1>수능 가채점 수합 (선생님)</h1>
+    <div class="row-actions"><span class="status">선생님 계정으로 로그인됨</span><button class="ghost" id="logout">로그아웃</button></div>
     <p class="sub">학생이 제출한 결과를 실시간으로 보여 줍니다. 교육청용과 대교협용 엑셀을 따로 받을 수 있습니다.</p>
     <section class="card">
       <h2>학생에게 보낼 입력 링크</h2>
@@ -386,17 +441,14 @@ function renderTeacher() {
   dlEdu.addEventListener('click', () => downloadEdu(current));
   dlKedi.addEventListener('click', () => downloadKedi(current));
 
-  loadFirebase().then(({ fs, db }) => {
-    fs.onSnapshot(fs.collection(db, COLLECTION), (snap) => {
-      current = snap.docs.map((d) => d.data());
-      drawRows(current);
-    }, (err) => {
-      console.error(err);
-      document.getElementById('count').textContent = '불러오지 못했습니다. 보안 규칙을 확인하세요.';
-    });
-  }).catch((err) => {
+  document.getElementById('logout').addEventListener('click', () => fb.am.signOut(fb.auth));
+  const { fs, db } = fb;
+  stopWatch = fs.onSnapshot(fs.collection(db, COLLECTION), (snap) => {
+    current = snap.docs.map((d) => d.data());
+    drawRows(current);
+  }, (err) => {
     console.error(err);
-    document.getElementById('count').textContent = '저장소에 연결하지 못했습니다.';
+    document.getElementById('count').textContent = '불러오지 못했습니다. 보안 규칙을 확인하세요.';
   });
 
   function drawRows(rows) {
