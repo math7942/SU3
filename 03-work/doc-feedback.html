@@ -998,6 +998,7 @@ function renderFileList(){
             '<div class="comment-rail"></div>' +
           '</div>' +
         '</div>' +
+        (isReviewerCopy(f) ? '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="review-btn" data-act="review-word-bottom">문항검토지 받기</button></div>' : '') +
       '</div>' +
     '</div>';
   }).join('');
@@ -1034,6 +1035,8 @@ function renderFileList(){
     if(cw) cw.addEventListener('click', function(){ downloadFileComments(fileId); });
     var rw = row.querySelector('[data-act="review-word"]');
     if(rw) rw.addEventListener('click', function(){ downloadReviewDoc(fileId); });
+    var rwb = row.querySelector('[data-act="review-word-bottom"]');
+    if(rwb) rwb.addEventListener('click', function(){ downloadReviewDoc(fileId); });
     var del = row.querySelector('[data-act=delete]');
     if(del) del.addEventListener('click', function(){ deleteFile(fileId); });
   });
