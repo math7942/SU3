@@ -194,7 +194,7 @@ export async function prepareDocxForView(arrayBuffer) {
   const xml = await docFile.async('string');
   const hasMath = xml.indexOf('<m:oMath') >= 0;
   const hasWhite = /w:color w:val="ffffff"/i.test(xml);
-  const hasSymbols = /[\uF000-\uF0FF]/.test(xml);
+  const hasSymbols = /[\uF000-\uF0FF]/.test(xml) || xml.indexOf('<w:sym') >= 0;
   if (!hasMath && !hasWhite && !hasSymbols) return { buffer: arrayBuffer, eqs: [] };
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   // 흰색 글자(배경과 같은 색)는 화면에서 보이지 않으므로 버린다
@@ -202,6 +202,15 @@ export async function prepareDocxForView(arrayBuffer) {
     if ((c.getAttributeNS(W_NS, 'val') || '').toLowerCase() !== 'ffffff') return;
     const run = c.parentNode && c.parentNode.parentNode;
     if (run && run.localName === 'r' && run.parentNode) run.parentNode.removeChild(run);
+  });
+  // 워드의 기호 글자(w:sym, 예: 기호 글꼴 F0FE)를 일반 글자로 바꾼 뒤 보이는 글자로 고친다
+  Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 'sym')).forEach((sym) => {
+    const code = parseInt(sym.getAttributeNS(W_NS, 'char') || '', 16);
+    if (isNaN(code) || !sym.parentNode) return;
+    const t = doc.createElementNS(W_NS, 'w:t');
+    t.setAttribute('xml:space', 'preserve');
+    t.textContent = mapSymbols(String.fromCodePoint(code));
+    sym.parentNode.replaceChild(t, sym);
   });
   // 체크박스 같은 기호 글자를 보이는 글자로 바꾼다
   Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 't')).forEach((t) => {
