@@ -2,7 +2,7 @@
 // 옮기는 것: 글자 모양(굵게·기울임·크기·색), 문단 정렬, 표(병합·칸별 테두리·배경색), 그림.
 // 옮기지 못했거나 모양이 달라질 수 있는 것은 경고 목록으로 돌려준다 (떠 있는 개체, 지원하지 않는 개체, 좁은 칸의 긴 글).
 // JSZip(전역)을 쓴다.
-import { hwpScriptToText } from './math-text.js';
+import { hwpScriptToText, hwpScriptToOmml } from './math-text.js';
 
 const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
 const NS_HH = 'http://www.hancom.co.kr/hwpml/2011/head';
@@ -223,12 +223,18 @@ class Converter {
           const d = this.drawing(child);
           if (d) runs.push(d);
         } else if (tag === 'equation') {
-          // 한글 수식은 스크립트를 글자로 바꿔 넣는다 (수식 모양 그대로는 아니다)
+          // 한글 수식은 워드의 수식 개체로 옮긴다. 읽지 못하는 수식만 글자로 바꿔 넣는다.
           const script = kid(child, 'script');
-          const text = hwpScriptToText(script ? script.textContent : '');
-          if (text) buf += text;
-          if (!this.warnings.some((w) => w.kind === 'equation')) {
-            this.warn('equation', '한글 수식을 글자로 바꿔 넣었습니다. 수식 모양은 원본과 다를 수 있습니다');
+          const source = script ? script.textContent : '';
+          const omml = hwpScriptToOmml(source);
+          if (omml) {
+            flush();
+            runs.push(omml);
+          } else {
+            buf += hwpScriptToText(source);
+            if (!this.warnings.some((w) => w.kind === 'equation')) {
+              this.warn('equation', '읽지 못한 한글 수식은 글자로 바꿔 넣었습니다. 수식 모양이 다를 수 있습니다');
+            }
           }
         } else if (UNSUPPORTED[tag]) {
           flush();
@@ -349,7 +355,7 @@ export async function convertHwpxToDocx(arrayBuffer) {
     '<w:document xmlns:w="' + W_NS + '" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' +
     'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" ' +
     'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
-    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>' + body +
+    'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"><w:body>' + body +
     '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>' +
     '</w:body></w:document>';
   const exts = Array.from(new Set(conv.media.map((m) => m.ext)));

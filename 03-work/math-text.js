@@ -258,3 +258,152 @@ export function hwpScriptToText(script) {
   s = s.replace(/[{}]/g, '').replace(/[~`]/g, ' ');
   return s.replace(/\s+/g, ' ').trim();
 }
+
+// ---------- 한글 수식 스크립트 → Word 수식(OMML) ----------
+// 분수(over), 근호(sqrt), 괄호(LEFT … RIGHT), 위·아래 첨자(^ _), 큰 연산자(int, sum, lim), 기호 이름, 그리스 문자를 옮긴다.
+// 읽지 못하는 스크립트는 null을 돌려주고, 호출하는 쪽이 글자 버전을 쓴다.
+const HWP_SYMS = {
+  rarrow: '→', larrow: '←', to: '→', INF: '∞', infty: '∞', GEQ: '≥', geq: '≥', LEQ: '≤', leq: '≤',
+  le: '≤', ge: '≥', ne: '≠', NEQ: '≠', times: '×', cdot: '·', CDOTS: '⋯', LDOTS: '…', prime: '′',
+  pi: 'π', PI: 'π', alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', theta: 'θ', lambda: 'λ', mu: 'μ',
+  sigma: 'σ', SIGMA: 'Σ', DELTA: 'Δ', omega: 'ω', epsilon: 'ε', pm: '±', approx: '≈', equiv: '≡', deg: '°',
+};
+const HWP_BIG = { int: '∫', sum: '∑', prod: '∏' };
+const HWP_FUNCS = /^(ln|log|exp|sin|cos|tan)/;
+
+function xmlEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function hwpTokens(script) {
+  const s = String(script || '').replace(/[\r\n#`~]/g, ' ');
+  const re = /''|[A-Za-z]+|\d+(?:\.\d+)?|\S/g;
+  return s.match(re) || [];
+}
+
+// 스크립트 한 개를 나무 구조로 읽는다
+function hwpParse(script) {
+  const T = hwpTokens(script);
+  let i = 0;
+
+  function parseSeq(stop) {
+    const items = [];
+    while (i < T.length && !stop(T[i])) {
+      const t = T[i];
+      if (t === 'over') {
+        i++;
+        const num = items.length ? items.pop() : { t: 'text', s: '' };
+        const den = parseScripted(stop);
+        items.push({ t: 'frac', num, den });
+        continue;
+      }
+      if (HWP_BIG[t]) {
+        // 큰 연산자: 아래·위 한계를 받고, 나머지 항목을 본문으로 삼는다
+        i++;
+        const nary = { t: 'nary', chr: HWP_BIG[t], sub: null, sup: null };
+        for (let k = 0; k < 2 && i < T.length && (T[i] === '_' || T[i] === '^'); k++) {
+          const kind = T[i++];
+          const arg = parseAtom(stop);
+          if (kind === '_') nary.sub = arg; else nary.sup = arg;
+        }
+        nary.body = { t: 'group', items: parseSeq(stop) };
+        items.push(nary);
+        break;
+      }
+      items.push(parseScripted(stop));
+    }
+    return items;
+  }
+
+  function parseScripted(stop) {
+    const base = parseAtom(stop);
+    let sub = null, sup = null;
+    for (let k = 0; k < 2 && i < T.length && (T[i] === '_' || T[i] === '^'); k++) {
+      const kind = T[i++];
+      const arg = parseAtom(stop);
+      if (kind === '_') sub = arg; else sup = arg;
+    }
+    if (sub && sup) return { t: 'subsup', base, sub, sup };
+    if (sub) return { t: 'sub', base, sub };
+    if (sup) return { t: 'sup', base, sup };
+    return base;
+  }
+
+  function parseAtom(stop) {
+    if (i >= T.length) throw new Error('수식이 중간에 끝남');
+    const t = T[i++];
+    if (t === '{') {
+      const items = parseSeq((x) => x === '}');
+      if (T[i] !== '}') throw new Error('중괄호가 맞지 않음');
+      i++;
+      return { t: 'group', items };
+    }
+    if (t === '}') throw new Error('닫는 중괄호가 남음');
+    if (t === 'sqrt') return { t: 'rad', e: parseAtom(stop) };
+    if (t === 'LEFT' || t === 'left') {
+      const open = T[i++];
+      const items = parseSeq((x) => x === 'RIGHT' || x === 'right');
+      if (!(T[i] === 'RIGHT' || T[i] === 'right')) throw new Error('RIGHT가 없음');
+      i++;
+      const close = T[i++];
+      return { t: 'fence', open, close, items };
+    }
+    if (t === 'lim') {
+      let sub = null;
+      if (T[i] === '_') { i++; sub = parseAtom(stop); }
+      return { t: 'limlow', lim: sub };
+    }
+    if (t === 'rm') return { t: 'plain', item: parseAtom(stop) };
+    if (t === 'it' || t === 'bold') return parseAtom(stop);
+    if (t === "'") return { t: 'text', s: '′' };
+    if (t === "''") return { t: 'text', s: '″' };
+    if (HWP_SYMS[t]) return { t: 'text', s: HWP_SYMS[t] };
+    if (/^\d/.test(t)) return { t: 'text', s: t };
+    if (/^[A-Za-z]+$/.test(t)) return { t: 'text', s: t, plain: HWP_FUNCS.test(t) };
+    if (t === '^' || t === '_') throw new Error('첨자 위치가 틀림');
+    return { t: 'text', s: t };
+  }
+
+  const items = parseSeq(() => false);
+  if (i !== T.length) throw new Error('읽지 못한 부분이 남음');
+  return items;
+}
+
+function ommlRunXml(text, plain) {
+  const pr = plain ? '<m:rPr><m:sty m:val="p"/></m:rPr>' : '';
+  return '<m:r>' + pr + '<m:t xml:space="preserve">' + xmlEsc(text) + '</m:t></m:r>';
+}
+function ommlItemsXml(items, plain) { return items.map((n) => ommlNodeXml(n, plain)).join(''); }
+function ommlNodeXml(n, plain) {
+  switch (n.t) {
+    case 'text': return ommlRunXml(n.s, plain || !!n.plain);
+    case 'group': return ommlItemsXml(n.items, plain);
+    case 'plain': return ommlNodeXml(n.item, true);
+    case 'frac': return '<m:f><m:num>' + ommlNodeXml(n.num, plain) + '</m:num><m:den>' + ommlNodeXml(n.den, plain) + '</m:den></m:f>';
+    case 'sup': return '<m:sSup><m:e>' + ommlNodeXml(n.base, plain) + '</m:e><m:sup>' + ommlNodeXml(n.sup, plain) + '</m:sup></m:sSup>';
+    case 'sub': return '<m:sSub><m:e>' + ommlNodeXml(n.base, plain) + '</m:e><m:sub>' + ommlNodeXml(n.sub, plain) + '</m:sub></m:sSub>';
+    case 'subsup':
+      return '<m:sSubSup><m:e>' + ommlNodeXml(n.base, plain) + '</m:e><m:sub>' + ommlNodeXml(n.sub, plain) +
+        '</m:sub><m:sup>' + ommlNodeXml(n.sup, plain) + '</m:sup></m:sSubSup>';
+    case 'rad': return '<m:rad><m:radPr><m:degHide m:val="1"/></m:radPr><m:deg/><m:e>' + ommlNodeXml(n.e, plain) + '</m:e></m:rad>';
+    case 'fence':
+      return '<m:d><m:dPr><m:begChr m:val="' + xmlEsc(n.open) + '"/><m:endChr m:val="' + xmlEsc(n.close) + '"/></m:dPr><m:e>' +
+        ommlItemsXml(n.items, plain) + '</m:e></m:d>';
+    case 'nary':
+      return '<m:nary><m:naryPr><m:chr m:val="' + xmlEsc(n.chr) + '"/>' +
+        (n.sub ? '' : '<m:subHide m:val="1"/>') + (n.sup ? '' : '<m:supHide m:val="1"/>') + '</m:naryPr><m:sub>' +
+        (n.sub ? ommlNodeXml(n.sub, plain) : '') + '</m:sub><m:sup>' + (n.sup ? ommlNodeXml(n.sup, plain) : '') +
+        '</m:sup><m:e>' + ommlNodeXml(n.body, plain) + '</m:e></m:nary>';
+    case 'limlow':
+      return '<m:limLow><m:e>' + ommlRunXml('lim', false) + '</m:e><m:lim>' + (n.lim ? ommlNodeXml(n.lim, plain) : '') + '</m:lim></m:limLow>';
+    default: throw new Error('알 수 없는 수식 요소: ' + n.t);
+  }
+}
+
+// 한글 수식 스크립트 → <m:oMath> 문자열. 읽지 못하면 null.
+export function hwpScriptToOmml(script) {
+  try {
+    const items = hwpParse(script);
+    return '<m:oMath>' + ommlItemsXml(items, false) + '</m:oMath>';
+  } catch (e) {
+    return null;
+  }
+}
