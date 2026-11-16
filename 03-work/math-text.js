@@ -21,12 +21,21 @@ function scriptPart(text, map, wrapOpen, wrapClose) {
 function supText(text) { return scriptPart(text, SUP, '^(', ')'); }
 function subText(text) { return scriptPart(text, SUB, '_(', ')'); }
 function unbrace(s) { return String(s).replace(/^\{/, '').replace(/\}$/, ''); }
-// 분수: 숫자끼리면 위·아래 글자로 바꿔 쓴다(4/2 → ⁴⁄₂). 그 밖에는 (분자)/(분모)
+// 분수: 흔한 숫자 분수는 한 글자(⅓, ½ …)로, 다른 숫자 분수는 위·아래 글자(⁴⁄₂)로 쓴다.
+// 문자 분수는 a/b, 그 밖에는 (분자)/(분모). 앞뒤 공백은 지운다.
+const VULGAR = {
+  '1/2': '½', '1/3': '⅓', '2/3': '⅔', '1/4': '¼', '3/4': '¾', '1/5': '⅕', '2/5': '⅖', '3/5': '⅗', '4/5': '⅘',
+  '1/6': '⅙', '5/6': '⅚', '1/7': '⅐', '1/8': '⅛', '3/8': '⅜', '5/8': '⅝', '7/8': '⅞', '1/9': '⅑', '1/10': '⅒',
+};
 function fracText(num, den) {
-  const plainNum = (t) => /^[0-9]+$/.test(t);
-  if (plainNum(num) && plainNum(den)) return num.split('').map((ch) => SUP[ch]).join('') + '⁄' + den.split('').map((ch) => SUB[ch]).join('');
+  const n = String(num).trim(), d = String(den).trim();
+  if (VULGAR[n + '/' + d]) return VULGAR[n + '/' + d];
+  if (/^[0-9]+$/.test(n) && /^[0-9]+$/.test(d)) {
+    return n.split('').map((ch) => SUP[ch]).join('') + '⁄' + d.split('').map((ch) => SUB[ch]).join('');
+  }
+  if (/^[A-Za-z0-9]+$/.test(n) && /^[A-Za-z0-9]+$/.test(d)) return n + '/' + d;
   const wrap = (x) => (/^\(.*\)$/.test(x) ? x : '(' + x + ')');
-  return wrap(num) + '/' + wrap(den);
+  return wrap(n) + '/' + wrap(d);
 }
 
 // ---------- Word 수식(OMML) ----------
