@@ -79,6 +79,8 @@
   .comment-card.flash{background:#fff3b0}
   .comment-card .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px;border-left:2px solid var(--line);padding-left:6px;max-height:4.8em;overflow:hidden}
   .comment-card .ct{display:block;font-size:11px;color:var(--sub);margin-top:4px}
+  .doc-view .eqv{display:inline;white-space:nowrap}
+  .doc-view .eqv math{font-size:1em}
   .comment-card .cdel{display:block;margin-top:4px;background:none;border:0;padding:0;font-size:12px;color:#b91c1c;cursor:pointer;text-decoration:underline}
   .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px}
   .comment-empty{color:#9ca3af;font-size:13px}
@@ -218,7 +220,7 @@
 
 <script type="module">
 import { convertHwpxToDocx } from './hwpx-to-docx.js';
-import { prepareDocxForView } from './math-text.js';
+import { prepareDocxForView, decorateEquations, equationsToText } from './math-text.js';
 // ---------------- Firebase ----------------
 // 이 사이트의 다른 "함께 보는 기록" 도구(명예의 전당 등)와 같은 프로젝트를 재사용한다.
 // (assets/firebase-store.js 참고) apiKey는 비밀값이 아니라 공개되어도 되는 클라이언트 식별자이며,
@@ -561,10 +563,21 @@ async function renderPdfToHtml(buf){
 // ---------------- 문서 안의 위치(텍스트 범위) 찾기/표시 ----------------
 // docx는 mammoth가 만든 순수 텍스트이므로, 같은 원본 파일이면 누가 다시 열어도
 // 똑같은 글자 offset이 나온다 — 그 offset을 코멘트의 "위치"로 저장해 재구성한다.
+// 수식(.eqv)은 화면에서 여러 글자로 보여도 글자 한 칸으로 센다
+function eqOf(node){
+  var el = node.parentNode;
+  return el && el.closest ? el.closest('.eqv') : null;
+}
 function textOffsetOf(container, targetNode, targetOffset){
   var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  var total = 0, node;
+  var total = 0, node, seenEq = null;
   while((node = walker.nextNode())){
+    var eq = eqOf(node);
+    if(eq){
+      if(eq.contains(targetNode)) return total + (targetOffset > 0 ? 1 : 0);
+      if(eq !== seenEq){ seenEq = eq; total += 1; }
+      continue;
+    }
     if(node === targetNode) return total + targetOffset;
     total += node.nodeValue.length;
   }
@@ -579,9 +592,19 @@ function getOffsetsForRange(container, range){
 function applyHighlight(container, start, end, commentId){
   if(end <= start) return;
   var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-  var total = 0, node;
-  var slices = [];
+  var total = 0, node, seenEq = null;
+  var slices = [], eqMarks = [];
   while((node = walker.nextNode())){
+    var eq = eqOf(node);
+    if(eq){
+      if(eq !== seenEq){
+        seenEq = eq;
+        if(total < end && total + 1 > start) eqMarks.push(eq);
+        total += 1;
+      }
+      if(total >= end) break;
+      continue;
+    }
     var len = node.nodeValue.length;
     var nodeStart = total, nodeEnd = total + len;
     if(nodeEnd > start && nodeStart < end){
@@ -598,6 +621,13 @@ function applyHighlight(container, start, end, commentId){
     mark.dataset.cid = commentId;
     middle.parentNode.insertBefore(mark, middle);
     mark.appendChild(middle);
+  });
+  eqMarks.forEach(function(eq){
+    var mark = document.createElement('mark');
+    mark.className = 'hl';
+    mark.dataset.cid = commentId;
+    eq.parentNode.insertBefore(mark, eq);
+    mark.appendChild(eq);
   });
 }
 function flashEl(el){
@@ -1036,8 +1066,9 @@ async function openFilePanel(row, fileId){
       if(isPdf(meta.filename)){
         html = await renderPdfToHtml(buf);
       } else {
-        var result = await mammoth.convertToHtml({ arrayBuffer: await prepareDocxForView(buf) });
-        html = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
+        var prep = await prepareDocxForView(buf);
+        var result = await mammoth.convertToHtml({ arrayBuffer: prep.buffer });
+        html = decorateEquations(result.value, prep.eqs) || '<p class="empty">(내용이 비어 있습니다)</p>';
       }
       docHtmlCache[fileId] = html;
       docView.classList.remove('empty');
@@ -1574,7 +1605,8 @@ function addCommentNode(commentsDoc, id, text, iso){
 }
 async function buildCommentedDocx(meta, comments){
   // 화면과 같은 글(수식을 글자로 바꾼 것)을 기준으로 의견 위치를 찾는다
-  var buf = await prepareDocxForView(await getFileArrayBuffer(meta));
+  var prep = await prepareDocxForView(await getFileArrayBuffer(meta));
+  var buf = prep.buffer;
   var zip = await JSZip.loadAsync(buf);
   var docDom = parseXml(await zip.file('word/document.xml').async('string'));
   var paras = Array.prototype.slice.call(docDom.getElementsByTagNameNS(W_NS, 'p'));
@@ -1640,6 +1672,10 @@ async function buildCommentedDocx(meta, comments){
     }
   });
 
+  // 수식 칸은 파일에 읽을 수 있는 글자로 넣는다
+  Array.prototype.forEach.call(docDom.getElementsByTagNameNS(W_NS, 't'), function(t){
+    if(/[\uE000-\uF8FF]/.test(t.textContent)) t.textContent = equationsToText(t.textContent, prep.eqs);
+  });
   zip.file('word/document.xml', xmlString(docDom));
   zip.file('word/comments.xml', xmlString(commentsDom));
 
@@ -2086,7 +2122,8 @@ async function buildPrintInner(){
       continue;
     }
     var comments = await getCommentsOnce(f.fileId);
-    var html = (await mammoth.convertToHtml({ arrayBuffer: await prepareDocxForView(await getFileArrayBuffer(f)) })).value;
+    var prep = await prepareDocxForView(await getFileArrayBuffer(f));
+    var html = equationsToText((await mammoth.convertToHtml({ arrayBuffer: prep.buffer })).value, prep.eqs);
     var box = document.createElement('div');
     box.innerHTML = html;
     var groups = {};
