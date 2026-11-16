@@ -18,6 +18,8 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
   .card h2 { font-size: 1.05rem; margin: 0 0 10px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 12px; }
+  /* 과목 한 줄: 같은 과목의 칸(과목, 공통, 선택 등)을 가로로 나란히 둔다 */
+  .subj-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin-bottom: 12px; align-items: start; }
   label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 3px; }
   /* 글자 크기 16px 이상이어야 휴대폰에서 입력할 때 화면이 확대되지 않는다 */
   input, select { width: 100%; font: inherit; font-size: 16px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); -webkit-appearance: none; appearance: none; }
@@ -40,7 +42,7 @@
   @media (max-width: 480px) {
     main { padding: 12px; }
     .card { padding: 14px; }
-    .grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .grid, .subj-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     .row-actions { flex-direction: column; align-items: stretch; }
     .row-actions > div, .row-actions button { width: 100%; }
     button { width: 100%; }
@@ -134,23 +136,31 @@ function renderStudent() {
 
       <section class="card">
         <h2>국어 · 수학 · 영어 · 한국사</h2>
-        <div class="grid">
+        <div class="subj-row">
           <div><label for="kor_sub">국어 선택과목</label><select id="kor_sub" name="kor_sub">${opts(KOR_SUBJECTS)}</select><div class="err" data-err="kor_sub"></div></div>
           <div><label for="kor_common">국어 공통 원점수 (0~100)</label><input id="kor_common" name="kor_common" inputmode="numeric"><div class="err" data-err="kor_common"></div></div>
           <div><label for="kor_elective">국어 선택 원점수 (0~100)</label><input id="kor_elective" name="kor_elective" inputmode="numeric"><div class="err" data-err="kor_elective"></div></div>
+        </div>
+        <div class="subj-row">
           <div><label for="math_sub">수학 선택과목</label><select id="math_sub" name="math_sub">${opts(MATH_SUBJECTS)}</select><div class="err" data-err="math_sub"></div></div>
           <div><label for="math_common">수학 공통 원점수 (0~100)</label><input id="math_common" name="math_common" inputmode="numeric"><div class="err" data-err="math_common"></div></div>
           <div><label for="math_elective">수학 선택 원점수 (0~100)</label><input id="math_elective" name="math_elective" inputmode="numeric"><div class="err" data-err="math_elective"></div></div>
+        </div>
+        <div class="subj-row">
           <div><label for="eng">영어 원점수 (0~100)</label><input id="eng" name="eng" inputmode="numeric"><div class="err" data-err="eng"></div></div>
+        </div>
+        <div class="subj-row">
           <div><label for="hist">한국사 원점수 (0~50)</label><input id="hist" name="hist" inputmode="numeric"><div class="err" data-err="hist"></div></div>
         </div>
       </section>
 
       <section class="card">
         <h2>탐구 영역 (두 과목)</h2>
-        <div class="grid">
+        <div class="subj-row">
           <div><label for="inq1_sub">탐구1 과목</label><select id="inq1_sub" name="inq1_sub">${opts(INQUIRY_SUBJECTS)}</select><div class="err" data-err="inq1_sub"></div></div>
           <div><label for="inq1">탐구1 원점수 (0~50)</label><input id="inq1" name="inq1" inputmode="numeric"><div class="err" data-err="inq1"></div></div>
+        </div>
+        <div class="subj-row">
           <div><label for="inq2_sub">탐구2 과목</label><select id="inq2_sub" name="inq2_sub">${opts(INQUIRY_SUBJECTS)}</select><div class="err" data-err="inq2_sub"></div></div>
           <div><label for="inq2">탐구2 원점수 (0~50)</label><input id="inq2" name="inq2" inputmode="numeric"><div class="err" data-err="inq2"></div></div>
         </div>
@@ -159,7 +169,7 @@ function renderStudent() {
 
       <section class="card">
         <h2>제2외국어 · 한문 <span class="hint">(응시한 경우만)</span></h2>
-        <div class="grid">
+        <div class="subj-row">
           <div><label for="fl_sub">제2외국어 과목</label><select id="fl_sub" name="fl_sub">${opts(FOREIGN_SUBJECTS)}</select><div class="err" data-err="fl_sub"></div></div>
           <div><label for="fl">원점수 (0~50)</label><input id="fl" name="fl" inputmode="numeric"><div class="err" data-err="fl"></div></div>
         </div>
