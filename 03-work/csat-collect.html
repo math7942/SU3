@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수능 가채점 수합</title>
+<style>
+  :root { --ink:#1d2433; --muted:#667085; --line:#d0d5dd; --bg:#f7f8fa; --card:#ffffff; --accent:#2f6fed; --bad:#c02d2d; --ok:#1f7a3d; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink:#e6e9f0; --muted:#9aa3b2; --line:#3a4150; --bg:#15181f; --card:#1d222c; --accent:#7ea6ff; --bad:#ff8a8a; --ok:#6fd38f; }
+  }
+  :root[data-theme="dark"] { --ink:#e6e9f0; --muted:#9aa3b2; --line:#3a4150; --bg:#15181f; --card:#1d222c; --accent:#7ea6ff; --bad:#ff8a8a; --ok:#6fd38f; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 760px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; margin: 8px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: 0.95rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 1.05rem; margin: 0 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 12px; }
+  label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 3px; }
+  input, select { width: 100%; font: inherit; padding: 8px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+  input.bad, select.bad { border-color: var(--bad); }
+  .err { color: var(--bad); font-size: 0.88rem; min-height: 1.2em; margin-top: 4px; }
+  .hint { color: var(--muted); font-size: 0.88rem; margin: 4px 0 0; }
+  button { font: inherit; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .done { text-align: center; padding: 28px 12px; }
+  .done strong { color: var(--ok); font-size: 1.15rem; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; }
+  .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+  .status { color: var(--muted); font-size: 0.9rem; }
+  @media (max-width: 480px) { main { padding: 12px; } }
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="module">
+// ---------------- 설정 ----------------
+// 같은 Firebase 프로젝트(su3su3-e2669)를 쓴다. apiKey는 공개되어도 되는 식별자이고,
+// 접근 제어는 Firestore 보안 규칙으로 한다 (csatScores 컬렉션 쓰기/읽기 허용 여부를 콘솔에서 확인).
+const firebaseConfig = {
+  apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
+  authDomain: "su3su3-e2669.firebaseapp.com",
+  projectId: "su3su3-e2669",
+  storageBucket: "su3su3-e2669.firebasestorage.app",
+  messagingSenderId: "989821997199",
+  appId: "1:989821997199:web:da319f053c098ea30560fa"
+};
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+const COLLECTION = 'csatScores';
+
+// 선택과목 목록 (교육청 양식 드롭다운과 같은 순서)
+const KOR_SUBJECTS = ['화법과작문', '언어와매체'];
+const MATH_SUBJECTS = ['확률과통계', '미적분', '기하'];
+const INQUIRY_SUBJECTS = ['생활과윤리', '윤리와사상', '한국지리', '세계지리', '동아시아사', '세계사', '경제', '정치와법', '사회문화',
+  '물리학1', '화학1', '생명과학1', '지구과학1', '물리학2', '화학2', '생명과학2', '지구과학2'];
+const FOREIGN_SUBJECTS = ['독일어', '프랑스어', '스페인어', '중국어', '일본어', '러시아어', '아랍어', '베트남어', '한문'];
+
+// 점수 범위 (원점수)
+const RANGE = { hist: [0, 50], kor: [0, 100], math: [0, 100], eng: [0, 100], inq: [0, 50], fl: [0, 50] };
+
+const app = document.getElementById('app');
+const isTeacher = new URLSearchParams(location.search).get('mode') === 'teacher';
+
+// ---------------- Firebase ----------------
+let fbPromise = null;
+function loadFirebase() {
+  if (!fbPromise) {
+    fbPromise = (async () => {
+      const [{ initializeApp }, fs] = await Promise.all([
+        import(`${SDK}/firebase-app.js`),
+        import(`${SDK}/firebase-firestore.js`)
+      ]);
+      const app = initializeApp(firebaseConfig);
+      return { fs, db: fs.getFirestore(app) };
+    })();
+  }
+  return fbPromise;
+}
+
+// ---------------- 공용 도구 ----------------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const opts = (list, selected = '') =>
+  '<option value="">선택</option>' + list.map((v) => `<option value="${esc(v)}"${v === selected ? ' selected' : ''}>${esc(v)}</option>`).join('');
+function toInt(v) {
+  const s = String(v).trim();
+  if (!/^\d+$/.test(s)) return null;
+  return parseInt(s, 10);
+}
+function inRange(v, [lo, hi]) { return v !== null && v >= lo && v <= hi; }
+
+// ---------------- 학생 화면 ----------------
+function renderStudent() {
+  app.innerHTML = `
+    <h1>수능 가채점 결과 입력</h1>
+    <p class="sub">가채점 결과를 입력하고 <strong>제출</strong>을 누르세요. 이미 제출했더라도 다시 제출하면 내용이 새로 저장됩니다.</p>
+    <form id="form" novalidate>
+      <section class="card">
+        <h2>내 정보</h2>
+        <div class="grid">
+          <div><label for="grade">학년</label><select id="grade" name="grade"><option value="3" selected>3</option></select></div>
+          <div><label for="cls">반</label><input id="cls" name="cls" inputmode="numeric" placeholder="예: 1"></div>
+          <div><label for="num">번호</label><input id="num" name="num" inputmode="numeric" placeholder="예: 1"></div>
+          <div><label for="name">이름</label><input id="name" name="name" placeholder="홍길동"></div>
+        </div>
+        <div class="err" data-err="info"></div>
+      </section>
+
+      <section class="card">
+        <h2>국어 · 수학 · 영어 · 한국사</h2>
+        <div class="grid">
+          <div><label for="hist">한국사 원점수 (0~50)</label><input id="hist" name="hist" inputmode="numeric"><div class="err" data-err="hist"></div></div>
+          <div><label for="kor_sub">국어 선택과목</label><select id="kor_sub" name="kor_sub">${opts(KOR_SUBJECTS)}</select><div class="err" data-err="kor_sub"></div></div>
+          <div><label for="kor">국어 원점수 (0~100)</label><input id="kor" name="kor" inputmode="numeric"><div class="err" data-err="kor"></div></div>
+          <div><label for="math_sub">수학 선택과목</label><select id="math_sub" name="math_sub">${opts(MATH_SUBJECTS)}</select><div class="err" data-err="math_sub"></div></div>
+          <div><label for="math">수학 원점수 (0~100)</label><input id="math" name="math" inputmode="numeric"><div class="err" data-err="math"></div></div>
+          <div><label for="eng">영어 원점수 (0~100)</label><input id="eng" name="eng" inputmode="numeric"><div class="err" data-err="eng"></div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>탐구 영역 (두 과목)</h2>
+        <div class="grid">
+          <div><label for="inq1_sub">탐구1 과목</label><select id="inq1_sub" name="inq1_sub">${opts(INQUIRY_SUBJECTS)}</select><div class="err" data-err="inq1_sub"></div></div>
+          <div><label for="inq1">탐구1 원점수 (0~50)</label><input id="inq1" name="inq1" inputmode="numeric"><div class="err" data-err="inq1"></div></div>
+          <div><label for="inq2_sub">탐구2 과목</label><select id="inq2_sub" name="inq2_sub">${opts(INQUIRY_SUBJECTS)}</select><div class="err" data-err="inq2_sub"></div></div>
+          <div><label for="inq2">탐구2 원점수 (0~50)</label><input id="inq2" name="inq2" inputmode="numeric"><div class="err" data-err="inq2"></div></div>
+        </div>
+        <div class="err" data-err="inq"></div>
+      </section>
+
+      <section class="card">
+        <h2>제2외국어 · 한문 <span class="hint">(응시한 경우만)</span></h2>
+        <div class="grid">
+          <div><label for="fl_sub">제2외국어 과목</label><select id="fl_sub" name="fl_sub">${opts(FOREIGN_SUBJECTS)}</select><div class="err" data-err="fl_sub"></div></div>
+          <div><label for="fl">원점수 (0~50)</label><input id="fl" name="fl" inputmode="numeric"><div class="err" data-err="fl"></div></div>
+        </div>
+      </section>
+
+      <div class="row-actions">
+        <span class="status" id="status"></span>
+        <button type="submit" id="submit">제출하기</button>
+      </div>
+    </form>`;
+
+  const form = document.getElementById('form');
+  form.addEventListener('submit', (e) => { e.preventDefault(); submitStudent(); });
+}
+
+function readStudent() {
+  const f = (id) => document.getElementById(id).value.trim();
+  return {
+    grade: f('grade'), cls: f('cls'), num: f('num'), name: f('name'),
+    hist: f('hist'), kor_sub: f('kor_sub'), kor: f('kor'),
+    math_sub: f('math_sub'), math: f('math'), eng: f('eng'),
+    inq1_sub: f('inq1_sub'), inq1: f('inq1'), inq2_sub: f('inq2_sub'), inq2: f('inq2'),
+    fl_sub: f('fl_sub'), fl: f('fl')
+  };
+}
+
+function validateStudent(v) {
+  const errs = {};
+  const need = (k, msg) => { if (!v[k]) errs[k] = msg; };
+  const clsN = toInt(v.cls), numN = toInt(v.num);
+  if (!clsN || clsN < 1) errs.info = '반을 숫자로 입력하세요.';
+  else if (!numN || numN < 1) errs.info = '번호를 숫자로 입력하세요.';
+  else if (!v.name) errs.info = '이름을 입력하세요.';
+
+  const score = (k, range, msg) => {
+    const n = toInt(v[k]);
+    if (n === null || !inRange(n, range)) errs[k] = msg;
+    return n;
+  };
+  const hist = score('hist', RANGE.hist, '0~50 사이 숫자');
+  need('kor_sub', '선택과목을 고르세요.');
+  const kor = score('kor', RANGE.kor, '0~100 사이 숫자');
+  need('math_sub', '선택과목을 고르세요.');
+  const math = score('math', RANGE.math, '0~100 사이 숫자');
+  const eng = score('eng', RANGE.eng, '0~100 사이 숫자');
+  need('inq1_sub', '과목을 고르세요.');
+  need('inq2_sub', '과목을 고르세요.');
+  const inq1 = score('inq1', RANGE.inq, '0~50 사이 숫자');
+  const inq2 = score('inq2', RANGE.inq, '0~50 사이 숫자');
+  if (v.inq1_sub && v.inq2_sub && v.inq1_sub === v.inq2_sub) errs.inq = '탐구 과목 두 개는 서로 달라야 합니다.';
+
+  // 제2외국어는 선택 사항: 과목이나 점수를 하나라도 적었으면 둘 다 맞아야 한다
+  let fl = null;
+  if (v.fl_sub || v.fl) {
+    if (!v.fl_sub) errs.fl_sub = '과목을 고르세요.';
+    const n = score('fl', RANGE.fl, '0~50 사이 숫자');
+    if (!errs.fl) fl = n;
+  }
+  return { errs, values: { grade: 3, cls: clsN, num: numN, name: v.name, hist, kor_sub: v.kor_sub, kor, math_sub: v.math_sub, math, eng, inq1_sub: v.inq1_sub, inq1, inq2_sub: v.inq2_sub, inq2, fl_sub: v.fl_sub || '', fl } };
+}
+
+function showErrors(errs) {
+  document.querySelectorAll('[data-err]').forEach((el) => { el.textContent = ''; });
+  document.querySelectorAll('input.bad, select.bad').forEach((el) => el.classList.remove('bad'));
+  Object.entries(errs).forEach(([k, msg]) => {
+    const el = document.querySelector(`[data-err="${k}"]`);
+    if (el) el.textContent = msg;
+    const input = document.getElementById(k);
+    if (input) input.classList.add('bad');
+  });
+  const first = Object.keys(errs)[0];
+  if (first) {
+    const target = document.getElementById(first) || document.querySelector(`[data-err="${first}"]`);
+    if (target && target.focus) target.focus();
+  }
+}
+
+async function submitStudent() {
+  const status = document.getElementById('status');
+  const submitBtn = document.getElementById('submit');
+  const { errs, values } = validateStudent(readStudent());
+  showErrors(errs);
+  if (Object.keys(errs).length) { status.textContent = '빨간 칸을 확인하세요.'; return; }
+
+  // 같은 학년·반·번호는 한 줄로 저장하므로 다시 제출하면 덮어쓴다
+  const id = `${values.grade}-${values.cls}-${values.num}`;
+  submitBtn.disabled = true;
+  status.textContent = '저장하는 중...';
+  try {
+    const { fs, db } = await loadFirebase();
+    await fs.setDoc(fs.doc(db, COLLECTION, id), { ...values, id, submittedAt: new Date().toISOString() });
+    renderDone(values);
+  } catch (err) {
+    console.error(err);
+    submitBtn.disabled = false;
+    status.textContent = '저장하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러 주세요.';
+  }
+}
+
+function renderDone(v) {
+  app.innerHTML = `
+    <div class="card done">
+      <p><strong>제출되었습니다.</strong></p>
+      <p>${esc(v.cls)}반 ${esc(v.num)}번 ${esc(v.name)} 학생의 가채점 결과가 저장되었습니다.</p>
+      <p class="hint">수정할 내용이 있으면 이 링크로 다시 들어와 처음부터 다시 제출하면 됩니다.</p>
+      <button class="ghost" id="again">다시 입력</button>
+    </div>`;
+  document.getElementById('again').addEventListener('click', renderStudent);
+}
+
+// ---------------- 선생님 화면 ----------------
+const SCHOOL_KEY = 'csatSchoolName';
+function getSchoolName() {
+  try { return localStorage.getItem(SCHOOL_KEY) || ''; } catch (e) { return ''; }
+}
+function setSchoolName(v) {
+  try { localStorage.setItem(SCHOOL_KEY, v); } catch (e) { /* 저장 못 하면 그냥 넘어간다 */ }
+}
+
+// 교육청 양식 열 순서 그대로 (고등학교, 학년, 반, 번호, 이름, 한국사, 국어 영역, 국어 총점, 수학 영역, 수학 총점, 영어, 탐구1 과목, 탐구1 점수, 탐구2 과목, 탐구2 점수, 제2외국어 과목, 점수)
+const EXCEL_HEADER = ['고등학교', '학년', '반', '번호', '이름', '한국사 원점수', '국어 영역', '국어 원점수총점', '수학 영역', '수학 원점수총점', '영어 원점수',
+  '탐구영역1 과목명', '탐구영역1 원점수', '탐구영역2 과목명', '탐구영역2 원점수', '제2외국어 과목명', '제2외국어 원점수'];
+
+function toExcelRow(r, school) {
+  return [school, r.grade, r.cls, r.num, r.name, r.hist, r.kor_sub, r.kor, r.math_sub, r.math, r.eng,
+    r.inq1_sub, r.inq1, r.inq2_sub, r.inq2, r.fl_sub || '', r.fl ?? ''];
+}
+
+function sortRows(rows) {
+  return rows.slice().sort((a, b) => (a.cls - b.cls) || (a.num - b.num));
+}
+
+function downloadExcel(rows) {
+  const school = getSchoolName().trim();
+  const data = [EXCEL_HEADER, ...sortRows(rows).map((r) => toExcelRow(r, school))];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = EXCEL_HEADER.map((h) => ({ wch: Math.max(8, h.length + 2) }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '가채점');
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+  XLSX.writeFile(wb, `가채점_${school || '학교'}_${stamp}.xlsx`);
+}
+
+function renderTeacher() {
+  app.innerHTML = `
+    <h1>수능 가채점 수합 (선생님)</h1>
+    <p class="sub">학생이 제출한 결과를 실시간으로 보여 줍니다. 엑셀은 교육청 양식의 열 순서로 받습니다.</p>
+    <section class="card">
+      <div class="grid">
+        <div><label for="school">고등학교 이름 (엑셀 첫 열)</label><input id="school" value="${esc(getSchoolName())}" placeholder="예: 광주교육고등학교"></div>
+      </div>
+    </section>
+    <section class="card">
+      <div class="row-actions">
+        <span class="status" id="count">불러오는 중...</span>
+        <button id="dl" disabled>엑셀 내려받기</button>
+      </div>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead><tr><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어</th><th>수학 과목</th><th>수학</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="12" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
+        </table>
+      </div>
+    </section>`;
+
+  let current = [];
+  const school = document.getElementById('school');
+  school.addEventListener('change', () => setSchoolName(school.value.trim()));
+  const dl = document.getElementById('dl');
+  dl.addEventListener('click', () => downloadExcel(current));
+
+  loadFirebase().then(({ fs, db }) => {
+    fs.onSnapshot(fs.collection(db, COLLECTION), (snap) => {
+      current = snap.docs.map((d) => d.data());
+      drawRows(current);
+    }, (err) => {
+      console.error(err);
+      document.getElementById('count').textContent = '불러오지 못했습니다. 보안 규칙을 확인하세요.';
+    });
+  }).catch((err) => {
+    console.error(err);
+    document.getElementById('count').textContent = '저장소에 연결하지 못했습니다.';
+  });
+
+  function drawRows(rows) {
+    document.getElementById('count').textContent = `제출 ${rows.length}명`;
+    dl.disabled = rows.length === 0;
+    const body = document.getElementById('rows');
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="12" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
+      return;
+    }
+    body.innerHTML = sortRows(rows).map((r) => `<tr>
+      <td>${esc(r.cls)}</td><td>${esc(r.num)}</td><td>${esc(r.name)}</td><td>${esc(r.hist)}</td>
+      <td>${esc(r.kor_sub)}</td><td>${esc(r.kor)}</td><td>${esc(r.math_sub)}</td><td>${esc(r.math)}</td><td>${esc(r.eng)}</td>
+      <td>${esc(r.inq1_sub)} ${esc(r.inq1)}</td><td>${esc(r.inq2_sub)} ${esc(r.inq2)}</td><td>${r.fl_sub ? esc(r.fl_sub) + ' ' + esc(r.fl) : ''}</td>
+    </tr>`).join('');
+  }
+}
+
+// ---------------- 시작 ----------------
+if (isTeacher) renderTeacher();
+else renderStudent();
+</script>
+</body>
+</html>
