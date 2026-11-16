@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수능 가채점 제출 현황 (담임용)</title>
+<style>
+  :root { --ink:#1d2433; --muted:#667085; --line:#d0d5dd; --bg:#f7f8fa; --card:#ffffff; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink:#e6e9f0; --muted:#9aa3b2; --line:#3a4150; --bg:#15181f; --card:#1d222c; }
+  }
+  :root[data-theme="dark"] { --ink:#e6e9f0; --muted:#9aa3b2; --line:#3a4150; --bg:#15181f; --card:#1d222c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 980px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.35rem; margin: 8px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 0.95rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .class-row { margin-bottom: 14px; }
+  .class-label { font-weight: 600; margin-bottom: 6px; }
+  .hint { color: var(--muted); font-size: 0.88rem; }
+  .cells { display: flex; flex-wrap: wrap; gap: 4px; }
+  .cell { width: 34px; height: 30px; line-height: 30px; text-align: center; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--line); color: var(--muted); }
+  .cell.submitted { background: #ffffff; color: #1d2433; border-color: #d0d5dd; }
+  .cell.absent { background: #eceef2; color: #667085; border-color: #d0d5dd; }
+  .cell.missing { background: #fff1a8; color: #6b5300; border-color: #e6c84a; font-weight: 600; }
+  .legend { margin-top: 8px; }
+  .status { color: var(--muted); font-size: 0.9rem; margin-bottom: 10px; }
+  @media (max-width: 480px) { main { padding: 12px; } .cell { width: 28px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>수능 가채점 제출 현황</h1>
+  <p class="sub">제출 여부만 보여 줍니다. 이름과 점수는 나타나지 않습니다. 새로고침하지 않아도 제출되면 자동으로 바뀝니다.</p>
+  <div class="status" id="status">불러오는 중...</div>
+  <section class="card" id="grid"></section>
+  <p class="hint legend">흰색: 제출 · 연한 회색: 미응시 · 노랑: 미제출</p>
+</main>
+
+<script type="module">
+// 같은 Firebase 프로젝트를 쓴다. 이 페이지는 로그인 없이 csatStatus 기록(반·번호·응시 여부)만 읽는다.
+const firebaseConfig = {
+  apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
+  authDomain: "su3su3-e2669.firebaseapp.com",
+  projectId: "su3su3-e2669",
+  storageBucket: "su3su3-e2669.firebasestorage.app",
+  messagingSenderId: "989821997199",
+  appId: "1:989821997199:web:da319f053c098ea30560fa"
+};
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+const CLASS_COUNT = 8;
+const NUM_MAX = 30;
+
+const statusEl = document.getElementById('status');
+const gridEl = document.getElementById('grid');
+
+function draw(docs) {
+  const byKey = new Map();
+  docs.forEach((d) => byKey.set(`${d.cls}-${d.num}`, d));
+  let submitted = 0, absent = 0;
+  let html = '';
+  for (let c = 1; c <= CLASS_COUNT; c++) {
+    let missing = 0;
+    let cells = '';
+    for (let n = 1; n <= NUM_MAX; n++) {
+      const d = byKey.get(`${c}-${n}`);
+      let cls = 'cell missing', title = `${n}번 미제출`;
+      if (d) {
+        if (d.attended === false) { cls = 'cell absent'; title = `${n}번 미응시`; absent++; }
+        else { cls = 'cell submitted'; title = `${n}번 제출`; submitted++; }
+      } else missing++;
+      cells += `<span class="${cls}" title="${title}">${n}</span>`;
+    }
+    html += `<div class="class-row"><div class="class-label">${c}반 <span class="hint">미제출 ${missing}명</span></div>`
+      + `<div class="cells">${cells}</div></div>`;
+  }
+  gridEl.innerHTML = html;
+  const total = CLASS_COUNT * NUM_MAX;
+  const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  statusEl.textContent = `제출 ${submitted}명 · 미응시 ${absent}명 · 미제출 ${total - submitted - absent}명 (전체 ${total}명 기준) · 마지막 갱신 ${time}`;
+}
+
+(async () => {
+  try {
+    const [{ initializeApp }, fs] = await Promise.all([
+      import(`${SDK}/firebase-app.js`),
+      import(`${SDK}/firebase-firestore.js`)
+    ]);
+    const db = fs.getFirestore(initializeApp(firebaseConfig));
+    fs.onSnapshot(fs.collection(db, 'csatStatus'), (snap) => {
+      draw(snap.docs.map((d) => d.data()));
+    }, (err) => {
+      console.error(err);
+      statusEl.textContent = '불러오지 못했습니다. 보안 규칙을 확인하세요.';
+    });
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = '저장소에 연결하지 못했습니다.';
+  }
+})();
+</script>
+</body>
+</html>

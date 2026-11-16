@@ -321,6 +321,8 @@ async function submitStudent() {
   try {
     const { fs, db } = await loadFirebase();
     await fs.setDoc(fs.doc(db, COLLECTION, id), { ...values, id, submittedAt: new Date().toISOString() });
+    // 담임용 현황 페이지는 이름과 점수 없이 반·번호·응시 여부만 본다 (누구나 읽을 수 있는 별도 기록)
+    await fs.setDoc(fs.doc(db, 'csatStatus', `${values.cls}-${values.num}`), { cls: values.cls, num: values.num, attended: values.attended, updatedAt: new Date().toISOString() });
     renderDone(values);
   } catch (err) {
     console.error(err);
@@ -488,6 +490,7 @@ function renderTeacherDashboard(fb) {
     <section class="card">
       <h2>학생에게 보낼 입력 링크</h2>
       <p class="hint"><a href="csat-collect.html" target="_blank" rel="noopener">학생용 입력 화면 열기</a> (학생에게는 이 주소를 보냅니다)</p>
+      <p class="hint"><a href="csat-status.html" target="_blank" rel="noopener">담임용 제출 현황 페이지 열기</a> (담임 선생님께는 이 주소를 보냅니다. 이름과 점수는 나오지 않습니다)</p>
     </section>
     <section class="card">
       <div class="grid">
