@@ -93,10 +93,18 @@ export async function prepareDocxForView(arrayBuffer) {
   const docFile = z.file('word/document.xml');
   if (!docFile) return arrayBuffer;
   const xml = await docFile.async('string');
-  if (xml.indexOf('<m:oMath') < 0) return arrayBuffer;
+  const hasMath = xml.indexOf('<m:oMath') >= 0;
+  const hasWhite = /w:color w:val="ffffff"/i.test(xml);
+  if (!hasMath && !hasWhite) return arrayBuffer;
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  // 흰색 글자(배경과 같은 색)는 화면에서 보이지 않으므로 버린다 (Word에서도 안 보이는 글자)
+  Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 'color')).forEach((c) => {
+    if ((c.getAttributeNS(W_NS, 'val') || '').toLowerCase() !== 'ffffff') return;
+    const run = c.parentNode && c.parentNode.parentNode;
+    if (run && run.localName === 'r' && run.parentNode) run.parentNode.removeChild(run);
+  });
   // 수식 덩어리마다 글로 바꾼 글자 칸을 넣는다. 가운데 맞춤 수식(oMathPara)을 먼저 처리한다.
-  Array.prototype.slice.call(doc.getElementsByTagNameNS(M_NS, 'oMathPara')).forEach((para) => {
+  if (hasMath) Array.prototype.slice.call(doc.getElementsByTagNameNS(M_NS, 'oMathPara')).forEach((para) => {
     const text = kids(para, 'oMath').map(ommlText).join('');
     const parent = para.parentNode;
     if (!parent) return;
