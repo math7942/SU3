@@ -79,6 +79,7 @@
   .comment-card.flash{background:#fff3b0}
   .comment-card .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px;border-left:2px solid var(--line);padding-left:6px;max-height:4.8em;overflow:hidden}
   .comment-card .ct{display:block;font-size:11px;color:var(--sub);margin-top:4px}
+  .comment-card .cdel{display:block;margin-top:4px;background:none;border:0;padding:0;font-size:12px;color:#b91c1c;cursor:pointer;text-decoration:underline}
   .cq{color:var(--sub);font-size:11.5px;font-style:italic;margin-bottom:4px}
   .comment-empty{color:#9ca3af;font-size:13px}
   @media (max-width:680px){
@@ -448,9 +449,36 @@ async function getCommentsOnce(fileId){
   list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
   return list;
 }
+// 이 브라우저에서 쓴 의견 번호. 삭제 버튼은 여기 있는 의견에만 보인다 (로그인이 없어서 작성자를 이 방법으로 구분한다)
+const MY_COMMENTS_KEY = 'docFeedbackMyComments';
+function myCommentIds(){
+  try{ var ids = JSON.parse(localStorage.getItem(MY_COMMENTS_KEY) || '[]'); return Array.isArray(ids) ? ids : []; }
+  catch(e){ return []; }
+}
+function rememberMyComment(id){
+  try{
+    var ids = myCommentIds().filter(function(x){ return x !== id; });
+    ids.push(id);
+    localStorage.setItem(MY_COMMENTS_KEY, JSON.stringify(ids.slice(-500)));
+  }catch(e){}
+}
+function forgetMyComment(id){
+  try{ localStorage.setItem(MY_COMMENTS_KEY, JSON.stringify(myCommentIds().filter(function(x){ return x !== id; }))); }
+  catch(e){}
+}
+function isMyComment(id){ return myCommentIds().indexOf(id) >= 0; }
 async function addComment(sessionId, fileId, data){
   const { fs, db } = await loadFirebase();
-  await fs.setDoc(fs.doc(fs.collection(db, COMMENTS)), Object.assign({ sessionId, fileId, createdAt: new Date().toISOString() }, data));
+  const ref = fs.doc(fs.collection(db, COMMENTS));
+  // 먼저 기억해 둔다: 저장이 시작되자마자 목록이 그려지므로, 저장이 끝난 뒤에 기억하면 삭제 버튼이 안 보인다
+  rememberMyComment(ref.id);
+  await fs.setDoc(ref, Object.assign({ sessionId, fileId, createdAt: new Date().toISOString() }, data));
+}
+async function deleteMyComment(commentId){
+  if(!confirm('이 의견을 지울까요? 지우면 되돌릴 수 없습니다.')) return;
+  const { fs, db } = await loadFirebase();
+  await fs.deleteDoc(fs.doc(db, COMMENTS, commentId));
+  forgetMyComment(commentId);
 }
 async function getFileArrayBuffer(fileEntry){
   const { fs, db } = await loadFirebase();
@@ -1119,6 +1147,17 @@ function renderCommentRail(row, fileId, comments){
       var q = c.quote ? ('<div class="cq">"' + esc(c.quote) + '"</div>') : (c.kind === 'pin' ? ('<div class="cq">' + esc(c.page) + '페이지 표시 위치</div>') : '');
       var tag = c.item ? '<div class="ctag">' + esc(itemLabelOf(c)) + ' · ' + esc(c.stance || '') + '</div>' : '';
       card.innerHTML = q + tag + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span>';
+      if(isMyComment(c.id)){
+        var del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'cdel';
+        del.textContent = '삭제';
+        del.addEventListener('click', function(e){
+          e.stopPropagation();
+          deleteMyComment(c.id).catch(function(err){ alert('지우지 못했습니다: ' + err.message); });
+        });
+        card.appendChild(del);
+      }
       rail.appendChild(card);
     });
   }
