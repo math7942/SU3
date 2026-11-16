@@ -1002,7 +1002,6 @@ function renderFileList(){
       '<div class="file-body">' +
         '<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">' +
           '<h3 style="margin:0">' + (isSummaryCopy(f) ? '의견 종합 (검토 의견 모음)' : '의견 남기기') + '</h3>' +
-          (isReviewerCopy(f) ? '<button class="review-btn" data-act="review-word">검토 완료 · 문항검토지 받기</button>' : '') +
           '<button class="small ghost" data-act="comments-word">' + (isSummaryCopy(f) ? '의견 모음 워드 받기' : '피드백 다운로드') + '</button>' +
         '</div>' +
         (isSummaryCopy(f)
@@ -1014,7 +1013,7 @@ function renderFileList(){
             '<div class="comment-rail"></div>' +
           '</div>' +
         '</div>' +
-        (isReviewerCopy(f) ? '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="review-btn" data-act="review-word-bottom">검토 완료 · 문항검토지 받기</button></div>' : '') +
+        (isReviewerCopy(f) ? '<div class="row" style="justify-content:flex-end;margin-top:10px"><button class="review-btn" data-act="review-word">검토 완료 · 문항검토지 받기</button></div>' : '') +
       '</div>' +
     '</div>';
   }).join('');
@@ -1051,8 +1050,6 @@ function renderFileList(){
     if(cw) cw.addEventListener('click', function(){ downloadFileComments(fileId); });
     var rw = row.querySelector('[data-act="review-word"]');
     if(rw) rw.addEventListener('click', function(){ downloadReviewDoc(fileId); });
-    var rwb = row.querySelector('[data-act="review-word-bottom"]');
-    if(rwb) rwb.addEventListener('click', function(){ downloadReviewDoc(fileId); });
     var del = row.querySelector('[data-act=delete]');
     if(del) del.addEventListener('click', function(){ deleteFile(fileId); });
   });
@@ -1992,7 +1989,9 @@ function hwpxBlockData(meta, comments){
 function hwpxFillBlock(unit, blk, chk){
   const H = '<hp:t>성명 / 1번 문항</hp:t>';
   if(unit.split(H).length !== 2) throw new Error('양식의 머리글을 찾지 못했습니다.');
-  let u = unit.replace(H, '<hp:t>성명 / ' + hwpxEsc(blk.label) + ' 문항</hp:t>');
+  // 양식의 샘플 문구("의견 없으면, 미작성")는 지우고, 의견 칸은 내용이 있을 때만 채운다
+  let u = unit.replace(/<hp:t>\s*의견 없으면, 미작성\s*<\/hp:t>/g, '<hp:t></hp:t>');
+  u = u.replace(H, '<hp:t>성명 / ' + hwpxEsc(blk.label) + ' 문항</hp:t>');
   const YES = '<hp:t>□ 적합</hp:t>', NO = '<hp:t>□ 보완</hp:t>';
   const positions = function(needle){
     const out = []; let i = u.indexOf(needle);
