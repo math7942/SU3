@@ -218,6 +218,7 @@
 
 <script type="module">
 import { convertHwpxToDocx } from './hwpx-to-docx.js';
+import { prepareDocxForView } from './math-text.js';
 // ---------------- Firebase ----------------
 // 이 사이트의 다른 "함께 보는 기록" 도구(명예의 전당 등)와 같은 프로젝트를 재사용한다.
 // (assets/firebase-store.js 참고) apiKey는 비밀값이 아니라 공개되어도 되는 클라이언트 식별자이며,
@@ -1035,7 +1036,7 @@ async function openFilePanel(row, fileId){
       if(isPdf(meta.filename)){
         html = await renderPdfToHtml(buf);
       } else {
-        var result = await mammoth.convertToHtml({ arrayBuffer: buf });
+        var result = await mammoth.convertToHtml({ arrayBuffer: await prepareDocxForView(buf) });
         html = result.value || '<p class="empty">(내용이 비어 있습니다)</p>';
       }
       docHtmlCache[fileId] = html;
@@ -1572,7 +1573,8 @@ function addCommentNode(commentsDoc, id, text, iso){
   commentsDoc.documentElement.appendChild(c);
 }
 async function buildCommentedDocx(meta, comments){
-  var buf = await getFileArrayBuffer(meta);
+  // 화면과 같은 글(수식을 글자로 바꾼 것)을 기준으로 의견 위치를 찾는다
+  var buf = await prepareDocxForView(await getFileArrayBuffer(meta));
   var zip = await JSZip.loadAsync(buf);
   var docDom = parseXml(await zip.file('word/document.xml').async('string'));
   var paras = Array.prototype.slice.call(docDom.getElementsByTagNameNS(W_NS, 'p'));
@@ -2084,7 +2086,7 @@ async function buildPrintInner(){
       continue;
     }
     var comments = await getCommentsOnce(f.fileId);
-    var html = (await mammoth.convertToHtml({ arrayBuffer: await getFileArrayBuffer(f) })).value;
+    var html = (await mammoth.convertToHtml({ arrayBuffer: await prepareDocxForView(await getFileArrayBuffer(f)) })).value;
     var box = document.createElement('div');
     box.innerHTML = html;
     var groups = {};
