@@ -2,6 +2,7 @@
 // 옮기는 것: 글자 모양(굵게·기울임·크기·색), 문단 정렬, 표(병합·칸별 테두리·배경색), 그림.
 // 옮기지 못했거나 모양이 달라질 수 있는 것은 경고 목록으로 돌려준다 (떠 있는 개체, 지원하지 않는 개체, 좁은 칸의 긴 글).
 // JSZip(전역)을 쓴다.
+import { hwpScriptToText } from './math-text.js';
 
 const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
 const NS_HH = 'http://www.hancom.co.kr/hwpml/2011/head';
@@ -12,7 +13,7 @@ const EMU = 127; // 1 HWPUNIT = 1/7200 인치 = 127 EMU
 const JC = { JUSTIFY: 'both', LEFT: 'left', CENTER: 'center', RIGHT: 'right', DISTRIBUTE: 'both' };
 const DASH = { DASH: 'dashed', DOT: 'dotted', DOUBLE_SLIM: 'double', DOUBLE: 'double' };
 const UNSUPPORTED = {
-  rect: '글상자', container: '묶음 개체', equation: '수식', ole: 'OLE 개체', line: '선', ellipse: '타원',
+  rect: '글상자', container: '묶음 개체', ole: 'OLE 개체', line: '선', ellipse: '타원',
   arc: '호', polygon: '다각형', curve: '곡선', textart: '글맵시', video: '동영상', chart: '차트'
 };
 const IMG_TYPES = { png: 'image/png', bmp: 'image/bmp', jpeg: 'image/jpeg', gif: 'image/gif' };
@@ -221,6 +222,14 @@ class Converter {
           this.checkFloat(child, '그림');
           const d = this.drawing(child);
           if (d) runs.push(d);
+        } else if (tag === 'equation') {
+          // 한글 수식은 스크립트를 글자로 바꿔 넣는다 (수식 모양 그대로는 아니다)
+          const script = kid(child, 'script');
+          const text = hwpScriptToText(script ? script.textContent : '');
+          if (text) buf += text;
+          if (!this.warnings.some((w) => w.kind === 'equation')) {
+            this.warn('equation', '한글 수식을 글자로 바꿔 넣었습니다. 수식 모양은 원본과 다를 수 있습니다');
+          }
         } else if (UNSUPPORTED[tag]) {
           flush();
           this.warn('unsupported', UNSUPPORTED[tag] + ': 이 개체는 변환하지 못했습니다');
