@@ -10,6 +10,9 @@ const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const EQ_BASE = 0xE000;   // 수식 표시 글자의 시작 (개인 영역 문자)
 const EQ_MAX = 2048;      // 0xE000 ~ 0xE7FF (기호 글꼴의 체크박스 글자와 겹치지 않게)
 const EQ_CHAR = /[\uE000-\uE7FF]/g;
+// 기호 글꼴의 체크박스 글자(U+F0xx)를 보이는 글자로 바꾼다 (예: 체크된 상자 U+F0FE → ☑)
+const SYMBOL_CHARS = { '\uF0FE': '☑', '\uF0FD': '☒', '\uF0FC': '✓', '\uF06E': '■', '\uF06F': '□', '\uF0A8': '□', '\uF0A7': '■' };
+export function mapSymbols(s) { return String(s).replace(/[\uF000-\uF0FF]/g, (ch) => SYMBOL_CHARS[ch] || '□'); }
 
 const SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '+': '⁺', '-': '⁻', '−': '⁻', n: 'ⁿ' };
 const SUB = { '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄', '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉', '+': '₊', '-': '₋', '−': '₋' };
@@ -191,13 +194,18 @@ export async function prepareDocxForView(arrayBuffer) {
   const xml = await docFile.async('string');
   const hasMath = xml.indexOf('<m:oMath') >= 0;
   const hasWhite = /w:color w:val="ffffff"/i.test(xml);
-  if (!hasMath && !hasWhite) return { buffer: arrayBuffer, eqs: [] };
+  const hasSymbols = /[\uF000-\uF0FF]/.test(xml);
+  if (!hasMath && !hasWhite && !hasSymbols) return { buffer: arrayBuffer, eqs: [] };
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   // 흰색 글자(배경과 같은 색)는 화면에서 보이지 않으므로 버린다
   Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 'color')).forEach((c) => {
     if ((c.getAttributeNS(W_NS, 'val') || '').toLowerCase() !== 'ffffff') return;
     const run = c.parentNode && c.parentNode.parentNode;
     if (run && run.localName === 'r' && run.parentNode) run.parentNode.removeChild(run);
+  });
+  // 체크박스 같은 기호 글자를 보이는 글자로 바꾼다
+  Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 't')).forEach((t) => {
+    if (/[\uF000-\uF0FF]/.test(t.textContent)) t.textContent = mapSymbols(t.textContent);
   });
   const eqs = [];
   if (hasMath) {
