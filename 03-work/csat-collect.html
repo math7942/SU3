@@ -81,7 +81,8 @@ const CLASSES = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 // 점수 범위 (원점수)
 // 국어·수학은 공통 원점수와 선택 원점수를 각각 받는다. 총점은 둘을 더한 값이다.
-const RANGE = { hist: [0, 50], common: [0, 100], elective: [0, 100], eng: [0, 100], inq: [0, 50], fl: [0, 50] };
+// 과목별 만점: 국어 공통 76 + 선택 24, 수학 공통 74 + 선택 26 (두 과목 모두 총점 100)
+const RANGE = { hist: [0, 50], korCommon: [0, 76], korElective: [0, 24], mathCommon: [0, 74], mathElective: [0, 26], eng: [0, 100], inq: [0, 50], fl: [0, 50] };
 
 // 대교협 양식의 과목 이름 (교육청 양식과 다른 표기만 적는다)
 const KEDI_NAMES = { '언어와매체': '언어와 매체', '생활과윤리': '생활과 윤리', '사회문화': '사회·문화', '한문': '한문 I' };
@@ -138,13 +139,13 @@ function renderStudent() {
         <h2>국어 · 수학 · 영어 · 한국사</h2>
         <div class="subj-row">
           <div><label for="kor_sub">국어 선택과목</label><select id="kor_sub" name="kor_sub">${opts(KOR_SUBJECTS)}</select><div class="err" data-err="kor_sub"></div></div>
-          <div><label for="kor_common">국어 공통 원점수 (0~100)</label><input id="kor_common" name="kor_common" inputmode="numeric"><div class="err" data-err="kor_common"></div></div>
-          <div><label for="kor_elective">국어 선택 원점수 (0~100)</label><input id="kor_elective" name="kor_elective" inputmode="numeric"><div class="err" data-err="kor_elective"></div></div>
+          <div><label for="kor_common">국어 공통 원점수 (0~76)</label><input id="kor_common" name="kor_common" inputmode="numeric"><div class="err" data-err="kor_common"></div></div>
+          <div><label for="kor_elective">국어 선택 원점수 (0~24)</label><input id="kor_elective" name="kor_elective" inputmode="numeric"><div class="err" data-err="kor_elective"></div></div>
         </div>
         <div class="subj-row">
           <div><label for="math_sub">수학 선택과목</label><select id="math_sub" name="math_sub">${opts(MATH_SUBJECTS)}</select><div class="err" data-err="math_sub"></div></div>
-          <div><label for="math_common">수학 공통 원점수 (0~100)</label><input id="math_common" name="math_common" inputmode="numeric"><div class="err" data-err="math_common"></div></div>
-          <div><label for="math_elective">수학 선택 원점수 (0~100)</label><input id="math_elective" name="math_elective" inputmode="numeric"><div class="err" data-err="math_elective"></div></div>
+          <div><label for="math_common">수학 공통 원점수 (0~74)</label><input id="math_common" name="math_common" inputmode="numeric"><div class="err" data-err="math_common"></div></div>
+          <div><label for="math_elective">수학 선택 원점수 (0~26)</label><input id="math_elective" name="math_elective" inputmode="numeric"><div class="err" data-err="math_elective"></div></div>
         </div>
         <div class="subj-row">
           <div><label for="eng">영어 원점수 (0~100)</label><input id="eng" name="eng" inputmode="numeric"><div class="err" data-err="eng"></div></div>
@@ -211,11 +212,11 @@ function validateStudent(v) {
   };
   const hist = score('hist', RANGE.hist, '0~50 사이 숫자');
   need('kor_sub', '선택과목을 고르세요.');
-  const korC = score('kor_common', RANGE.common, '0~100 사이 숫자');
-  const korE = score('kor_elective', RANGE.elective, '0~100 사이 숫자');
+  const korC = score('kor_common', RANGE.korCommon, '0~76 사이 숫자');
+  const korE = score('kor_elective', RANGE.korElective, '0~24 사이 숫자');
   need('math_sub', '선택과목을 고르세요.');
-  const mathC = score('math_common', RANGE.common, '0~100 사이 숫자');
-  const mathE = score('math_elective', RANGE.elective, '0~100 사이 숫자');
+  const mathC = score('math_common', RANGE.mathCommon, '0~74 사이 숫자');
+  const mathE = score('math_elective', RANGE.mathElective, '0~26 사이 숫자');
   const eng = score('eng', RANGE.eng, '0~100 사이 숫자');
   need('inq1_sub', '과목을 고르세요.');
   need('inq2_sub', '과목을 고르세요.');
