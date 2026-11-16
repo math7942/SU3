@@ -19,11 +19,13 @@
   .card h2 { font-size: 1.05rem; margin: 0 0 10px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 12px; }
   label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 3px; }
-  input, select { width: 100%; font: inherit; padding: 8px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+  /* 글자 크기 16px 이상이어야 휴대폰에서 입력할 때 화면이 확대되지 않는다 */
+  input, select { width: 100%; font: inherit; font-size: 16px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); -webkit-appearance: none; appearance: none; }
+  select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
   input.bad, select.bad { border-color: var(--bad); }
   .err { color: var(--bad); font-size: 0.88rem; min-height: 1.2em; margin-top: 4px; }
   .hint { color: var(--muted); font-size: 0.88rem; margin: 4px 0 0; }
-  button { font: inherit; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+  button { font: inherit; font-size: 16px; min-height: 44px; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
   button.ghost { background: transparent; color: var(--accent); }
   button:disabled { opacity: 0.5; cursor: default; }
   .done { text-align: center; padding: 28px 12px; }
@@ -34,7 +36,16 @@
   th { color: var(--muted); font-weight: 600; }
   .row-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .status { color: var(--muted); font-size: 0.9rem; }
-  @media (max-width: 480px) { main { padding: 12px; } }
+  /* 휴대폰 화면: 입력칸을 한 줄에 하나씩 쌓고, 버튼을 화면 너비에 맞춘다 */
+  @media (max-width: 480px) {
+    main { padding: 12px; }
+    .card { padding: 14px; }
+    .grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .row-actions { flex-direction: column; align-items: stretch; }
+    .row-actions > div, .row-actions button { width: 100%; }
+    button { width: 100%; }
+    table { font-size: 0.82rem; }
+  }
 </style>
 </head>
 <body>
@@ -63,8 +74,16 @@ const INQUIRY_SUBJECTS = ['생활과윤리', '윤리와사상', '한국지리', 
   '물리학1', '화학1', '생명과학1', '지구과학1', '물리학2', '화학2', '생명과학2', '지구과학2'];
 const FOREIGN_SUBJECTS = ['독일어', '프랑스어', '스페인어', '중국어', '일본어', '러시아어', '아랍어', '베트남어', '한문'];
 
+// 반 목록 (1반부터 8반)
+const CLASSES = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
 // 점수 범위 (원점수)
-const RANGE = { hist: [0, 50], kor: [0, 100], math: [0, 100], eng: [0, 100], inq: [0, 50], fl: [0, 50] };
+// 국어·수학은 공통 원점수와 선택 원점수를 각각 받는다. 총점은 둘을 더한 값이다.
+const RANGE = { hist: [0, 50], common: [0, 100], elective: [0, 100], eng: [0, 100], inq: [0, 50], fl: [0, 50] };
+
+// 대교협 양식의 과목 이름 (교육청 양식과 다른 표기만 적는다)
+const KEDI_NAMES = { '언어와매체': '언어와 매체', '생활과윤리': '생활과 윤리', '사회문화': '사회·문화', '한문': '한문 I' };
+const kediName = (name) => KEDI_NAMES[name] || name;
 
 const app = document.getElementById('app');
 const isTeacher = new URLSearchParams(location.search).get('mode') === 'teacher';
@@ -106,7 +125,7 @@ function renderStudent() {
         <h2>내 정보</h2>
         <div class="grid">
           <div><label for="grade">학년</label><select id="grade" name="grade"><option value="3" selected>3</option></select></div>
-          <div><label for="cls">반</label><input id="cls" name="cls" inputmode="numeric" placeholder="예: 1"></div>
+          <div><label for="cls">반</label><select id="cls" name="cls">${opts(CLASSES)}</select><div class="err" data-err="cls"></div></div>
           <div><label for="num">번호</label><input id="num" name="num" inputmode="numeric" placeholder="예: 1"></div>
           <div><label for="name">이름</label><input id="name" name="name" placeholder="홍길동"></div>
         </div>
@@ -116,12 +135,14 @@ function renderStudent() {
       <section class="card">
         <h2>국어 · 수학 · 영어 · 한국사</h2>
         <div class="grid">
-          <div><label for="hist">한국사 원점수 (0~50)</label><input id="hist" name="hist" inputmode="numeric"><div class="err" data-err="hist"></div></div>
           <div><label for="kor_sub">국어 선택과목</label><select id="kor_sub" name="kor_sub">${opts(KOR_SUBJECTS)}</select><div class="err" data-err="kor_sub"></div></div>
-          <div><label for="kor">국어 원점수 (0~100)</label><input id="kor" name="kor" inputmode="numeric"><div class="err" data-err="kor"></div></div>
+          <div><label for="kor_common">국어 공통 원점수 (0~100)</label><input id="kor_common" name="kor_common" inputmode="numeric"><div class="err" data-err="kor_common"></div></div>
+          <div><label for="kor_elective">국어 선택 원점수 (0~100)</label><input id="kor_elective" name="kor_elective" inputmode="numeric"><div class="err" data-err="kor_elective"></div></div>
           <div><label for="math_sub">수학 선택과목</label><select id="math_sub" name="math_sub">${opts(MATH_SUBJECTS)}</select><div class="err" data-err="math_sub"></div></div>
-          <div><label for="math">수학 원점수 (0~100)</label><input id="math" name="math" inputmode="numeric"><div class="err" data-err="math"></div></div>
+          <div><label for="math_common">수학 공통 원점수 (0~100)</label><input id="math_common" name="math_common" inputmode="numeric"><div class="err" data-err="math_common"></div></div>
+          <div><label for="math_elective">수학 선택 원점수 (0~100)</label><input id="math_elective" name="math_elective" inputmode="numeric"><div class="err" data-err="math_elective"></div></div>
           <div><label for="eng">영어 원점수 (0~100)</label><input id="eng" name="eng" inputmode="numeric"><div class="err" data-err="eng"></div></div>
+          <div><label for="hist">한국사 원점수 (0~50)</label><input id="hist" name="hist" inputmode="numeric"><div class="err" data-err="hist"></div></div>
         </div>
       </section>
 
@@ -158,8 +179,8 @@ function readStudent() {
   const f = (id) => document.getElementById(id).value.trim();
   return {
     grade: f('grade'), cls: f('cls'), num: f('num'), name: f('name'),
-    hist: f('hist'), kor_sub: f('kor_sub'), kor: f('kor'),
-    math_sub: f('math_sub'), math: f('math'), eng: f('eng'),
+    hist: f('hist'), kor_sub: f('kor_sub'), kor_common: f('kor_common'), kor_elective: f('kor_elective'),
+    math_sub: f('math_sub'), math_common: f('math_common'), math_elective: f('math_elective'), eng: f('eng'),
     inq1_sub: f('inq1_sub'), inq1: f('inq1'), inq2_sub: f('inq2_sub'), inq2: f('inq2'),
     fl_sub: f('fl_sub'), fl: f('fl')
   };
@@ -169,8 +190,8 @@ function validateStudent(v) {
   const errs = {};
   const need = (k, msg) => { if (!v[k]) errs[k] = msg; };
   const clsN = toInt(v.cls), numN = toInt(v.num);
-  if (!clsN || clsN < 1) errs.info = '반을 숫자로 입력하세요.';
-  else if (!numN || numN < 1) errs.info = '번호를 숫자로 입력하세요.';
+  if (!v.cls) errs.cls = '반을 고르세요.';
+  if (!numN || numN < 1) errs.info = '번호를 숫자로 입력하세요.';
   else if (!v.name) errs.info = '이름을 입력하세요.';
 
   const score = (k, range, msg) => {
@@ -180,9 +201,11 @@ function validateStudent(v) {
   };
   const hist = score('hist', RANGE.hist, '0~50 사이 숫자');
   need('kor_sub', '선택과목을 고르세요.');
-  const kor = score('kor', RANGE.kor, '0~100 사이 숫자');
+  const korC = score('kor_common', RANGE.common, '0~100 사이 숫자');
+  const korE = score('kor_elective', RANGE.elective, '0~100 사이 숫자');
   need('math_sub', '선택과목을 고르세요.');
-  const math = score('math', RANGE.math, '0~100 사이 숫자');
+  const mathC = score('math_common', RANGE.common, '0~100 사이 숫자');
+  const mathE = score('math_elective', RANGE.elective, '0~100 사이 숫자');
   const eng = score('eng', RANGE.eng, '0~100 사이 숫자');
   need('inq1_sub', '과목을 고르세요.');
   need('inq2_sub', '과목을 고르세요.');
@@ -197,7 +220,14 @@ function validateStudent(v) {
     const n = score('fl', RANGE.fl, '0~50 사이 숫자');
     if (!errs.fl) fl = n;
   }
-  return { errs, values: { grade: 3, cls: clsN, num: numN, name: v.name, hist, kor_sub: v.kor_sub, kor, math_sub: v.math_sub, math, eng, inq1_sub: v.inq1_sub, inq1, inq2_sub: v.inq2_sub, inq2, fl_sub: v.fl_sub || '', fl } };
+  // 총점은 공통과 선택을 더한 값 (두 칸 중 하나라도 틀리면 총점은 비운다)
+  const kor = korC !== null && korE !== null ? korC + korE : null;
+  const math = mathC !== null && mathE !== null ? mathC + mathE : null;
+  return { errs, values: {
+    grade: 3, cls: clsN, num: numN, name: v.name, hist,
+    kor_sub: v.kor_sub, kor_common: korC, kor_elective: korE, kor,
+    math_sub: v.math_sub, math_common: mathC, math_elective: mathE, math,
+    eng, inq1_sub: v.inq1_sub, inq1, inq2_sub: v.inq2_sub, inq2, fl_sub: v.fl_sub || '', fl } };
 }
 
 function showErrors(errs) {
@@ -257,49 +287,80 @@ function getSchoolName() {
 function setSchoolName(v) {
   try { localStorage.setItem(SCHOOL_KEY, v); } catch (e) { /* 저장 못 하면 그냥 넘어간다 */ }
 }
+const YEAR_KEY = 'csatYear';
+function getYear() {
+  try { return localStorage.getItem(YEAR_KEY) || '2026'; } catch (e) { return '2026'; }
+}
+function setYear(v) {
+  try { localStorage.setItem(YEAR_KEY, v); } catch (e) { /* 저장 못 하면 그냥 넘어간다 */ }
+}
 
 // 교육청 양식 열 순서 그대로 (고등학교, 학년, 반, 번호, 이름, 한국사, 국어 영역, 국어 총점, 수학 영역, 수학 총점, 영어, 탐구1 과목, 탐구1 점수, 탐구2 과목, 탐구2 점수, 제2외국어 과목, 점수)
-const EXCEL_HEADER = ['고등학교', '학년', '반', '번호', '이름', '한국사 원점수', '국어 영역', '국어 원점수총점', '수학 영역', '수학 원점수총점', '영어 원점수',
+const EDU_HEADER = ['고등학교', '학년', '반', '번호', '이름', '한국사 원점수', '국어 영역', '국어 원점수총점', '수학 영역', '수학 원점수총점', '영어 원점수',
   '탐구영역1 과목명', '탐구영역1 원점수', '탐구영역2 과목명', '탐구영역2 원점수', '제2외국어 과목명', '제2외국어 원점수'];
+// 대교협 양식 열 순서 그대로 (국어·수학은 공통과 선택 원점수를 따로 쓴다)
+const KEDI_HEADER = ['학년도', '학년', '반', '번호', '이름', '한국사 원점수', '국어 영역', '국어 공통원점수', '국어 선택원점수',
+  '수학 영역', '수학 공통원점수', '수학 선택원점수', '영어 원점수', '탐구영역1 과목명', '탐구영역1 원점수', '탐구영역2 과목명', '탐구영역2 원점수',
+  '제2외국어 과목명', '제2외국어 원점수'];
 
-function toExcelRow(r, school) {
+function eduRow(r, school) {
   return [school, r.grade, r.cls, r.num, r.name, r.hist, r.kor_sub, r.kor, r.math_sub, r.math, r.eng,
     r.inq1_sub, r.inq1, r.inq2_sub, r.inq2, r.fl_sub || '', r.fl ?? ''];
+}
+function kediRow(r, year) {
+  return [year, r.grade, r.cls, r.num, r.name, r.hist, kediName(r.kor_sub), r.kor_common, r.kor_elective,
+    kediName(r.math_sub), r.math_common, r.math_elective, r.eng,
+    kediName(r.inq1_sub), r.inq1, kediName(r.inq2_sub), r.inq2, kediName(r.fl_sub), r.fl ?? ''];
 }
 
 function sortRows(rows) {
   return rows.slice().sort((a, b) => (a.cls - b.cls) || (a.num - b.num));
 }
 
-function downloadExcel(rows) {
-  const school = getSchoolName().trim();
-  const data = [EXCEL_HEADER, ...sortRows(rows).map((r) => toExcelRow(r, school))];
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = EXCEL_HEADER.map((h) => ({ wch: Math.max(8, h.length + 2) }));
+function downloadWorkbook(header, rows, filename) {
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  ws['!cols'] = header.map((h) => ({ wch: Math.max(8, h.length + 2) }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '가채점');
-  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-  XLSX.writeFile(wb, `가채점_${school || '학교'}_${stamp}.xlsx`);
+  XLSX.writeFile(wb, filename);
+}
+const stampNow = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+
+function downloadEdu(rows) {
+  const school = getSchoolName().trim();
+  downloadWorkbook(EDU_HEADER, sortRows(rows).map((r) => eduRow(r, school)), `가채점_교육청_${school || '학교'}_${stampNow()}.xlsx`);
+}
+function downloadKedi(rows) {
+  const year = getYear();
+  downloadWorkbook(KEDI_HEADER, sortRows(rows).map((r) => kediRow(r, year)), `가채점_대교협_${year}_${stampNow()}.xlsx`);
 }
 
 function renderTeacher() {
   app.innerHTML = `
     <h1>수능 가채점 수합 (선생님)</h1>
-    <p class="sub">학생이 제출한 결과를 실시간으로 보여 줍니다. 엑셀은 교육청 양식의 열 순서로 받습니다.</p>
+    <p class="sub">학생이 제출한 결과를 실시간으로 보여 줍니다. 교육청용과 대교협용 엑셀을 따로 받을 수 있습니다.</p>
+    <section class="card">
+      <h2>학생에게 보낼 입력 링크</h2>
+      <p class="hint"><a href="csat-collect.html" target="_blank" rel="noopener">학생용 입력 화면 열기</a> (학생에게는 이 주소를 보냅니다)</p>
+    </section>
     <section class="card">
       <div class="grid">
-        <div><label for="school">고등학교 이름 (엑셀 첫 열)</label><input id="school" value="${esc(getSchoolName())}" placeholder="예: 광주교육고등학교"></div>
+        <div><label for="school">고등학교 이름 (교육청용 첫 열)</label><input id="school" value="${esc(getSchoolName())}" placeholder="예: 광주교육고등학교"></div>
+        <div><label for="year">학년도 (대교협용 첫 열)</label><input id="year" value="${esc(getYear())}" inputmode="numeric"></div>
       </div>
     </section>
     <section class="card">
       <div class="row-actions">
         <span class="status" id="count">불러오는 중...</span>
-        <button id="dl" disabled>엑셀 내려받기</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="dl-edu" disabled>교육청용 엑셀</button>
+          <button id="dl-kedi" class="ghost" disabled>대교협용 엑셀</button>
+        </div>
       </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
-          <thead><tr><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어</th><th>수학 과목</th><th>수학</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th></tr></thead>
-          <tbody id="rows"><tr><td colspan="12" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
+          <thead><tr><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어 공통</th><th>국어 선택</th><th>수학 과목</th><th>수학 공통</th><th>수학 선택</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="14" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
         </table>
       </div>
     </section>`;
@@ -307,8 +368,12 @@ function renderTeacher() {
   let current = [];
   const school = document.getElementById('school');
   school.addEventListener('change', () => setSchoolName(school.value.trim()));
-  const dl = document.getElementById('dl');
-  dl.addEventListener('click', () => downloadExcel(current));
+  const year = document.getElementById('year');
+  year.addEventListener('change', () => setYear(year.value.trim()));
+  const dlEdu = document.getElementById('dl-edu');
+  const dlKedi = document.getElementById('dl-kedi');
+  dlEdu.addEventListener('click', () => downloadEdu(current));
+  dlKedi.addEventListener('click', () => downloadKedi(current));
 
   loadFirebase().then(({ fs, db }) => {
     fs.onSnapshot(fs.collection(db, COLLECTION), (snap) => {
@@ -325,15 +390,17 @@ function renderTeacher() {
 
   function drawRows(rows) {
     document.getElementById('count').textContent = `제출 ${rows.length}명`;
-    dl.disabled = rows.length === 0;
+    dlEdu.disabled = rows.length === 0;
+    dlKedi.disabled = rows.length === 0;
     const body = document.getElementById('rows');
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="12" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
+      body.innerHTML = '<tr><td colspan="14" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
       return;
     }
     body.innerHTML = sortRows(rows).map((r) => `<tr>
       <td>${esc(r.cls)}</td><td>${esc(r.num)}</td><td>${esc(r.name)}</td><td>${esc(r.hist)}</td>
-      <td>${esc(r.kor_sub)}</td><td>${esc(r.kor)}</td><td>${esc(r.math_sub)}</td><td>${esc(r.math)}</td><td>${esc(r.eng)}</td>
+      <td>${esc(r.kor_sub)}</td><td>${esc(r.kor_common)}</td><td>${esc(r.kor_elective)}</td>
+      <td>${esc(r.math_sub)}</td><td>${esc(r.math_common)}</td><td>${esc(r.math_elective)}</td><td>${esc(r.eng)}</td>
       <td>${esc(r.inq1_sub)} ${esc(r.inq1)}</td><td>${esc(r.inq2_sub)} ${esc(r.inq2)}</td><td>${r.fl_sub ? esc(r.fl_sub) + ' ' + esc(r.fl) : ''}</td>
     </tr>`).join('');
   }
