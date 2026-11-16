@@ -183,6 +183,53 @@ function setWordText(doc, text) {
 }
 function eqChar(k) { return String.fromCharCode(EQ_BASE + k); }
 
+// 워드의 겹침 필드(eq \o\ac(□,√))는 상자 위에 기호를 겹쳐 그린 것이다.
+// 화면에서는 필드 코드가 보이지 않으므로 체크된 상자는 ☑, 엑스 표시는 ☒로 바꾼다.
+const OVERLAY_FIELD = /eq\s*\\o\s*\\ac\s*\(\s*([^,]*?)\s*,\s*([^)]*?)\s*\)/;
+function overlayFieldText(instr) {
+  const m = OVERLAY_FIELD.exec(instr);
+  if (!m) return null;
+  const over = m[2];
+  if (over.indexOf('√') >= 0 || over.indexOf('✓') >= 0) return '☑';
+  if (over.indexOf('×') >= 0 || /x/i.test(over)) return '☒';
+  return mapSymbols(m[1] || '□');
+}
+function replaceOverlayFields(doc) {
+  const runs = Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 'r'));
+  let depth = 0;
+  let group = null;
+  let instr = '';
+  runs.forEach((run) => {
+    const fc = run.getElementsByTagNameNS(W_NS, 'fldChar')[0];
+    const type = fc ? fc.getAttributeNS(W_NS, 'fldCharType') : null;
+    if (depth === 0 && type !== 'begin') return;
+    if (depth === 0) { group = []; instr = ''; }
+    group.push(run);
+    Array.prototype.slice.call(run.getElementsByTagNameNS(W_NS, 'instrText')).forEach((t) => { instr += t.textContent; });
+    if (type === 'begin') { depth++; return; }
+    if (type !== 'end') return;
+    depth--;
+    if (depth !== 0) return;
+    const text = overlayFieldText(instr);
+    const first = group[0];
+    const last = group[group.length - 1];
+    if (text !== null && first.parentNode) {
+      const nr = doc.createElementNS(W_NS, 'w:r');
+      // 필드 뒤에 오는 글자의 서식(글꼴 등)을 따른다
+      const after = last.nextElementSibling;
+      const rPr = after && after.localName === 'r' ? after.getElementsByTagNameNS(W_NS, 'rPr')[0] : null;
+      if (rPr) nr.appendChild(rPr.cloneNode(true));
+      const t = doc.createElementNS(W_NS, 'w:t');
+      t.setAttribute('xml:space', 'preserve');
+      t.textContent = text;
+      nr.appendChild(t);
+      first.parentNode.insertBefore(nr, first);
+      group.forEach((r) => { if (r.parentNode) r.parentNode.removeChild(r); });
+    }
+    group = null;
+  });
+}
+
 // docx 한 개를 화면용으로 바꾼다.
 //   buffer: 변환한 docx (수식은 글자 한 칸으로 바뀌어 있다)
 //   eqs: 수식 목록 [{ mathml, text }] (칸 번호 = 목록 순서)
@@ -195,7 +242,8 @@ export async function prepareDocxForView(arrayBuffer) {
   const hasMath = xml.indexOf('<m:oMath') >= 0;
   const hasWhite = /w:color w:val="ffffff"/i.test(xml);
   const hasSymbols = /[\uF000-\uF0FF]/.test(xml) || xml.indexOf('<w:sym') >= 0;
-  if (!hasMath && !hasWhite && !hasSymbols) return { buffer: arrayBuffer, eqs: [] };
+  const hasOverlay = xml.indexOf('\\ac(') >= 0;
+  if (!hasMath && !hasWhite && !hasSymbols && !hasOverlay) return { buffer: arrayBuffer, eqs: [] };
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   // 흰색 글자(배경과 같은 색)는 화면에서 보이지 않으므로 버린다
   Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 'color')).forEach((c) => {
@@ -203,6 +251,8 @@ export async function prepareDocxForView(arrayBuffer) {
     const run = c.parentNode && c.parentNode.parentNode;
     if (run && run.localName === 'r' && run.parentNode) run.parentNode.removeChild(run);
   });
+  // 겹침 필드(eq \o\ac(□,√))의 체크 상자를 ☑로 바꾼다
+  if (hasOverlay) replaceOverlayFields(doc);
   // 워드의 기호 글자(w:sym, 예: 기호 글꼴 F0FE)를 일반 글자로 바꾼 뒤 보이는 글자로 고친다
   Array.prototype.slice.call(doc.getElementsByTagNameNS(W_NS, 'sym')).forEach((sym) => {
     const code = parseInt(sym.getAttributeNS(W_NS, 'char') || '', 16);
