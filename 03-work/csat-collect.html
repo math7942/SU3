@@ -305,8 +305,8 @@ async function submitStudent() {
   showErrors(errs);
   if (Object.keys(errs).length) { status.textContent = '빨간 칸을 확인하세요.'; return; }
 
-  // 같은 학년·반·번호는 한 줄로 저장하므로 다시 제출하면 덮어쓴다
-  const id = `${values.grade}-${values.cls}-${values.num}`;
+  // 학년·반·번호·이름이 모두 같으면 같은 학생으로 보고 덮어쓴다. 문서 이름에 쓸 수 없는 '/'는 '_'로 바꾼다
+  const id = `${values.grade}-${values.cls}-${values.num}-${values.name}`.replace(/\//g, '_');
   submitBtn.disabled = true;
   status.textContent = '저장하는 중...';
   try {
