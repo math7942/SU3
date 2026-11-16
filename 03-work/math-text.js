@@ -287,7 +287,7 @@ function xmlEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;
 // 명령 이름 목록: 붙여 쓴 낱말(sinpix, lnx …)을 이 목록으로 나눈다
 const HWP_KEYWORDS = new Set([
   ...Object.keys(HWP_SYMS), ...Object.keys(HWP_BIG),
-  'over', 'sqrt', 'LEFT', 'RIGHT', 'left', 'right', 'lim', 'rm', 'it', 'bold', 'ln', 'log', 'exp', 'sin', 'cos', 'tan',
+  'over', 'sqrt', 'LEFT', 'RIGHT', 'left', 'right', 'lim', 'rm', 'RM', 'it', 'IT', 'bold', 'ln', 'log', 'exp', 'sin', 'cos', 'tan',
 ]);
 function splitWord(w) {
   if (w.length <= 1 || HWP_KEYWORDS.has(w)) return [w];
@@ -379,8 +379,8 @@ function hwpParse(script) {
       if (T[i] === '_') { i++; sub = parseAtom(stop); }
       return { t: 'limlow', lim: sub };
     }
-    if (t === 'rm') return { t: 'plain', item: parseAtom(stop) };
-    if (t === 'it' || t === 'bold') return parseAtom(stop);
+    if (t === 'rm' || t === 'RM') return { t: 'plain', item: parseAtom(stop) };
+    if (t === 'it' || t === 'IT' || t === 'bold') return parseAtom(stop);
     if (t === "'") return { t: 'text', s: '′' };
     if (t === "''") return { t: 'text', s: '″' };
     if (HWP_SYMS[t]) return { t: 'text', s: HWP_SYMS[t] };
