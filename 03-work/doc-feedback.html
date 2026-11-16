@@ -1397,6 +1397,8 @@ async function deleteGroup(groupId){
   var label = members[0].label || '이 묶음';
   if(!confirm('⚠ "' + label + '" 묶음 전체(' + (members.length + originals.length) + '개 파일)와 거기에 달린 모든 의견을 삭제할까요?\n\n' +
     '문서: ' + (members[0].filename || '') + '\n\n삭제하면 복구할 수 없습니다. 되돌릴 수 없습니다.')) return;
+  // 한 번 더 확인: 실수로 누른 경우 여기서 멈춘다
+  if(!confirm('정말로 삭제할까요?\n\n"' + label + '" 묶음의 파일과 의견이 모두 지워집니다.\n이 작업은 되돌릴 수 없습니다.')) return;
   try{
     for(var i = 0; i < members.length; i++){
       await deleteFileEverywhere(members[i]);
