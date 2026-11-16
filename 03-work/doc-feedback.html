@@ -52,6 +52,15 @@
   .file-admin-actions[hidden]{display:none}
   .file-body{display:none;padding:14px;border-top:1px solid var(--line)}
   .file-body.open{display:block}
+  /* 검토 화면 모드: 열린 문서 패널만 크게 보이고 나머지(제목, 자료, 올리기, 칩, 다른 문서)는 숨긴다 */
+  body.review-focus #session > a.back, body.review-focus #session > #sessTitle, body.review-focus #session > .sub{display:none}
+  body.review-focus #session > .card:not(:has(#fileList)){display:none}
+  body.review-focus #session > .card:has(#fileList) > .row:first-child{display:none}
+  body.review-focus #adminTools, body.review-focus .review-letters{display:none}
+  body.review-focus .copy-group-title, body.review-focus .copy-strip, body.review-focus .file-row:not(.show){display:none}
+  body.review-focus .file-row.show{border:0}
+  body.review-focus .file-row.show .file-body{padding:8px 0}
+  body.review-focus .file-row.show .doc-view{max-height:none;height:calc(100vh - 190px);min-height:420px}
   .doc-view-wrap{display:flex;gap:10px;align-items:flex-start;position:relative}
   .doc-view{flex:1;min-width:0;max-height:60vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff;font-size:13.5px;position:relative;user-select:text}
   .doc-view table{border-collapse:collapse;width:100%;margin:8px 0}
@@ -992,6 +1001,7 @@ function renderFileList(){
   }).join('');
 
   Array.prototype.forEach.call(el.querySelectorAll('.file-admin-actions'), function(s){ s.hidden = !isAdmin; });
+  document.body.classList.toggle('review-focus', !!el.querySelector('.file-row.show'));
   applyChipState();
   Array.prototype.forEach.call(el.querySelectorAll('[data-admin-dl]'), function(b){
     b.addEventListener('click', function(){ downloadOriginal(b.dataset.adminDl); });
@@ -1045,6 +1055,7 @@ function updateToggleButtons(){
 }
 
 function closeAllPanels(){
+  document.body.classList.remove('review-focus');
   Array.prototype.forEach.call(document.querySelectorAll('.file-body.open'), function(b){ b.classList.remove('open'); });
   Array.prototype.forEach.call(document.querySelectorAll('.file-row.show'), function(r){ r.classList.remove('show'); });
   closeAllCommentListeners();
@@ -1052,6 +1063,7 @@ function closeAllPanels(){
 
 async function openFilePanel(row, fileId){
   row.classList.add('show');
+  document.body.classList.add('review-focus');
   row.querySelector('.file-body').classList.add('open');
   var docView = row.querySelector('.doc-view');
   var isNewLoad = docHtmlCache[fileId] === undefined;
