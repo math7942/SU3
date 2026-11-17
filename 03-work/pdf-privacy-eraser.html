@@ -108,13 +108,15 @@ header .sub{color:var(--sub);font-size:12px;margin-left:-4px}
   </div>
 </header>
 <div class="scope">
-  <b style="font-size:13px">새로 고른 영역을 적용할 쪽</b>
-  <label><input type="radio" name="scope" value="cur" checked>현재 쪽만</label>
-  <label><input type="radio" name="scope" value="all">모든 쪽(같은 위치)</label>
-  <label title="한 파일에 여러 학생의 답안지가 들어 있고, 이름이 학생마다 첫 쪽에만 있을 때"><input type="radio" name="scope" value="every">학생마다 첫 쪽만 (학생당 <input id="perStudent" type="number" min="1" value="2">쪽, 시작 <input id="startPage" type="number" min="1" value="1">쪽)</label>
-  <label><input type="radio" name="scope" value="custom">직접 입력</label>
+  <b style="font-size:13px">고른 영역을 적용할 쪽 (여러 개 고를 수 있음)</b>
+  <label><input type="checkbox" name="scope" value="cur" checked>현재 쪽</label>
+  <label><input type="checkbox" name="scope" value="all">모든 쪽(같은 위치)</label>
+  <label title="한 파일에 여러 학생의 답안지가 들어 있고, 이름이 학생마다 첫 쪽에만 있을 때"><input type="checkbox" name="scope" value="every">학생마다 첫 쪽만 (학생당 <input id="perStudent" type="number" min="1" value="2">쪽, 시작 <input id="startPage" type="number" min="1" value="1">쪽)</label>
+  <label><input type="checkbox" name="scope" value="custom">직접 입력</label>
   <input id="custom" type="text" size="14" placeholder="예: 1,3,5-8">
-  <span class="hint">화면에서 마우스로 드래그하면 지울 영역이 추가됩니다.</span>
+  <span class="hint">화면에서 드래그해 영역을 고른 뒤 「적용하기」를 누르세요.</span>
+  <button id="apply" class="primary" disabled>적용하기</button>
+  <button id="cancelPending" disabled>취소</button>
 </div>
 <main>
   <div id="view">
@@ -208,6 +210,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([$('#pdfWo
 
 let srcBytes = null, srcName = '', pdf = null, pageNo = 0, zoom = 1.2, color = '#ffffff';
 let edits = [], curTask = null, drag = null, tmpEl = null, busy = false, pending = null;
+let sel = null;   /* 드래그로 고른 영역(아직 적용 전). 「적용하기」를 누르면 edits로 옮겨진다 */
 
 function toast(t, ms = 2600) {
   const m = $('#msg'); m.textContent = t; m.classList.add('show');
@@ -289,7 +292,7 @@ async function loadFile(file) {
     const doc = await pdfjsLib.getDocument({data: bytes.slice()}).promise;
     if (pdf) pdf.destroy();
     pdf = doc; srcBytes = bytes; srcName = file.name.replace(/\.pdf$/i, '');
-    edits = []; pageNo = 0;
+    edits = []; sel = null; pageNo = 0;
     $('#drop').hidden = true; $('#stage').hidden = false;
     await fitWidth(false);
     await renderPage(); renderList();
@@ -335,6 +338,12 @@ function drawOverlay() {
     d.style.cssText = `left:${e.rel[0] * 100}%;top:${e.rel[1] * 100}%;width:${(e.rel[2] - e.rel[0]) * 100}%;height:${(e.rel[3] - e.rel[1]) * 100}%;background:${swatchBg(e.color)}`;
     ov.appendChild(d);
   }
+  if (sel && sel.page === pageNo) {
+    const d = document.createElement('div'); d.className = 'rect tmp';
+    d.style.cssText = `left:${sel.rel[0] * 100}%;top:${sel.rel[1] * 100}%;width:${(sel.rel[2] - sel.rel[0]) * 100}%;height:${(sel.rel[3] - sel.rel[1]) * 100}%`;
+    ov.appendChild(d);
+  }
+  updateApply();
   updateState();
 }
 /* 지금 보는 쪽이 지워지는 쪽인지 표시 */
@@ -351,7 +360,13 @@ function updateNav() {
 }
 function renderList() {
   const l = $('#list'); l.innerHTML = '';
-  if (!edits.length) { l.innerHTML = '<div class="empty">아직 고른 영역이 없습니다.<br>화면에서 마우스로 드래그해 보세요.</div>'; return; }
+  if (sel) {
+    const d = document.createElement('div'); d.className = 'item';
+    d.innerHTML = `<i style="background:${swatchBg(sel.color)}"></i><span>선택한 영역 (${sel.page + 1}쪽, 적용 전)</span><button title="취소">✕</button>`;
+    d.querySelector('button').onclick = ev => { ev.stopPropagation(); cancelSel(); };
+    l.appendChild(d);
+  }
+  if (!edits.length) { if (!sel) l.innerHTML = '<div class="empty">아직 고른 영역이 없습니다.<br>화면에서 마우스로 드래그해 보세요.</div>'; return; }
   edits.forEach((e, i) => {
     const d = document.createElement('div'); d.className = 'item';
     d.innerHTML = `<i style="background:${swatchBg(e.color)}"></i><span>${i + 1}. ${e.label || fmtPages(e.pages, pdf.numPages)}</span><button title="삭제">✕</button>`;
@@ -405,15 +420,8 @@ stage.addEventListener('pointerup', e => {
   const [x0, y0, x1, y1] = dragBox(e), r = drag.r;
   drag = null; tmpEl.remove(); tmpEl = null;
   if (x1 - x0 < 4 || y1 - y0 < 4) return;
-  const mode = document.querySelector('input[name=scope]:checked').value, total = pdf.numPages;
-  let pages, label = '';
-  try {
-    if (mode === 'cur') pages = new Set([pageNo]);
-    else if (mode === 'all') pages = new Set([...Array(total).keys()]);
-    else if (mode === 'every') ({pages, label} = everyPages(total));
-    else pages = parsePages($('#custom').value, total);
-  } catch (err) { toast(err.message, 3500); return; }
-  edits.push({pages, label, rel: [x0 / r.width, y0 / r.height, x1 / r.width, y1 / r.height], color});
+  /* 드래그한 영역은 바로 지우지 않고 선택으로 둔다. 「적용하기」를 누르면 체크한 쪽에 적용된다 */
+  sel = {page: pageNo, rel: [x0 / r.width, y0 / r.height, x1 / r.width, y1 / r.height], color};
   drawOverlay(); renderList();
 });
 stage.addEventListener('pointercancel', () => { drag = null; if (tmpEl) { tmpEl.remove(); tmpEl = null; } });
@@ -422,10 +430,40 @@ $('#custom').addEventListener('focus', () => document.querySelector('input[name=
 
 function undo() { if (edits.length) { edits.pop(); drawOverlay(); renderList(); } }
 $('#undo').onclick = undo;
+
+/* 체크한 쪽 범위를 합친 쪽 번호 집합 (현재 쪽, 모든 쪽, 학생마다 첫 쪽, 직접 입력을 같이 고를 수 있다) */
+function scopePages(total) {
+  const picked = [...document.querySelectorAll('input[name=scope]:checked')].map(i => i.value);
+  const s = new Set();
+  if (picked.includes('cur')) s.add(pageNo);
+  if (picked.includes('all')) for (let i = 0; i < total; i++) s.add(i);
+  if (picked.includes('every')) for (const i of everyPages(total).pages) s.add(i);
+  if (picked.includes('custom')) for (const i of parsePages($('#custom').value, total)) s.add(i);
+  return s;
+}
+function applySel() {
+  if (!sel || !pdf) { toast('먼저 화면에서 지울 영역을 드래그하세요.', 3000); return; }
+  let pages;
+  try { pages = scopePages(pdf.numPages); } catch (err) { toast(err.message, 3500); return; }
+  if (!pages.size) { toast('적용할 쪽을 하나 이상 고르세요.', 3000); return; }
+  edits.push({pages, label: '', rel: sel.rel, color: sel.color});
+  sel = null;
+  drawOverlay(); renderList();
+  toast('적용했습니다: ' + fmtPages(pages, pdf.numPages), 2600);
+}
+function cancelSel() { if (!sel) return; sel = null; drawOverlay(); renderList(); }
+function updateApply() {
+  const a = $('#apply'), c = $('#cancelPending');
+  if (a) a.disabled = !sel;
+  if (c) c.disabled = !sel;
+}
+$('#apply').onclick = applySel;
+$('#cancelPending').onclick = cancelSel;
 document.addEventListener('keydown', e => {
   if (!$('#done').hidden) { if (e.key === 'Escape') $('#doneBack').click(); return; }
   if (e.target.tagName === 'INPUT' && (e.target.type === 'text' || e.target.type === 'number')) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+  else if (e.key === 'Escape' && sel) cancelSel();
   else if (e.key === 'PageUp') go(pageNo - 1);
   else if (e.key === 'PageDown') go(pageNo + 1);
 });
