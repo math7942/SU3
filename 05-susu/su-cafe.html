@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수카페 · 함께 기록하는 카페·박물관</title>
+<style>
+  :root { --ink:#1d2433; --muted:#667085; --line:#d0d5dd; --bg:#f7f8fa; --card:#ffffff; --accent:#2f6fed; --bad:#c02d2d; --ok:#1f7a3d; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --ink:#e6e9f0; --muted:#9aa3b2; --line:#3a4150; --bg:#15181f; --card:#1d222c; --accent:#7ea6ff; --bad:#ff8a8a; --ok:#6fd38f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "맑은 고딕", system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 900px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 1.4rem; margin: 8px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 14px; font-size: 0.95rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .card h2 { font-size: 1.02rem; margin: 0 0 10px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 12px; }
+  label { display: block; font-size: 0.88rem; color: var(--muted); margin-bottom: 3px; }
+  input, select, textarea { width: 100%; font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink); }
+  textarea { min-height: 64px; resize: vertical; }
+  button { font: inherit; font-size: 15px; min-height: 40px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--accent); }
+  button.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
+  button:disabled { opacity: .5; cursor: default; }
+  .filebtn { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 14px; border: 1px solid var(--accent); border-radius: 8px; color: var(--accent); cursor: pointer; font-size: 15px; }
+  .filebtn:hover { background: rgba(47,111,237,.08); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .spacer { flex: 1; }
+  .hint { color: var(--muted); font-size: 0.86rem; }
+  .status { color: var(--muted); font-size: 0.9rem; }
+  .place { border-top: 1px solid var(--line); padding: 14px 0; }
+  .place:first-child { border-top: none; padding-top: 0; }
+  .place-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .place-name { font-size: 1.08rem; font-weight: 700; }
+  .badge { font-size: 0.78rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .badge.cafe { color: #7a4a12; border-color: #e7c79a; background: #fff7ea; }
+  .badge.museum { color: #1d3f8a; border-color: #9fb9ef; background: #eef4ff; }
+  .memo { white-space: pre-wrap; margin: 6px 0; }
+  .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
+  .thumb { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fafafa; position: relative; }
+  .thumb img { width: 100%; height: 110px; object-fit: cover; display: block; cursor: zoom-in; }
+  .thumb .cap { font-size: 0.78rem; color: var(--muted); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .files { margin: 6px 0; padding-left: 18px; }
+  .files li { margin: 3px 0; }
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 12px; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 6px; }
+  .lightbox button { position: absolute; top: 12px; right: 12px; }
+  .err { color: var(--bad); font-size: 0.88rem; min-height: 1.2em; }
+  @media (max-width: 480px) { main { padding: 12px; } button { width: 100%; } .row > button { width: auto; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>수카페</h1>
+  <p class="sub">카페와 박물관에서 찍은 사진과 자료를 함께 모아 정리합니다. 여러 사람이 같은 링크로 보고 올릴 수 있습니다.</p>
+
+  <section class="card">
+    <h2>새 장소 기록</h2>
+    <div class="grid">
+      <div><label for="pName">장소 이름 <b>(필수)</b></label><input id="pName" placeholder="예: 서촌 ○○카페"></div>
+      <div><label for="pKind">종류</label>
+        <select id="pKind"><option value="카페">카페</option><option value="박물관">박물관</option><option value="기타">기타</option></select></div>
+      <div><label for="pDate">방문일</label><input id="pDate" type="date"></div>
+      <div><label for="pAuthor">내 이름 <b>(필수)</b></label><input id="pAuthor" placeholder="예: 홍길동"></div>
+      <div><label for="pPw">개인 비밀번호 <b>(4자리 이상)</b></label><input id="pPw" type="password" autocomplete="off"></div>
+    </div>
+    <div style="margin-top:10px"><label for="pMemo">메모</label><textarea id="pMemo" placeholder="느낀 점, 메뉴, 전시 내용 등"></textarea></div>
+    <div class="row" style="margin-top:10px">
+      <span class="hint">삭제할 때 개인 비밀번호가 필요합니다. 다른 컴퓨터에서도 같은 비밀번호로 삭제할 수 있습니다.</span>
+      <span class="spacer"></span>
+      <button id="saveBtn">장소 저장</button>
+    </div>
+    <div class="err" id="formErr"></div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <select id="filterKind" style="width:auto">
+        <option value="">전체 종류</option><option value="카페">카페</option><option value="박물관">박물관</option><option value="기타">기타</option>
+      </select>
+      <input id="search" placeholder="장소 이름 검색" style="max-width:260px">
+      <span class="spacer"></span>
+      <span class="status" id="count">불러오는 중...</span>
+    </div>
+  </section>
+
+  <section class="card" id="list"></section>
+</main>
+
+<script type="module">
+// 같은 Firebase 프로젝트를 쓴다. 사진과 자료는 작게 나눠 Firestore에 저장한다 (Firebase Storage는 유료라 쓰지 않는다).
+const firebaseConfig = {
+  apiKey: "AIzaSyD-vjDcKI1XRtWOYznrvzCKT8nOYs5690I",
+  authDomain: "su3su3-e2669.firebaseapp.com",
+  projectId: "su3su3-e2669",
+  storageBucket: "su3su3-e2669.firebasestorage.app",
+  messagingSenderId: "989821997199",
+  appId: "1:989821997199:web:da319f053c098ea30560fa"
+};
+const SDK = "https://www.gstatic.com/firebasejs/10.12.2";
+const PLACES = 'sooCafePlaces', FILES = 'sooCafeFiles', CHUNKS = 'sooCafeChunks';
+const CHUNK_SIZE = 700000;          // 글자 수 기준 조각 크기 (Firestore 문서 한 개 1MB 제한보다 작게)
+const MAX_DOC_BYTES = 5 * 1024 * 1024;
+const NAME_KEY = 'sooCafeName';
+
+let fbPromise = null;
+function loadFirebase() {
+  if (!fbPromise) {
+    fbPromise = (async () => {
+      const [{ initializeApp }, fs] = await Promise.all([
+        import(`${SDK}/firebase-app.js`),
+        import(`${SDK}/firebase-firestore.js`)
+      ]);
+      const app = initializeApp(firebaseConfig);
+      return { fs, db: fs.getFirestore(app) };
+    })();
+  }
+  return fbPromise;
+}
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const todayStr = () => new Date().toLocaleDateString('sv-SE');
+async function pwHash(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('su-cafe|' + pw));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+function getName() { try { return localStorage.getItem(NAME_KEY) || ''; } catch (e) { return ''; } }
+function rememberName(n) { try { localStorage.setItem(NAME_KEY, n); } catch (e) { /* 저장 못 하면 그냥 넘어간다 */ } }
+
+// ---------- 상태 ----------
+let places = [], files = [];
+const dataCache = {};   // 파일 id -> data URL (한 번 읽은 사진·자료는 다시 읽지 않는다)
+const openPlaces = new Set();
+
+// ---------- 사진 줄이기 ----------
+function resizeImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const max = 1280;
+      const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error('사진을 바꾸지 못했습니다'))), 'image/jpeg', 0.82);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('사진을 읽지 못했습니다')); };
+    img.src = url;
+  });
+}
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+// ---------- 저장 ----------
+async function savePlace() {
+  const err = document.getElementById('formErr');
+  err.textContent = '';
+  const name = document.getElementById('pName').value.trim();
+  const author = document.getElementById('pAuthor').value.trim();
+  const pw = document.getElementById('pPw').value;
+  if (!name) { err.textContent = '장소 이름을 적어 주세요.'; return; }
+  if (!author) { err.textContent = '내 이름을 적어 주세요.'; return; }
+  if (pw.length < 4) { err.textContent = '개인 비밀번호를 4자리 이상 적어 주세요.'; return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  try {
+    const { fs, db } = await loadFirebase();
+    await fs.setDoc(fs.doc(fs.collection(db, PLACES)), {
+      name,
+      kind: document.getElementById('pKind').value,
+      visitDate: document.getElementById('pDate').value || todayStr(),
+      memo: document.getElementById('pMemo').value.trim(),
+      author,
+      pwHash: await pwHash(pw),
+      createdAt: new Date().toISOString()
+    });
+    rememberName(author);
+    ['pName', 'pMemo'].forEach((id) => { document.getElementById(id).value = ''; });
+    err.textContent = '저장했습니다.';
+    setTimeout(() => { if (err.textContent === '저장했습니다.') err.textContent = ''; }, 2000);
+  } catch (e) {
+    console.error(e);
+    err.textContent = '저장하지 못했습니다. 인터넷 연결을 확인해 주세요.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------- 사진·자료 올리기 ----------
+async function uploadFiles(place, fileList, uploader) {
+  const { fs, db } = await loadFirebase();
+  for (const f of Array.from(fileList)) {
+    try {
+      const isPhoto = /^image\//.test(f.type);
+      let blob = f, name = f.name, mime = f.type || 'application/octet-stream';
+      if (isPhoto) {
+        blob = await resizeImage(f);
+        name = f.name.replace(/\.[^.]+$/, '') + '.jpg';
+        mime = 'image/jpeg';
+      } else if (f.size > MAX_DOC_BYTES) {
+        alert(`'${f.name}'은(는) 5MB를 넘어 올릴 수 없습니다.`);
+        continue;
+      }
+      const b64 = await blobToBase64(blob);
+      const fileRef = fs.doc(fs.collection(db, FILES));
+      const parts = [];
+      for (let i = 0; i < b64.length; i += CHUNK_SIZE) parts.push(b64.slice(i, i + CHUNK_SIZE));
+      // 조각을 먼저 다 올리고, 마지막에 파일 정보를 올린다 (중간에 실패하면 목록에 나타나지 않는다)
+      for (let i = 0; i < parts.length; i++) {
+        await fs.setDoc(fs.doc(db, CHUNKS, fileRef.id + '-' + i), { fileId: fileRef.id, index: i, data: parts[i] });
+      }
+      await fs.setDoc(fileRef, { placeId: place.id, name, mime, kind: isPhoto ? 'photo' : 'doc', size: blob.size, chunks: parts.length, uploader, createdAt: new Date().toISOString() });
+    } catch (e) {
+      console.error(e);
+      alert(`'${f.name}'을(를) 올리지 못했습니다: ${e.message}`);
+    }
+  }
+}
+
+// ---------- 사진·자료 보기 ----------
+async function loadData(file) {
+  if (dataCache[file.id]) return dataCache[file.id];
+  const { fs, db } = await loadFirebase();
+  const snap = await fs.getDocs(fs.query(fs.collection(db, CHUNKS), fs.where('fileId', '==', file.id)));
+  const parts = snap.docs.map((d) => d.data()).sort((a, b) => a.index - b.index).map((d) => d.data);
+  const url = 'data:' + file.mime + ';base64,' + parts.join('');
+  dataCache[file.id] = url;
+  return url;
+}
+
+// ---------- 삭제 (장소를 쓴 사람의 개인 비밀번호) ----------
+async function askPw(place) {
+  const pw = prompt('이 장소를 쓸 때 정한 개인 비밀번호를 입력하세요');
+  if (pw === null) return false;
+  if ((await pwHash(pw)) !== place.pwHash) { alert('비밀번호가 맞지 않습니다.'); return false; }
+  return true;
+}
+async function deletePlace(place) {
+  if (!(await askPw(place))) return;
+  if (!confirm('이 장소와 올린 사진·자료를 모두 지울까요? 되돌릴 수 없습니다.')) return;
+  const { fs, db } = await loadFirebase();
+  for (const f of files.filter((x) => x.placeId === place.id)) await deleteFile(f, fs, db);
+  await fs.deleteDoc(fs.doc(db, PLACES, place.id));
+}
+async function deleteFile(file, fs, db) {
+  const snap = await fs.getDocs(fs.query(fs.collection(db, CHUNKS), fs.where('fileId', '==', file.id)));
+  for (const d of snap.docs) await fs.deleteDoc(d.ref);
+  await fs.deleteDoc(fs.doc(db, FILES, file.id));
+  delete dataCache[file.id];
+}
+async function removeFile(file, place) {
+  if (!(await askPw(place))) return;
+  if (!confirm(`'${file.name}'을(를) 지울까요?`)) return;
+  const { fs, db } = await loadFirebase();
+  await deleteFile(file, fs, db);
+}
+
+// ---------- 화면 ----------
+function lightbox(url) {
+  const box = document.createElement('div');
+  box.className = 'lightbox';
+  box.innerHTML = '<img alt=""><button class="ghost" type="button">닫기</button>';
+  box.querySelector('img').src = url;
+  box.addEventListener('click', () => box.remove());
+  document.body.appendChild(box);
+}
+
+function render() {
+  const kind = document.getElementById('filterKind').value;
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const list = document.getElementById('list');
+  const shown = places.filter((p) => (!kind || p.kind === kind) && (!q || (p.name || '').toLowerCase().includes(q)));
+  document.getElementById('count').textContent = `장소 ${shown.length}곳 · 사진·자료 ${files.length}개`;
+  if (!shown.length) { list.innerHTML = '<p class="hint">아직 기록된 장소가 없습니다. 위에서 첫 장소를 적어 보세요.</p>'; return; }
+  list.innerHTML = shown.map((p) => {
+    const mine = files.filter((f) => f.placeId === p.id);
+    const photos = mine.filter((f) => f.kind === 'photo');
+    const docs = mine.filter((f) => f.kind !== 'photo');
+    const kindClass = p.kind === '카페' ? 'cafe' : (p.kind === '박물관' ? 'museum' : '');
+    const open = openPlaces.has(p.id);
+    return `<article class="place" data-id="${esc(p.id)}">
+      <div class="place-head">
+        <span class="place-name">${esc(p.name)}</span>
+        <span class="badge ${kindClass}">${esc(p.kind || '기타')}</span>
+        <span class="hint">${esc(p.visitDate || '')} · ${esc(p.author || '')}</span>
+      </div>
+      ${p.memo ? `<div class="memo">${esc(p.memo)}</div>` : ''}
+      <div class="row">
+        <span class="hint">사진 ${photos.length}장 · 자료 ${docs.length}개</span>
+        <span class="spacer"></span>
+        <label class="filebtn"><input type="file" multiple accept="image/*,.pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" class="upload" hidden>사진·자료 올리기</label>
+        <button class="ghost" data-act="toggle">${open ? '접기' : '보기'}</button>
+        <button class="danger" data-act="delete">장소 삭제</button>
+      </div>
+      ${open ? `<div class="thumbs" data-loaded="0">${photos.map((f) => `<div class="thumb"><img alt="${esc(f.name)}" data-fid="${esc(f.id)}" src="" title="${esc(f.name)}"><div class="cap">${esc(f.name)} · ${esc(f.uploader || '')}</div></div>`).join('')}</div>
+        ${docs.length ? `<ul class="files">${docs.map((f) => `<li><a href="#" data-fid="${esc(f.id)}" data-act="download">${esc(f.name)}</a> <span class="hint">(${esc(f.uploader || '')})</span> <button class="danger" data-fid="${esc(f.id)}" data-act="removefile" style="min-height:28px;padding:2px 8px;font-size:13px">삭제</button></li>`).join('')}</ul>` : ''}`
+      : ''}
+    </article>`;
+  }).join('');
+  // 펼쳐 둔 장소의 사진을 읽어 온다
+  list.querySelectorAll('.thumbs img').forEach((img) => {
+    loadData(files.find((f) => f.id === img.dataset.fid)).then((url) => { img.src = url; }).catch(() => {});
+  });
+}
+
+function bindList() {
+  document.getElementById('list').addEventListener('click', async (e) => {
+    const card = e.target.closest('.place');
+    if (!card) return;
+    const place = places.find((p) => p.id === card.dataset.id);
+    const act = e.target.dataset.act;
+    if (!place) return;
+    if (e.target.tagName === 'IMG') { lightbox(e.target.src); return; }
+    try {
+      if (act === 'toggle') { openPlaces.has(place.id) ? openPlaces.delete(place.id) : openPlaces.add(place.id); render(); }
+      else if (act === 'delete') await deletePlace(place);
+      else if (act === 'removefile') { e.preventDefault(); const f = files.find((x) => x.id === e.target.dataset.fid); if (f) await removeFile(f, place); }
+      else if (act === 'download') {
+        e.preventDefault();
+        const f = files.find((x) => x.id === e.target.dataset.fid);
+        const url = await loadData(f);
+        const a = document.createElement('a'); a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('처리하지 못했습니다: ' + err.message);
+    }
+  });
+  document.getElementById('list').addEventListener('change', async (e) => {
+    if (!e.target.classList.contains('upload')) return;
+    const card = e.target.closest('.place');
+    const place = places.find((p) => p.id === card.dataset.id);
+    const who = getName() || prompt('올리는 사람 이름을 적어 주세요');
+    if (!who) { e.target.value = ''; return; }
+    rememberName(who);
+    openPlaces.add(place.id);
+    await uploadFiles(place, e.target.files, who);
+    e.target.value = '';
+  });
+}
+
+async function start() {
+  document.getElementById('pDate').value = todayStr();
+  document.getElementById('pAuthor').value = getName();
+  document.getElementById('saveBtn').addEventListener('click', savePlace);
+  document.getElementById('filterKind').addEventListener('change', render);
+  document.getElementById('search').addEventListener('input', render);
+  bindList();
+  try {
+    const { fs, db } = await loadFirebase();
+    fs.onSnapshot(fs.query(fs.collection(db, PLACES), fs.orderBy('visitDate', 'desc')), (snap) => {
+      places = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      render();
+    }, (err) => { console.error(err); document.getElementById('count').textContent = '불러오지 못했습니다. 보안 규칙을 확인하세요.'; });
+    fs.onSnapshot(fs.collection(db, FILES), (snap) => {
+      files = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      render();
+    }, (err) => { console.error(err); });
+  } catch (err) {
+    console.error(err);
+    document.getElementById('count').textContent = '저장소에 연결하지 못했습니다.';
+  }
+}
+start();
+</script>
+</body>
+</html>
