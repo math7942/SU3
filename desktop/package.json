@@ -1,0 +1,35 @@
+{
+  "name": "pdf-privacy-eraser",
+  "version": "1.0.0",
+  "description": "PDF 개인정보 지우기 (Windows 실행 파일)",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "copy-app": "node scripts/copy-app.js",
+    "build:win": "node scripts/copy-app.js && electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "kr.su3.pdferaser",
+    "productName": "PDF선택지우기",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "PDF선택지우기-${version}.exe"
+    }
+  }
+}

@@ -497,6 +497,24 @@ function forgetMyComment(id){
   catch(e){}
 }
 function isMyComment(id){ return myCommentIds().indexOf(id) >= 0; }
+// 개인 비밀번호: 의견을 쓸 때 정하고, 다른 컴퓨터에서 수정·삭제할 때 맞춰 본다. 비밀번호 자체는 저장하지 않고 암호화 값(해시)만 저장한다.
+const PW_KEY = 'docFeedbackPw';
+function savedPw(){ try{ return localStorage.getItem(PW_KEY) || ''; }catch(e){ return ''; } }
+function rememberPw(pw){ try{ localStorage.setItem(PW_KEY, pw); }catch(e){} }
+async function pwHash(pw){
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('su3-feedback|' + pw));
+  return Array.prototype.map.call(new Uint8Array(buf), function(b){ return b.toString(16).padStart(2, '0'); }).join('');
+}
+// 이 컴퓨터에서 쓴 의견이면 바로 통과. 아니면 개인 비밀번호를 물어 맞으면 통과. 비밀번호가 없는 옛 의견은 쓴 컴퓨터에서만 가능하다.
+async function canChangeComment(c){
+  if(isMyComment(c.id)) return true;
+  if(!c.pwHash) return false;
+  var pw = prompt('이 의견을 쓸 때 정한 개인 비밀번호를 입력하세요');
+  if(pw === null) return false;
+  if((await pwHash(pw)) !== c.pwHash){ alert('비밀번호가 맞지 않습니다.'); return false; }
+  rememberMyComment(c.id);
+  return true;
+}
 async function addComment(sessionId, fileId, data){
   const { fs, db } = await loadFirebase();
   const ref = fs.doc(fs.collection(db, COMMENTS));
@@ -1268,14 +1286,14 @@ function renderCommentRail(row, fileId, comments){
       var q = c.quote ? ('<div class="cq">"' + esc(c.quote) + '"</div>') : (c.kind === 'pin' ? ('<div class="cq">' + esc(c.page) + '페이지 표시 위치</div>') : '');
       var tag = c.item ? '<div class="ctag">' + esc(itemLabelOf(c)) + ' · ' + esc(c.stance || '') + '</div>' : '';
       card.innerHTML = q + tag + '<div>' + esc(c.comment) + '</div><span class="ct">' + esc(fmtTime(c.createdAt)) + '</span>';
-      if(isMyComment(c.id)){
+      if(isMyComment(c.id) || c.pwHash){
         var edit = document.createElement('button');
         edit.type = 'button';
         edit.className = 'cdel';
         edit.textContent = '수정';
         edit.addEventListener('click', function(e){
           e.stopPropagation();
-          startEditComment(card, c);
+          canChangeComment(c).then(function(ok){ if(ok) startEditComment(card, c); });
         });
         card.appendChild(edit);
         var del = document.createElement('button');
@@ -1284,7 +1302,7 @@ function renderCommentRail(row, fileId, comments){
         del.textContent = '삭제';
         del.addEventListener('click', function(e){
           e.stopPropagation();
-          deleteMyComment(c.id).catch(function(err){ alert('지우지 못했습니다: ' + err.message); });
+          canChangeComment(c).then(function(ok){ if(ok) return deleteMyComment(c.id); }).catch(function(err){ alert('지우지 못했습니다: ' + err.message); });
         });
         card.appendChild(del);
       }
@@ -1333,6 +1351,8 @@ function setupAnnotation(row, fileId){
       '<div class="cfield"><label>검토 <b>(필수)</b> &nbsp;</label>' +
         '<label><input type="radio" name="' + stanceName + '" value="적합"> 적합</label> &nbsp; ' +
         '<label><input type="radio" name="' + stanceName + '" value="보완"> 보완</label></div>' +
+      '<div class="cfield"><label>개인 비밀번호 <b>(필수, 4자리 이상)</b> · 나중에 다른 컴퓨터에서 수정·삭제할 때 필요합니다</label>' +
+        '<input type="password" class="c-pw" autocomplete="off" value="' + esc(savedPw()) + '"></div>' +
       '<textarea placeholder="의견을 남겨주세요"></textarea>' +
       '<div class="row" style="margin-top:6px;justify-content:flex-end">' +
         '<button class="small ghost" data-act="cancel">취소</button>' +
@@ -1364,10 +1384,14 @@ function setupAnnotation(row, fileId){
       if(!itemSel.value){ checkMsg.className = 'msg err'; checkMsg.textContent = '검토 항목을 고르세요.'; return; }
       if(!stanceEl){ checkMsg.className = 'msg err'; checkMsg.textContent = '적합 또는 보완을 고르세요.'; return; }
       if(!text) return;
+      var pwEl = el.querySelector('.c-pw');
+      var pw = pwEl ? pwEl.value : '';
+      if(pw.length < 4){ checkMsg.className = 'msg err'; checkMsg.textContent = '개인 비밀번호를 4자리 이상 입력하세요.'; return; }
       var msg = el.querySelector('.msg');
       msg.textContent = '등록 중...';
       try{
-        var data = { comment: text, kind: anchor.kind, item: itemSel.value, stance: stanceEl.value };
+        var data = { comment: text, kind: anchor.kind, item: itemSel.value, stance: stanceEl.value, pwHash: await pwHash(pw) };
+        rememberPw(pw);
         if(anchor.kind === 'range'){ data.startOffset = anchor.startOffset; data.endOffset = anchor.endOffset; data.quote = anchor.quote; }
         else { data.page = anchor.page; data.xPct = anchor.xPct; data.yPct = anchor.yPct; }
         await addComment(sessionId, fileId, data);
