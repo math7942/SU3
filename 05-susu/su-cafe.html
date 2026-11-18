@@ -140,7 +140,7 @@ function resizeImage(file) {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      const max = 1280;
+      const max = 1024;
       const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
       const w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
       const c = document.createElement('canvas');
@@ -149,12 +149,18 @@ function resizeImage(file) {
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      c.toBlob((b) => (b ? resolve(b) : reject(new Error('사진을 바꾸지 못했습니다'))), 'image/jpeg', 0.82);
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error('사진을 바꾸지 못했습니다'))), 'image/jpeg', 0.75);
     };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('사진을 읽지 못했습니다')); };
     img.src = url;
   });
 }
+// 구글 드라이브 공유 링크에서 파일 번호를 꺼낸다 (예: .../file/d/번호/view, .../open?id=번호)
+function driveIdFrom(url) {
+  const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(url) || /[?&]id=([A-Za-z0-9_-]{20,})/.exec(url);
+  return m ? m[1] : '';
+}
+function driveSrc(id) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w1000'; }
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -287,8 +293,8 @@ function render() {
   if (!shown.length) { list.innerHTML = '<p class="hint">아직 기록된 장소가 없습니다. 위에서 첫 장소를 적어 보세요.</p>'; return; }
   list.innerHTML = shown.map((p) => {
     const mine = files.filter((f) => f.placeId === p.id);
-    const photos = mine.filter((f) => f.kind === 'photo');
-    const docs = mine.filter((f) => f.kind !== 'photo');
+    const photos = mine.filter((f) => f.kind === 'photo' || f.kind === 'drive');
+    const docs = mine.filter((f) => f.kind === 'doc');
     const kindClass = p.kind === '카페' ? 'cafe' : (p.kind === '박물관' ? 'museum' : '');
     const open = openPlaces.has(p.id);
     return `<article class="place" data-id="${esc(p.id)}">
@@ -305,13 +311,19 @@ function render() {
         <button class="ghost" data-act="toggle">${open ? '접기' : '보기'}</button>
         <button class="danger" data-act="delete">장소 삭제</button>
       </div>
-      ${open ? `<div class="thumbs" data-loaded="0">${photos.map((f) => `<div class="thumb"><img alt="${esc(f.name)}" data-fid="${esc(f.id)}" src="" title="${esc(f.name)}"><div class="cap">${esc(f.name)} · ${esc(f.uploader || '')}</div></div>`).join('')}</div>
+      <div class="row" style="margin-top:6px">
+        <input class="drive-url" placeholder="구글 드라이브 사진 공유 링크 붙여넣기" style="flex:1;min-width:200px">
+        <button class="ghost" data-act="adddrive">드라이브 사진 붙이기</button>
+      </div>
+      <div class="hint">구글 드라이브 사진은 저장 공간을 쓰지 않고 링크로 보입니다. 사진의 공유 설정을 "링크가 있는 모든 사용자"로 해 두세요.</div>
+      ${open ? `<div class="thumbs" data-loaded="0">${photos.map((f) => `<div class="thumb"><img alt="${esc(f.name)}" data-fid="${esc(f.id)}" ${f.kind === 'drive' ? `data-drive="1" src="${esc(driveSrc(f.driveId))}"` : 'src=""'} title="${esc(f.name)}"><div class="cap">${esc(f.name)} · ${esc(f.uploader || '')}</div></div>`).join('')}</div>
         ${docs.length ? `<ul class="files">${docs.map((f) => `<li><a href="#" data-fid="${esc(f.id)}" data-act="download">${esc(f.name)}</a> <span class="hint">(${esc(f.uploader || '')})</span> <button class="danger" data-fid="${esc(f.id)}" data-act="removefile" style="min-height:28px;padding:2px 8px;font-size:13px">삭제</button></li>`).join('')}</ul>` : ''}`
       : ''}
     </article>`;
   }).join('');
   // 펼쳐 둔 장소의 사진을 읽어 온다
   list.querySelectorAll('.thumbs img').forEach((img) => {
+    if (img.dataset.drive) return;   // 드라이브 사진은 링크로 바로 보인다
     loadData(files.find((f) => f.id === img.dataset.fid)).then((url) => { img.src = url; }).catch(() => {});
   });
 }
@@ -327,6 +339,18 @@ function bindList() {
     try {
       if (act === 'toggle') { openPlaces.has(place.id) ? openPlaces.delete(place.id) : openPlaces.add(place.id); render(); }
       else if (act === 'delete') await deletePlace(place);
+      else if (act === 'adddrive') {
+        const input = card.querySelector('.drive-url');
+        const id = driveIdFrom(input.value.trim());
+        if (!id) { alert('구글 드라이브 공유 링크를 붙여 넣어 주세요.'); return; }
+        const who = getName() || prompt('올리는 사람 이름을 적어 주세요');
+        if (!who) return;
+        rememberName(who);
+        openPlaces.add(place.id);   // 저장 전에 펼쳐 둬야 목록이 다시 그려질 때 사진이 보인다
+        const { fs, db } = await loadFirebase();
+        await fs.setDoc(fs.doc(fs.collection(db, FILES)), { placeId: place.id, name: '드라이브 사진', mime: 'image/jpeg', kind: 'drive', driveId: id, size: 0, chunks: 0, uploader: who, createdAt: new Date().toISOString() });
+        input.value = '';
+      }
       else if (act === 'removefile') { e.preventDefault(); const f = files.find((x) => x.id === e.target.dataset.fid); if (f) await removeFile(f, place); }
       else if (act === 'download') {
         e.preventDefault();
