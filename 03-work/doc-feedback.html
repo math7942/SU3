@@ -793,10 +793,18 @@ function renderSessionList(list){
       var pwNorm = pw.replace(/[！-～]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
                      .replace(/[。．]/g, '.').replace(/\s+/g, '');
       if(pwNorm !== SESSION_DELETE_PASSWORD){ alert('비밀번호가 올바르지 않습니다.'); return; }
+      var btn = item.querySelector('[data-act=delete]');
+      btn.disabled = true; btn.textContent = '삭제 중…';
+      var slow = setTimeout(function(){ btn.textContent = '삭제 중… (문서가 많으면 오래 걸립니다)'; }, 4000);
       try{
         await deleteSessionEverywhere(id);
+        alert('삭제했습니다.');
       }catch(err){
-        alert('삭제하지 못했습니다: ' + err.message);
+        console.error(err);
+        alert('삭제하지 못했습니다: ' + (err && err.message ? err.message : err));
+        btn.disabled = false; btn.textContent = '삭제';
+      }finally{
+        clearTimeout(slow);
       }
     });
   });
