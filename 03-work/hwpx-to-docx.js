@@ -301,7 +301,7 @@ class Converter {
         break;
       }
     }
-    const occupied = new Set();
+    const occupied = new Map();   // "행,열" -> 위 칸에서 이어지는 칸의 가로 칸 수 (이어지는 칸의 첫 열에만 적는다)
     const outRows = [];
     rows.forEach((_, r) => {
       const tcs = [];
@@ -314,9 +314,7 @@ class Converter {
           if (cell.cs > 1) attrs += '<w:gridSpan w:val="' + cell.cs + '"/>';
           if (cell.rs > 1) {
             attrs += '<w:vMerge w:val="restart"/>';
-            for (let rr = r + 1; rr < r + cell.rs; rr++) {
-              for (let cc = c; cc < c + cell.cs; cc++) occupied.add(rr + ',' + cc);
-            }
+            for (let rr = r + 1; rr < r + cell.rs; rr++) occupied.set(rr + ',' + c, cell.cs);
           }
           attrs += this.tcprBorders(cell.tc.getAttribute('borderFillIDRef'));
           const sub = kid(cell.tc, 'subList');
@@ -324,10 +322,13 @@ class Converter {
           tcs.push('<w:tc><w:tcPr>' + attrs + '</w:tcPr>' + (inner || '<w:p/>') + '</w:tc>');
           c += cell.cs;
         } else {
-          if (occupied.has(r + ',' + c)) {
-            tcs.push('<w:tc><w:tcPr><w:tcW w:w="' + (gridTw[c] || 300) + '" w:type="dxa"/><w:vMerge/></w:tcPr><w:p/></w:tc>');
+          // 세로로 합쳐진 칸의 이어지는 부분: 위 칸과 같은 가로 폭의 칸 하나로 쓴다 (열마다 쪼개면 Word·mammoth가 칸 위치를 잘못 맞춘다)
+          const cs = occupied.get(r + ',' + c);
+          if (cs) {
+            tcs.push('<w:tc><w:tcPr><w:tcW w:w="' + sumRange(gridTw, c, cs) + '" w:type="dxa"/>' +
+              (cs > 1 ? '<w:gridSpan w:val="' + cs + '"/>' : '') + '<w:vMerge/></w:tcPr><w:p/></w:tc>');
           }
-          c += 1;
+          c += cs || 1;
         }
       }
       outRows.push('<w:tr>' + tcs.join('') + '</w:tr>');
