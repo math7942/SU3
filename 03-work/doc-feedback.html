@@ -789,7 +789,10 @@ function renderSessionList(list){
       var title = item.querySelector('.si-title').textContent;
       var pw = window.prompt('"' + title + '" 기수를 삭제하려면 비밀번호를 입력하세요.\n(올라온 문서와 의견이 모두 함께 삭제되며, 되돌릴 수 없습니다.)');
       if(pw === null) return;
-      if(pw !== SESSION_DELETE_PASSWORD){ alert('비밀번호가 올바르지 않습니다.'); return; }
+      // 공백·전각 문자(３．１４…, 。)가 섞여도 통과하도록 정리한 뒤 비교한다
+      var pwNorm = pw.replace(/[！-～]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+                     .replace(/[。．]/g, '.').replace(/\s+/g, '');
+      if(pwNorm !== SESSION_DELETE_PASSWORD){ alert('비밀번호가 올바르지 않습니다.'); return; }
       try{
         await deleteSessionEverywhere(id);
       }catch(err){
