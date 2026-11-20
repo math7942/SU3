@@ -40,6 +40,7 @@
   .cells { display: flex; flex-wrap: wrap; gap: 4px; }
   .cell { width: 34px; height: 30px; line-height: 30px; text-align: center; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--line); color: var(--muted); }
   .cell.submitted { background: #ffffff; color: #1d2433; border-color: #d0d5dd; }
+  .cell.dup { background: #d9f7e3; color: #14532d; border-color: #9ddcae; }
   .cell.absent { background: #eceef2; color: #667085; border-color: #d0d5dd; }
   .cell.missing { background: #fff1a8; color: #6b5300; border-color: #e6c84a; }
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 99; padding: 16px; }
@@ -527,24 +528,35 @@ const NUM_MAX = 30;
 function drawClassGrid(rows) {
   const box = document.getElementById('classGrid');
   if (!box) return;
+  // 같은 반·번호에 여러 명이 제출했으면 (번호를 잘못 적은 경우) 목록으로 모아 둔다
   const byKey = new Map();
-  rows.forEach((r) => byKey.set(`${r.cls}-${r.num}`, r));
+  rows.forEach((r) => {
+    const key = `${r.cls}-${r.num}`;
+    byKey.set(key, [...(byKey.get(key) || []), r]);
+  });
   const outOfRange = rows.filter((r) => !(r.cls >= 1 && r.cls <= CLASS_COUNT && r.num >= 1 && r.num <= NUM_MAX)).length;
   let html = '';
   for (let c = 1; c <= CLASS_COUNT; c++) {
     const missing = [];
     let cells = '';
     for (let n = 1; n <= NUM_MAX; n++) {
-      const r = byKey.get(`${c}-${n}`);
+      const list = byKey.get(`${c}-${n}`) || [];
+      const r = list[0];
       if (!r) missing.push(n);
-      const cls = !r ? 'cell missing' : (r.attended === false ? 'cell absent' : 'cell submitted');
-      const title = r ? `${n}번 ${r.name}${r.attended === false ? ' (미응시)' : ''}` : `${n}번 미제출`;
+      let cls, title;
+      if (list.length > 1) {
+        cls = 'cell dup';
+        title = `${n}번 중복: ${list.map((x) => x.name).join(', ')}`;
+      } else {
+        cls = !r ? 'cell missing' : (r.attended === false ? 'cell absent' : 'cell submitted');
+        title = r ? `${n}번 ${r.name}${r.attended === false ? ' (미응시)' : ''}` : `${n}번 미제출`;
+      }
       cells += `<span class="${cls}" title="${esc(title)}">${n}</span>`;
     }
     html += `<div class="class-row"><div class="class-label">${c}반 <span class="hint">미제출 ${missing.length}명</span></div>`
       + `<div class="cells">${cells}</div></div>`;
   }
-  html += '<p class="hint">흰색: 제출 · 연한 회색: 미응시 · 노랑: 미제출'
+  html += '<p class="hint">흰색: 제출 · 연한 회색: 미응시 · 노랑: 미제출 · 연한 초록: 반·번호 중복'
     + (outOfRange ? ` · 반·번호 범위를 벗어난 제출 ${outOfRange}건(목록에서 확인하세요)` : '') + '</p>';
   box.innerHTML = html;
 }
