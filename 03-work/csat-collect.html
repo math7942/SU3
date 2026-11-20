@@ -506,19 +506,22 @@ function renderTeacherDashboard(fb) {
       <div class="row-actions">
         <span class="status" id="count">불러오는 중...</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="danger" id="delSelected" disabled>선택 삭제 (0명)</button>
           <button id="dl-edu" disabled>교육청용 엑셀</button>
           <button id="dl-kedi" class="ghost" disabled>대교협용 엑셀</button>
         </div>
       </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
-          <thead><tr><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어 공통</th><th>국어 선택</th><th>수학 과목</th><th>수학 공통</th><th>수학 선택</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th></tr></thead>
-          <tbody id="rows"><tr><td colspan="14" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
+          <thead><tr><th><input type="checkbox" id="selAll" title="전체 선택"></th><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어 공통</th><th>국어 선택</th><th>수학 과목</th><th>수학 공통</th><th>수학 선택</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th><th>삭제</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="16" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
         </table>
       </div>
     </section>`;
 
   let current = [];
+  const selected = new Set();   // 선택한 제출 자료 번호(문서 번호)
+  const delSelected = document.getElementById('delSelected');
   const school = document.getElementById('school');
   school.addEventListener('change', () => setSchoolName(school.value.trim()));
   const year = document.getElementById('year');
@@ -531,11 +534,61 @@ function renderTeacherDashboard(fb) {
   document.getElementById('logout').addEventListener('click', () => fb.am.signOut(fb.auth));
   const { fs, db } = fb;
   stopWatch = fs.onSnapshot(fs.collection(db, COLLECTION), (snap) => {
-    current = snap.docs.map((d) => d.data());
+    current = snap.docs.map((d) => ({ ...d.data(), docId: d.id }));
     drawRows(current);
   }, (err) => {
     console.error(err);
     document.getElementById('count').textContent = '불러오지 못했습니다. 보안 규칙을 확인하세요.';
+  });
+
+  // 제출 자료 지우기 (선생님 로그인 후에만 보인다). 같은 반·번호의 남은 자료가 없으면 반별 현황 칸도 비운다.
+  async function deleteRecords(recs) {
+    const gone = new Set(recs.map((r) => r.docId));
+    for (const r of recs) await fs.deleteDoc(fs.doc(db, COLLECTION, r.docId));
+    for (const key of new Set(recs.map((r) => `${r.cls}-${r.num}`))) {
+      const left = current.some((x) => !gone.has(x.docId) && `${x.cls}-${x.num}` === key);
+      if (!left) await fs.deleteDoc(fs.doc(db, 'csatStatus', key));
+    }
+    recs.forEach((r) => selected.delete(r.docId));
+  }
+  function updateSelectionUI() {
+    delSelected.textContent = `선택 삭제 (${selected.size}명)`;
+    delSelected.disabled = selected.size === 0;
+    const boxes = Array.from(document.querySelectorAll('#rows input.sel'));
+    document.getElementById('selAll').checked = boxes.length > 0 && boxes.every((b) => b.checked);
+  }
+  document.getElementById('rows').addEventListener('change', (e) => {
+    if (!e.target.classList.contains('sel')) return;
+    if (e.target.checked) selected.add(e.target.dataset.id); else selected.delete(e.target.dataset.id);
+    updateSelectionUI();
+  });
+  document.getElementById('selAll').addEventListener('change', (e) => {
+    document.querySelectorAll('#rows input.sel').forEach((b) => {
+      b.checked = e.target.checked;
+      if (b.checked) selected.add(b.dataset.id); else selected.delete(b.dataset.id);
+    });
+    updateSelectionUI();
+  });
+  document.getElementById('rows').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-del]');
+    if (!btn) return;
+    const r = current.find((x) => x.docId === btn.dataset.del);
+    if (!r) return;
+    if (!confirm(`${r.cls}반 ${r.num}번 ${r.name} 학생의 제출 자료를 지울까요? 되돌릴 수 없습니다.`)) return;
+    btn.disabled = true;
+    try { await deleteRecords([r]); }
+    catch (err) { console.error(err); btn.disabled = false; alert('지우지 못했습니다: ' + err.message); }
+  });
+  delSelected.addEventListener('click', async () => {
+    const recs = current.filter((x) => selected.has(x.docId));
+    if (!recs.length) return;
+    const names = recs.slice(0, 5).map((r) => `${r.cls}반 ${r.num}번 ${r.name}`).join('\n');
+    const more = recs.length > 5 ? `\n외 ${recs.length - 5}명` : '';
+    if (!confirm(`선택한 ${recs.length}명의 제출 자료를 지울까요? 되돌릴 수 없습니다.\n\n${names}${more}`)) return;
+    delSelected.disabled = true;
+    try { await deleteRecords(recs); }
+    catch (err) { console.error(err); alert('일부를 지우지 못했습니다: ' + err.message); }
+    updateSelectionUI();
   });
 
   function drawRows(rows) {
@@ -543,17 +596,24 @@ function renderTeacherDashboard(fb) {
     drawClassGrid(rows);
     dlEdu.disabled = rows.length === 0;
     dlKedi.disabled = rows.length === 0;
+    // 지워져서 없어진 자료는 선택에서도 뺀다
+    const ids = new Set(rows.map((r) => r.docId));
+    Array.from(selected).forEach((id) => { if (!ids.has(id)) selected.delete(id); });
     const body = document.getElementById('rows');
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="14" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
+      body.innerHTML = '<tr><td colspan="16" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
+      updateSelectionUI();
       return;
     }
     body.innerHTML = sortRows(rows).map((r) => `<tr>
+      <td><input type="checkbox" class="sel" data-id="${esc(r.docId)}" ${selected.has(r.docId) ? 'checked' : ''}></td>
       <td>${esc(r.cls)}</td><td>${esc(r.num)}</td><td>${esc(r.name)}${r.attended === false ? ' (미응시)' : ''}</td><td>${esc(r.hist)}</td>
       <td>${esc(r.kor_sub)}</td><td>${esc(r.kor_common)}</td><td>${esc(r.kor_elective)}</td>
       <td>${esc(r.math_sub)}</td><td>${esc(r.math_common)}</td><td>${esc(r.math_elective)}</td><td>${esc(r.eng)}</td>
       <td>${esc(r.inq1_sub)} ${esc(r.inq1)}</td><td>${esc(r.inq2_sub)} ${esc(r.inq2)}</td><td>${r.fl_sub ? esc(r.fl_sub) + ' ' + esc(r.fl) : ''}</td>
+      <td><button class="danger" data-del="${esc(r.docId)}" style="min-height:30px;padding:2px 8px;font-size:13px">삭제</button></td>
     </tr>`).join('');
+    updateSelectionUI();
   }
 }
 
