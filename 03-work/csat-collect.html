@@ -481,6 +481,46 @@ function confirmDelete(title, names) {
   });
 }
 
+// 제출 자료의 반·번호·이름을 고치는 창. 같은 반·번호·이름이 이미 있으면 저장하지 않고 알려 준다.
+function editStudent(r, taken) {
+  return new Promise((resolve) => {
+    const bg = document.createElement('div');
+    bg.className = 'modal-bg';
+    bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="제출 자료 수정">
+      <h3 style="margin:0 0 8px">제출 자료 수정</h3>
+      <div class="grid" style="grid-template-columns:1fr 1fr 2fr">
+        <div><label for="eCls">반</label><select id="eCls">${CLASSES.map((c) => `<option value="${c}"${String(r.cls) === c ? ' selected' : ''}>${c}반</option>`).join('')}</select></div>
+        <div><label for="eNum">번호</label><input id="eNum" inputmode="numeric" value="${esc(r.num)}"></div>
+        <div><label for="eName">이름</label><input id="eName" value="${esc(r.name)}"></div>
+      </div>
+      <p class="err" id="eErr"></p>
+      <div class="row" style="justify-content:flex-end">
+        <button class="ghost" data-ans="no">취소</button>
+        <button data-ans="yes">저장</button>
+      </div></div>`;
+    const finish = (v) => { bg.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') finish(null); };
+    bg.addEventListener('click', (e) => {
+      const ans = e.target.dataset && e.target.dataset.ans;
+      if (ans === 'no') return finish(null);
+      if (ans === 'yes') {
+        const cls = Number(document.getElementById('eCls').value);
+        const num = Number(document.getElementById('eNum').value);
+        const name = document.getElementById('eName').value.trim();
+        const err = document.getElementById('eErr');
+        if (!Number.isInteger(num) || num < 1 || num > NUM_MAX) { err.textContent = `번호는 1~${NUM_MAX} 사이로 적어 주세요.`; return; }
+        if (!name) { err.textContent = '이름을 적어 주세요.'; return; }
+        if (taken(cls, num, name)) { err.textContent = '같은 반·번호·이름의 제출이 이미 있습니다.'; return; }
+        return finish({ cls, num, name });
+      }
+      if (e.target === bg) finish(null);
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(bg);
+    document.getElementById('eName').focus();
+  });
+}
+
 // 반·번호 칸으로 제출 현황을 보여 준다. 1~8반, 각 반 1~30번 기준
 const CLASS_COUNT = 8;
 const NUM_MAX = 30;
@@ -542,8 +582,8 @@ function renderTeacherDashboard(fb) {
       </div>
       <div class="table-wrap" style="margin-top:12px">
         <table>
-          <thead><tr><th><input type="checkbox" id="selAll" title="전체 선택"></th><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어 공통</th><th>국어 선택</th><th>수학 과목</th><th>수학 공통</th><th>수학 선택</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th><th>삭제</th></tr></thead>
-          <tbody id="rows"><tr><td colspan="16" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
+          <thead><tr><th><input type="checkbox" id="selAll" title="전체 선택"></th><th>반</th><th>번호</th><th>이름</th><th>한국사</th><th>국어 과목</th><th>국어 공통</th><th>국어 선택</th><th>수학 과목</th><th>수학 공통</th><th>수학 선택</th><th>영어</th><th>탐구1</th><th>탐구2</th><th>제2외국어</th><th>수정</th><th>삭제</th></tr></thead>
+          <tbody id="rows"><tr><td colspan="17" class="hint">아직 제출된 내용이 없습니다.</td></tr></tbody>
         </table>
       </div>
     </section>`;
@@ -580,6 +620,20 @@ function renderTeacherDashboard(fb) {
     }
     recs.forEach((r) => selected.delete(r.docId));
   }
+  // 반·번호·이름 고치기: 새 번호로 저장하고 옛 자료를 지운다 (기존 자료는 고칠 수 없으므로 같은 방식)
+  async function updateRecord(r, v) {
+    const { docId, ...rest } = r;
+    const newId = `${r.grade}-${v.cls}-${v.num}-${v.name}`.replace(/\//g, '_');
+    await fs.setDoc(fs.doc(db, COLLECTION, newId), { ...rest, cls: v.cls, num: v.num, name: v.name, id: newId });
+    if (newId !== docId) await fs.deleteDoc(fs.doc(db, COLLECTION, docId));
+    // 반별 현황: 새 반·번호 칸을 채우고, 옛 칸은 남은 자료가 없을 때만 비운다
+    const takenNew = current.some((x) => x.docId !== docId && x.docId !== newId && x.cls === v.cls && x.num === v.num);
+    if (!takenNew) await fs.setDoc(fs.doc(db, 'csatStatus', `${v.cls}-${v.num}`), { cls: v.cls, num: v.num, attended: r.attended !== false, updatedAt: new Date().toISOString() });
+    const oldKey = `${r.cls}-${r.num}`;
+    if (oldKey !== `${v.cls}-${v.num}` && !current.some((x) => x.docId !== docId && `${x.cls}-${x.num}` === oldKey)) {
+      await fs.deleteDoc(fs.doc(db, 'csatStatus', oldKey));
+    }
+  }
   function updateSelectionUI() {
     delSelected.textContent = `선택 삭제 (${selected.size}명)`;
     delSelected.disabled = selected.size === 0;
@@ -608,6 +662,17 @@ function renderTeacherDashboard(fb) {
     try { await deleteRecords([r]); }
     catch (err) { console.error(err); btn.disabled = false; alert('지우지 못했습니다: ' + err.message); }
   });
+  document.getElementById('rows').addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-edit]');
+    if (!btn) return;
+    const r = current.find((x) => x.docId === btn.dataset.edit);
+    if (!r) return;
+    const taken = (cls, num, name) => current.some((x) => x.docId !== r.docId && x.cls === cls && x.num === num && x.name === name);
+    const v = await editStudent(r, taken);
+    if (!v) return;
+    try { await updateRecord(r, v); }
+    catch (err) { console.error(err); alert('수정하지 못했습니다: ' + err.message); }
+  });
   delSelected.addEventListener('click', async () => {
     const recs = current.filter((x) => selected.has(x.docId));
     if (!recs.length) return;
@@ -628,7 +693,7 @@ function renderTeacherDashboard(fb) {
     Array.from(selected).forEach((id) => { if (!ids.has(id)) selected.delete(id); });
     const body = document.getElementById('rows');
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="16" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
+      body.innerHTML = '<tr><td colspan="17" class="hint">아직 제출된 내용이 없습니다.</td></tr>';
       updateSelectionUI();
       return;
     }
@@ -638,6 +703,7 @@ function renderTeacherDashboard(fb) {
       <td>${esc(r.kor_sub)}</td><td>${esc(r.kor_common)}</td><td>${esc(r.kor_elective)}</td>
       <td>${esc(r.math_sub)}</td><td>${esc(r.math_common)}</td><td>${esc(r.math_elective)}</td><td>${esc(r.eng)}</td>
       <td>${esc(r.inq1_sub)} ${esc(r.inq1)}</td><td>${esc(r.inq2_sub)} ${esc(r.inq2)}</td><td>${r.fl_sub ? esc(r.fl_sub) + ' ' + esc(r.fl) : ''}</td>
+      <td><button class="ghost" data-edit="${esc(r.docId)}" style="min-height:30px;padding:2px 8px;font-size:13px">수정</button></td>
       <td><button class="danger" data-del="${esc(r.docId)}" style="min-height:30px;padding:2px 8px;font-size:13px">삭제</button></td>
     </tr>`).join('');
     updateSelectionUI();
