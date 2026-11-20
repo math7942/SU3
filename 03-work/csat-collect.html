@@ -42,6 +42,9 @@
   .cell.submitted { background: #ffffff; color: #1d2433; border-color: #d0d5dd; }
   .cell.absent { background: #eceef2; color: #667085; border-color: #d0d5dd; }
   .cell.missing { background: #fff1a8; color: #6b5300; border-color: #e6c84a; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 99; padding: 16px; }
+  .modal { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 18px; max-width: 420px; width: 100%; }
+  .modal ul { margin: 8px 0; padding-left: 20px; max-height: 240px; overflow: auto; }
   @media (max-width: 480px) { .cell { width: 28px; } }
   .took-row input[type="radio"] { -webkit-appearance: radio; appearance: auto; width: 20px; height: 20px; min-height: 0; margin: 0; accent-color: var(--accent); }
   button { font: inherit; font-size: 16px; min-height: 44px; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
@@ -452,6 +455,32 @@ function renderTeacherLogin(fb) {
   });
 }
 
+// 삭제 전에 한 번 더 확인한다. 브라우저 기본 창 대신 화면 안의 창을 쓰고, 기본으로 '취소'에 초점을 둔다.
+function confirmDelete(title, names) {
+  return new Promise((resolve) => {
+    const bg = document.createElement('div');
+    bg.className = 'modal-bg';
+    bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <h3 style="margin:0 0 6px">${esc(title)}</h3>
+      <p class="hint" style="margin:0">아래 학생의 자료를 지웁니다. 되돌릴 수 없으니 이름과 반·번호를 확인하세요.</p>
+      <ul>${names.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
+      <div class="row" style="justify-content:flex-end">
+        <button class="ghost" data-ans="no">취소</button>
+        <button class="danger" data-ans="yes">확인 후 삭제</button>
+      </div></div>`;
+    const finish = (ok) => { bg.remove(); document.removeEventListener('keydown', onKey); resolve(ok); };
+    const onKey = (e) => { if (e.key === 'Escape') finish(false); };
+    bg.addEventListener('click', (e) => {
+      const ans = e.target.dataset && e.target.dataset.ans;
+      if (ans) finish(ans === 'yes');
+      else if (e.target === bg) finish(false);
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(bg);
+    bg.querySelector('[data-ans=no]').focus();
+  });
+}
+
 // 반·번호 칸으로 제출 현황을 보여 준다. 1~8반, 각 반 1~30번 기준
 const CLASS_COUNT = 8;
 const NUM_MAX = 30;
@@ -574,7 +603,7 @@ function renderTeacherDashboard(fb) {
     if (!btn) return;
     const r = current.find((x) => x.docId === btn.dataset.del);
     if (!r) return;
-    if (!confirm(`${r.cls}반 ${r.num}번 ${r.name} 학생의 제출 자료를 지울까요? 되돌릴 수 없습니다.`)) return;
+    if (!(await confirmDelete('제출 자료 1명 삭제', [`${r.cls}반 ${r.num}번 ${r.name}`]))) return;
     btn.disabled = true;
     try { await deleteRecords([r]); }
     catch (err) { console.error(err); btn.disabled = false; alert('지우지 못했습니다: ' + err.message); }
@@ -582,9 +611,7 @@ function renderTeacherDashboard(fb) {
   delSelected.addEventListener('click', async () => {
     const recs = current.filter((x) => selected.has(x.docId));
     if (!recs.length) return;
-    const names = recs.slice(0, 5).map((r) => `${r.cls}반 ${r.num}번 ${r.name}`).join('\n');
-    const more = recs.length > 5 ? `\n외 ${recs.length - 5}명` : '';
-    if (!confirm(`선택한 ${recs.length}명의 제출 자료를 지울까요? 되돌릴 수 없습니다.\n\n${names}${more}`)) return;
+    if (!(await confirmDelete(`선택한 ${recs.length}명의 제출 자료 삭제`, recs.map((r) => `${r.cls}반 ${r.num}번 ${r.name}`)))) return;
     delSelected.disabled = true;
     try { await deleteRecords(recs); }
     catch (err) { console.error(err); alert('일부를 지우지 못했습니다: ' + err.message); }
